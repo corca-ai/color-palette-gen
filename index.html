@@ -164,6 +164,47 @@
             ></div>
           </div>
         </div>
+        <section
+          class="constraint-map"
+          aria-labelledby="constraint-map-title"
+        >
+          <div class="constraint-map-heading">
+            <div>
+              <p class="eyebrow">Constraint map</p>
+              <h3 id="constraint-map-title">What the system can prove.</h3>
+            </div>
+            <p>
+              Every mark compares an actual value with an explicit target.
+              Adjusted means the condition passed after a documented correction.
+            </p>
+          </div>
+          <div
+            class="constraint-summary"
+            id="constraint-summary"
+            aria-label="Constraint summary"
+          ></div>
+          <div class="constraint-detail-layout">
+            <div class="constraint-matrix-wrap">
+              <table class="constraint-matrix">
+                <thead>
+                  <tr>
+                    <th scope="col">Token</th>
+                    <th scope="col">Contrast</th>
+                    <th scope="col">Gamut</th>
+                    <th scope="col">Relation</th>
+                    <th scope="col">State</th>
+                  </tr>
+                </thead>
+                <tbody id="constraint-matrix-body"></tbody>
+              </table>
+            </div>
+            <aside
+              class="constraint-certificate"
+              id="constraint-certificate"
+              aria-live="polite"
+            ></aside>
+          </div>
+        </section>
         <div class="lineage-legend" aria-hidden="true">
           <span><i class="legend-input"></i> Input</span>
           <span><i class="legend-derived"></i> Derived</span>

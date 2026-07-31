@@ -131,10 +131,19 @@ const floatingHarmonyOptions = document.querySelector(
   "#floating-harmony-options",
 );
 const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
+const constraintSummary = document.querySelector("#constraint-summary");
+const constraintMatrixBody = document.querySelector(
+  "#constraint-matrix-body",
+);
+const constraintCertificate = document.querySelector(
+  "#constraint-certificate",
+);
 const toast = document.querySelector("#toast");
 
 let currentResult;
+let currentConstraintReport;
 let activeDebugFunction = "primary button default";
+let activeConstraintFunction = "main text";
 let activeHarmonyId = "default";
 
 function clamp(value, min = 0, max = 1) {
@@ -1260,6 +1269,325 @@ function renderHarmonyOptions(result) {
   });
 }
 
+function hueDistance(first, second) {
+  const difference = Math.abs(first - second) % 360;
+  return Math.min(difference, 360 - difference);
+}
+
+function buildConstraintReport(result) {
+  const tokens = tokenMap(result.tokens);
+  const checks = [];
+  const addCheck = (check) => checks.push(check);
+  const addContrastCheck = (
+    token,
+    foreground,
+    background,
+    target,
+    label,
+  ) => {
+    const actual = contrastRatio(foreground, background);
+    addCheck({
+      token,
+      category: "contrast",
+      label,
+      status: actual >= target ? "pass" : "fail",
+      target: `≥ ${target.toFixed(1)}:1`,
+      actual: `${actual.toFixed(2)}:1`,
+      explanation: `${foreground} against ${background}`,
+    });
+  };
+
+  addContrastCheck(
+    "main text",
+    tokens["main text"],
+    tokens.background,
+    result.input.vibe === "high contrast" ? 10.5 : 8,
+    "Primary reading contrast",
+  );
+  addContrastCheck(
+    "secondary text",
+    tokens["secondary text"],
+    tokens.background,
+    result.input.vibe === "high contrast" ? 7 : 4.7,
+    "Secondary reading contrast",
+  );
+
+  const buttonBackgrounds = [
+    tokens["primary button default"],
+    tokens["primary button hover"],
+    tokens["primary button active"],
+  ];
+  const buttonRatios = buttonBackgrounds.map((background) =>
+    contrastRatio(tokens["primary button text"], background),
+  );
+  const buttonMinimum = Math.min(...buttonRatios);
+  addCheck({
+    token: "primary button text",
+    category: "contrast",
+    label: "Shared button text contrast",
+    status: buttonMinimum >= 4.5 ? "pass" : "fail",
+    target: "≥ 4.5:1 in every state",
+    actual: `${buttonMinimum.toFixed(2)}:1 minimum`,
+    explanation: buttonRatios
+      .map((ratio, index) => `${["default", "hover", "active"][index]} ${ratio.toFixed(2)}:1`)
+      .join(" · "),
+  });
+
+  [
+    ["secondary accent text", "secondary accent soft"],
+    ["decorative accent text", "decorative accent soft"],
+  ].forEach(([foregroundName, backgroundName]) => {
+    if (!tokens[foregroundName] || !tokens[backgroundName]) return;
+    addContrastCheck(
+      foregroundName,
+      tokens[foregroundName],
+      tokens[backgroundName],
+      4.5,
+      "Accent text contrast",
+    );
+  });
+
+  result.tokens.forEach(([, functionName]) => {
+    const gamutStep = result.traces[functionName]?.steps.find(
+      (step) => step.stage === "gamut",
+    );
+    const adjusted = Boolean(
+      gamutStep && /reduced chroma/i.test(gamutStep.message),
+    );
+    addCheck({
+      token: functionName,
+      category: "gamut",
+      label: "sRGB output gamut",
+      status: adjusted ? "adjusted" : "pass",
+      target: "Inside sRGB",
+      actual: adjusted ? "Passed after chroma reduction" : "Inside sRGB",
+      explanation: adjusted
+        ? `${gamutStep.before} → ${gamutStep.after}`
+        : "No gamut correction was required.",
+    });
+  });
+
+  const defaultOklch = rgbToOklch(
+    hexToRgb(tokens["primary button default"]),
+  );
+  [
+    ["primary button hover", 0.62],
+    ["primary button active", 1],
+  ].forEach(([functionName, multiplier]) => {
+    const stateOklch = rgbToOklch(hexToRgb(tokens[functionName]));
+    const actual = Math.abs(stateOklch.l - defaultOklch.l);
+    const target = result.params.stateLightnessStep * multiplier;
+    addCheck({
+      token: functionName,
+      category: "state",
+      label: "Interaction lightness step",
+      status:
+        actual < 0.005
+          ? "fail"
+          : actual < target * 0.85
+            ? "adjusted"
+            : "pass",
+      target: `ΔL ${target.toFixed(3)}`,
+      actual: `ΔL ${actual.toFixed(3)}`,
+      explanation:
+        actual < target * 0.85
+          ? "The requested vibe step was reduced to preserve one readable button foreground."
+          : "Hue is preserved while lightness creates the interaction distinction.",
+    });
+  });
+
+  [
+    ["secondary accent", "secondary", 0],
+    ["decorative accent", "additional", 1],
+  ].forEach(([tokenName, sourceName, offsetIndex]) => {
+    const source = result.supportingColors[sourceName];
+    if (!source || !tokens[tokenName]) return;
+    const actualHue = rgbToOklch(hexToRgb(tokens[tokenName])).h;
+    const expectedHue = source.isDerived
+      ? (result.primary.h + result.params.hueOffsets[offsetIndex] + 360) % 360
+      : rgbToOklch(hexToRgb(source.hex)).h;
+    const difference = hueDistance(actualHue, expectedHue);
+    addCheck({
+      token: tokenName,
+      category: "relation",
+      label: source.isDerived
+        ? `${result.params.harmony} hue relation`
+        : "User color preservation",
+      status: difference <= 1.5 ? "pass" : "fail",
+      target: source.isDerived
+        ? `H ${expectedHue.toFixed(1)}° (${result.params.hueOffsets[offsetIndex] > 0 ? "+" : ""}${result.params.hueOffsets[offsetIndex]}°)`
+        : `Preserve H ${expectedHue.toFixed(1)}°`,
+      actual: `H ${actualHue.toFixed(1)}°`,
+      explanation: source.isDerived
+        ? "The selected harmony policy determines hue; gamut mapping may only reduce chroma."
+        : "Explicit user input takes priority over the automatic harmony candidate.",
+    });
+  });
+
+  return { checks };
+}
+
+function constraintStatusLabel(status) {
+  return {
+    pass: "Passed",
+    adjusted: "Adjusted",
+    fail: "Failed",
+  }[status];
+}
+
+function renderConstraintCertificate(result, report, functionName) {
+  const checks = report.checks.filter((check) => check.token === functionName);
+  const color = tokenMap(result.tokens)[functionName];
+  const resolvedChecks =
+    checks.length > 0
+      ? checks
+      : [{
+          status: "pass",
+          category: "role",
+          label: "Semantic role resolved",
+          target: "Export a valid role color",
+          actual: color,
+          explanation:
+            "This token has no additional measurable condition beyond its documented derivation.",
+        }];
+
+  constraintCertificate.innerHTML = `
+    <div class="certificate-heading">
+      <div>
+        <span class="certificate-kicker">Constraint certificate</span>
+        <h4>${functionName}</h4>
+      </div>
+      <span class="certificate-swatch" style="background:${color}"></span>
+    </div>
+    <div class="certificate-checks">
+      ${resolvedChecks
+        .map(
+          (check) => `
+            <article class="certificate-check ${check.status}">
+              <div class="certificate-check-heading">
+                <span class="constraint-mark" aria-hidden="true"></span>
+                <strong>${check.label}</strong>
+                <span>${constraintStatusLabel(check.status)}</span>
+              </div>
+              <dl>
+                <div><dt>Target</dt><dd>${check.target}</dd></div>
+                <div><dt>Actual</dt><dd>${check.actual}</dd></div>
+              </dl>
+              <p>${check.explanation}</p>
+            </article>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderConstraintMap(result) {
+  const report = buildConstraintReport(result);
+  const categories = [
+    ["contrast", "Contrast"],
+    ["gamut", "sRGB gamut"],
+    ["relation", "Hue relation"],
+    ["state", "State distinction"],
+  ];
+
+  constraintSummary.innerHTML = categories
+    .map(([category, label]) => {
+      const categoryChecks = report.checks.filter(
+        (check) => check.category === category,
+      );
+      const failed = categoryChecks.filter(
+        (check) => check.status === "fail",
+      ).length;
+      const adjusted = categoryChecks.filter(
+        (check) => check.status === "adjusted",
+      ).length;
+      const status = failed > 0 ? "fail" : adjusted > 0 ? "adjusted" : "pass";
+      return `
+        <button type="button" class="constraint-summary-item ${status}" data-constraint-category="${category}">
+          <span class="constraint-mark" aria-hidden="true"></span>
+          <span>
+            <strong>${label}</strong>
+            <small>${categoryChecks.length - failed}/${categoryChecks.length} met${adjusted ? ` · ${adjusted} adjusted` : ""}</small>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
+
+  const matrixTokens = [...new Set(report.checks.map((check) => check.token))];
+  const matrixCategories = ["contrast", "gamut", "relation", "state"];
+  constraintMatrixBody.innerHTML = matrixTokens
+    .map((functionName) => {
+      const cells = matrixCategories
+        .map((category) => {
+          const check = report.checks.find(
+            (item) =>
+              item.token === functionName && item.category === category,
+          );
+          if (!check) return '<td class="constraint-empty">—</td>';
+          return `
+            <td>
+              <span class="matrix-result ${check.status}">
+                <span class="constraint-mark" aria-hidden="true"></span>
+                ${check.actual}
+              </span>
+            </td>
+          `;
+        })
+        .join("");
+      return `
+        <tr>
+          <th scope="row">
+            <button type="button" data-constraint-token="${functionName}">
+              ${functionName}
+            </button>
+          </th>
+          ${cells}
+        </tr>
+      `;
+    })
+    .join("");
+
+  if (!matrixTokens.includes(activeConstraintFunction)) {
+    activeConstraintFunction = matrixTokens[0];
+  }
+  renderConstraintCertificate(result, report, activeConstraintFunction);
+
+  constraintMatrixBody
+    .querySelectorAll("[data-constraint-token]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        activeConstraintFunction = button.dataset.constraintToken;
+        renderConstraintCertificate(
+          result,
+          report,
+          activeConstraintFunction,
+        );
+      });
+    });
+
+  constraintSummary
+    .querySelectorAll("[data-constraint-category]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const firstCheck = report.checks.find(
+          (check) =>
+            check.category === button.dataset.constraintCategory,
+        );
+        if (!firstCheck) return;
+        activeConstraintFunction = firstCheck.token;
+        renderConstraintCertificate(
+          result,
+          report,
+          activeConstraintFunction,
+        );
+      });
+    });
+
+  return report;
+}
+
 function renderLineage(result) {
   document.querySelector("#lineage-strategy").textContent =
     `Harmony: ${result.params.harmony} · ${result.params.hueOffsets
@@ -1610,13 +1938,17 @@ function renderLineage(result) {
     .forEach((node) => {
       const openTrace = () => {
         activeDebugFunction = node.dataset.lineageFunction;
-        activateTab("debug");
-        renderDebug(result);
-        document.querySelector(".workspace").scrollIntoView({
+        activeConstraintFunction = node.dataset.lineageFunction;
+        renderConstraintCertificate(
+          result,
+          currentConstraintReport,
+          activeConstraintFunction,
+        );
+        constraintCertificate.scrollIntoView({
           behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
             ? "auto"
             : "smooth",
-          block: "start",
+          block: "center",
         });
       };
       node.addEventListener("click", openTrace);
@@ -1633,6 +1965,7 @@ function renderResult(result) {
   currentResult = result;
   applyCssVariables(result.tokens);
   renderHarmonyOptions(result);
+  currentConstraintReport = renderConstraintMap(result);
   renderLineage(result);
   renderPalette(result);
   renderStates(result);
