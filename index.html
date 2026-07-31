@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A small, inspectable color palette generator prototype."
+    />
+    <title>Color Lab — Inspectable palette generator</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="#" aria-label="Color Lab home">
+        <span class="wordmark-mark" aria-hidden="true"></span>
+        <span>Color Lab</span>
+      </a>
+      <p class="header-note">A transparent palette experiment</p>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Inspectable by design</p>
+          <h1 id="page-title">Turn one color into a working interface.</h1>
+          <p class="hero-description">
+            Generate a small semantic palette, see it applied, and inspect every
+            decision made along the way.
+          </p>
+        </div>
+
+        <form class="generator-card" id="palette-form">
+          <div class="field-group primary-field">
+            <label for="primary-color">Primary</label>
+            <div class="color-input-row">
+              <input
+                type="color"
+                id="primary-picker"
+                value="#ff0000"
+                aria-label="Choose primary color"
+              />
+              <input
+                type="text"
+                id="primary-color"
+                name="primary"
+                value="#FF0000"
+                maxlength="7"
+                spellcheck="false"
+                autocomplete="off"
+                aria-describedby="primary-error"
+              />
+            </div>
+            <p class="field-error" id="primary-error" aria-live="polite"></p>
+          </div>
+
+          <div class="optional-row">
+            <div class="field-group">
+              <label for="secondary-color">
+                Secondary <span>optional</span>
+              </label>
+              <div class="optional-color-input-row">
+                <input
+                  type="color"
+                  id="secondary-picker"
+                  value="#0066ff"
+                  aria-label="Choose optional secondary color"
+                  class="is-empty"
+                />
+                <input
+                  type="text"
+                  id="secondary-color"
+                  name="secondary"
+                  placeholder="#0066FF"
+                  maxlength="7"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="additional-color">
+                Additional <span>optional</span>
+              </label>
+              <div class="optional-color-input-row">
+                <input
+                  type="color"
+                  id="additional-picker"
+                  value="#ffd60a"
+                  aria-label="Choose optional additional color"
+                  class="is-empty"
+                />
+                <input
+                  type="text"
+                  id="additional-color"
+                  name="additional"
+                  placeholder="#FFD60A"
+                  maxlength="7"
+                  spellcheck="false"
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+          </div>
+
+          <fieldset class="vibe-field">
+            <legend>Vibe <span>optional</span></legend>
+            <div class="vibe-options">
+              <label>
+                <input type="radio" name="vibe" value="balanced" checked />
+                <span>Balanced</span>
+              </label>
+              <label>
+                <input type="radio" name="vibe" value="calm" />
+                <span>Calm</span>
+              </label>
+              <label>
+                <input type="radio" name="vibe" value="soft" />
+                <span>Soft</span>
+              </label>
+              <label>
+                <input type="radio" name="vibe" value="energetic" />
+                <span>Energetic</span>
+              </label>
+              <label>
+                <input type="radio" name="vibe" value="high contrast" />
+                <span>High contrast</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <button class="generate-button" type="submit">
+            Generate palette
+            <span aria-hidden="true">↗</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="lineage-section" aria-labelledby="lineage-title">
+        <div class="lineage-heading">
+          <div>
+            <p class="eyebrow">Color lineage</p>
+            <h2 id="lineage-title">See what influenced what.</h2>
+          </div>
+          <p>
+            Follow the primary color through tinting, contrast searches, and
+            state derivation. Select a result node to open its full trace.
+          </p>
+        </div>
+        <div class="lineage-legend" aria-hidden="true">
+          <span><i class="legend-input"></i> Input</span>
+          <span><i class="legend-derived"></i> Derived</span>
+          <span><i class="legend-check"></i> Constraint-driven</span>
+          <span class="lineage-strategy">Hue strategy: preserve, not harmonize</span>
+        </div>
+        <div class="lineage-canvas" id="lineage-canvas"></div>
+      </section>
+
+      <section class="workspace" aria-label="Generated palette workspace">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">Generated system</p>
+            <h2 id="result-title">Red · Balanced</h2>
+          </div>
+          <div class="result-meta">
+            <span id="result-count">10 roles</span>
+            <span class="status-pill" id="result-status">
+              <span aria-hidden="true"></span>
+              All checks pass
+            </span>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Palette views">
+          <button
+            id="tab-palette"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-palette"
+            tabindex="0"
+          >
+            Palette
+          </button>
+          <button
+            id="tab-content"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-content"
+            tabindex="-1"
+          >
+            Content
+          </button>
+          <button
+            id="tab-form"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-form"
+            tabindex="-1"
+          >
+            Form
+          </button>
+          <button
+            id="tab-states"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-states"
+            tabindex="-1"
+          >
+            States
+          </button>
+          <button
+            id="tab-adjustments"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-adjustments"
+            tabindex="-1"
+          >
+            Adjustments
+            <span class="debug-count" id="adjustment-count">0</span>
+          </button>
+          <button
+            id="tab-debug"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-debug"
+            tabindex="-1"
+          >
+            Debug
+            <span class="debug-count" id="debug-count">0</span>
+          </button>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-palette"
+          role="tabpanel"
+          aria-labelledby="tab-palette"
+        >
+          <div class="palette-intro">
+            <p>
+              Every color has one job. Select a row to inspect how it was made.
+            </p>
+            <button class="text-button" type="button" id="copy-output">
+              Copy output
+            </button>
+          </div>
+          <div class="palette-list" id="palette-list"></div>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-content"
+          role="tabpanel"
+          aria-labelledby="tab-content"
+          hidden
+        >
+          <div class="scenario-frame">
+            <nav class="sample-nav">
+              <strong>Journal</strong>
+              <div>
+                <a href="#">Stories</a>
+                <a href="#">About</a>
+                <button class="sample-primary-button" type="button">
+                  Subscribe
+                </button>
+              </div>
+            </nav>
+            <article class="editorial-card">
+              <p class="sample-kicker">Design systems · 6 min read</p>
+              <h3>Color should explain itself.</h3>
+              <p class="sample-lead">
+                A palette becomes useful when every shade has a reason to exist.
+                Start with intent, calculate the relationships, then make the
+                decisions visible.
+              </p>
+              <div class="article-meta">
+                <div class="sample-avatar">CL</div>
+                <div>
+                  <strong>Color Lab</strong>
+                  <span>Updated just now</span>
+                </div>
+              </div>
+              <div class="sample-accent-uses">
+                <span class="secondary-accent-use" id="secondary-accent-use">
+                  Secondary accent
+                </span>
+                <span class="decorative-accent-use" id="decorative-accent-use">
+                  <i aria-hidden="true"></i>
+                  Decorative accent
+                </span>
+              </div>
+            </article>
+            <div class="accent-family-grid">
+              <article class="accent-family-card secondary-family-card" id="secondary-family-card">
+                <span class="accent-family-dot" aria-hidden="true"></span>
+                <p>Secondary family</p>
+                <h4>A supporting action with its own visual voice.</h4>
+                <a href="#">Explore the secondary path <span>→</span></a>
+              </article>
+              <article class="accent-family-card decorative-family-card" id="decorative-family-card">
+                <span class="accent-family-dot" aria-hidden="true"></span>
+                <p>Additional family</p>
+                <h4>A distinct highlight for optional content.</h4>
+                <span class="accent-family-badge">Featured note</span>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-form"
+          role="tabpanel"
+          aria-labelledby="tab-form"
+          hidden
+        >
+          <div class="scenario-frame form-scenario">
+            <div class="sample-form-copy">
+              <p class="sample-kicker">Early access</p>
+              <h3>Build a palette you can trust.</h3>
+              <p>
+                Join the prototype list. This fixture checks text hierarchy,
+                field boundaries, button contrast, and keyboard focus.
+              </p>
+            </div>
+            <form class="sample-form" onsubmit="return false">
+              <label for="sample-email">Email address</label>
+              <input
+                id="sample-email"
+                type="email"
+                value="designer@example.com"
+              />
+              <span class="sample-help">We only send useful experiments.</span>
+              <label for="sample-role">Your role</label>
+              <select id="sample-role">
+                <option>Designer</option>
+                <option>Developer</option>
+                <option>Researcher</option>
+              </select>
+              <div
+                class="sample-form-accent-note"
+                id="form-decorative-note"
+              >
+                <i aria-hidden="true"></i>
+                <span>
+                  <strong>Palette note</strong>
+                  Additional colors can highlight optional context without
+                  competing with the primary action.
+                </span>
+              </div>
+              <div class="sample-form-actions">
+                <button
+                  class="sample-secondary-button"
+                  id="form-secondary-action"
+                  type="button"
+                >
+                  Save draft
+                </button>
+                <button class="sample-primary-button" type="submit">
+                  Request access
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-states"
+          role="tabpanel"
+          aria-labelledby="tab-states"
+          hidden
+        >
+          <div class="states-heading">
+            <div>
+              <p class="sample-kicker">Primary action</p>
+              <h3>One label, four contexts.</h3>
+            </div>
+            <p>
+              The foreground is shared, so every background state must pass
+              against the same text color.
+            </p>
+          </div>
+          <div class="state-grid" id="state-grid"></div>
+          <div class="accent-context-grid" id="accent-context-grid">
+            <article
+              class="accent-context-card secondary-context-card"
+              id="states-secondary-family"
+            >
+              <div class="accent-context-swatch">
+                <span aria-hidden="true"></span>
+              </div>
+              <div>
+                <p>Secondary family</p>
+                <strong>Supporting information</strong>
+                <span>Anchor, tinted surface, and readable text together.</span>
+              </div>
+            </article>
+            <article
+              class="accent-context-card decorative-context-card"
+              id="states-decorative-family"
+            >
+              <div class="accent-context-swatch">
+                <span aria-hidden="true"></span>
+              </div>
+              <div>
+                <p>Additional family</p>
+                <strong>Optional highlight</strong>
+                <span>A separate family reserved for non-essential emphasis.</span>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-adjustments"
+          role="tabpanel"
+          aria-labelledby="tab-adjustments"
+          hidden
+        >
+          <div class="adjustments-header">
+            <div>
+              <p class="eyebrow">Automatic corrections</p>
+              <h3>What changed—and why.</h3>
+            </div>
+            <p>
+              Only interventions that changed a requested or candidate value
+              appear here. Routine conversions and passing checks stay in Debug.
+            </p>
+          </div>
+          <div class="adjustments-list" id="adjustments-list"></div>
+        </div>
+
+        <div
+          class="tab-panel"
+          id="panel-debug"
+          role="tabpanel"
+          aria-labelledby="tab-debug"
+          hidden
+        >
+          <div class="debug-layout">
+            <aside class="debug-sidebar">
+              <div class="debug-summary" id="debug-summary"></div>
+              <nav id="debug-nav" aria-label="Debug color roles"></nav>
+            </aside>
+            <section class="trace-panel" id="trace-panel"></section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Color Lab prototype · Values are calculated in OKLCH and exported as sRGB hex.</p>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
