@@ -116,6 +116,8 @@ const additionalPicker = document.querySelector("#additional-picker");
 const primaryError = document.querySelector("#primary-error");
 const paletteList = document.querySelector("#palette-list");
 const stateGrid = document.querySelector("#state-grid");
+const buttonHierarchyGrid = document.querySelector("#button-hierarchy-grid");
+const buttonUsageGrid = document.querySelector("#button-usage-grid");
 const debugNav = document.querySelector("#debug-nav");
 const tracePanel = document.querySelector("#trace-panel");
 const debugSummary = document.querySelector("#debug-summary");
@@ -131,6 +133,9 @@ const floatingHarmonyOptions = document.querySelector(
   "#floating-harmony-options",
 );
 const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
+const hueRelationshipCard = document.querySelector(
+  "#hue-relationship-card",
+);
 const constraintSummary = document.querySelector("#constraint-summary");
 const constraintMatrixBody = document.querySelector(
   "#constraint-matrix-body",
@@ -144,6 +149,7 @@ let currentResult;
 let currentConstraintReport;
 let activeDebugFunction = "primary button default";
 let activeConstraintFunction = "main text";
+let activeConstraintCategory = null;
 let activeHarmonyId = "default";
 
 function clamp(value, min = 0, max = 1) {
@@ -648,6 +654,129 @@ function deriveHarmonyColor(primary, params, offset, role) {
     hex: mapped.hex,
     source: `${params.name} vibe · ${params.harmony}`,
     relation: `${offset > 0 ? "+" : ""}${offset}° from primary for ${role}`,
+    edgeLabel: `${offset > 0 ? "+" : ""}${offset}°`,
+    targetHue: rawHue,
+    derivationMode: "primary-template",
+    oklch: mapped.color,
+    adjusted: mapped.adjusted,
+  };
+}
+
+function signedHueDistance(from, to) {
+  return ((to - from + 540) % 360) - 180;
+}
+
+function completeHarmonyColor(primary, secondaryHex, params) {
+  const secondary = rgbToOklch(hexToRgb(secondaryHex));
+  const secondaryOffset = signedHueDistance(primary.h, secondary.h);
+  const harmony = params.harmony;
+  const idealSecondaryOffsets = harmony.includes("monochromatic")
+    ? [0]
+    : harmony.includes("triadic")
+      ? [120, 240]
+      : harmony.includes("complementary") &&
+          !harmony.includes("split complement")
+        ? [180]
+        : params.hueOffsets;
+  const relationError = Math.min(
+    ...idealSecondaryOffsets.map((offset) =>
+      hueDistance(
+        secondary.h,
+        (primary.h + offset + 360) % 360,
+      ),
+    ),
+  );
+  let targetHue;
+  let relation;
+  let edgeLabel;
+  let chromaMultiplier = 1;
+
+  if (harmony.includes("monochromatic")) {
+    targetHue = primary.h;
+    chromaMultiplier = 0.62;
+    relation =
+      "Kept the primary hue because a monochromatic system creates its third role through lightness and chroma.";
+    edgeLabel = "same H · vary L/C";
+  } else if (harmony.includes("analogous")) {
+    const mirroredOffset = -secondaryOffset;
+    targetHue = (primary.h + mirroredOffset + 360) % 360;
+    relation =
+      `Mirrored the user secondary (${secondaryOffset >= 0 ? "+" : ""}${secondaryOffset.toFixed(1)}°) across the primary hue.`;
+    edgeLabel = `mirror ${mirroredOffset >= 0 ? "+" : ""}${mirroredOffset.toFixed(0)}°`;
+  } else if (harmony.includes("triadic")) {
+    const positiveArm = (primary.h + 120) % 360;
+    const negativeArm = (primary.h + 240) % 360;
+    const secondaryIsCloserToPositive =
+      hueDistance(secondary.h, positiveArm) <=
+      hueDistance(secondary.h, negativeArm);
+    targetHue = secondaryIsCloserToPositive ? negativeArm : positiveArm;
+    const chosenOffset = secondaryIsCloserToPositive ? -120 : 120;
+    relation =
+      `Placed additional on the ${chosenOffset > 0 ? "+" : ""}${chosenOffset}° triadic arm because the user secondary is closer to the opposite arm.`;
+    edgeLabel = `complete ${chosenOffset > 0 ? "+" : ""}${chosenOffset}°`;
+  } else if (harmony.includes("split complement")) {
+    const splitArms = params.hueOffsets.map((offset) => ({
+      hue: (primary.h + offset + 360) % 360,
+      offset,
+    }));
+    const secondaryArmIndex =
+      hueDistance(secondary.h, splitArms[0].hue) <=
+      hueDistance(secondary.h, splitArms[1].hue)
+        ? 0
+        : 1;
+    const additionalArm = splitArms[secondaryArmIndex === 0 ? 1 : 0];
+    targetHue = additionalArm.hue;
+    const targetOffset = signedHueDistance(primary.h, targetHue);
+    relation =
+      `The user secondary is closer to the ${splitArms[secondaryArmIndex].offset > 0 ? "+" : ""}${splitArms[secondaryArmIndex].offset}° split arm, so additional uses the opposite ${additionalArm.offset > 0 ? "+" : ""}${additionalArm.offset}° arm.`;
+    edgeLabel = `complete ${targetOffset >= 0 ? "+" : ""}${targetOffset.toFixed(0)}°`;
+  } else if (harmony.includes("complementary")) {
+    targetHue = secondary.h;
+    chromaMultiplier = 0.62;
+    relation =
+      "Reused the user secondary hue because complementary harmony contains two hue families; additional is separated through lightness and chroma.";
+    edgeLabel = "reuse H · vary L/C";
+  } else {
+    const candidates = params.hueOffsets.map(
+      (offset) => (primary.h + offset + 360) % 360,
+    );
+    targetHue =
+      hueDistance(secondary.h, candidates[0]) >
+      hueDistance(secondary.h, candidates[1])
+        ? candidates[0]
+        : candidates[1];
+    const targetOffset = signedHueDistance(primary.h, targetHue);
+    relation =
+      "Selected the configured harmony position furthest from the user secondary.";
+    edgeLabel = `complete ${targetOffset >= 0 ? "+" : ""}${targetOffset.toFixed(0)}°`;
+  }
+
+  const targetLightness =
+    params.name === "soft"
+      ? clamp(primary.l + 0.06, 0.58, 0.78)
+      : params.name === "high contrast"
+        ? clamp(1 - primary.l * 0.38, 0.54, 0.74)
+        : clamp(primary.l, 0.54, 0.72);
+  const targetChroma =
+    Math.min(
+      0.24,
+      Math.max(0.075, primary.c * params.derivedChromaScale),
+    ) * chromaMultiplier;
+  const mapped = oklchToHex({
+    l: targetLightness,
+    c: targetChroma,
+    h: targetHue,
+  });
+
+  return {
+    hex: mapped.hex,
+    source: `${params.name} vibe · ${params.harmony} · pair completion`,
+    relation,
+    edgeLabel,
+    targetHue,
+    derivationMode: "primary-secondary-completion",
+    secondaryOffset,
+    relationError,
     oklch: mapped.color,
     adjusted: mapped.adjusted,
   };
@@ -842,6 +971,9 @@ function generatePalette(input) {
     params.hueOffsets[1],
     "additional",
   );
+  const completedAdditional = input.secondary
+    ? completeHarmonyColor(primary, input.secondary, params)
+    : derivedAdditional;
   const supportingColors = {
     secondary: input.secondary
       ? {
@@ -858,7 +990,7 @@ function generatePalette(input) {
           relation: null,
           isDerived: false,
         }
-      : { ...derivedAdditional, isDerived: true },
+      : { ...completedAdditional, isDerived: true },
   };
 
   if (supportingColors.secondary) {
@@ -947,7 +1079,7 @@ function renderPalette(result) {
   paletteList.innerHTML = result.tokens
     .map(
       ([color, functionName]) => `
-        <button class="palette-row" type="button" data-debug-function="${functionName}">
+        <button class="palette-row" type="button" data-inspect-function="${functionName}">
           <span class="palette-swatch" style="background:${color}"></span>
           <span>
             <span class="palette-role">${functionName}</span>
@@ -959,11 +1091,11 @@ function renderPalette(result) {
     )
     .join("");
 
-  paletteList.querySelectorAll("[data-debug-function]").forEach((button) => {
+  paletteList.querySelectorAll("[data-inspect-function]").forEach((button) => {
     button.addEventListener("click", () => {
-      activeDebugFunction = button.dataset.debugFunction;
-      activateTab("debug");
-      renderDebug(result);
+      activeDebugFunction = button.dataset.inspectFunction;
+      activeConstraintFunction = button.dataset.inspectFunction;
+      openInspector(result, activeConstraintFunction);
     });
   });
 }
@@ -984,7 +1116,7 @@ function renderStates(result) {
       return `
         <article class="state-card ${className}">
           <div class="state-preview" style="background:${tokens.background}">
-            <button type="button" style="background:${color}">Continue</button>
+            <button type="button" data-preview-only style="background:${color}">Continue</button>
           </div>
           <div class="state-details">
             <strong>${label}</strong>
@@ -995,6 +1127,98 @@ function renderStates(result) {
       `;
     })
     .join("");
+
+  const provenanceLine = (functionName) => `
+    <li>
+      <i style="background:${tokens[functionName]}"></i>
+      <span>${functionName}</span>
+      <code>${tokens[functionName]}</code>
+    </li>
+  `;
+
+  buttonHierarchyGrid.innerHTML = `
+    <article class="button-role-card">
+      <div class="button-role-meta">
+        <span class="button-role-kind generated">Generated role</span>
+        <h5>Primary action</h5>
+        <p>The dominant action uses dedicated button and interaction-state functions.</p>
+      </div>
+      <div class="button-role-preview">
+        <button class="lab-primary-button" type="button" data-preview-only>
+          Publish palette
+        </button>
+      </div>
+      <ul class="button-token-list">
+        ${provenanceLine("primary button default")}
+        ${provenanceLine("primary button hover")}
+        ${provenanceLine("primary button active")}
+        ${provenanceLine("primary button text")}
+        ${provenanceLine("focus ring")}
+      </ul>
+    </article>
+    <article class="button-role-card" id="states-secondary-family">
+      <div class="button-role-meta">
+        <span class="button-role-kind composed">Composed example</span>
+        <h5>Secondary action</h5>
+        <p>A supporting action composed from the secondary accent family—not a generated button role.</p>
+      </div>
+      <div class="button-role-preview">
+        <button class="lab-secondary-button" type="button" data-preview-only>
+          Save draft
+        </button>
+      </div>
+      <ul class="button-token-list">
+        ${provenanceLine("secondary accent soft")}
+        ${provenanceLine("secondary accent text")}
+        ${provenanceLine("secondary accent")}
+      </ul>
+    </article>
+    <article class="button-role-card">
+      <div class="button-role-meta">
+        <span class="button-role-kind composed">Composed example</span>
+        <h5>Quiet action</h5>
+        <p>A low-emphasis control composed from foundation roles for cancel or dismiss actions.</p>
+      </div>
+      <div class="button-role-preview">
+        <button class="lab-quiet-button" type="button" data-preview-only>
+          Cancel
+        </button>
+      </div>
+      <ul class="button-token-list">
+        ${provenanceLine("surface")}
+        ${provenanceLine("border")}
+        ${provenanceLine("main text")}
+        ${provenanceLine("focus ring")}
+      </ul>
+    </article>
+  `;
+
+  buttonUsageGrid.innerHTML = `
+    <article class="button-usage-card page-context">
+      <span class="button-context-label">Page background</span>
+      <div>
+        <p>Palette ready</p>
+        <h5>Publish this color system?</h5>
+        <span>The hierarchy should remain obvious before either action is used.</span>
+      </div>
+      <div class="button-usage-actions">
+        <button class="lab-secondary-button" type="button" data-preview-only>Save draft</button>
+        <button class="lab-primary-button" type="button" data-preview-only>Publish palette</button>
+      </div>
+    </article>
+    <article class="button-usage-card surface-context">
+      <span class="button-context-label">Surface toolbar</span>
+      <div>
+        <p>3 colors selected</p>
+        <h5>Apply harmony candidate</h5>
+        <span>Quiet and dominant actions share a compact working context.</span>
+      </div>
+      <div class="button-usage-actions">
+        <button class="lab-quiet-button" type="button" data-preview-only>Cancel</button>
+        <button class="lab-primary-button compact" type="button" data-preview-only>Apply</button>
+      </div>
+    </article>
+  `;
 }
 
 function renderDebug(result) {
@@ -1031,7 +1255,15 @@ function renderDebug(result) {
   debugNav.querySelectorAll("[data-trace]").forEach((button) => {
     button.addEventListener("click", () => {
       activeDebugFunction = button.dataset.trace;
+      activeConstraintFunction = button.dataset.trace;
       renderDebug(result);
+      if (constraintCertificate.classList.contains("is-open")) {
+        renderConstraintCertificate(
+          result,
+          currentConstraintReport,
+          activeConstraintFunction,
+        );
+      }
     });
   });
 
@@ -1195,20 +1427,26 @@ function renderHarmonyOptions(result) {
           ).hex;
       const additional = result.input.additional
         ? result.input.additional
-        : deriveHarmonyColor(
-            result.primary,
-            candidateParams,
-            candidate.offsets[1],
-            "additional",
-          ).hex;
+        : result.input.secondary
+          ? completeHarmonyColor(
+              result.primary,
+              result.input.secondary,
+              candidateParams,
+            ).hex
+          : deriveHarmonyColor(
+              result.primary,
+              candidateParams,
+              candidate.offsets[1],
+              "additional",
+            ).hex;
       const selected = candidate.id === result.params.harmonyId;
 
       return `
         <button
           type="button"
           class="harmony-option"
-          role="tab"
-          aria-selected="${selected}"
+          role="radio"
+          aria-checked="${selected}"
           tabindex="${selected ? "0" : "-1"}"
           data-harmony-id="${candidate.id}"
           data-harmony-index="${index}"
@@ -1272,6 +1510,140 @@ function renderHarmonyOptions(result) {
 function hueDistance(first, second) {
   const difference = Math.abs(first - second) % 360;
   return Math.min(difference, 360 - difference);
+}
+
+function harmonyExplanation(harmony) {
+  if (harmony.includes("monochromatic")) {
+    return "Keeps one hue and creates distinction through lightness and chroma.";
+  }
+  if (harmony.includes("triadic")) {
+    return "Places three hues roughly 120° apart to create distinct color roles.";
+  }
+  if (harmony.includes("split complement")) {
+    return "Uses the two hues beside the direct opposite, keeping contrast while reducing a head-on clash.";
+  }
+  if (harmony.includes("complementary")) {
+    return "Places a supporting hue opposite the primary for the strongest hue separation.";
+  }
+  if (harmony.includes("analogous")) {
+    return "Selects nearby hues to favor continuity and a closely related color family.";
+  }
+  return "Uses explicit hue offsets to position supporting colors around the primary.";
+}
+
+function huePoint(hue, radius = 39) {
+  const radians = (hue * Math.PI) / 180;
+  return {
+    x: 50 + Math.sin(radians) * radius,
+    y: 50 - Math.cos(radians) * radius,
+  };
+}
+
+function renderHueRelationship(result) {
+  const secondary = result.supportingColors.secondary;
+  const additional = result.supportingColors.additional;
+  const hues = [
+    {
+      key: "P",
+      label: "Primary",
+      hex: result.input.primary,
+      hue: result.primary.h,
+      relation: "Input anchor",
+    },
+    {
+      key: "S",
+      label: "Secondary",
+      hex: secondary.hex,
+      hue: rgbToOklch(hexToRgb(secondary.hex)).h,
+      relation: secondary.isDerived
+        ? secondary.relation
+        : "User input · automatic relation bypassed",
+    },
+    {
+      key: "A",
+      label: "Additional",
+      hex: additional.hex,
+      hue: rgbToOklch(hexToRgb(additional.hex)).h,
+      relation: additional.isDerived
+        ? additional.relation
+        : "User input · automatic relation bypassed",
+    },
+  ];
+  const points = hues.map((color, index) => {
+    const overlapCount = hues
+      .slice(0, index)
+      .filter((previous) => hueDistance(previous.hue, color.hue) < 8)
+      .length;
+    return {
+      ...color,
+      point: huePoint(color.hue, 39 - overlapCount * 8),
+    };
+  });
+  const derivedCount = Number(secondary.isDerived) +
+    Number(additional.isDerived);
+  const policyStatus =
+    derivedCount === 2
+      ? "Both supporting hues follow this rule."
+      : !secondary.isDerived && additional.isDerived
+        ? "Secondary is locked by user input; additional completes the relationship formed with primary."
+        : secondary.isDerived && !additional.isDerived
+          ? "Additional is locked by user input; secondary follows the selected template."
+          : "Both supporting hues are locked by user input, so this rule does not move them.";
+
+  hueRelationshipCard.innerHTML = `
+    <div class="hue-card-copy">
+      <p class="eyebrow">Hue relationship</p>
+      <h3 id="hue-relationship-title">How supporting hues are chosen.</h3>
+      <p>
+        A color wheel maps hue onto a 0–360° circle.
+        <strong>${result.params.harmony}</strong> is the active placement rule.
+        ${harmonyExplanation(result.params.harmony)}
+      </p>
+      <div class="hue-policy-status">
+        ${policyStatus}
+      </div>
+      <p class="hue-card-limit">
+        Hue chooses a direction, not the final color. Role, vibe, contrast, and
+        sRGB checks adjust lightness and chroma afterward.
+      </p>
+    </div>
+    <div class="hue-wheel-panel">
+      <div class="hue-wheel" aria-label="Current hues positioned on a color wheel">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <polyline
+            points="${points.map(({ point }) => `${point.x},${point.y}`).join(" ")} ${points[0].point.x},${points[0].point.y}"
+          ></polyline>
+        </svg>
+        ${points
+          .map(
+            ({ key, label, hex, hue, point }) => `
+              <span
+                class="hue-wheel-point"
+                style="--point-x:${point.x}%;--point-y:${point.y}%;--point-color:${hex}"
+                title="${label}: ${hue.toFixed(1)}°"
+              >${key}</span>
+            `,
+          )
+          .join("")}
+        <span class="hue-wheel-center">H</span>
+      </div>
+      <div class="hue-equations">
+        ${hues
+          .map(
+            ({ key, label, hex, hue, relation }) => `
+              <div>
+                <span class="hue-equation-key" style="background:${hex}">${key}</span>
+                <span>
+                  <strong>${label} · H ${hue.toFixed(1)}°</strong>
+                  <small>${relation}</small>
+                </span>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
 }
 
 function buildConstraintReport(result) {
@@ -1397,14 +1769,14 @@ function buildConstraintReport(result) {
   });
 
   [
-    ["secondary accent", "secondary", 0],
-    ["decorative accent", "additional", 1],
-  ].forEach(([tokenName, sourceName, offsetIndex]) => {
+    ["secondary accent", "secondary"],
+    ["decorative accent", "additional"],
+  ].forEach(([tokenName, sourceName]) => {
     const source = result.supportingColors[sourceName];
     if (!source || !tokens[tokenName]) return;
     const actualHue = rgbToOklch(hexToRgb(tokens[tokenName])).h;
     const expectedHue = source.isDerived
-      ? (result.primary.h + result.params.hueOffsets[offsetIndex] + 360) % 360
+      ? source.targetHue
       : rgbToOklch(hexToRgb(source.hex)).h;
     const difference = hueDistance(actualHue, expectedHue);
     addCheck({
@@ -1415,14 +1787,35 @@ function buildConstraintReport(result) {
         : "User color preservation",
       status: difference <= 1.5 ? "pass" : "fail",
       target: source.isDerived
-        ? `H ${expectedHue.toFixed(1)}° (${result.params.hueOffsets[offsetIndex] > 0 ? "+" : ""}${result.params.hueOffsets[offsetIndex]}°)`
+        ? `H ${expectedHue.toFixed(1)}° · ${source.edgeLabel}`
         : `Preserve H ${expectedHue.toFixed(1)}°`,
       actual: `H ${actualHue.toFixed(1)}°`,
       explanation: source.isDerived
-        ? "The selected harmony policy determines hue; gamut mapping may only reduce chroma."
+        ? `${source.relation} Gamut mapping may only reduce chroma.`
         : "Explicit user input takes priority over the automatic harmony candidate.",
     });
   });
+
+  const completedAdditional = result.supportingColors.additional;
+  if (
+    result.input.secondary &&
+    completedAdditional.derivationMode ===
+      "primary-secondary-completion"
+  ) {
+    const error = completedAdditional.relationError;
+    addCheck({
+      token: "secondary accent",
+      category: "relation",
+      label: "User pair harmony fit",
+      status: error <= 15 ? "pass" : "adjusted",
+      target: "≤ 15° from a selected harmony arm",
+      actual: `${error.toFixed(1)}° deviation`,
+      explanation:
+        error <= 15
+          ? "The supplied secondary already fits the selected hue relationship."
+          : "The supplied secondary is preserved. Additional completes the nearest valid side, but the overall relationship is reported as relaxed.",
+    });
+  }
 
   return { checks };
 }
@@ -1438,6 +1831,7 @@ function constraintStatusLabel(status) {
 function renderConstraintCertificate(result, report, functionName) {
   const checks = report.checks.filter((check) => check.token === functionName);
   const color = tokenMap(result.tokens)[functionName];
+  const trace = result.traces[functionName];
   const resolvedChecks =
     checks.length > 0
       ? checks
@@ -1454,11 +1848,15 @@ function renderConstraintCertificate(result, report, functionName) {
   constraintCertificate.innerHTML = `
     <div class="certificate-heading">
       <div>
-        <span class="certificate-kicker">Constraint certificate</span>
+        <span class="certificate-kicker">Token inspector</span>
         <h4>${functionName}</h4>
       </div>
-      <span class="certificate-swatch" style="background:${color}"></span>
+      <div class="certificate-heading-actions">
+        <span class="certificate-swatch" style="background:${color}"></span>
+        <button type="button" class="certificate-close" aria-label="Close token inspector">×</button>
+      </div>
     </div>
+    <h5 class="certificate-section-title">Conditions</h5>
     <div class="certificate-checks">
       ${resolvedChecks
         .map(
@@ -1479,7 +1877,48 @@ function renderConstraintCertificate(result, report, functionName) {
         )
         .join("")}
     </div>
+    <h5 class="certificate-section-title">Derivation</h5>
+    <ol class="certificate-trace">
+      ${(trace?.steps ?? [])
+        .map(
+          (step) => `
+            <li>
+              <span>${step.stage}</span>
+              <div>
+                <strong>${step.message}</strong>
+                ${
+                  step.before || step.after
+                    ? `<code>${step.before}${step.before && step.after ? " → " : ""}${step.after}</code>`
+                    : ""
+                }
+              </div>
+            </li>
+          `,
+        )
+        .join("")}
+    </ol>
   `;
+  constraintCertificate
+    .querySelector(".certificate-close")
+    .addEventListener("click", closeInspector);
+}
+
+function openInspector(
+  result,
+  functionName,
+  report = currentConstraintReport,
+) {
+  activeConstraintFunction = functionName;
+  activeDebugFunction = functionName;
+  renderConstraintCertificate(result, report, functionName);
+  renderDebug(result);
+  constraintCertificate.classList.add("is-open");
+  constraintCertificate.setAttribute("aria-hidden", "false");
+}
+
+function closeInspector() {
+  constraintCertificate.classList.remove("is-open");
+  constraintCertificate.setAttribute("aria-hidden", "true");
 }
 
 function renderConstraintMap(result) {
@@ -1504,7 +1943,12 @@ function renderConstraintMap(result) {
       ).length;
       const status = failed > 0 ? "fail" : adjusted > 0 ? "adjusted" : "pass";
       return `
-        <button type="button" class="constraint-summary-item ${status}" data-constraint-category="${category}">
+        <button
+          type="button"
+          class="constraint-summary-item ${status}${activeConstraintCategory === category ? " active" : ""}"
+          data-constraint-category="${category}"
+          aria-pressed="${activeConstraintCategory === category}"
+        >
           <span class="constraint-mark" aria-hidden="true"></span>
           <span>
             <strong>${label}</strong>
@@ -1515,73 +1959,88 @@ function renderConstraintMap(result) {
     })
     .join("");
 
-  const matrixTokens = [...new Set(report.checks.map((check) => check.token))];
   const matrixCategories = ["contrast", "gamut", "relation", "state"];
-  constraintMatrixBody.innerHTML = matrixTokens
-    .map((functionName) => {
-      const cells = matrixCategories
-        .map((category) => {
-          const check = report.checks.find(
-            (item) =>
-              item.token === functionName && item.category === category,
-          );
-          if (!check) return '<td class="constraint-empty">—</td>';
-          return `
-            <td>
-              <span class="matrix-result ${check.status}">
-                <span class="constraint-mark" aria-hidden="true"></span>
-                ${check.actual}
-              </span>
-            </td>
-          `;
-        })
-        .join("");
-      return `
-        <tr>
-          <th scope="row">
-            <button type="button" data-constraint-token="${functionName}">
-              ${functionName}
-            </button>
-          </th>
-          ${cells}
-        </tr>
-      `;
-    })
-    .join("");
+  const renderMatrixRows = () => {
+    const visibleChecks = activeConstraintCategory
+      ? report.checks.filter(
+          (check) => check.category === activeConstraintCategory,
+        )
+      : report.checks;
+    const matrixTokens = [
+      ...new Set(visibleChecks.map((check) => check.token)),
+    ];
+    constraintMatrixBody.innerHTML = matrixTokens
+      .map((functionName) => {
+        const cells = matrixCategories
+          .map((category) => {
+            const matchingChecks = report.checks.filter(
+              (item) =>
+                item.token === functionName && item.category === category,
+            );
+            if (matchingChecks.length === 0) {
+              return '<td class="constraint-empty">—</td>';
+            }
+            const severity = { pass: 0, adjusted: 1, fail: 2 };
+            const check = [...matchingChecks].sort(
+              (first, second) =>
+                severity[second.status] - severity[first.status],
+            )[0];
+            const cellValue =
+              matchingChecks.length > 1
+                ? `${matchingChecks.length} checks · ${constraintStatusLabel(check.status)}`
+                : check.actual;
+            return `
+              <td>
+                <span class="matrix-result ${check.status}">
+                  <span class="constraint-mark" aria-hidden="true"></span>
+                  ${cellValue}
+                </span>
+              </td>
+            `;
+          })
+          .join("");
+        return `
+          <tr>
+            <th scope="row">
+              <button type="button" data-constraint-token="${functionName}">
+                ${functionName}
+              </button>
+            </th>
+            ${cells}
+          </tr>
+        `;
+      })
+      .join("");
 
-  if (!matrixTokens.includes(activeConstraintFunction)) {
-    activeConstraintFunction = matrixTokens[0];
-  }
-  renderConstraintCertificate(result, report, activeConstraintFunction);
-
-  constraintMatrixBody
-    .querySelectorAll("[data-constraint-token]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        activeConstraintFunction = button.dataset.constraintToken;
-        renderConstraintCertificate(
-          result,
-          report,
-          activeConstraintFunction,
-        );
+    constraintMatrixBody
+      .querySelectorAll("[data-constraint-token]")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          openInspector(result, button.dataset.constraintToken, report);
+        });
       });
-    });
+  };
+
+  renderMatrixRows();
 
   constraintSummary
     .querySelectorAll("[data-constraint-category]")
     .forEach((button) => {
       button.addEventListener("click", () => {
-        const firstCheck = report.checks.find(
-          (check) =>
-            check.category === button.dataset.constraintCategory,
-        );
-        if (!firstCheck) return;
-        activeConstraintFunction = firstCheck.token;
-        renderConstraintCertificate(
-          result,
-          report,
-          activeConstraintFunction,
-        );
+        activeConstraintCategory =
+          activeConstraintCategory === button.dataset.constraintCategory
+            ? null
+            : button.dataset.constraintCategory;
+        constraintSummary
+          .querySelectorAll("[data-constraint-category]")
+          .forEach((summaryButton) => {
+            const selected =
+              summaryButton.dataset.constraintCategory ===
+              activeConstraintCategory;
+            summaryButton.classList.toggle("active", selected);
+            summaryButton.setAttribute("aria-pressed", String(selected));
+          });
+        renderMatrixRows();
       });
     });
 
@@ -1792,10 +2251,18 @@ function renderLineage(result) {
     nodes.push(
       {
         id: "additionalInput",
-        label: additionalSource.isDerived
-          ? "Derived additional"
-          : "User additional",
-        value: additionalSource.hex,
+        label:
+          additionalSource.derivationMode ===
+          "primary-secondary-completion"
+            ? "Primary + secondary"
+            : additionalSource.isDerived
+              ? "Derived additional"
+              : "User additional",
+        value:
+          additionalSource.derivationMode ===
+          "primary-secondary-completion"
+            ? "pair completion"
+            : additionalSource.hex,
         color: additionalSource.hex,
         x: 18,
         y: 376,
@@ -1853,7 +2320,7 @@ function renderLineage(result) {
       "secondaryInput",
       "secondary",
       result.supportingColors.secondary.isDerived
-        ? `${result.params.hueOffsets[0] > 0 ? "+" : ""}${result.params.hueOffsets[0]}°`
+        ? result.supportingColors.secondary.edgeLabel
         : "preserve",
       false,
     ]);
@@ -1870,7 +2337,7 @@ function renderLineage(result) {
       "additionalInput",
       "decorative",
       result.supportingColors.additional.isDerived
-        ? `${result.params.hueOffsets[1] > 0 ? "+" : ""}${result.params.hueOffsets[1]}°`
+        ? result.supportingColors.additional.edgeLabel
         : "preserve",
       false,
     ]);
@@ -1937,19 +2404,11 @@ function renderLineage(result) {
     .querySelectorAll("[data-lineage-function]")
     .forEach((node) => {
       const openTrace = () => {
-        activeDebugFunction = node.dataset.lineageFunction;
-        activeConstraintFunction = node.dataset.lineageFunction;
-        renderConstraintCertificate(
+        openInspector(
           result,
+          node.dataset.lineageFunction,
           currentConstraintReport,
-          activeConstraintFunction,
         );
-        constraintCertificate.scrollIntoView({
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-            ? "auto"
-            : "smooth",
-          block: "center",
-        });
       };
       node.addEventListener("click", openTrace);
       node.addEventListener("keydown", (event) => {
@@ -1965,8 +2424,12 @@ function renderResult(result) {
   currentResult = result;
   applyCssVariables(result.tokens);
   renderHarmonyOptions(result);
+  renderHueRelationship(result);
   currentConstraintReport = renderConstraintMap(result);
   renderLineage(result);
+  if (constraintCertificate.classList.contains("is-open")) {
+    openInspector(result, activeConstraintFunction, currentConstraintReport);
+  }
   renderPalette(result);
   renderStates(result);
   renderAdjustments(result);
@@ -1986,13 +2449,6 @@ function renderResult(result) {
     !result.tokens.some(([, name]) => name === "decorative accent");
   document.querySelector("#states-secondary-family").hidden =
     !result.tokens.some(([, name]) => name === "secondary accent");
-  document.querySelector("#states-decorative-family").hidden =
-    !result.tokens.some(([, name]) => name === "decorative accent");
-  document.querySelector("#accent-context-grid").hidden =
-    !result.tokens.some(
-      ([, name]) =>
-        name === "secondary accent" || name === "decorative accent",
-    );
 
   resultTitle.textContent = `${titleForColor(result.input.primary)} · ${
     result.input.vibe[0].toUpperCase() + result.input.vibe.slice(1)
@@ -2129,7 +2585,7 @@ form.addEventListener("submit", (event) => {
   const input = readInput();
   if (!input) return;
   renderResult(generatePalette(input));
-  document.querySelector(".workspace").scrollIntoView({
+  document.querySelector(".constraint-map").scrollIntoView({
     behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ? "auto"
       : "smooth",
@@ -2148,6 +2604,18 @@ document.querySelector("#copy-output").addEventListener("click", async () => {
   }
   toast.classList.add("visible");
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-preview-only]")) return;
+  event.preventDefault();
+  toast.textContent = "Preview only · no action performed";
+  toast.classList.add("visible");
+  window.setTimeout(() => toast.classList.remove("visible"), 1600);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeInspector();
 });
 
 const initialInput = readInput();

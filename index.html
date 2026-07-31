@@ -12,7 +12,7 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="wordmark" href="#" aria-label="Color Lab home">
+      <a class="wordmark" href="#page-title" aria-label="Back to palette inputs">
         <span class="wordmark-mark" aria-hidden="true"></span>
         <span>Color Lab</span>
       </a>
@@ -159,11 +159,16 @@
             <div
               class="harmony-options"
               id="harmony-options"
-              role="tablist"
+              role="radiogroup"
               aria-label="Harmony candidates"
             ></div>
           </div>
         </div>
+        <section
+          class="hue-relationship-card"
+          id="hue-relationship-card"
+          aria-labelledby="hue-relationship-title"
+        ></section>
         <section
           class="constraint-map"
           aria-labelledby="constraint-map-title"
@@ -198,11 +203,6 @@
                 <tbody id="constraint-matrix-body"></tbody>
               </table>
             </div>
-            <aside
-              class="constraint-certificate"
-              id="constraint-certificate"
-              aria-live="polite"
-            ></aside>
           </div>
         </section>
         <div class="lineage-legend" aria-hidden="true">
@@ -219,7 +219,7 @@
       <div
         class="floating-harmony-options"
         id="floating-harmony-options"
-        role="tablist"
+        role="radiogroup"
         aria-label="Floating harmony candidates"
         aria-hidden="true"
       ></div>
@@ -323,12 +323,13 @@
           hidden
         >
           <div class="scenario-frame">
+            <p class="preview-note">Color fixture · controls do not navigate</p>
             <nav class="sample-nav">
               <strong>Journal</strong>
               <div>
-                <a href="#">Stories</a>
-                <a href="#">About</a>
-                <button class="sample-primary-button" type="button">
+                <a aria-disabled="true" data-preview-only>Stories</a>
+                <a aria-disabled="true" data-preview-only>About</a>
+                <button class="sample-primary-button" type="button" data-preview-only>
                   Subscribe
                 </button>
               </div>
@@ -363,7 +364,7 @@
                 <span class="accent-family-dot" aria-hidden="true"></span>
                 <p>Secondary family</p>
                 <h4>A supporting action with its own visual voice.</h4>
-                <a href="#">Explore the secondary path <span>→</span></a>
+                <a aria-disabled="true" data-preview-only>Explore the secondary path <span>→</span></a>
               </article>
               <article class="accent-family-card decorative-family-card" id="decorative-family-card">
                 <span class="accent-family-dot" aria-hidden="true"></span>
@@ -384,6 +385,7 @@
         >
           <div class="scenario-frame form-scenario">
             <div class="sample-form-copy">
+              <p class="preview-note">Color fixture · controls do not submit</p>
               <p class="sample-kicker">Early access</p>
               <h3>Build a palette you can trust.</h3>
               <p>
@@ -421,10 +423,11 @@
                   class="sample-secondary-button"
                   id="form-secondary-action"
                   type="button"
+                  data-preview-only
                 >
                   Save draft
                 </button>
-                <button class="sample-primary-button" type="submit">
+                <button class="sample-primary-button" type="submit" data-preview-only>
                   Request access
                 </button>
               </div>
@@ -441,8 +444,8 @@
         >
           <div class="states-heading">
             <div>
-              <p class="sample-kicker">Primary action</p>
-              <h3>One label, four contexts.</h3>
+              <p class="sample-kicker">Button lab</p>
+              <h3>One action, four states.</h3>
             </div>
             <p>
               The foreground is shared, so every background state must pass
@@ -450,34 +453,32 @@
             </p>
           </div>
           <div class="state-grid" id="state-grid"></div>
-          <div class="accent-context-grid" id="accent-context-grid">
-            <article
-              class="accent-context-card secondary-context-card"
-              id="states-secondary-family"
-            >
-              <div class="accent-context-swatch">
-                <span aria-hidden="true"></span>
-              </div>
+          <section class="button-lab-section" aria-labelledby="button-hierarchy-title">
+            <div class="button-lab-heading">
               <div>
-                <p>Secondary family</p>
-                <strong>Supporting information</strong>
-                <span>Anchor, tinted surface, and readable text together.</span>
+                <p class="sample-kicker">Action hierarchy</p>
+                <h4 id="button-hierarchy-title">Generated roles and composed examples.</h4>
               </div>
-            </article>
-            <article
-              class="accent-context-card decorative-context-card"
-              id="states-decorative-family"
-            >
-              <div class="accent-context-swatch">
-                <span aria-hidden="true"></span>
-              </div>
+              <p>
+                Primary is a generated button role. Secondary and quiet actions
+                are transparent compositions of existing palette tokens.
+              </p>
+            </div>
+            <div class="button-hierarchy-grid" id="button-hierarchy-grid"></div>
+          </section>
+          <section class="button-lab-section button-context-section" aria-labelledby="button-context-title">
+            <div class="button-lab-heading">
               <div>
-                <p>Additional family</p>
-                <strong>Optional highlight</strong>
-                <span>A separate family reserved for non-essential emphasis.</span>
+                <p class="sample-kicker">Usage contexts</p>
+                <h4 id="button-context-title">The same hierarchy in working layouts.</h4>
               </div>
-            </article>
-          </div>
+              <p>
+                Compare dominant, supporting, and quiet actions on page and
+                surface backgrounds.
+              </p>
+            </div>
+            <div class="button-usage-grid" id="button-usage-grid"></div>
+          </section>
         </div>
 
         <div
@@ -521,6 +522,13 @@
     <footer>
       <p>Color Lab prototype · Values are calculated in OKLCH and exported as sRGB hex.</p>
     </footer>
+
+    <aside
+      class="constraint-certificate"
+      id="constraint-certificate"
+      aria-live="polite"
+      aria-hidden="true"
+    ></aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./app.js"></script>

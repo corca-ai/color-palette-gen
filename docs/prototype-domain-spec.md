@@ -118,14 +118,28 @@ Vibe는 하나의 harmony 결과만 강제하지 않는다. 각 vibe는 동일�
 선택 데이터를 수집하기 위한 장치다.
 
 사용자가 secondary 또는 additional을 지정하면 해당 hue는 모든 후보에서
-고정된다. 비어 있는 supporting hue만 harmony offset으로 파생한다.
+고정된다. primary만 주어진 경우에는 두 supporting hue를 harmony template의
+offset으로 파생한다. primary와 secondary가 주어지고 additional만 비어 있다면,
+additional은 primary의 고정 offset이 아니라 두 입력색이 만든 관계를 완성하도록
+파생한다.
 
 ### 추가 색상과의 관계
 
 - primary는 primary button과 focus ring의 기준이다.
 - secondary가 있으면 자동 harmony보다 우선하여 secondary family의 anchor가 된다.
 - additional color가 있으면 자동 harmony보다 우선하여 decorative family의 anchor가 된다.
-- 값이 없으면 vibe의 `hueOffsets`에 따라 primary에서 두 supporting hue를 파생한다.
+- secondary와 additional이 모두 없으면 vibe의 `hueOffsets`에 따라 primary에서
+  두 supporting hue를 파생한다.
+- secondary가 있고 additional이 없으면 선택한 harmony별 pair completion 규칙을
+  적용한다.
+  - analogous: secondary를 primary hue 반대편으로 반사
+  - split complementary: secondary와 가까운 split arm을 찾고 반대쪽의 설정된
+    arm으로 관계 완성
+  - triadic: secondary와 가까운 arm의 반대쪽 ±120° arm 선택
+  - complementary: 새로운 hue를 만들지 않고 secondary hue의 L/C 변형 사용
+  - monochromatic: primary hue를 유지하고 L/C로 역할 구분
+- 사용자 secondary가 선택한 harmony의 이상적인 위치와 다르더라도 입력값을
+  이동시키지 않는다. additional 생성 근거와 관계 오차를 diagnostics에서 밝힌다.
 - primary 역할은 hue를 유지하고, supporting family에만 harmony rotation을 적용한다.
 - 파생 hue의 lightness와 chroma는 gamut 및 역할별 대비 조건에 맞춰 추가 조정한다.
 
