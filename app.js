@@ -1,34 +1,77 @@
 const VIBES = {
   balanced: {
+    harmony: "split complementary",
+    hueOffsets: [150, 210],
     chromaScale: 1,
+    derivedChromaScale: 0.82,
     surfaceTint: 0.02,
     stateLightnessStep: 0.05,
     borderEmphasis: 0.08,
   },
   calm: {
+    harmony: "analogous",
+    hueOffsets: [-24, 24],
     chromaScale: 0.78,
+    derivedChromaScale: 0.68,
     surfaceTint: 0.03,
     stateLightnessStep: 0.035,
     borderEmphasis: 0.06,
   },
   soft: {
+    harmony: "soft analogous",
+    hueOffsets: [18, 42],
     chromaScale: 0.72,
+    derivedChromaScale: 0.56,
     surfaceTint: 0.08,
     stateLightnessStep: 0.025,
     borderEmphasis: 0.04,
   },
   energetic: {
+    harmony: "split complementary",
+    hueOffsets: [150, 210],
     chromaScale: 1.12,
+    derivedChromaScale: 1.08,
     surfaceTint: 0.02,
     stateLightnessStep: 0.07,
     borderEmphasis: 0.1,
   },
   "high contrast": {
+    harmony: "complementary",
+    hueOffsets: [180, 165],
     chromaScale: 1,
+    derivedChromaScale: 1,
     surfaceTint: 0,
     stateLightnessStep: 0.08,
     borderEmphasis: 0.14,
   },
+};
+
+const HARMONY_CANDIDATES = {
+  balanced: [
+    { id: "default", label: "Split complement", offsets: [150, 210] },
+    { id: "analogous", label: "Analogous", offsets: [-30, 30] },
+    { id: "triadic", label: "Triadic", offsets: [120, 240] },
+  ],
+  calm: [
+    { id: "default", label: "Analogous", offsets: [-24, 24] },
+    { id: "monochromatic", label: "Monochromatic", offsets: [0, 0] },
+    { id: "wide-analogous", label: "Wide analogous", offsets: [-42, 42] },
+  ],
+  soft: [
+    { id: "default", label: "Soft analogous", offsets: [18, 42] },
+    { id: "monochromatic", label: "Monochromatic", offsets: [0, 0] },
+    { id: "warm-analogous", label: "Wide analogous", offsets: [-36, 36] },
+  ],
+  energetic: [
+    { id: "default", label: "Split complement", offsets: [150, 210] },
+    { id: "triadic", label: "Triadic", offsets: [120, 240] },
+    { id: "complementary", label: "Complementary", offsets: [180, 165] },
+  ],
+  "high contrast": [
+    { id: "default", label: "Complementary", offsets: [180, 165] },
+    { id: "split", label: "Split complement", offsets: [150, 210] },
+    { id: "triadic", label: "Triadic", offsets: [120, 240] },
+  ],
 };
 
 const REQUIRED_FUNCTIONS = [
@@ -83,10 +126,16 @@ const debugCount = document.querySelector("#debug-count");
 const adjustmentCount = document.querySelector("#adjustment-count");
 const adjustmentsList = document.querySelector("#adjustments-list");
 const lineageCanvas = document.querySelector("#lineage-canvas");
+const harmonyOptions = document.querySelector("#harmony-options");
+const floatingHarmonyOptions = document.querySelector(
+  "#floating-harmony-options",
+);
+const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
 const toast = document.querySelector("#toast");
 
 let currentResult;
 let activeDebugFunction = "primary button default";
+let activeHarmonyId = "default";
 
 function clamp(value, min = 0, max = 1) {
   return Math.min(max, Math.max(min, value));
@@ -475,6 +524,7 @@ function addAccentFamily({
   inputHex,
   prefix,
   source,
+  relation,
   params,
   tokens,
   traces,
@@ -489,7 +539,9 @@ function addAccentFamily({
     { ...base, c: base.c * params.chromaScale },
     source,
     traces,
-    `Preserved the supplied hue as the ${prefix} family anchor.`,
+    relation
+      ? `Selected this hue through the ${params.harmony} rule: ${relation}.`
+      : `Preserved the user-supplied hue as the ${prefix} family anchor.`,
   );
   tokens.push(accent);
 
@@ -565,8 +617,45 @@ function addAccentFamily({
   tokens.push([textCandidate.hex, textName]);
 }
 
+function deriveHarmonyColor(primary, params, offset, role) {
+  const rawHue = (primary.h + offset + 360) % 360;
+  const targetLightness =
+    params.name === "soft"
+      ? clamp(primary.l + 0.06, 0.58, 0.78)
+      : params.name === "high contrast"
+        ? clamp(1 - primary.l * 0.38, 0.54, 0.74)
+        : clamp(primary.l, 0.54, 0.72);
+  const targetChroma = Math.min(
+    0.24,
+    Math.max(0.075, primary.c * params.derivedChromaScale),
+  );
+  const mapped = oklchToHex({
+    l: targetLightness,
+    c: targetChroma,
+    h: rawHue,
+  });
+
+  return {
+    hex: mapped.hex,
+    source: `${params.name} vibe · ${params.harmony}`,
+    relation: `${offset > 0 ? "+" : ""}${offset}° from primary for ${role}`,
+    oklch: mapped.color,
+    adjusted: mapped.adjusted,
+  };
+}
+
 function generatePalette(input) {
-  const params = { ...VIBES[input.vibe], name: input.vibe };
+  const candidates = HARMONY_CANDIDATES[input.vibe];
+  const selectedCandidate =
+    candidates.find((candidate) => candidate.id === input.harmonyId) ??
+    candidates[0];
+  const params = {
+    ...VIBES[input.vibe],
+    name: input.vibe,
+    harmony: selectedCandidate.label.toLowerCase(),
+    hueOffsets: selectedCandidate.offsets,
+    harmonyId: selectedCandidate.id,
+  };
   const primaryRgb = hexToRgb(input.primary);
   const primary = rgbToOklch(primaryRgb);
   const traces = {};
@@ -732,22 +821,55 @@ function generatePalette(input) {
   }
   tokens.push(focusToken);
 
-  if (input.secondary) {
+  const derivedSecondary = deriveHarmonyColor(
+    primary,
+    params,
+    params.hueOffsets[0],
+    "secondary",
+  );
+  const derivedAdditional = deriveHarmonyColor(
+    primary,
+    params,
+    params.hueOffsets[1],
+    "additional",
+  );
+  const supportingColors = {
+    secondary: input.secondary
+      ? {
+          hex: input.secondary,
+          source: "user secondary",
+          relation: null,
+          isDerived: false,
+        }
+      : { ...derivedSecondary, isDerived: true },
+    additional: input.additional
+      ? {
+          hex: input.additional,
+          source: "user additional",
+          relation: null,
+          isDerived: false,
+        }
+      : { ...derivedAdditional, isDerived: true },
+  };
+
+  if (supportingColors.secondary) {
     addAccentFamily({
-      inputHex: input.secondary,
+      inputHex: supportingColors.secondary.hex,
       prefix: "secondary",
-      source: "user secondary",
+      source: supportingColors.secondary.source,
+      relation: supportingColors.secondary.relation,
       params,
       tokens,
       traces,
     });
   }
 
-  if (input.additional) {
+  if (supportingColors.additional) {
     addAccentFamily({
-      inputHex: input.additional,
+      inputHex: supportingColors.additional.hex,
       prefix: "decorative",
-      source: "user additional",
+      source: supportingColors.additional.source,
+      relation: supportingColors.additional.relation,
       params,
       tokens,
       traces,
@@ -767,6 +889,7 @@ function generatePalette(input) {
     input,
     params,
     primary,
+    supportingColors,
     tokens,
     traces,
     warnings,
@@ -878,6 +1001,7 @@ function renderDebug(result) {
     <dl>
       <dt>Input</dt><dd>${result.input.primary}</dd>
       <dt>Vibe</dt><dd>${result.input.vibe}</dd>
+      <dt>Harmony</dt><dd>${result.params.harmony}</dd>
       <dt>Roles</dt><dd>${result.tokens.length}</dd>
       <dt>Gamut maps</dt><dd>${adjustedCount}</dd>
       <dt>Warnings</dt><dd>${result.warnings.length}</dd>
@@ -1032,7 +1156,116 @@ function renderAdjustments(result) {
     .join("");
 }
 
+function renderHarmonyOptions(result) {
+  const candidates = HARMONY_CANDIDATES[result.input.vibe];
+  const lockedCount = Number(Boolean(result.input.secondary)) +
+    Number(Boolean(result.input.additional));
+
+  harmonySwitcherNote.textContent =
+    lockedCount === 2
+      ? "Both supporting hues are user-locked; candidates share the same hues."
+      : lockedCount === 1
+        ? "One supporting hue is user-locked; the other follows the candidate."
+        : "Both supporting hues are derived from the selected candidate.";
+
+  const optionsMarkup = candidates
+    .map((candidate, index) => {
+      const candidateParams = {
+        ...VIBES[result.input.vibe],
+        name: result.input.vibe,
+        harmony: candidate.label.toLowerCase(),
+        hueOffsets: candidate.offsets,
+      };
+      const secondary = result.input.secondary
+        ? result.input.secondary
+        : deriveHarmonyColor(
+            result.primary,
+            candidateParams,
+            candidate.offsets[0],
+            "secondary",
+          ).hex;
+      const additional = result.input.additional
+        ? result.input.additional
+        : deriveHarmonyColor(
+            result.primary,
+            candidateParams,
+            candidate.offsets[1],
+            "additional",
+          ).hex;
+      const selected = candidate.id === result.params.harmonyId;
+
+      return `
+        <button
+          type="button"
+          class="harmony-option"
+          role="tab"
+          aria-selected="${selected}"
+          tabindex="${selected ? "0" : "-1"}"
+          data-harmony-id="${candidate.id}"
+          data-harmony-index="${index}"
+        >
+          <span class="harmony-icon" aria-hidden="true">
+            <i style="background:${result.input.primary}"></i>
+            <i style="background:${secondary}"></i>
+            <i style="background:${additional}"></i>
+          </span>
+          <span>
+            <span class="harmony-option-label">${candidate.label}</span>
+            <span class="harmony-option-offset">${candidate.offsets
+              .map((offset) => `${offset > 0 ? "+" : ""}${offset}°`)
+              .join(" / ")}</span>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
+
+  harmonyOptions.innerHTML = optionsMarkup;
+  floatingHarmonyOptions.innerHTML = optionsMarkup;
+
+  const selectCandidate = (button) => {
+    activeHarmonyId = button.dataset.harmonyId;
+    renderResult(
+      generatePalette({
+        ...result.input,
+        harmonyId: activeHarmonyId,
+      }),
+    );
+  };
+
+  [harmonyOptions, floatingHarmonyOptions].forEach((container) => {
+    const optionButtons = [
+      ...container.querySelectorAll("[data-harmony-id]"),
+    ];
+    optionButtons.forEach((button, index) => {
+      button.addEventListener("click", () => selectCandidate(button));
+      button.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+          return;
+        }
+        event.preventDefault();
+        let nextIndex = index;
+        if (event.key === "ArrowRight") {
+          nextIndex = (index + 1) % optionButtons.length;
+        }
+        if (event.key === "ArrowLeft") {
+          nextIndex = (index - 1 + optionButtons.length) % optionButtons.length;
+        }
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = optionButtons.length - 1;
+        optionButtons[nextIndex].focus();
+        selectCandidate(optionButtons[nextIndex]);
+      });
+    });
+  });
+}
+
 function renderLineage(result) {
+  document.querySelector("#lineage-strategy").textContent =
+    `Harmony: ${result.params.harmony} · ${result.params.hueOffsets
+      .map((offset) => `${offset > 0 ? "+" : ""}${offset}°`)
+      .join(" / ")}`;
+
   const theme = {
     background: oklchToHex({
       l: 0.18,
@@ -1180,12 +1413,15 @@ function renderLineage(result) {
   ];
 
   if (tokens["secondary accent"]) {
+    const secondarySource = result.supportingColors.secondary;
     nodes.push(
       {
         id: "secondaryInput",
-        label: "User secondary",
-        value: result.input.secondary,
-        color: result.input.secondary,
+        label: secondarySource.isDerived
+          ? "Derived secondary"
+          : "User secondary",
+        value: secondarySource.hex,
+        color: secondarySource.hex,
         x: 18,
         y: 292,
         type: "input",
@@ -1224,12 +1460,15 @@ function renderLineage(result) {
   }
 
   if (tokens["decorative accent"]) {
+    const additionalSource = result.supportingColors.additional;
     nodes.push(
       {
         id: "additionalInput",
-        label: "User additional",
-        value: result.input.additional,
-        color: result.input.additional,
+        label: additionalSource.isDerived
+          ? "Derived additional"
+          : "User additional",
+        value: additionalSource.hex,
+        color: additionalSource.hex,
         x: 18,
         y: 376,
         type: "input",
@@ -1282,7 +1521,14 @@ function renderLineage(result) {
     ["active", "buttonText", "contrast", true],
   ];
   if (byId.secondaryInput) {
-    edges.push(["secondaryInput", "secondary", "preserve", false]);
+    edges.push([
+      "secondaryInput",
+      "secondary",
+      result.supportingColors.secondary.isDerived
+        ? `${result.params.hueOffsets[0] > 0 ? "+" : ""}${result.params.hueOffsets[0]}°`
+        : "preserve",
+      false,
+    ]);
     edges.push(["secondary", "secondarySoft", "tint", false]);
     edges.push([
       "secondarySoft",
@@ -1292,7 +1538,14 @@ function renderLineage(result) {
     ]);
   }
   if (byId.additionalInput) {
-    edges.push(["additionalInput", "decorative", "preserve", false]);
+    edges.push([
+      "additionalInput",
+      "decorative",
+      result.supportingColors.additional.isDerived
+        ? `${result.params.hueOffsets[1] > 0 ? "+" : ""}${result.params.hueOffsets[1]}°`
+        : "preserve",
+      false,
+    ]);
     edges.push(["decorative", "decorativeSoft", "tint", false]);
     edges.push([
       "decorativeSoft",
@@ -1379,6 +1632,7 @@ function renderLineage(result) {
 function renderResult(result) {
   currentResult = result;
   applyCssVariables(result.tokens);
+  renderHarmonyOptions(result);
   renderLineage(result);
   renderPalette(result);
   renderStates(result);
@@ -1452,11 +1706,12 @@ function readInput() {
     secondary: secondaryRaw ? normalizeHex(secondaryRaw) : null,
     additional: additionalRaw ? normalizeHex(additionalRaw) : null,
     vibe: VIBES[vibe] ? vibe : "balanced",
+    harmonyId: activeHarmonyId,
   };
 }
 
 function activateTab(name) {
-  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const tabs = [...document.querySelectorAll('.tabs [role="tab"]')];
   tabs.forEach((tab) => {
     const selected = tab.id === `tab-${name}`;
     tab.setAttribute("aria-selected", String(selected));
@@ -1466,7 +1721,7 @@ function activateTab(name) {
   });
 }
 
-document.querySelectorAll('[role="tab"]').forEach((tab, index, tabs) => {
+document.querySelectorAll('.tabs [role="tab"]').forEach((tab, index, tabs) => {
   tab.addEventListener("click", () => activateTab(tab.id.replace("tab-", "")));
   tab.addEventListener("keydown", (event) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
@@ -1509,8 +1764,35 @@ function connectOptionalColorPicker(textInput, colorPicker) {
 connectOptionalColorPicker(secondaryInput, secondaryPicker);
 connectOptionalColorPicker(additionalInput, additionalPicker);
 
+function updateFloatingHarmonyDock() {
+  const originalOptionsRect = harmonyOptions.getBoundingClientRect();
+  const shouldFloat = originalOptionsRect.top <= 12;
+
+  floatingHarmonyOptions.style.setProperty(
+    "--floating-harmony-left",
+    `${originalOptionsRect.left}px`,
+  );
+  floatingHarmonyOptions.style.setProperty(
+    "--floating-harmony-width",
+    `${originalOptionsRect.width}px`,
+  );
+
+  floatingHarmonyOptions.classList.toggle("is-visible", shouldFloat);
+  floatingHarmonyOptions.setAttribute(
+    "aria-hidden",
+    String(!shouldFloat),
+  );
+}
+
+window.addEventListener("scroll", updateFloatingHarmonyDock, {
+  passive: true,
+});
+window.addEventListener("resize", updateFloatingHarmonyDock);
+updateFloatingHarmonyDock();
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  activeHarmonyId = "default";
   const input = readInput();
   if (!input) return;
   renderResult(generatePalette(input));

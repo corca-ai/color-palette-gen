@@ -68,14 +68,20 @@ type PrototypeVibe =
 
 ```typescript
 interface VibeParameters {
+  harmony: string
+  hueOffsets: [number, number]
   chromaScale: number
+  derivedChromaScale: number
   surfaceTint: number
   stateLightnessStep: number
   borderEmphasis: number
 }
 ```
 
+- `harmony`: supporting hue를 고르는 색상 관계
+- `hueOffsets`: primary hue로부터 secondary/additional hue까지의 각도
 - `chromaScale`: 입력색의 chroma를 얼마나 유지하거나 강조할지
+- `derivedChromaScale`: 자동 파생 hue의 chroma 강도
 - `surfaceTint`: background와 surface에 브랜드 hue를 얼마나 섞을지
 - `stateLightnessStep`: button default에서 hover, active로 이동할 때의 명도 간격
 - `borderEmphasis`: border와 주변 surface 사이의 명도 차이
@@ -84,23 +90,44 @@ interface VibeParameters {
 
 수치는 첫 구현을 위한 가설이며, 샘플 페이지를 비교하면서 조정한다.
 
-| Vibe | Chroma scale | Surface tint | State L step | Border emphasis | 의도 |
-|---|---:|---:|---:|---:|---|
-| `balanced` | 1.00 | 0.02 | 0.05 | 0.08 | 별도 인상을 강요하지 않는 기준점 |
-| `calm` | 0.78 | 0.03 | 0.035 | 0.06 | 채도와 상태 변화의 긴장을 낮춤 |
-| `soft` | 0.72 | 0.08 | 0.025 | 0.04 | 옅은 tinted surface와 부드러운 경계 |
-| `energetic` | 1.12 | 0.02 | 0.07 | 0.10 | 강한 accent와 분명한 interaction state |
-| `high contrast` | 1.00 | 0.00 | 0.08 | 0.14 | 중립 surface와 명확한 경계 및 상태 |
+| Vibe | Harmony | Hue offsets | Chroma | Derived chroma | Surface tint | State L step | 의도 |
+|---|---|---|---:|---:|---:|---:|---|
+| `balanced` | split complementary | +150°, +210° | 1.00 | 0.82 | 0.02 | 0.05 | 반대편 hue의 긴장을 완화해 균형 있게 분산 |
+| `calm` | analogous | -24°, +24° | 0.78 | 0.68 | 0.03 | 0.035 | 가까운 hue와 낮은 chroma로 긴장을 억제 |
+| `soft` | soft analogous | +18°, +42° | 0.72 | 0.56 | 0.08 | 0.025 | 가까운 한 방향 hue와 tinted surface 사용 |
+| `energetic` | split complementary | +150°, +210° | 1.12 | 1.08 | 0.02 | 0.07 | 멀리 떨어진 hue와 높은 chroma로 역동성 강화 |
+| `high contrast` | complementary | +180°, +165° | 1.00 | 1.00 | 0.00 | 0.08 | 정반대 hue와 강한 명도·경계 차이 사용 |
 
 모든 계산 후에는 sRGB gamut에 맞게 chroma를 줄일 수 있다.
+
+### Harmony 후보 비교
+
+Vibe는 하나의 harmony 결과만 강제하지 않는다. 각 vibe는 동일한 role과 sample에
+즉시 적용해 비교할 수 있는 세 후보를 제공한다.
+
+| Vibe | 기본 후보 | 대안 1 | 대안 2 |
+|---|---|---|---|
+| `balanced` | split complementary | analogous | triadic |
+| `calm` | analogous | monochromatic | wide analogous |
+| `soft` | soft analogous | monochromatic | wide analogous |
+| `energetic` | split complementary | triadic | complementary |
+| `high contrast` | complementary | split complementary | triadic |
+
+기본 후보는 현재의 가설이지 심미적으로 가장 우수하다고 검증된 결과가 아니다.
+후보 탭은 같은 입력과 sample fixture에서 차이를 빠르게 비교하고 이후 사용자
+선택 데이터를 수집하기 위한 장치다.
+
+사용자가 secondary 또는 additional을 지정하면 해당 hue는 모든 후보에서
+고정된다. 비어 있는 supporting hue만 harmony offset으로 파생한다.
 
 ### 추가 색상과의 관계
 
 - primary는 primary button과 focus ring의 기준이다.
-- secondary가 있으면 secondary accent에 사용한다.
-- additional color가 있으면 샘플의 decorative accent에만 사용한다.
-- secondary/additional color가 없으면 프로토타입에서 억지로 많은 hue를 만들지 않는다.
-- vibe는 입력색의 hue를 회전시키지 않는다. 주로 lightness와 chroma 관계만 바꾼다.
+- secondary가 있으면 자동 harmony보다 우선하여 secondary family의 anchor가 된다.
+- additional color가 있으면 자동 harmony보다 우선하여 decorative family의 anchor가 된다.
+- 값이 없으면 vibe의 `hueOffsets`에 따라 primary에서 두 supporting hue를 파생한다.
+- primary 역할은 hue를 유지하고, supporting family에만 harmony rotation을 적용한다.
+- 파생 hue의 lightness와 chroma는 gamut 및 역할별 대비 조건에 맞춰 추가 조정한다.
 
 ### Debug 표시
 
@@ -147,10 +174,14 @@ type PrototypeColorFunction =
   | "primary button text"
   | "focus ring"
   | "secondary accent"
+  | "secondary accent soft"
+  | "secondary accent text"
   | "decorative accent"
+  | "decorative accent soft"
+  | "decorative accent text"
 ```
 
-마지막 두 값은 해당 입력색이 있을 때만 출력한다.
+마지막 여섯 값은 사용자 입력 또는 vibe harmony로 만든 supporting color family다.
 
 ### 필수 여부와 적용 위치
 
@@ -166,8 +197,12 @@ type PrototypeColorFunction =
 | `primary button active` | 예 | primary button `:active` | active 및 상태 비교 |
 | `primary button text` | 예 | primary button `color` | 세 버튼 배경 위의 텍스트 |
 | `focus ring` | 예 | `:focus-visible` outline/box-shadow | 키보드 focus 표시 |
-| `secondary accent` | 조건부 | link, secondary badge | secondary 입력이 있을 때 |
-| `decorative accent` | 조건부 | chart dot, avatar, 작은 장식 | additional color가 있을 때 |
+| `secondary accent` | 예 | link, indicator | secondary family의 anchor |
+| `secondary accent soft` | 예 | supporting card와 action background | secondary의 낮은 chroma surface |
+| `secondary accent text` | 예 | supporting card와 action text | soft surface에서 대비 보정 |
+| `decorative accent` | 예 | badge, indicator | decorative family의 anchor |
+| `decorative accent soft` | 예 | highlight와 callout background | additional의 낮은 chroma surface |
+| `decorative accent text` | 예 | highlight와 callout text | soft surface에서 대비 보정 |
 
 ### 적용 규칙
 
@@ -316,8 +351,9 @@ Disabled state는 현재 출력 function에 없으므로 샘플에도 넣지 않
 
 ### 선택 색상이 없는 경우
 
-- `secondary accent`, `decorative accent`를 출력하지 않음
-- 해당 샘플 요소는 primary 또는 neutral role만 사용
+- secondary는 vibe의 첫 번째 hue offset으로 primary에서 파생
+- additional은 vibe의 두 번째 hue offset으로 primary에서 파생
+- Debug와 Lineage에 `derived` 출처와 적용된 각도를 기록
 
 ## 5. 테스트 가능한 불변 조건
 
@@ -325,9 +361,8 @@ Disabled state는 현재 출력 function에 없으므로 샘플에도 넣지 않
 - 모든 `color`는 `#RRGGBB` 형식이다.
 - 모든 `function`은 허용 값 중 하나다.
 - 필수 function은 정확히 한 번씩 존재한다.
-- 조건부 function은 대응 입력이 있을 때만 존재한다.
+- 사용자 지정 supporting color는 harmony로 파생한 색보다 우선한다.
 - 모든 탭은 동일한 output 목록에서 파생한 CSS 변수를 사용한다.
 - main/secondary text는 background에서 내부 대비 기준을 만족한다.
 - primary button text는 세 button state 모두에서 내부 대비 기준을 만족한다.
 - 지원하지 않는 vibe는 결과 생성 실패가 아니라 debug warning을 만든다.
-

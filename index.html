@@ -148,14 +148,40 @@
             state derivation. Select a result node to open its full trace.
           </p>
         </div>
+        <div class="harmony-switcher-anchor">
+          <div class="harmony-switcher">
+            <div>
+              <span>Harmony candidates</span>
+              <small id="harmony-switcher-note">
+                Switch one intent across every sample.
+              </small>
+            </div>
+            <div
+              class="harmony-options"
+              id="harmony-options"
+              role="tablist"
+              aria-label="Harmony candidates"
+            ></div>
+          </div>
+        </div>
         <div class="lineage-legend" aria-hidden="true">
           <span><i class="legend-input"></i> Input</span>
           <span><i class="legend-derived"></i> Derived</span>
           <span><i class="legend-check"></i> Constraint-driven</span>
-          <span class="lineage-strategy">Hue strategy: preserve, not harmonize</span>
+          <span class="lineage-strategy" id="lineage-strategy">
+            Harmony: split complementary
+          </span>
         </div>
         <div class="lineage-canvas" id="lineage-canvas"></div>
       </section>
+
+      <div
+        class="floating-harmony-options"
+        id="floating-harmony-options"
+        role="tablist"
+        aria-label="Floating harmony candidates"
+        aria-hidden="true"
+      ></div>
 
       <section class="workspace" aria-label="Generated palette workspace">
         <div class="workspace-heading">
