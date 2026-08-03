@@ -1642,7 +1642,7 @@ form.addEventListener("submit", (event) => {
   if (!input) return;
   renderResult(generatePalette(input));
   activateTab("content");
-  document.querySelector(".workspace").scrollIntoView({
+  document.querySelector(".lineage-section").scrollIntoView({
     behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ? "auto"
       : "smooth",

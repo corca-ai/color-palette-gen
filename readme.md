@@ -58,6 +58,7 @@ list[(color, function)]
 - [엔진 검증 및 한계](docs/engine-testing-plan.md)
 - [참고 자료와 적용 근거](docs/reference-insights.md)
 - [공개 표준 기반 설계 근거](docs/public-design-basis.md)
+- [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
 - [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
 
 ## 프로토타입 실행

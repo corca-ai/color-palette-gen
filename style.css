@@ -111,8 +111,6 @@ button {
 }
 
 main {
-  display: flex;
-  flex-direction: column;
   margin: 0 auto;
   max-width: 1480px;
   min-width: 0;
@@ -125,7 +123,6 @@ main {
   gap: clamp(36px, 6vw, 88px);
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   padding: clamp(54px, 7vw, 88px) 0;
-  order: 1;
 }
 
 .hero-copy {
@@ -195,7 +192,6 @@ h1 {
   color: #f8f5ef;
   margin-bottom: clamp(52px, 7vw, 88px);
   padding: clamp(28px, 4vw, 52px);
-  order: 3;
   min-width: 0;
 }
 
@@ -1221,7 +1217,6 @@ input[type="color"]::-webkit-color-swatch {
   box-shadow: 0 14px 36px rgba(24, 23, 22, 0.09);
   margin-bottom: clamp(52px, 7vw, 88px);
   min-width: 0;
-  order: 2;
 }
 
 .workspace-heading {
