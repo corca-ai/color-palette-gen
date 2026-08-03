@@ -133,3 +133,16 @@ test("gamut adjustments remain visible in the report", () => {
     "oklch(70.0% 0.300 30.0) → oklch(70.0% 0.264 30.0)",
   );
 });
+
+test("state checks expose perceptual and per-axis movement", () => {
+  const report = buildConstraintReport(makeResult());
+  const check = report.checks.find(
+    ({ token, category }) =>
+      token === "primary button hover" && category === "state",
+  );
+  assert.ok(check.metrics.deltaE > 0);
+  assert.equal(typeof check.metrics.deltaL, "number");
+  assert.equal(typeof check.metrics.deltaC, "number");
+  assert.equal(typeof check.metrics.deltaH, "number");
+  assert.match(check.actual, /ΔE .* · ΔL .* · ΔC .* · ΔH/);
+});

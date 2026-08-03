@@ -45,6 +45,9 @@ test("every generated token has a complete inspectable trace", () => {
   for (const [, name] of result.tokens) {
     assert.ok(result.traces[name], `${name} should have a trace`);
     assert.ok(result.traces[name].steps.length >= 2);
+    assert.equal(result.traces[name].recipe.source, result.traces[name].source);
+    assert.ok(result.traces[name].recipe.operations.length >= 1);
+    assert.equal(result.traces[name].recipe.operations[0].index, 1);
     assert.equal(
       result.traces[name].steps.at(-1).stage,
       "final",

@@ -2768,6 +2768,78 @@ input[type="color"]::-webkit-color-swatch {
 
 .state-sequence-arrow {
   color: var(--color-secondary-text);
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+}
+
+.state-sequence-arrow b {
+  color: var(--color-main-text);
+}
+
+.state-sequence-arrow small {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  white-space: nowrap;
+}
+
+.recipe-card {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--color-background);
+}
+
+.recipe-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.recipe-source span,
+.recipe-operations strong {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.recipe-operations {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recipe-operations li {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.recipe-index {
+  color: var(--color-secondary-text);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+}
+
+.recipe-operations p {
+  margin: 5px 0;
+  color: var(--color-secondary-text);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.recipe-operations code {
+  color: var(--color-secondary-text);
+  font-size: 0.64rem;
+  overflow-wrap: anywhere;
 }
 
 .trace-details {

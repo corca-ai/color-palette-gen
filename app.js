@@ -4,6 +4,7 @@ import {
   hexToRgb,
   isHex,
   normalizeHex,
+  oklchDifference,
   oklchToHex,
   rgbToOklch,
 } from "./lib/color-math.js";
@@ -371,6 +372,10 @@ function renderButtonStateSequence(result, functionName) {
             const artifact = result.artifacts[name];
             const color = artifact.output.srgb.hex;
             const oklch = artifact.output.srgb.oklch;
+            const nextArtifact = result.artifacts[names[index + 1]];
+            const difference = nextArtifact
+              ? oklchDifference(oklch, nextArtifact.output.srgb.oklch)
+              : null;
             return `
             <div class="state-sequence-item ${name === functionName ? "is-selected" : ""}">
               <span class="state-sequence-swatch" style="background:${color}"></span>
@@ -378,7 +383,15 @@ function renderButtonStateSequence(result, functionName) {
               <code>${color}</code>
               <small>L ${(oklch.l * 100).toFixed(1)}% · H ${oklch.h.toFixed(1)}°</small>
             </div>
-            ${index < names.length - 1 ? '<span class="state-sequence-arrow">→</span>' : ""}
+            ${
+              difference
+                ? `<span class="state-sequence-arrow" aria-label="Perceptual change delta E ${difference.deltaE.toFixed(3)}">
+                    <b>→</b>
+                    <small>ΔE ${difference.deltaE.toFixed(3)}</small>
+                    <small>ΔL ${difference.deltaL.toFixed(3)}</small>
+                  </span>`
+                : ""
+            }
           `;
           })
           .join("")}
@@ -475,6 +488,28 @@ function renderDebug(result) {
       <code>${finalColor}</code>
     </div>
     ${renderArtifactVisuals(result, trace.function)}
+    <section class="recipe-card" aria-labelledby="recipe-title">
+      <div class="debug-visual-heading">
+        <div><p class="eyebrow">Structured recipe</p><h4 id="recipe-title">Source and recorded operations</h4></div>
+        <span class="visual-status locked">${trace.recipe.operations.length} operations</span>
+      </div>
+      <div class="recipe-source"><span>Source</span><strong>${trace.recipe.source}</strong></div>
+      <ol class="recipe-operations">
+        ${trace.recipe.operations
+          .map(
+            (operation) => `
+              <li>
+                <span class="recipe-index">${String(operation.index).padStart(2, "0")}</span>
+                <div>
+                  <strong>${operation.type}</strong>
+                  <p>${operation.rationale}</p>
+                  ${operation.input || operation.output ? `<code>${operation.input ?? "—"} → ${operation.output ?? "—"}</code>` : ""}
+                </div>
+              </li>`,
+          )
+          .join("")}
+      </ol>
+    </section>
     <details class="trace-details">
       <summary>
         <span>Detailed calculation trace</span>
@@ -904,16 +939,16 @@ function renderConstraintCertificate(result, report, functionName) {
     </div>
     <h5 class="certificate-section-title">Derivation</h5>
     <ol class="certificate-trace">
-      ${(trace?.steps ?? [])
+      ${(trace?.recipe.operations ?? [])
         .map(
-          (step) => `
+          (operation) => `
             <li>
-              <span>${step.stage}</span>
+              <span>${operation.type}</span>
               <div>
-                <strong>${step.message}</strong>
+                <strong>${operation.rationale}</strong>
                 ${
-                  step.before || step.after
-                    ? `<code>${step.before}${step.before && step.after ? " → " : ""}${step.after}</code>`
+                  operation.input || operation.output
+                    ? `<code>${operation.input ?? "—"} → ${operation.output ?? "—"}</code>`
                     : ""
                 }
               </div>

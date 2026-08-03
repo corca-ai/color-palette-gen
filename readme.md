@@ -57,6 +57,7 @@ list[(color, function)]
 - [초기 설계 기록](docs/prototype-plan.md)
 - [엔진 검증 및 한계](docs/engine-testing-plan.md)
 - [참고 자료와 적용 근거](docs/reference-insights.md)
+- [공개 표준 기반 설계 근거](docs/public-design-basis.md)
 - [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
 
 ## 프로토타입 실행

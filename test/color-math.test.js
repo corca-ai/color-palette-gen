@@ -7,6 +7,7 @@ import {
   hexToRgb,
   inGamut,
   mapToSrgb,
+  oklchDifference,
   oklchToHex,
   oklchToRawRgb,
   rgbToHex,
@@ -55,6 +56,17 @@ test("WCAG contrast calculation has known endpoints and is symmetric", () => {
     contrastRatio("#6F5D5A", "#FFFFFF"),
     contrastRatio("#FFFFFF", "#6F5D5A"),
   );
+});
+
+test("OKLCH difference exposes axis movement and Oklab delta E", () => {
+  const difference = oklchDifference(
+    { l: 0.5, c: 0.1, h: 350 },
+    { l: 0.56, c: 0.12, h: 10 },
+  );
+  approximately(difference.deltaL, 0.06, 1e-12, "delta L");
+  approximately(difference.deltaC, 0.02, 1e-12, "delta C");
+  approximately(difference.deltaH, 20, 1e-12, "signed hue delta");
+  assert.ok(difference.deltaE > Math.abs(difference.deltaL));
 });
 
 test("contrast solver finds the closest darker OKLCH color after sRGB export", () => {
