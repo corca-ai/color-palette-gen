@@ -165,6 +165,15 @@ normalized vibe: "balanced"
 warning: UNSUPPORTED_VIBE
 ```
 
+현재 UI는 이 값을 역할별 시각화로 먼저 보여준다.
+
+- OKLCH axis: candidate와 sRGB output 사이에서 L/C/H 중 무엇이 변했는지 표시
+- hue wheel: supporting family가 primary에서 몇 도 이동했는지 표시
+- contrast meter: 실제 대비값과 역할별 요구 기준선을 함께 표시
+- state sequence: button default/hover/active의 lightness 이동을 나란히 표시
+
+문장형 trace는 시각화의 근거를 확인하는 상세 영역으로 유지한다.
+
 ## 2. Function
 
 ### 정의
@@ -242,6 +251,12 @@ type PrototypeColorFunction =
   --color-primary-button-active: /* function: primary button active */;
   --color-primary-button-text: /* function: primary button text */;
   --color-focus-ring: /* function: focus ring */;
+  --color-secondary-accent: /* function: secondary accent */;
+  --color-secondary-accent-soft: /* function: secondary accent soft */;
+  --color-secondary-accent-text: /* function: secondary accent text */;
+  --color-decorative-accent: /* function: decorative accent */;
+  --color-decorative-accent-soft: /* function: decorative accent soft */;
+  --color-decorative-accent-text: /* function: decorative accent text */;
 }
 ```
 

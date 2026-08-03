@@ -69,6 +69,61 @@ Itten은 하나의 primary hue에서 다음 네 모드를 자동 생성하는 �
 - Itten README는 전체 코드가 AI로 생성되었고 사람이 검토하지 않았다고 명시한다. 또한 조사 시점의 `docs/spec.md` 기본값과 실제 코드 기본값 일부가 달랐다. 따라서 아이디어와 테스트 전략은 참고하되 구현을 검증 없이 이식하지 않는다.
 - P3 최대 chroma만 생성하면 sRGB 화면에서 fallback이 필요하다. 최소 공통 출력은 sRGB gamut에 맞추고 P3를 progressive enhancement로 제공하는 정책을 검토한다.
 
+## 1.1 OKLCH Picker
+
+자료:
+
+- [Evil Martians OKLCH Picker](https://oklch.com/)
+- [GitHub 저장소](https://github.com/evilmartians/oklch-picker)
+
+Itten을 만들 때 참고한 기반 프로젝트로 공유받았다. 이 프로젝트에서 가져올
+핵심은 picker UI보다 **색상값과 출력 색역을 분리해서 취급하는 방식**이다.
+
+### 구현에서 확인한 접근법
+
+1. 내부 색상을 OKLCH canonical value로 유지한다.
+   - 변환 과정에서 불필요한 반올림을 피하기 위해 높은 정밀도를 사용한다.
+   - 화면 표시용 문자열의 정밀도와 내부 계산 정밀도를 구분한다.
+2. 색이 속한 색역을 단계적으로 분류한다.
+   - sRGB
+   - Display P3
+   - Rec. 2020
+   - 지원 색역 밖
+3. 출력 포맷의 성격을 구분한다.
+   - hex/rgb처럼 sRGB에 묶인 출력은 gamut mapping 후 내보낸다.
+   - OKLCH/P3 같은 wide-gamut 출력은 가능한 경우 원래 값을 보존한다.
+4. 단순 RGB channel clipping과 perceptual gamut mapping을 구분한다.
+   - 저장 또는 export에는 CSS Color 4 계열의 chroma reduction을 사용한다.
+   - 브라우저 fallback을 설명할 때만 naive channel clipping 결과를 별도로
+     다룬다.
+5. 색역 판정에는 부동소수점 및 round-trip 오차를 고려한 명시적 tolerance를
+   둔다.
+6. 변환, parsing, gamut 판정, export를 UI model과 분리하고 단위 테스트한다.
+
+### 현재 프로젝트에 가져올 점
+
+- palette engine은 DOM과 분리된 순수 함수 모듈이어야 한다.
+- token마다 다음 두 값을 구분해 보존한다.
+  - `candidate`: 의도에 따라 생성된 원본 OKLCH
+  - `output.srgb`: 최소 공통 출력에 맞게 mapping된 값
+- gamut diagnostic은 단순한 `adjusted: true`가 아니라 다음을 기록한다.
+  - 원래 color space
+  - mapping 전후 OKLCH
+  - chroma 감소량과 비율
+  - hue/lightness 보존 여부
+- 현재 직접 구현한 sRGB chroma binary search는 테스트 기준점으로 유지하되,
+  CSS Color 4에 맞는 검증된 color library 도입을 검토한다.
+- 테스트는 최소한 parsing/round-trip, gamut classification, mapping 후 sRGB
+  포함 여부, mapping 전후 hue 안정성을 포함한다.
+
+### 그대로 복제하지 않을 점
+
+- 이 프로젝트는 범용 color picker가 아니므로 자유 형식 parsing, URL state,
+  WebGL/3D gamut visualization은 우선 범위가 아니다.
+- Rec. 2020 export는 현재 프로토타입의 필수 결과물이 아니다.
+- wide-gamut 지원을 위해 기본 hex 출력 형식을 제거하지 않는다. hex는 계속
+  sRGB fallback으로 제공한다.
+
 ## 2. 선언적 디자인과 디자인 런타임
 
 자료:

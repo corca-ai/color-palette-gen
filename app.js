@@ -1,110 +1,33 @@
-const VIBES = {
-  balanced: {
-    harmony: "split complementary",
-    hueOffsets: [150, 210],
-    chromaScale: 1,
-    derivedChromaScale: 0.82,
-    surfaceTint: 0.02,
-    stateLightnessStep: 0.05,
-    borderEmphasis: 0.08,
-  },
-  calm: {
-    harmony: "analogous",
-    hueOffsets: [-24, 24],
-    chromaScale: 0.78,
-    derivedChromaScale: 0.68,
-    surfaceTint: 0.03,
-    stateLightnessStep: 0.035,
-    borderEmphasis: 0.06,
-  },
-  soft: {
-    harmony: "soft analogous",
-    hueOffsets: [18, 42],
-    chromaScale: 0.72,
-    derivedChromaScale: 0.56,
-    surfaceTint: 0.08,
-    stateLightnessStep: 0.025,
-    borderEmphasis: 0.04,
-  },
-  energetic: {
-    harmony: "split complementary",
-    hueOffsets: [150, 210],
-    chromaScale: 1.12,
-    derivedChromaScale: 1.08,
-    surfaceTint: 0.02,
-    stateLightnessStep: 0.07,
-    borderEmphasis: 0.1,
-  },
-  "high contrast": {
-    harmony: "complementary",
-    hueOffsets: [180, 165],
-    chromaScale: 1,
-    derivedChromaScale: 1,
-    surfaceTint: 0,
-    stateLightnessStep: 0.08,
-    borderEmphasis: 0.14,
-  },
-};
-
-const HARMONY_CANDIDATES = {
-  balanced: [
-    { id: "default", label: "Split complement", offsets: [150, 210] },
-    { id: "analogous", label: "Analogous", offsets: [-30, 30] },
-    { id: "triadic", label: "Triadic", offsets: [120, 240] },
-  ],
-  calm: [
-    { id: "default", label: "Analogous", offsets: [-24, 24] },
-    { id: "monochromatic", label: "Monochromatic", offsets: [0, 0] },
-    { id: "wide-analogous", label: "Wide analogous", offsets: [-42, 42] },
-  ],
-  soft: [
-    { id: "default", label: "Soft analogous", offsets: [18, 42] },
-    { id: "monochromatic", label: "Monochromatic", offsets: [0, 0] },
-    { id: "warm-analogous", label: "Wide analogous", offsets: [-36, 36] },
-  ],
-  energetic: [
-    { id: "default", label: "Split complement", offsets: [150, 210] },
-    { id: "triadic", label: "Triadic", offsets: [120, 240] },
-    { id: "complementary", label: "Complementary", offsets: [180, 165] },
-  ],
-  "high contrast": [
-    { id: "default", label: "Complementary", offsets: [180, 165] },
-    { id: "split", label: "Split complement", offsets: [150, 210] },
-    { id: "triadic", label: "Triadic", offsets: [120, 240] },
-  ],
-};
-
-const REQUIRED_FUNCTIONS = [
-  "background",
-  "surface",
-  "main text",
-  "secondary text",
-  "border",
-  "primary button default",
-  "primary button hover",
-  "primary button active",
-  "primary button text",
-  "focus ring",
-];
-
-const FUNCTION_TO_VAR = {
-  background: "--color-background",
-  surface: "--color-surface",
-  "main text": "--color-main-text",
-  "secondary text": "--color-secondary-text",
-  border: "--color-border",
-  "primary button default": "--color-primary-button",
-  "primary button hover": "--color-primary-button-hover",
-  "primary button active": "--color-primary-button-active",
-  "primary button text": "--color-primary-button-text",
-  "focus ring": "--color-focus-ring",
-  "secondary accent": "--color-secondary-accent",
-  "secondary accent soft": "--color-secondary-accent-soft",
-  "secondary accent text": "--color-secondary-accent-text",
-  "decorative accent": "--color-decorative-accent",
-  "decorative accent soft": "--color-decorative-accent-soft",
-  "decorative accent text": "--color-decorative-accent-text",
-};
+import {
+  contrastLabel,
+  contrastRatio,
+  hexToRgb,
+  isHex,
+  normalizeHex,
+  oklchToHex,
+  rgbToOklch,
+} from "./lib/color-math.js";
+import {
+  HARMONY_CANDIDATES,
+  VIBES,
+} from "./lib/palette-config.js";
+import {
+  completeHarmonyColor,
+  deriveHarmonyColor,
+  hueDistance,
+} from "./lib/harmony.js";
+import { buildConstraintReport } from "./lib/constraints.js";
+import { generatePalette } from "./lib/palette-generator.js";
+import {
+  FUNCTION_TO_VAR,
+  serializeCss,
+  serializeDebug,
+  serializeTokens,
+} from "./lib/output-format.js";
+import {
+  axisMarkerPosition,
+  parseMeasurement,
+} from "./lib/debug-visual.js";
 
 const form = document.querySelector("#palette-form");
 const primaryInput = document.querySelector("#primary-color");
@@ -151,891 +74,6 @@ let activeDebugFunction = "primary button default";
 let activeConstraintFunction = "main text";
 let activeConstraintCategory = null;
 let activeHarmonyId = "default";
-
-function clamp(value, min = 0, max = 1) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function isHex(value) {
-  return /^#[0-9a-f]{6}$/i.test(value.trim());
-}
-
-function normalizeHex(value) {
-  return value.trim().toUpperCase();
-}
-
-function hexToRgb(hex) {
-  const value = Number.parseInt(hex.slice(1), 16);
-  return {
-    r: ((value >> 16) & 255) / 255,
-    g: ((value >> 8) & 255) / 255,
-    b: (value & 255) / 255,
-  };
-}
-
-function rgbToHex({ r, g, b }) {
-  const channel = (value) =>
-    Math.round(clamp(value) * 255)
-      .toString(16)
-      .padStart(2, "0");
-  return `#${channel(r)}${channel(g)}${channel(b)}`.toUpperCase();
-}
-
-function srgbToLinear(value) {
-  return value <= 0.04045
-    ? value / 12.92
-    : ((value + 0.055) / 1.055) ** 2.4;
-}
-
-function linearToSrgb(value) {
-  return value <= 0.0031308
-    ? 12.92 * value
-    : 1.055 * value ** (1 / 2.4) - 0.055;
-}
-
-function rgbToOklch({ r, g, b }) {
-  const lr = srgbToLinear(r);
-  const lg = srgbToLinear(g);
-  const lb = srgbToLinear(b);
-
-  const l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb;
-  const m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb;
-  const s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb;
-
-  const lRoot = Math.cbrt(l);
-  const mRoot = Math.cbrt(m);
-  const sRoot = Math.cbrt(s);
-
-  const L =
-    0.2104542553 * lRoot +
-    0.793617785 * mRoot -
-    0.0040720468 * sRoot;
-  const a =
-    1.9779984951 * lRoot -
-    2.428592205 * mRoot +
-    0.4505937099 * sRoot;
-  const bValue =
-    0.0259040371 * lRoot +
-    0.7827717662 * mRoot -
-    0.808675766 * sRoot;
-
-  const C = Math.sqrt(a * a + bValue * bValue);
-  let H = (Math.atan2(bValue, a) * 180) / Math.PI;
-  if (H < 0) H += 360;
-  return { l: L, c: C, h: C < 0.0001 ? 0 : H };
-}
-
-function oklchToRawRgb({ l, c, h }) {
-  const angle = (h * Math.PI) / 180;
-  const a = c * Math.cos(angle);
-  const b = c * Math.sin(angle);
-
-  const lRoot = l + 0.3963377774 * a + 0.2158037573 * b;
-  const mRoot = l - 0.1055613458 * a - 0.0638541728 * b;
-  const sRoot = l - 0.0894841775 * a - 1.291485548 * b;
-
-  const linearL = lRoot ** 3;
-  const linearM = mRoot ** 3;
-  const linearS = sRoot ** 3;
-
-  return {
-    r: linearToSrgb(
-      4.0767416621 * linearL -
-        3.3077115913 * linearM +
-        0.2309699292 * linearS,
-    ),
-    g: linearToSrgb(
-      -1.2684380046 * linearL +
-        2.6097574011 * linearM -
-        0.3413193965 * linearS,
-    ),
-    b: linearToSrgb(
-      -0.0041960863 * linearL -
-        0.7034186147 * linearM +
-        1.707614701 * linearS,
-    ),
-  };
-}
-
-function inGamut(rgb) {
-  return Object.values(rgb).every((channel) => channel >= 0 && channel <= 1);
-}
-
-function mapToSrgb(color) {
-  const raw = oklchToRawRgb(color);
-  if (inGamut(raw)) {
-    return { color, rgb: raw, adjusted: false };
-  }
-
-  let low = 0;
-  let high = color.c;
-  for (let index = 0; index < 24; index += 1) {
-    const mid = (low + high) / 2;
-    const candidate = { ...color, c: mid };
-    if (inGamut(oklchToRawRgb(candidate))) low = mid;
-    else high = mid;
-  }
-  const mapped = { ...color, c: low };
-  return { color: mapped, rgb: oklchToRawRgb(mapped), adjusted: true };
-}
-
-function oklchToHex(color) {
-  const mapped = mapToSrgb(color);
-  return { ...mapped, hex: rgbToHex(mapped.rgb) };
-}
-
-function relativeLuminance(hex) {
-  const rgb = hexToRgb(hex);
-  return (
-    0.2126 * srgbToLinear(rgb.r) +
-    0.7152 * srgbToLinear(rgb.g) +
-    0.0722 * srgbToLinear(rgb.b)
-  );
-}
-
-function contrastRatio(first, second) {
-  const lum1 = relativeLuminance(first);
-  const lum2 = relativeLuminance(second);
-  return (
-    (Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05)
-  );
-}
-
-function contrastLabel(ratio) {
-  if (ratio >= 7) return "AAA";
-  if (ratio >= 4.5) return "AA";
-  return "Fail";
-}
-
-function formatOklch(color) {
-  return `oklch(${(color.l * 100).toFixed(1)}% ${color.c.toFixed(3)} ${color.h.toFixed(1)})`;
-}
-
-function createTrace(functionName, source) {
-  return {
-    function: functionName,
-    source,
-    steps: [],
-    warnings: [],
-  };
-}
-
-function addStep(trace, stage, message, before = "", after = "") {
-  trace.steps.push({ stage, message, before, after });
-}
-
-function tokenFromOklch(functionName, color, source, traces, message) {
-  const trace = createTrace(functionName, source);
-  addStep(
-    trace,
-    "derive",
-    message,
-    "",
-    formatOklch(color),
-  );
-  const mapped = oklchToHex(color);
-  addStep(
-    trace,
-    "gamut",
-    mapped.adjusted
-      ? "Reduced chroma until the color fit inside sRGB."
-      : "Candidate already fits inside sRGB.",
-    formatOklch(color),
-    formatOklch(mapped.color),
-  );
-  addStep(
-    trace,
-    "final",
-    `Exported the resolved color for “${functionName}”.`,
-    formatOklch(mapped.color),
-    mapped.hex,
-  );
-  traces[functionName] = trace;
-  return [mapped.hex, functionName];
-}
-
-function findNeutralForContrast(backgroundHex, target, darker) {
-  let low = 0;
-  let high = 1;
-  for (let index = 0; index < 30; index += 1) {
-    const middle = (low + high) / 2;
-    const candidate = oklchToHex({ l: middle, c: 0, h: 0 }).hex;
-    const passes = contrastRatio(candidate, backgroundHex) >= target;
-    if (darker === passes) low = middle;
-    else high = middle;
-  }
-  return darker ? low : high;
-}
-
-function makeTextToken(functionName, backgroundHex, target, primary, traces) {
-  const lightness = findNeutralForContrast(backgroundHex, target, true);
-  const tint = functionName === "main text" ? 0.012 : 0.018;
-  const candidate = { l: lightness - 0.012, c: tint, h: primary.h };
-  const trace = createTrace(functionName, "derived from background contrast");
-  addStep(
-    trace,
-    "derive",
-    `Searched for the lightest dark text that reaches ${target.toFixed(1)}:1 against the background.`,
-    backgroundHex,
-    formatOklch(candidate),
-  );
-  const mapped = oklchToHex(candidate);
-  const ratio = contrastRatio(mapped.hex, backgroundHex);
-  addStep(
-    trace,
-    "contrast",
-    `${ratio.toFixed(2)}:1 against ${backgroundHex} — ${contrastLabel(ratio)}.`,
-    mapped.hex,
-    `${ratio.toFixed(2)}:1`,
-  );
-  addStep(
-    trace,
-    "gamut",
-    mapped.adjusted
-      ? "Reduced chroma to fit inside sRGB."
-      : "Candidate already fits inside sRGB.",
-    formatOklch(candidate),
-    formatOklch(mapped.color),
-  );
-  addStep(trace, "final", `Resolved “${functionName}”.`, "", mapped.hex);
-  traces[functionName] = trace;
-  return [mapped.hex, functionName];
-}
-
-function chooseButtonText(backgrounds, traces) {
-  const candidates = ["#FFFFFF", "#000000"];
-  const scores = candidates.map((candidate) => ({
-    hex: candidate,
-    ratios: backgrounds.map((background) =>
-      contrastRatio(candidate, background),
-    ),
-  }));
-  const selected = scores.sort(
-    (a, b) => Math.min(...b.ratios) - Math.min(...a.ratios),
-  )[0];
-
-  const trace = createTrace(
-    "primary button text",
-    "black / white contrast comparison",
-  );
-  for (const score of scores) {
-    addStep(
-      trace,
-      "contrast",
-      `${score.hex} minimum contrast across button states: ${Math.min(...score.ratios).toFixed(2)}:1.`,
-      backgrounds.join(", "),
-      score.ratios.map((ratio) => `${ratio.toFixed(2)}:1`).join(", "),
-    );
-  }
-  addStep(
-    trace,
-    "final",
-    `Selected the text color with the strongest worst-case contrast across all states.`,
-    "",
-    selected.hex,
-  );
-  if (Math.min(...selected.ratios) < 4.5) {
-    trace.warnings.push(
-      "BUTTON_TEXT_CONTRAST: No shared black or white foreground reaches 4.5:1 in every state.",
-    );
-  }
-  traces["primary button text"] = trace;
-  return { token: [selected.hex, "primary button text"], scores };
-}
-
-function deriveButtonStates(primary, defaultHex, params, traces) {
-  const stateTarget = 4.5;
-  const blackDefault = contrastRatio("#000000", defaultHex);
-  const whiteDefault = contrastRatio("#FFFFFF", defaultHex);
-  const preferDarker =
-    whiteDefault >= stateTarget || whiteDefault > blackDefault;
-  const direction = preferDarker ? -1 : 1;
-
-  const makeState = (name, multiplier) => {
-    const desiredStep = params.stateLightnessStep * multiplier;
-    let appliedStep = desiredStep;
-    let mapped;
-    let ratio;
-    let attempts = 0;
-
-    while (attempts < 30) {
-      const candidate = {
-        l: clamp(primary.l + direction * appliedStep, 0.08, 0.96),
-        c: primary.c * params.chromaScale,
-        h: primary.h,
-      };
-      mapped = oklchToHex(candidate);
-      const foreground =
-        contrastRatio("#FFFFFF", mapped.hex) >
-        contrastRatio("#000000", mapped.hex)
-          ? "#FFFFFF"
-          : "#000000";
-      ratio = contrastRatio(foreground, mapped.hex);
-
-      const sharesDefaultForeground =
-        (blackDefault >= whiteDefault && foreground === "#000000") ||
-        (whiteDefault > blackDefault && foreground === "#FFFFFF");
-      if (ratio >= stateTarget && sharesDefaultForeground) break;
-
-      appliedStep *= 0.84;
-      attempts += 1;
-    }
-
-    const trace = createTrace(name, "primary color");
-    addStep(
-      trace,
-      "input",
-      "Started with the normalized primary color.",
-      "",
-      `${defaultHex} · ${formatOklch(primary)}`,
-    );
-    addStep(
-      trace,
-      "vibe",
-      `The ${params.name} vibe requested a ${(desiredStep * 100).toFixed(1)} point lightness step.`,
-      `step ${desiredStep.toFixed(3)}`,
-      `step ${appliedStep.toFixed(3)}`,
-    );
-    addStep(
-      trace,
-      "derive",
-      `Moved lightness ${direction < 0 ? "down" : "up"} while preserving the primary hue.`,
-      formatOklch(primary),
-      formatOklch(mapped.color),
-    );
-    addStep(
-      trace,
-      "contrast",
-      `Best black/white foreground contrast is ${ratio.toFixed(2)}:1.`,
-      mapped.hex,
-      `${ratio.toFixed(2)}:1 · ${contrastLabel(ratio)}`,
-    );
-    addStep(
-      trace,
-      "gamut",
-      mapped.adjusted
-        ? "Reduced chroma to keep the state inside sRGB."
-        : "State already fits inside sRGB.",
-      "",
-      mapped.hex,
-    );
-    if (appliedStep < desiredStep * 0.85) {
-      trace.warnings.push(
-        `STATE_STEP_REDUCED: Reduced the requested lightness step from ${desiredStep.toFixed(3)} to ${appliedStep.toFixed(3)} to preserve a shared readable foreground.`,
-      );
-    }
-    addStep(trace, "final", `Resolved “${name}”.`, "", mapped.hex);
-    traces[name] = trace;
-    return [mapped.hex, name];
-  };
-
-  return [
-    makeState("primary button hover", 0.62),
-    makeState("primary button active", 1),
-  ];
-}
-
-function addAccentFamily({
-  inputHex,
-  prefix,
-  source,
-  relation,
-  params,
-  tokens,
-  traces,
-}) {
-  const base = rgbToOklch(hexToRgb(inputHex));
-  const accentName = `${prefix} accent`;
-  const softName = `${prefix} accent soft`;
-  const textName = `${prefix} accent text`;
-
-  const accent = tokenFromOklch(
-    accentName,
-    { ...base, c: base.c * params.chromaScale },
-    source,
-    traces,
-    relation
-      ? `Selected this hue through the ${params.harmony} rule: ${relation}.`
-      : `Preserved the user-supplied hue as the ${prefix} family anchor.`,
-  );
-  tokens.push(accent);
-
-  const soft = tokenFromOklch(
-    softName,
-    {
-      l: params.name === "high contrast" ? 0.965 : 0.94,
-      c: Math.min(0.055, base.c * (params.name === "soft" ? 0.2 : 0.13)),
-      h: base.h,
-    },
-    accentName,
-    traces,
-    `Turned the ${prefix} anchor into a low-chroma tinted surface.`,
-  );
-  tokens.push(soft);
-
-  const textTrace = createTrace(textName, `${accentName} + ${softName}`);
-  const textChroma = Math.min(0.14, base.c * 0.58);
-  let textLightness = Math.min(base.l, 0.5);
-  let textCandidate = oklchToHex({
-    l: textLightness,
-    c: textChroma,
-    h: base.h,
-  });
-  let ratio = contrastRatio(textCandidate.hex, soft[0]);
-
-  while (ratio < 4.5 && textLightness > 0.12) {
-    textLightness -= 0.012;
-    textCandidate = oklchToHex({
-      l: textLightness,
-      c: textChroma,
-      h: base.h,
-    });
-    ratio = contrastRatio(textCandidate.hex, soft[0]);
-  }
-
-  addStep(
-    textTrace,
-    "derive",
-    `Kept the supplied hue and searched downward in lightness for readable text on the soft surface.`,
-    formatOklch(base),
-    formatOklch(textCandidate.color),
-  );
-  addStep(
-    textTrace,
-    "contrast",
-    `${ratio.toFixed(2)}:1 against ${soft[0]} — ${contrastLabel(ratio)}.`,
-    `${textCandidate.hex} / ${soft[0]}`,
-    `${ratio.toFixed(2)}:1`,
-  );
-  addStep(
-    textTrace,
-    "gamut",
-    textCandidate.adjusted
-      ? "Reduced chroma to keep the readable text inside sRGB."
-      : "Readable text already fits inside sRGB.",
-    "",
-    formatOklch(textCandidate.color),
-  );
-  addStep(
-    textTrace,
-    "final",
-    `Resolved “${textName}”.`,
-    "",
-    textCandidate.hex,
-  );
-  if (ratio < 4.5) {
-    textTrace.warnings.push(
-      `ACCENT_TEXT_CONTRAST: Could not reach 4.5:1 for ${textName}.`,
-    );
-  }
-  traces[textName] = textTrace;
-  tokens.push([textCandidate.hex, textName]);
-}
-
-function deriveHarmonyColor(primary, params, offset, role) {
-  const rawHue = (primary.h + offset + 360) % 360;
-  const targetLightness =
-    params.name === "soft"
-      ? clamp(primary.l + 0.06, 0.58, 0.78)
-      : params.name === "high contrast"
-        ? clamp(1 - primary.l * 0.38, 0.54, 0.74)
-        : clamp(primary.l, 0.54, 0.72);
-  const targetChroma = Math.min(
-    0.24,
-    Math.max(0.075, primary.c * params.derivedChromaScale),
-  );
-  const mapped = oklchToHex({
-    l: targetLightness,
-    c: targetChroma,
-    h: rawHue,
-  });
-
-  return {
-    hex: mapped.hex,
-    source: `${params.name} vibe · ${params.harmony}`,
-    relation: `${offset > 0 ? "+" : ""}${offset}° from primary for ${role}`,
-    edgeLabel: `${offset > 0 ? "+" : ""}${offset}°`,
-    targetHue: rawHue,
-    derivationMode: "primary-template",
-    oklch: mapped.color,
-    adjusted: mapped.adjusted,
-  };
-}
-
-function signedHueDistance(from, to) {
-  return ((to - from + 540) % 360) - 180;
-}
-
-function completeHarmonyColor(primary, secondaryHex, params) {
-  const secondary = rgbToOklch(hexToRgb(secondaryHex));
-  const secondaryOffset = signedHueDistance(primary.h, secondary.h);
-  const harmony = params.harmony;
-  const idealSecondaryOffsets = harmony.includes("monochromatic")
-    ? [0]
-    : harmony.includes("triadic")
-      ? [120, 240]
-      : harmony.includes("complementary") &&
-          !harmony.includes("split complement")
-        ? [180]
-        : params.hueOffsets;
-  const relationError = Math.min(
-    ...idealSecondaryOffsets.map((offset) =>
-      hueDistance(
-        secondary.h,
-        (primary.h + offset + 360) % 360,
-      ),
-    ),
-  );
-  let targetHue;
-  let relation;
-  let edgeLabel;
-  let chromaMultiplier = 1;
-
-  if (harmony.includes("monochromatic")) {
-    targetHue = primary.h;
-    chromaMultiplier = 0.62;
-    relation =
-      "Kept the primary hue because a monochromatic system creates its third role through lightness and chroma.";
-    edgeLabel = "same H · vary L/C";
-  } else if (harmony.includes("analogous")) {
-    const mirroredOffset = -secondaryOffset;
-    targetHue = (primary.h + mirroredOffset + 360) % 360;
-    relation =
-      `Mirrored the user secondary (${secondaryOffset >= 0 ? "+" : ""}${secondaryOffset.toFixed(1)}°) across the primary hue.`;
-    edgeLabel = `mirror ${mirroredOffset >= 0 ? "+" : ""}${mirroredOffset.toFixed(0)}°`;
-  } else if (harmony.includes("triadic")) {
-    const positiveArm = (primary.h + 120) % 360;
-    const negativeArm = (primary.h + 240) % 360;
-    const secondaryIsCloserToPositive =
-      hueDistance(secondary.h, positiveArm) <=
-      hueDistance(secondary.h, negativeArm);
-    targetHue = secondaryIsCloserToPositive ? negativeArm : positiveArm;
-    const chosenOffset = secondaryIsCloserToPositive ? -120 : 120;
-    relation =
-      `Placed additional on the ${chosenOffset > 0 ? "+" : ""}${chosenOffset}° triadic arm because the user secondary is closer to the opposite arm.`;
-    edgeLabel = `complete ${chosenOffset > 0 ? "+" : ""}${chosenOffset}°`;
-  } else if (harmony.includes("split complement")) {
-    const splitArms = params.hueOffsets.map((offset) => ({
-      hue: (primary.h + offset + 360) % 360,
-      offset,
-    }));
-    const secondaryArmIndex =
-      hueDistance(secondary.h, splitArms[0].hue) <=
-      hueDistance(secondary.h, splitArms[1].hue)
-        ? 0
-        : 1;
-    const additionalArm = splitArms[secondaryArmIndex === 0 ? 1 : 0];
-    targetHue = additionalArm.hue;
-    const targetOffset = signedHueDistance(primary.h, targetHue);
-    relation =
-      `The user secondary is closer to the ${splitArms[secondaryArmIndex].offset > 0 ? "+" : ""}${splitArms[secondaryArmIndex].offset}° split arm, so additional uses the opposite ${additionalArm.offset > 0 ? "+" : ""}${additionalArm.offset}° arm.`;
-    edgeLabel = `complete ${targetOffset >= 0 ? "+" : ""}${targetOffset.toFixed(0)}°`;
-  } else if (harmony.includes("complementary")) {
-    targetHue = secondary.h;
-    chromaMultiplier = 0.62;
-    relation =
-      "Reused the user secondary hue because complementary harmony contains two hue families; additional is separated through lightness and chroma.";
-    edgeLabel = "reuse H · vary L/C";
-  } else {
-    const candidates = params.hueOffsets.map(
-      (offset) => (primary.h + offset + 360) % 360,
-    );
-    targetHue =
-      hueDistance(secondary.h, candidates[0]) >
-      hueDistance(secondary.h, candidates[1])
-        ? candidates[0]
-        : candidates[1];
-    const targetOffset = signedHueDistance(primary.h, targetHue);
-    relation =
-      "Selected the configured harmony position furthest from the user secondary.";
-    edgeLabel = `complete ${targetOffset >= 0 ? "+" : ""}${targetOffset.toFixed(0)}°`;
-  }
-
-  const targetLightness =
-    params.name === "soft"
-      ? clamp(primary.l + 0.06, 0.58, 0.78)
-      : params.name === "high contrast"
-        ? clamp(1 - primary.l * 0.38, 0.54, 0.74)
-        : clamp(primary.l, 0.54, 0.72);
-  const targetChroma =
-    Math.min(
-      0.24,
-      Math.max(0.075, primary.c * params.derivedChromaScale),
-    ) * chromaMultiplier;
-  const mapped = oklchToHex({
-    l: targetLightness,
-    c: targetChroma,
-    h: targetHue,
-  });
-
-  return {
-    hex: mapped.hex,
-    source: `${params.name} vibe · ${params.harmony} · pair completion`,
-    relation,
-    edgeLabel,
-    targetHue,
-    derivationMode: "primary-secondary-completion",
-    secondaryOffset,
-    relationError,
-    oklch: mapped.color,
-    adjusted: mapped.adjusted,
-  };
-}
-
-function generatePalette(input) {
-  const candidates = HARMONY_CANDIDATES[input.vibe];
-  const selectedCandidate =
-    candidates.find((candidate) => candidate.id === input.harmonyId) ??
-    candidates[0];
-  const params = {
-    ...VIBES[input.vibe],
-    name: input.vibe,
-    harmony: selectedCandidate.label.toLowerCase(),
-    hueOffsets: selectedCandidate.offsets,
-    harmonyId: selectedCandidate.id,
-  };
-  const primaryRgb = hexToRgb(input.primary);
-  const primary = rgbToOklch(primaryRgb);
-  const traces = {};
-  const warnings = [];
-  const tokens = [];
-
-  const backgroundCandidate = {
-    l: input.vibe === "high contrast" ? 0.99 : 0.975,
-    c: primary.c * params.surfaceTint * 0.32,
-    h: primary.h,
-  };
-  const background = tokenFromOklch(
-    "background",
-    backgroundCandidate,
-    "primary color + vibe",
-    traces,
-    `Created a near-white canvas with ${(params.surfaceTint * 100).toFixed(0)}% surface tint intent.`,
-  );
-  tokens.push(background);
-
-  tokens.push(
-    tokenFromOklch(
-      "surface",
-      {
-        l: 1,
-        c: primary.c * params.surfaceTint * 0.08,
-        h: primary.h,
-      },
-      "background",
-      traces,
-      "Raised the surface above the tinted page background.",
-    ),
-  );
-
-  const textTarget = input.vibe === "high contrast" ? 10.5 : 8;
-  const secondaryTarget = input.vibe === "high contrast" ? 7 : 4.7;
-  tokens.push(
-    makeTextToken(
-      "main text",
-      background[0],
-      textTarget,
-      primary,
-      traces,
-    ),
-  );
-  tokens.push(
-    makeTextToken(
-      "secondary text",
-      background[0],
-      secondaryTarget,
-      primary,
-      traces,
-    ),
-  );
-
-  tokens.push(
-    tokenFromOklch(
-      "border",
-      {
-        l: clamp(0.91 - params.borderEmphasis * 0.42, 0.75, 0.94),
-        c: primary.c * Math.max(params.surfaceTint, 0.018) * 0.85,
-        h: primary.h,
-      },
-      "surface + vibe",
-      traces,
-      `Applied ${params.borderEmphasis.toFixed(2)} border emphasis without turning every boundary into a red alert.`,
-    ),
-  );
-
-  const primaryTrace = createTrace(
-    "primary button default",
-    "user primary",
-  );
-  addStep(
-    primaryTrace,
-    "input",
-    "Preserved the explicit user color as the first button candidate.",
-    input.rawPrimary,
-    input.primary,
-  );
-  addStep(
-    primaryTrace,
-    "convert",
-    "Converted sRGB to OKLCH for perceptual calculations.",
-    input.primary,
-    formatOklch(primary),
-  );
-  const defaultColor = oklchToHex({
-    ...primary,
-    c: primary.c * params.chromaScale,
-  });
-  addStep(
-    primaryTrace,
-    "vibe",
-    `${params.name} applied a ${params.chromaScale.toFixed(2)} chroma scale.`,
-    formatOklch(primary),
-    formatOklch(defaultColor.color),
-  );
-  addStep(
-    primaryTrace,
-    "contrast",
-    `White: ${contrastRatio("#FFFFFF", defaultColor.hex).toFixed(2)}:1. Black: ${contrastRatio("#000000", defaultColor.hex).toFixed(2)}:1.`,
-    defaultColor.hex,
-    "Foreground selection happens after state generation.",
-  );
-  addStep(
-    primaryTrace,
-    "gamut",
-    defaultColor.adjusted
-      ? "Reduced chroma to fit the primary button inside sRGB."
-      : "Primary button fits inside sRGB.",
-    "",
-    defaultColor.hex,
-  );
-  addStep(
-    primaryTrace,
-    "final",
-    "Resolved the default primary button background.",
-    "",
-    defaultColor.hex,
-  );
-  traces["primary button default"] = primaryTrace;
-  tokens.push([defaultColor.hex, "primary button default"]);
-
-  const states = deriveButtonStates(
-    defaultColor.color,
-    defaultColor.hex,
-    params,
-    traces,
-  );
-  tokens.push(...states);
-
-  const buttonText = chooseButtonText(
-    [defaultColor.hex, states[0][0], states[1][0]],
-    traces,
-  );
-  tokens.push(buttonText.token);
-
-  const focusCandidate = {
-    l: primary.l > 0.62 ? primary.l - 0.18 : primary.l + 0.2,
-    c: primary.c * 0.72,
-    h: primary.h,
-  };
-  const focusToken = tokenFromOklch(
-    "focus ring",
-    focusCandidate,
-    "primary color",
-    traces,
-    "Shifted lightness and reduced chroma so the focus ring remains related to primary without merging into the button.",
-  );
-  const focusBackgroundRatio = contrastRatio(focusToken[0], background[0]);
-  addStep(
-    traces["focus ring"],
-    "contrast",
-    `Focus ring contrast against the page background is ${focusBackgroundRatio.toFixed(2)}:1.`,
-    `${focusToken[0]} / ${background[0]}`,
-    `${focusBackgroundRatio.toFixed(2)}:1`,
-  );
-  if (focusBackgroundRatio < 3) {
-    traces["focus ring"].warnings.push(
-      "FOCUS_RING_CONTRAST: Focus ring is below the 3:1 internal target against the page background.",
-    );
-  }
-  tokens.push(focusToken);
-
-  const derivedSecondary = deriveHarmonyColor(
-    primary,
-    params,
-    params.hueOffsets[0],
-    "secondary",
-  );
-  const derivedAdditional = deriveHarmonyColor(
-    primary,
-    params,
-    params.hueOffsets[1],
-    "additional",
-  );
-  const completedAdditional = input.secondary
-    ? completeHarmonyColor(primary, input.secondary, params)
-    : derivedAdditional;
-  const supportingColors = {
-    secondary: input.secondary
-      ? {
-          hex: input.secondary,
-          source: "user secondary",
-          relation: null,
-          isDerived: false,
-        }
-      : { ...derivedSecondary, isDerived: true },
-    additional: input.additional
-      ? {
-          hex: input.additional,
-          source: "user additional",
-          relation: null,
-          isDerived: false,
-        }
-      : { ...completedAdditional, isDerived: true },
-  };
-
-  if (supportingColors.secondary) {
-    addAccentFamily({
-      inputHex: supportingColors.secondary.hex,
-      prefix: "secondary",
-      source: supportingColors.secondary.source,
-      relation: supportingColors.secondary.relation,
-      params,
-      tokens,
-      traces,
-    });
-  }
-
-  if (supportingColors.additional) {
-    addAccentFamily({
-      inputHex: supportingColors.additional.hex,
-      prefix: "decorative",
-      source: supportingColors.additional.source,
-      relation: supportingColors.additional.relation,
-      params,
-      tokens,
-      traces,
-    });
-  }
-
-  Object.values(traces).forEach((trace) => warnings.push(...trace.warnings));
-
-  const missing = REQUIRED_FUNCTIONS.filter(
-    (name) => !tokens.some(([, functionName]) => functionName === name),
-  );
-  if (missing.length) {
-    warnings.push(`MISSING_FUNCTIONS: ${missing.join(", ")}`);
-  }
-
-  return {
-    input,
-    params,
-    primary,
-    supportingColors,
-    tokens,
-    traces,
-    warnings,
-  };
-}
 
 function tokenMap(tokens) {
   return Object.fromEntries(
@@ -1221,19 +259,184 @@ function renderStates(result) {
   `;
 }
 
+function renderColorAxis({ label, candidate, output, maximum, format }) {
+  const tolerance = label === "Hue" ? 0.1 : 0.0005;
+  const unchanged = Math.abs(candidate - output) < tolerance;
+  return `
+    <div class="color-axis">
+      <div class="color-axis-heading">
+        <strong>${label}</strong>
+        <span class="${unchanged ? "is-locked" : "is-changed"}">${unchanged ? "Preserved" : "Adjusted"}</span>
+      </div>
+      <div class="color-axis-track">
+        <span class="color-axis-range" style="--axis-from:${axisMarkerPosition(candidate, maximum)}%;--axis-to:${axisMarkerPosition(output, maximum)}%"></span>
+        <i class="color-axis-marker candidate" style="left:${axisMarkerPosition(candidate, maximum)}%" aria-hidden="true"></i>
+        <i class="color-axis-marker output" style="left:${axisMarkerPosition(output, maximum)}%" aria-hidden="true"></i>
+      </div>
+      <div class="color-axis-values">
+        <span><i class="candidate-dot"></i>Intent ${format(candidate)}</span>
+        <span><i class="output-dot"></i>Output ${format(output)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderHueWheel(result, functionName) {
+  const sourceName = functionName.startsWith("secondary")
+    ? "secondary"
+    : functionName.startsWith("decorative")
+      ? "additional"
+      : null;
+  if (!sourceName) return "";
+
+  const source = result.supportingColors[sourceName];
+  const artifact = result.artifacts[functionName];
+  if (!source || !artifact) return "";
+
+  const primaryHue = result.primary.h;
+  const outputHue = artifact.output.srgb.oklch.h;
+  const pointForHue = (hue, radius = 48) => {
+    const angle = ((hue - 90) * Math.PI) / 180;
+    return {
+      x: 70 + Math.cos(angle) * radius,
+      y: 70 + Math.sin(angle) * radius,
+    };
+  };
+  const primaryPoint = pointForHue(primaryHue);
+  const outputPoint = pointForHue(outputHue);
+
+  return `
+    <section class="debug-visual-card hue-wheel-card">
+      <div class="debug-visual-heading">
+        <div>
+          <p class="eyebrow">Hue relationship</p>
+          <h4>${source.isDerived ? result.params.harmony : "Explicit supporting color"}</h4>
+        </div>
+        <span class="visual-status ${source.isDerived ? "pass" : "locked"}">${source.isDerived ? source.edgeLabel : "User hue · locked"}</span>
+      </div>
+      <div class="mini-hue-layout">
+        <svg class="mini-hue-wheel" viewBox="0 0 140 140" role="img" aria-label="Primary hue ${primaryHue.toFixed(1)} degrees connected to ${sourceName} hue ${outputHue.toFixed(1)} degrees">
+          <foreignObject x="15" y="15" width="110" height="110">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="mini-hue-spectrum"></div>
+          </foreignObject>
+          <line x1="${primaryPoint.x}" y1="${primaryPoint.y}" x2="${outputPoint.x}" y2="${outputPoint.y}"></line>
+          <circle class="hue-point primary" cx="${primaryPoint.x}" cy="${primaryPoint.y}" r="6" style="fill:${result.input.primary}"></circle>
+          <circle class="hue-point output" cx="${outputPoint.x}" cy="${outputPoint.y}" r="7" style="fill:${artifact.output.srgb.hex}"></circle>
+          <text x="${primaryPoint.x}" y="${primaryPoint.y - 10}" text-anchor="middle">P</text>
+          <text x="${outputPoint.x}" y="${outputPoint.y - 11}" text-anchor="middle">${sourceName === "secondary" ? "S" : "A"}</text>
+        </svg>
+        <dl class="hue-wheel-values">
+          <div><dt>Primary</dt><dd>H ${primaryHue.toFixed(1)}°</dd></div>
+          <div><dt>${sourceName}</dt><dd>H ${outputHue.toFixed(1)}°</dd></div>
+          <div><dt>Rule</dt><dd>${source.relation ?? "Explicit input takes priority over automatic harmony."}</dd></div>
+        </dl>
+      </div>
+    </section>
+  `;
+}
+
+function renderContrastMeter(functionName) {
+  const checks = currentConstraintReport?.checks.filter(
+    (check) => check.token === functionName && check.category === "contrast",
+  ) ?? [];
+  return checks
+    .map((check) => {
+      const actual = parseMeasurement(check.actual);
+      const target = parseMeasurement(check.target);
+      const maximum = Math.max(12, actual + 1);
+      return `
+        <section class="debug-visual-card contrast-card">
+          <div class="debug-visual-heading">
+            <div><p class="eyebrow">Contrast constraint</p><h4>${check.label}</h4></div>
+            <span class="visual-status ${check.status}">${check.actual}</span>
+          </div>
+          <div class="contrast-meter" style="--target:${axisMarkerPosition(target, maximum)}%;--actual:${axisMarkerPosition(actual, maximum)}%">
+            <span class="contrast-fail-zone"></span>
+            <i class="contrast-threshold"></i>
+            <i class="contrast-result"></i>
+          </div>
+          <div class="contrast-scale"><span>1:1</span><span>Required ${check.target}</span><span>${maximum.toFixed(0)}:1</span></div>
+          <p class="visual-explanation">${check.explanation}</p>
+        </section>
+      `;
+    })
+    .join("");
+}
+
+function renderButtonStateSequence(result, functionName) {
+  if (!functionName.startsWith("primary button")) return "";
+  const names = [
+    "primary button default",
+    "primary button hover",
+    "primary button active",
+  ];
+  return `
+    <section class="debug-visual-card state-sequence-card">
+      <div class="debug-visual-heading">
+        <div><p class="eyebrow">Interaction sequence</p><h4>One hue, stepped lightness</h4></div>
+        <span class="visual-status locked">Hue locked</span>
+      </div>
+      <div class="state-sequence">
+        ${names.map((name, index) => {
+          const artifact = result.artifacts[name];
+          const color = artifact.output.srgb.hex;
+          const oklch = artifact.output.srgb.oklch;
+          return `
+            <div class="state-sequence-item ${name === functionName ? "is-selected" : ""}">
+              <span class="state-sequence-swatch" style="background:${color}"></span>
+              <strong>${["Default", "Hover", "Active"][index]}</strong>
+              <code>${color}</code>
+              <small>L ${(oklch.l * 100).toFixed(1)}% · H ${oklch.h.toFixed(1)}°</small>
+            </div>
+            ${index < names.length - 1 ? '<span class="state-sequence-arrow">→</span>' : ""}
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderArtifactVisuals(result, functionName) {
+  const artifact = result.artifacts[functionName];
+  const candidate = artifact.candidate.value;
+  const output = artifact.output.srgb.oklch;
+  const gamut = artifact.diagnostic.gamut;
+  return `
+    <div class="debug-visual-grid">
+      <section class="debug-visual-card axis-card">
+        <div class="debug-visual-heading">
+          <div><p class="eyebrow">OKLCH transformation</p><h4>What moved—and what stayed fixed</h4></div>
+          <span class="visual-status ${artifact.diagnostic.adjusted ? "adjusted" : "pass"}">${artifact.diagnostic.adjusted ? "Gamut adjusted" : "No gamut change"}</span>
+        </div>
+        <div class="color-axes">
+          ${renderColorAxis({ label: "Lightness", candidate: candidate.l, output: output.l, maximum: 1, format: (value) => `${(value * 100).toFixed(1)}%` })}
+          ${renderColorAxis({ label: "Chroma", candidate: candidate.c, output: output.c, maximum: Math.max(0.4, candidate.c, output.c), format: (value) => value.toFixed(4) })}
+          ${renderColorAxis({ label: "Hue", candidate: candidate.h, output: output.h, maximum: 360, format: (value) => `${value.toFixed(1)}°` })}
+        </div>
+        <div class="constraint-chips">
+          <span class="${Math.abs(gamut.lightnessDelta) < 0.0005 ? "pass" : "adjusted"}">L ${Math.abs(gamut.lightnessDelta) < 0.0005 ? "preserved" : "shifted"}</span>
+          <span class="${gamut.chromaReductionRatio > 0 ? "adjusted" : "pass"}">C ${gamut.chromaReductionRatio > 0 ? `−${(gamut.chromaReductionRatio * 100).toFixed(1)}%` : "preserved"}</span>
+          <span class="${Math.abs(gamut.hueDelta) < 0.1 ? "pass" : "adjusted"}">H ${Math.abs(gamut.hueDelta) < 0.1 ? "preserved" : `shifted ${gamut.hueDelta.toFixed(1)}°`}</span>
+        </div>
+      </section>
+      ${renderHueWheel(result, functionName)}
+      ${renderButtonStateSequence(result, functionName)}
+      ${renderContrastMeter(functionName)}
+    </div>
+  `;
+}
+
 function renderDebug(result) {
-  const adjustedCount = Object.values(result.traces).filter((trace) =>
-    trace.steps.some(
-      (step) =>
-        step.stage === "gamut" &&
-        step.message.toLowerCase().includes("reduced"),
-    ),
+  const adjustedCount = Object.values(result.artifacts).filter(
+    (artifact) => artifact.diagnostic.adjusted,
   ).length;
 
   debugSummary.innerHTML = `
     <dl>
       <dt>Input</dt><dd>${result.input.primary}</dd>
-      <dt>Vibe</dt><dd>${result.input.vibe}</dd>
+      <dt>Vibe</dt><dd>${result.params.vibeDefaulted
+        ? `${result.input.vibe} → ${result.params.name}`
+        : result.params.name}</dd>
       <dt>Harmony</dt><dd>${result.params.harmony}</dd>
       <dt>Roles</dt><dd>${result.tokens.length}</dd>
       <dt>Gamut maps</dt><dd>${adjustedCount}</dd>
@@ -1278,26 +481,35 @@ function renderDebug(result) {
       </div>
       <code>${finalColor}</code>
     </div>
-    ${trace.steps
-      .map(
-        (step) => `
-          <div class="trace-step">
-            <span class="trace-stage">${step.stage}</span>
-            <div>
-              <div class="trace-message">${step.message}</div>
-              ${
-                step.before || step.after
-                  ? `<div class="trace-values">${step.before}${step.before && step.after ? "\n→ " : ""}${step.after}</div>`
-                  : ""
-              }
-            </div>
-          </div>
-        `,
-      )
-      .join("")}
-    ${trace.warnings
-      .map((warning) => `<div class="trace-warning">${warning}</div>`)
-      .join("")}
+    ${renderArtifactVisuals(result, trace.function)}
+    <details class="trace-details">
+      <summary>
+        <span>Detailed calculation trace</span>
+        <small>${trace.steps.length} recorded steps</small>
+      </summary>
+      <div class="trace-details-body">
+        ${trace.steps
+          .map(
+            (step) => `
+              <div class="trace-step">
+                <span class="trace-stage">${step.stage}</span>
+                <div>
+                  <div class="trace-message">${step.message}</div>
+                  ${
+                    step.before || step.after
+                      ? `<div class="trace-values">${step.before}${step.before && step.after ? "\n→ " : ""}${step.after}</div>`
+                      : ""
+                  }
+                </div>
+              </div>
+            `,
+          )
+          .join("")}
+        ${trace.warnings
+          .map((warning) => `<div class="trace-warning">${warning}</div>`)
+          .join("")}
+      </div>
+    </details>
   `;
 }
 
@@ -1398,7 +610,7 @@ function renderAdjustments(result) {
 }
 
 function renderHarmonyOptions(result) {
-  const candidates = HARMONY_CANDIDATES[result.input.vibe];
+  const candidates = HARMONY_CANDIDATES[result.params.name];
   const lockedCount = Number(Boolean(result.input.secondary)) +
     Number(Boolean(result.input.additional));
 
@@ -1412,8 +624,8 @@ function renderHarmonyOptions(result) {
   const optionsMarkup = candidates
     .map((candidate, index) => {
       const candidateParams = {
-        ...VIBES[result.input.vibe],
-        name: result.input.vibe,
+        ...VIBES[result.params.name],
+        name: result.params.name,
         harmony: candidate.label.toLowerCase(),
         hueOffsets: candidate.offsets,
       };
@@ -1505,11 +717,6 @@ function renderHarmonyOptions(result) {
       });
     });
   });
-}
-
-function hueDistance(first, second) {
-  const difference = Math.abs(first - second) % 360;
-  return Math.min(difference, 360 - difference);
 }
 
 function harmonyExplanation(harmony) {
@@ -1644,180 +851,6 @@ function renderHueRelationship(result) {
       </div>
     </div>
   `;
-}
-
-function buildConstraintReport(result) {
-  const tokens = tokenMap(result.tokens);
-  const checks = [];
-  const addCheck = (check) => checks.push(check);
-  const addContrastCheck = (
-    token,
-    foreground,
-    background,
-    target,
-    label,
-  ) => {
-    const actual = contrastRatio(foreground, background);
-    addCheck({
-      token,
-      category: "contrast",
-      label,
-      status: actual >= target ? "pass" : "fail",
-      target: `≥ ${target.toFixed(1)}:1`,
-      actual: `${actual.toFixed(2)}:1`,
-      explanation: `${foreground} against ${background}`,
-    });
-  };
-
-  addContrastCheck(
-    "main text",
-    tokens["main text"],
-    tokens.background,
-    result.input.vibe === "high contrast" ? 10.5 : 8,
-    "Primary reading contrast",
-  );
-  addContrastCheck(
-    "secondary text",
-    tokens["secondary text"],
-    tokens.background,
-    result.input.vibe === "high contrast" ? 7 : 4.7,
-    "Secondary reading contrast",
-  );
-
-  const buttonBackgrounds = [
-    tokens["primary button default"],
-    tokens["primary button hover"],
-    tokens["primary button active"],
-  ];
-  const buttonRatios = buttonBackgrounds.map((background) =>
-    contrastRatio(tokens["primary button text"], background),
-  );
-  const buttonMinimum = Math.min(...buttonRatios);
-  addCheck({
-    token: "primary button text",
-    category: "contrast",
-    label: "Shared button text contrast",
-    status: buttonMinimum >= 4.5 ? "pass" : "fail",
-    target: "≥ 4.5:1 in every state",
-    actual: `${buttonMinimum.toFixed(2)}:1 minimum`,
-    explanation: buttonRatios
-      .map((ratio, index) => `${["default", "hover", "active"][index]} ${ratio.toFixed(2)}:1`)
-      .join(" · "),
-  });
-
-  [
-    ["secondary accent text", "secondary accent soft"],
-    ["decorative accent text", "decorative accent soft"],
-  ].forEach(([foregroundName, backgroundName]) => {
-    if (!tokens[foregroundName] || !tokens[backgroundName]) return;
-    addContrastCheck(
-      foregroundName,
-      tokens[foregroundName],
-      tokens[backgroundName],
-      4.5,
-      "Accent text contrast",
-    );
-  });
-
-  result.tokens.forEach(([, functionName]) => {
-    const gamutStep = result.traces[functionName]?.steps.find(
-      (step) => step.stage === "gamut",
-    );
-    const adjusted = Boolean(
-      gamutStep && /reduced chroma/i.test(gamutStep.message),
-    );
-    addCheck({
-      token: functionName,
-      category: "gamut",
-      label: "sRGB output gamut",
-      status: adjusted ? "adjusted" : "pass",
-      target: "Inside sRGB",
-      actual: adjusted ? "Passed after chroma reduction" : "Inside sRGB",
-      explanation: adjusted
-        ? `${gamutStep.before} → ${gamutStep.after}`
-        : "No gamut correction was required.",
-    });
-  });
-
-  const defaultOklch = rgbToOklch(
-    hexToRgb(tokens["primary button default"]),
-  );
-  [
-    ["primary button hover", 0.62],
-    ["primary button active", 1],
-  ].forEach(([functionName, multiplier]) => {
-    const stateOklch = rgbToOklch(hexToRgb(tokens[functionName]));
-    const actual = Math.abs(stateOklch.l - defaultOklch.l);
-    const target = result.params.stateLightnessStep * multiplier;
-    addCheck({
-      token: functionName,
-      category: "state",
-      label: "Interaction lightness step",
-      status:
-        actual < 0.005
-          ? "fail"
-          : actual < target * 0.85
-            ? "adjusted"
-            : "pass",
-      target: `ΔL ${target.toFixed(3)}`,
-      actual: `ΔL ${actual.toFixed(3)}`,
-      explanation:
-        actual < target * 0.85
-          ? "The requested vibe step was reduced to preserve one readable button foreground."
-          : "Hue is preserved while lightness creates the interaction distinction.",
-    });
-  });
-
-  [
-    ["secondary accent", "secondary"],
-    ["decorative accent", "additional"],
-  ].forEach(([tokenName, sourceName]) => {
-    const source = result.supportingColors[sourceName];
-    if (!source || !tokens[tokenName]) return;
-    const actualHue = rgbToOklch(hexToRgb(tokens[tokenName])).h;
-    const expectedHue = source.isDerived
-      ? source.targetHue
-      : rgbToOklch(hexToRgb(source.hex)).h;
-    const difference = hueDistance(actualHue, expectedHue);
-    addCheck({
-      token: tokenName,
-      category: "relation",
-      label: source.isDerived
-        ? `${result.params.harmony} hue relation`
-        : "User color preservation",
-      status: difference <= 1.5 ? "pass" : "fail",
-      target: source.isDerived
-        ? `H ${expectedHue.toFixed(1)}° · ${source.edgeLabel}`
-        : `Preserve H ${expectedHue.toFixed(1)}°`,
-      actual: `H ${actualHue.toFixed(1)}°`,
-      explanation: source.isDerived
-        ? `${source.relation} Gamut mapping may only reduce chroma.`
-        : "Explicit user input takes priority over the automatic harmony candidate.",
-    });
-  });
-
-  const completedAdditional = result.supportingColors.additional;
-  if (
-    result.input.secondary &&
-    completedAdditional.derivationMode ===
-      "primary-secondary-completion"
-  ) {
-    const error = completedAdditional.relationError;
-    addCheck({
-      token: "secondary accent",
-      category: "relation",
-      label: "User pair harmony fit",
-      status: error <= 15 ? "pass" : "adjusted",
-      target: "≤ 15° from a selected harmony arm",
-      actual: `${error.toFixed(1)}° deviation`,
-      explanation:
-        error <= 15
-          ? "The supplied secondary already fits the selected hue relationship."
-          : "The supplied secondary is preserved. Additional completes the nearest valid side, but the overall relationship is reported as relaxed.",
-    });
-  }
-
-  return { checks };
 }
 
 function constraintStatusLabel(status) {
@@ -2451,7 +1484,7 @@ function renderResult(result) {
     !result.tokens.some(([, name]) => name === "secondary accent");
 
   resultTitle.textContent = `${titleForColor(result.input.primary)} · ${
-    result.input.vibe[0].toUpperCase() + result.input.vibe.slice(1)
+    result.params.name[0].toUpperCase() + result.params.name.slice(1)
   }`;
   resultCount.textContent = `${result.tokens.length} roles`;
   debugCount.textContent = String(result.warnings.length);
@@ -2593,17 +1626,36 @@ form.addEventListener("submit", (event) => {
   });
 });
 
-document.querySelector("#copy-output").addEventListener("click", async () => {
-  if (!currentResult) return;
-  const value = JSON.stringify(currentResult.tokens, null, 2);
+async function copyResult(value, successMessage) {
   try {
     await navigator.clipboard.writeText(value);
-    toast.textContent = "Output copied";
+    toast.textContent = successMessage;
   } catch {
     toast.textContent = "Clipboard unavailable";
   }
   toast.classList.add("visible");
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
+}
+
+document.querySelector("#copy-output").addEventListener("click", () => {
+  if (!currentResult) return;
+  copyResult(
+    serializeTokens(currentResult.tokens),
+    "Token output copied",
+  );
+});
+
+document.querySelector("#copy-css").addEventListener("click", () => {
+  if (!currentResult) return;
+  copyResult(serializeCss(currentResult.tokens), "CSS variables copied");
+});
+
+document.querySelector("#copy-debug").addEventListener("click", () => {
+  if (!currentResult) return;
+  copyResult(
+    serializeDebug(currentResult, currentConstraintReport),
+    "Debug output copied",
+  );
 });
 
 document.addEventListener("click", (event) => {

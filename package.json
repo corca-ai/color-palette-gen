@@ -1,0 +1,10 @@
+{
+  "name": "color-palette-gen",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-site.mjs",
+    "check": "node --check app.js && node --test",
+    "test": "node --test"
+  }
+}

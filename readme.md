@@ -12,21 +12,20 @@
 
 ## 출력
 
-각 색상과 해당 색상의 UI 용도를 연결한 목록을 제공합니다.
+현재 프로토타입은 16개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
 
 ```text
 list[(color, function)]
 ```
 
-`function`은 다음과 같은 역할이 될 수 있습니다.
+현재 고정된 `function`은 다음과 같습니다.
 
-- 메인 글자색
-- 배경색
-- 보조 글자색
-- 버튼 기본 색상
-- 버튼 hover 상태 색상
-- 버튼 클릭 상태 색상
-- 그 밖의 UI 요소 및 상태별 색상
+- background, surface, border
+- main text, secondary text
+- primary button default, hover, active, text
+- focus ring
+- secondary accent, soft, text
+- decorative accent, soft, text
 
 ## 목표
 
@@ -53,3 +52,64 @@ http://localhost:4173
 
 초기 입력은 `#FF0000`과 `balanced` vibe입니다. Palette, Content, Form,
 States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
+
+Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 맞게 표시됩니다.
+
+- 공통: candidate와 sRGB output의 OKLCH 변화축
+- secondary/decorative family: primary와의 hue wheel 관계
+- primary button family: default → hover → active 명도 시퀀스
+- text, button text, focus ring: 기준선이 표시된 contrast meter
+
+보존된 축과 조정된 축은 상태 badge로 구분되며, 기존의 문장형 계산 과정은
+`Detailed calculation trace`를 펼쳐 확인할 수 있습니다.
+
+## 구조
+
+색을 계산하는 코드와 결과를 보여주는 코드를 분리했습니다.
+
+- `lib/color-math.js`: sRGB/OKLCH 변환, 대비, gamut mapping
+- `lib/harmony.js`: 색상환 관계와 supporting color 도출
+- `lib/palette-engine.js`: 입력과 vibe/harmony 해석
+- `lib/palette-generator.js`: semantic token과 디버깅 trace 생성
+- `lib/constraints.js`: 대비, 색역, 상태 변화, hue 관계 검증
+- `app.js`: 입력 처리, 시각화, 사용자 인터랙션
+
+브라우저 없이 계산 규칙과 진입 스크립트 문법을 함께 확인하려면 다음을
+실행합니다.
+
+```sh
+npm run check
+```
+
+테스트는 대표 primary 색상과 모든 vibe, harmony 후보, 입력 모드를
+조합하여 필수 function, trace, 대비 및 관계 조건을 검사합니다.
+
+## 현재 범위
+
+모든 계산은 브라우저에서 실행되므로 현재 프로토타입은 정적 웹사이트로
+배포할 수 있습니다. 팔레트 저장, 사용자 계정, 공유 데이터베이스는 아직
+포함하지 않습니다.
+
+## GitHub Pages 배포 준비
+
+이 프로젝트는 별도 번들러 없이 정적 파일을 GitHub Pages artifact로 배포한다.
+
+```sh
+npm run check
+npm run build
+```
+
+`npm run build`는 공개 페이지에 필요한 `index.html`, `app.js`, `style.css`,
+`lib/*.js`와 `.nojekyll`만 `dist/`에 조립한다. `test/`와 `docs/`는 배포
+artifact에 포함하지 않는다.
+
+`.github/workflows/deploy-pages.yml`은 `main` push 또는 수동 실행 시 다음 순서로
+동작한다.
+
+```text
+check → build dist/ → upload Pages artifact → deploy
+```
+
+원격 저장소를 만든 뒤 GitHub의 `Settings → Pages → Source`를
+`GitHub Actions`로 설정해야 실제 배포가 시작된다. 저장소 이름이 확정되기
+전까지는 현재의 상대 asset 경로를 유지하며 별도의 base path 설정은 필요 없다.

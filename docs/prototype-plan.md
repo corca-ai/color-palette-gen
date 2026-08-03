@@ -1,5 +1,12 @@
 # 빠른 프로토타입 플랜
 
+> 상태: 초기 계획을 보존한 문서
+>
+> 현재 구현은 supporting color family, harmony 비교, Constraint Map,
+> CSS/debug 복사까지 확장되었다. 현재 구조와 자동 검증 범위는
+> [엔진 테스트 계획](engine-testing-plan.md)과
+> [도메인 명세](prototype-domain-spec.md)를 따른다.
+
 ## 목표
 
 입력 색상과 선택적 vibe로부터 그럴듯한 `list[(color, function)]`을 만들고, 브라우저에서 결과와 중간 계산을 즉시 확인한다.
@@ -78,7 +85,8 @@ vibe는 초기에는 자유 텍스트가 아니라 허용 값을 선택하는 co
 
 ### 고정 출력 role
 
-초기에는 다음 10개 안팎만 생성한다.
+초기 기준은 다음 10개였으며, 현재는 supporting family 6개를 포함한 16개를
+생성한다.
 
 ```text
 background
@@ -105,7 +113,9 @@ error/warning/info/success, dark mode, high-contrast mode는 제외한다.
 4. **States**: 버튼 default/hover/active/focus 비교
 5. **Debug**: 단계별 값, 대비, gamut, 변경 이유
 
-CSS/JSON 다운로드, diff view, pairing matrix, 다양한 component fixture는 만들지 않는다.
+초기 범위에서는 제외했지만 현재는 tuple JSON, resolved CSS variables,
+machine-readable debug JSON을 클립보드로 복사할 수 있다. 파일 다운로드,
+diff view, pairing matrix는 아직 포함하지 않는다.
 
 ## 단순한 생성 전략
 

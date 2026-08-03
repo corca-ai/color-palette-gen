@@ -308,9 +308,17 @@
             <p>
               Every color has one job. Select a row to inspect how it was made.
             </p>
-            <button class="text-button" type="button" id="copy-output">
-              Copy output
-            </button>
+            <div class="output-actions" aria-label="Copy palette output">
+              <button class="text-button" type="button" id="copy-output">
+                Copy tokens
+              </button>
+              <button class="text-button" type="button" id="copy-css">
+                Copy CSS
+              </button>
+              <button class="text-button" type="button" id="copy-debug">
+                Copy debug
+              </button>
+            </div>
           </div>
           <div class="palette-list" id="palette-list"></div>
         </div>
