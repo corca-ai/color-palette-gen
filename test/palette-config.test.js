@@ -48,9 +48,18 @@ test("vibe parameters stay inside their declared domains", () => {
   for (const [name, vibe] of Object.entries(VIBES)) {
     assert.ok(vibe.chromaScale > 0, `${name} chromaScale`);
     assert.ok(vibe.derivedChromaScale > 0, `${name} derivedChromaScale`);
-    assert.ok(vibe.surfaceTint >= 0 && vibe.surfaceTint <= 1, `${name} surfaceTint`);
-    assert.ok(vibe.stateLightnessStep > 0 && vibe.stateLightnessStep < 1, `${name} stateLightnessStep`);
-    assert.ok(vibe.borderEmphasis >= 0 && vibe.borderEmphasis <= 1, `${name} borderEmphasis`);
+    assert.ok(
+      vibe.surfaceTint >= 0 && vibe.surfaceTint <= 1,
+      `${name} surfaceTint`,
+    );
+    assert.ok(
+      vibe.stateLightnessStep > 0 && vibe.stateLightnessStep < 1,
+      `${name} stateLightnessStep`,
+    );
+    assert.ok(
+      vibe.borderEmphasis >= 0 && vibe.borderEmphasis <= 1,
+      `${name} borderEmphasis`,
+    );
   }
 });
 

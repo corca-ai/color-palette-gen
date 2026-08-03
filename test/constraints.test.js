@@ -25,12 +25,30 @@ function makeResult() {
     tokens.map(([, functionName]) => [
       functionName,
       {
-        steps: [{
-          stage: "gamut",
-          message: "Candidate already fits inside sRGB.",
-        }],
+        steps: [
+          {
+            stage: "gamut",
+            message: "Candidate already fits inside sRGB.",
+          },
+        ],
       },
     ]),
+  );
+  const artifacts = Object.fromEntries(
+    tokens.map(([hex, functionName]) => {
+      const color = rgbToOklch(hexToRgb(hex));
+      return [
+        functionName,
+        {
+          candidate: { space: "oklch", value: color },
+          output: { srgb: { hex, oklch: color } },
+          diagnostic: {
+            adjusted: false,
+            gamut: { chromaReductionRatio: 0 },
+          },
+        },
+      ];
+    }),
   );
   return {
     input: { vibe: "balanced", secondary: null },
@@ -53,6 +71,7 @@ function makeResult() {
       },
     },
     tokens,
+    artifacts,
     traces,
   };
 }
@@ -84,11 +103,21 @@ test("constraint report exposes failing contrast rather than hiding it", () => {
 
 test("gamut adjustments remain visible in the report", () => {
   const result = makeResult();
-  result.traces["decorative accent"].steps[0] = {
-    stage: "gamut",
-    message: "Reduced chroma by 12.0% to fit inside sRGB.",
-    before: "oklch(70% 0.3 30)",
-    after: "oklch(70% 0.264 30)",
+  result.artifacts["decorative accent"] = {
+    candidate: {
+      space: "oklch",
+      value: { l: 0.7, c: 0.3, h: 30 },
+    },
+    output: {
+      srgb: {
+        hex: "#CC7722",
+        oklch: { l: 0.7, c: 0.264, h: 30 },
+      },
+    },
+    diagnostic: {
+      adjusted: true,
+      gamut: { chromaReductionRatio: 0.12 },
+    },
   };
   const report = buildConstraintReport(result);
   const check = report.checks.find(
@@ -96,5 +125,8 @@ test("gamut adjustments remain visible in the report", () => {
       token === "decorative accent" && category === "gamut",
   );
   assert.equal(check.status, "adjusted");
-  assert.match(check.explanation, /0\.3 30.*0\.264 30/);
+  assert.equal(
+    check.explanation,
+    "oklch(70.0% 0.300 30.0) → oklch(70.0% 0.264 30.0)",
+  );
 });

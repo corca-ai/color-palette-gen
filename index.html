@@ -28,6 +28,11 @@
             Generate a small semantic palette, see it applied, and inspect every
             decision made along the way.
           </p>
+          <p class="prototype-disclaimer" role="note">
+            Experimental prototype. Contrast checks are calculation aids, not a
+            complete accessibility certification. Verify colors in the final
+            interface before production use.
+          </p>
         </div>
 
         <form class="generator-card" id="palette-form">
@@ -75,6 +80,7 @@
                   maxlength="7"
                   spellcheck="false"
                   autocomplete="off"
+                  aria-describedby="primary-error"
                 />
               </div>
             </div>
@@ -99,6 +105,7 @@
                   maxlength="7"
                   spellcheck="false"
                   autocomplete="off"
+                  aria-describedby="primary-error"
                 />
               </div>
             </div>
@@ -395,20 +402,20 @@
             <div class="sample-form-copy">
               <p class="preview-note">Color fixture · controls do not submit</p>
               <p class="sample-kicker">Early access</p>
-              <h3>Build a palette you can trust.</h3>
+              <h3>Inspect a palette before you use it.</h3>
               <p>
-                Join the prototype list. This fixture checks text hierarchy,
+                This non-submitting fixture checks text hierarchy,
                 field boundaries, button contrast, and keyboard focus.
               </p>
             </div>
-            <form class="sample-form" onsubmit="return false">
+            <form class="sample-form" data-preview-form>
               <label for="sample-email">Email address</label>
               <input
                 id="sample-email"
                 type="email"
                 value="designer@example.com"
               />
-              <span class="sample-help">We only send useful experiments.</span>
+              <span class="sample-help">Preview value only. Nothing is collected or sent.</span>
               <label for="sample-role">Your role</label>
               <select id="sample-role">
                 <option>Designer</option>

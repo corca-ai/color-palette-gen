@@ -1,4 +1,7 @@
-# Palette engine extraction and testing plan
+# Palette engine 검증 범위와 알려진 한계
+
+> 상태: 공개 기술 문서. 자동으로 검증하는 범위와 아직 검증하지 않는 범위를
+> 함께 기록한다.
 
 ## Goal
 

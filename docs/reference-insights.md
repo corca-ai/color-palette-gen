@@ -66,7 +66,9 @@ Itten은 하나의 primary hue에서 다음 네 모드를 자동 생성하는 �
 - Itten은 primary **색상 전체가 아니라 hue 하나**만 입력받는다. 이 프로젝트는 사용자가 지정한 원색의 lightness/chroma도 브랜드 의도로 보존해야 한다.
 - secondary와 tertiary를 각각 180°, ±120°로 고정 파생한다. 사용자가 추가 색상을 주면 그 값을 우선하고, 자동 파생은 누락된 경우의 전략 중 하나로만 사용해야 한다.
 - 버튼의 hover/active/disabled/focus 같은 interaction state token은 제공하지 않는다. 이 프로젝트에서는 필수 출력 영역이다.
-- Itten README는 전체 코드가 AI로 생성되었고 사람이 검토하지 않았다고 명시한다. 또한 조사 시점의 `docs/spec.md` 기본값과 실제 코드 기본값 일부가 달랐다. 따라서 아이디어와 테스트 전략은 참고하되 구현을 검증 없이 이식하지 않는다.
+- Itten이 실험적 프로젝트임을 명시한 점을 고려해, 아이디어와 테스트 전략을
+  참고하되 이 프로젝트의 입력 계약과 자동 검증 기준에 맞춰 독립적으로
+  재검증한다.
 - P3 최대 chroma만 생성하면 sRGB 화면에서 fallback이 필요하다. 최소 공통 출력은 sRGB gamut에 맞추고 P3를 progressive enhancement로 제공하는 정책을 검토한다.
 
 ## 1.1 OKLCH Picker

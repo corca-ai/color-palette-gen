@@ -2,6 +2,12 @@
 
 사용자가 제공한 핵심 색상과 원하는 분위기(vibe)를 바탕으로, UI에서 바로 사용할 수 있는 색상 팔레트를 생성하는 프로젝트입니다.
 
+> **Experimental prototype**
+>
+> 이 프로젝트의 contrast와 gamut 결과는 설계 판단을 돕는 계산 자료이며,
+> 완전한 접근성 인증이나 production 적합성 보장을 의미하지 않습니다. 실제
+> 서비스의 글자 크기, 굵기, 상태, 컴포넌트 맥락에서 다시 검증해야 합니다.
+
 ## 입력
 
 - **Primary color**: 필수
@@ -9,6 +15,20 @@
 - **Vibe**: 선택
   - 색상 조합에서 느껴져야 하는 인상을 단어로 입력합니다.
   - 예: `calm`, `soft`, `energetic`, `high contrast`
+
+엔진의 공개 입력 계약은 다음과 같습니다.
+
+```js
+{
+  primary: "#FF0000",
+  secondary: "#00AA88",            // optional
+  additionalColors: ["#2255CC"],   // optional
+  vibe: "balanced"                 // optional
+}
+```
+
+현재 UI 프로토타입은 `additionalColors` 중 첫 번째 색만 decorative family에
+사용하며, 그 이상의 색이 들어오면 입력을 보존한 채 scope warning을 반환합니다.
 
 ## 출력
 
@@ -31,12 +51,13 @@ list[(color, function)]
 
 입력된 색상 간의 조화와 지정된 vibe를 함께 고려하여, 일관된 UI 디자인에 활용할 수 있는 색상과 기능의 조합을 생성합니다.
 
-## 문서
+## 공개 문서
 
-- [빠른 프로토타입 플랜](docs/prototype-plan.md)
 - [프로토타입 도메인 명세](docs/prototype-domain-spec.md)
-- [참고 자료 조사 및 프로젝트 적용 인사이트](docs/reference-insights.md)
-- [장기 결과물 및 시각화 아이디어](docs/output-artifact-proposal.md)
+- [초기 설계 기록](docs/prototype-plan.md)
+- [엔진 검증 및 한계](docs/engine-testing-plan.md)
+- [참고 자료와 적용 근거](docs/reference-insights.md)
+- [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
 
 ## 프로토타입 실행
 
@@ -90,6 +111,9 @@ npm run check
 배포할 수 있습니다. 팔레트 저장, 사용자 계정, 공유 데이터베이스는 아직
 포함하지 않습니다.
 
+사용자가 입력한 색상은 브라우저 안에서만 계산하며 외부 API, analytics,
+cookie 또는 browser storage로 전송하거나 저장하지 않습니다.
+
 ## GitHub Pages 배포 준비
 
 이 프로젝트는 별도 번들러 없이 정적 파일을 GitHub Pages artifact로 배포한다.
@@ -98,6 +122,8 @@ npm run check
 npm run check
 npm run build
 ```
+
+의존성은 `package-lock.json`으로 고정하며 CI는 `npm ci`를 사용한다.
 
 `npm run build`는 공개 페이지에 필요한 `index.html`, `app.js`, `style.css`,
 `lib/*.js`와 `.nojekyll`만 `dist/`에 조립한다. `test/`와 `docs/`는 배포
@@ -113,3 +139,7 @@ check → build dist/ → upload Pages artifact → deploy
 원격 저장소를 만든 뒤 GitHub의 `Settings → Pages → Source`를
 `GitHub Actions`로 설정해야 실제 배포가 시작된다. 저장소 이름이 확정되기
 전까지는 현재의 상대 asset 경로를 유지하며 별도의 base path 설정은 필요 없다.
+
+## License
+
+[MIT](LICENSE)

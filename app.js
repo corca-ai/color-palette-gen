@@ -7,10 +7,7 @@ import {
   oklchToHex,
   rgbToOklch,
 } from "./lib/color-math.js";
-import {
-  HARMONY_CANDIDATES,
-  VIBES,
-} from "./lib/palette-config.js";
+import { HARMONY_CANDIDATES, VIBES } from "./lib/palette-config.js";
 import {
   completeHarmonyColor,
   deriveHarmonyColor,
@@ -24,10 +21,7 @@ import {
   serializeDebug,
   serializeTokens,
 } from "./lib/output-format.js";
-import {
-  axisMarkerPosition,
-  parseMeasurement,
-} from "./lib/debug-visual.js";
+import { axisMarkerPosition, parseMeasurement } from "./lib/debug-visual.js";
 
 const form = document.querySelector("#palette-form");
 const primaryInput = document.querySelector("#primary-color");
@@ -56,16 +50,10 @@ const floatingHarmonyOptions = document.querySelector(
   "#floating-harmony-options",
 );
 const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
-const hueRelationshipCard = document.querySelector(
-  "#hue-relationship-card",
-);
+const hueRelationshipCard = document.querySelector("#hue-relationship-card");
 const constraintSummary = document.querySelector("#constraint-summary");
-const constraintMatrixBody = document.querySelector(
-  "#constraint-matrix-body",
-);
-const constraintCertificate = document.querySelector(
-  "#constraint-certificate",
-);
+const constraintMatrixBody = document.querySelector("#constraint-matrix-body");
+const constraintCertificate = document.querySelector("#constraint-certificate");
 const toast = document.querySelector("#toast");
 
 let currentResult;
@@ -336,9 +324,10 @@ function renderHueWheel(result, functionName) {
 }
 
 function renderContrastMeter(functionName) {
-  const checks = currentConstraintReport?.checks.filter(
-    (check) => check.token === functionName && check.category === "contrast",
-  ) ?? [];
+  const checks =
+    currentConstraintReport?.checks.filter(
+      (check) => check.token === functionName && check.category === "contrast",
+    ) ?? [];
   return checks
     .map((check) => {
       const actual = parseMeasurement(check.actual);
@@ -377,11 +366,12 @@ function renderButtonStateSequence(result, functionName) {
         <span class="visual-status locked">Hue locked</span>
       </div>
       <div class="state-sequence">
-        ${names.map((name, index) => {
-          const artifact = result.artifacts[name];
-          const color = artifact.output.srgb.hex;
-          const oklch = artifact.output.srgb.oklch;
-          return `
+        ${names
+          .map((name, index) => {
+            const artifact = result.artifacts[name];
+            const color = artifact.output.srgb.hex;
+            const oklch = artifact.output.srgb.oklch;
+            return `
             <div class="state-sequence-item ${name === functionName ? "is-selected" : ""}">
               <span class="state-sequence-swatch" style="background:${color}"></span>
               <strong>${["Default", "Hover", "Active"][index]}</strong>
@@ -390,7 +380,8 @@ function renderButtonStateSequence(result, functionName) {
             </div>
             ${index < names.length - 1 ? '<span class="state-sequence-arrow">→</span>' : ""}
           `;
-        }).join("")}
+          })
+          .join("")}
       </div>
     </section>
   `;
@@ -434,9 +425,11 @@ function renderDebug(result) {
   debugSummary.innerHTML = `
     <dl>
       <dt>Input</dt><dd>${result.input.primary}</dd>
-      <dt>Vibe</dt><dd>${result.params.vibeDefaulted
-        ? `${result.input.vibe} → ${result.params.name}`
-        : result.params.name}</dd>
+      <dt>Vibe</dt><dd>${
+        result.params.vibeDefaulted
+          ? `${result.input.vibe} → ${result.params.name}`
+          : result.params.name
+      }</dd>
       <dt>Harmony</dt><dd>${result.params.harmony}</dd>
       <dt>Roles</dt><dd>${result.tokens.length}</dd>
       <dt>Gamut maps</dt><dd>${adjustedCount}</dd>
@@ -470,8 +463,8 @@ function renderDebug(result) {
     });
   });
 
-  const trace = result.traces[activeDebugFunction] ??
-    result.traces[result.tokens[0][1]];
+  const trace =
+    result.traces[activeDebugFunction] ?? result.traces[result.tokens[0][1]];
   const finalColor = tokenMap(result.tokens)[trace.function];
   tracePanel.innerHTML = `
     <div class="trace-heading">
@@ -599,8 +592,7 @@ function renderAdjustments(result) {
           }
           ${adjustment.warnings
             .map(
-              (warning) =>
-                `<div class="adjustment-warning">${warning}</div>`,
+              (warning) => `<div class="adjustment-warning">${warning}</div>`,
             )
             .join("")}
         </article>
@@ -611,8 +603,9 @@ function renderAdjustments(result) {
 
 function renderHarmonyOptions(result) {
   const candidates = HARMONY_CANDIDATES[result.params.name];
-  const lockedCount = Number(Boolean(result.input.secondary)) +
-    Number(Boolean(result.input.additional));
+  const additionalInput = result.input.additionalColors[0] ?? null;
+  const lockedCount =
+    Number(Boolean(result.input.secondary)) + Number(Boolean(additionalInput));
 
   harmonySwitcherNote.textContent =
     lockedCount === 2
@@ -637,8 +630,8 @@ function renderHarmonyOptions(result) {
             candidate.offsets[0],
             "secondary",
           ).hex;
-      const additional = result.input.additional
-        ? result.input.additional
+      const additional = additionalInput
+        ? additionalInput
         : result.input.secondary
           ? completeHarmonyColor(
               result.primary,
@@ -693,9 +686,7 @@ function renderHarmonyOptions(result) {
   };
 
   [harmonyOptions, floatingHarmonyOptions].forEach((container) => {
-    const optionButtons = [
-      ...container.querySelectorAll("[data-harmony-id]"),
-    ];
+    const optionButtons = [...container.querySelectorAll("[data-harmony-id]")];
     optionButtons.forEach((button, index) => {
       button.addEventListener("click", () => selectCandidate(button));
       button.addEventListener("keydown", (event) => {
@@ -779,15 +770,14 @@ function renderHueRelationship(result) {
   const points = hues.map((color, index) => {
     const overlapCount = hues
       .slice(0, index)
-      .filter((previous) => hueDistance(previous.hue, color.hue) < 8)
-      .length;
+      .filter((previous) => hueDistance(previous.hue, color.hue) < 8).length;
     return {
       ...color,
       point: huePoint(color.hue, 39 - overlapCount * 8),
     };
   });
-  const derivedCount = Number(secondary.isDerived) +
-    Number(additional.isDerived);
+  const derivedCount =
+    Number(secondary.isDerived) + Number(additional.isDerived);
   const policyStatus =
     derivedCount === 2
       ? "Both supporting hues follow this rule."
@@ -868,15 +858,17 @@ function renderConstraintCertificate(result, report, functionName) {
   const resolvedChecks =
     checks.length > 0
       ? checks
-      : [{
-          status: "pass",
-          category: "role",
-          label: "Semantic role resolved",
-          target: "Export a valid role color",
-          actual: color,
-          explanation:
-            "This token has no additional measurable condition beyond its documented derivation.",
-        }];
+      : [
+          {
+            status: "pass",
+            category: "role",
+            label: "Semantic role resolved",
+            target: "Export a valid role color",
+            actual: color,
+            explanation:
+              "This token has no additional measurable condition beyond its documented derivation.",
+          },
+        ];
 
   constraintCertificate.innerHTML = `
     <div class="certificate-heading">
@@ -936,11 +928,7 @@ function renderConstraintCertificate(result, report, functionName) {
     .addEventListener("click", closeInspector);
 }
 
-function openInspector(
-  result,
-  functionName,
-  report = currentConstraintReport,
-) {
+function openInspector(result, functionName, report = currentConstraintReport) {
   activeConstraintFunction = functionName;
   activeDebugFunction = functionName;
   renderConstraintCertificate(result, report, functionName);
@@ -1285,15 +1273,13 @@ function renderLineage(result) {
       {
         id: "additionalInput",
         label:
-          additionalSource.derivationMode ===
-          "primary-secondary-completion"
+          additionalSource.derivationMode === "primary-secondary-completion"
             ? "Primary + secondary"
             : additionalSource.isDerived
               ? "Derived additional"
               : "User additional",
         value:
-          additionalSource.derivationMode ===
-          "primary-secondary-completion"
+          additionalSource.derivationMode === "primary-secondary-completion"
             ? "pair completion"
             : additionalSource.hex,
         color: additionalSource.hex,
@@ -1358,12 +1344,7 @@ function renderLineage(result) {
       false,
     ]);
     edges.push(["secondary", "secondarySoft", "tint", false]);
-    edges.push([
-      "secondarySoft",
-      "secondaryAccentText",
-      "4.5:1 target",
-      true,
-    ]);
+    edges.push(["secondarySoft", "secondaryAccentText", "4.5:1 target", true]);
   }
   if (byId.additionalInput) {
     edges.push([
@@ -1433,24 +1414,22 @@ function renderLineage(result) {
     </svg>
   `;
 
-  lineageCanvas
-    .querySelectorAll("[data-lineage-function]")
-    .forEach((node) => {
-      const openTrace = () => {
-        openInspector(
-          result,
-          node.dataset.lineageFunction,
-          currentConstraintReport,
-        );
-      };
-      node.addEventListener("click", openTrace);
-      node.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          openTrace();
-        }
-      });
+  lineageCanvas.querySelectorAll("[data-lineage-function]").forEach((node) => {
+    const openTrace = () => {
+      openInspector(
+        result,
+        node.dataset.lineageFunction,
+        currentConstraintReport,
+      );
+    };
+    node.addEventListener("click", openTrace);
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openTrace();
+      }
     });
+  });
 }
 
 function renderResult(result) {
@@ -1468,18 +1447,23 @@ function renderResult(result) {
   renderAdjustments(result);
   renderDebug(result);
 
-  document.querySelector("#secondary-accent-use").hidden =
-    !result.tokens.some(([, name]) => name === "secondary accent");
-  document.querySelector("#decorative-accent-use").hidden =
-    !result.tokens.some(([, name]) => name === "decorative accent");
-  document.querySelector("#secondary-family-card").hidden =
-    !result.tokens.some(([, name]) => name === "secondary accent");
+  document.querySelector("#secondary-accent-use").hidden = !result.tokens.some(
+    ([, name]) => name === "secondary accent",
+  );
+  document.querySelector("#decorative-accent-use").hidden = !result.tokens.some(
+    ([, name]) => name === "decorative accent",
+  );
+  document.querySelector("#secondary-family-card").hidden = !result.tokens.some(
+    ([, name]) => name === "secondary accent",
+  );
   document.querySelector("#decorative-family-card").hidden =
     !result.tokens.some(([, name]) => name === "decorative accent");
-  document.querySelector("#form-secondary-action").hidden =
-    !result.tokens.some(([, name]) => name === "secondary accent");
-  document.querySelector("#form-decorative-note").hidden =
-    !result.tokens.some(([, name]) => name === "decorative accent");
+  document.querySelector("#form-secondary-action").hidden = !result.tokens.some(
+    ([, name]) => name === "secondary accent",
+  );
+  document.querySelector("#form-decorative-note").hidden = !result.tokens.some(
+    ([, name]) => name === "decorative accent",
+  );
   document.querySelector("#states-secondary-family").hidden =
     !result.tokens.some(([, name]) => name === "secondary accent");
 
@@ -1504,6 +1488,10 @@ function readInput() {
     .value.trim();
   const vibe = form.elements.vibe.value;
 
+  [primaryInput, secondaryInput, additionalInput].forEach((input) =>
+    input.removeAttribute("aria-invalid"),
+  );
+
   if (!isHex(primary)) {
     primaryError.textContent = "Use a six-digit hex color, such as #FF0000.";
     primaryInput.setAttribute("aria-invalid", "true");
@@ -1516,6 +1504,9 @@ function readInput() {
   ]) {
     if (value && !isHex(value)) {
       primaryError.textContent = `${label} must be a six-digit hex color.`;
+      const invalidInput =
+        label === "Secondary" ? secondaryInput : additionalInput;
+      invalidInput.setAttribute("aria-invalid", "true");
       return null;
     }
   }
@@ -1526,7 +1517,7 @@ function readInput() {
     rawPrimary: primaryInput.value,
     primary,
     secondary: secondaryRaw ? normalizeHex(secondaryRaw) : null,
-    additional: additionalRaw ? normalizeHex(additionalRaw) : null,
+    additionalColors: additionalRaw ? [normalizeHex(additionalRaw)] : [],
     vibe: VIBES[vibe] ? vibe : "balanced",
     harmonyId: activeHarmonyId,
   };
@@ -1600,10 +1591,7 @@ function updateFloatingHarmonyDock() {
   );
 
   floatingHarmonyOptions.classList.toggle("is-visible", shouldFloat);
-  floatingHarmonyOptions.setAttribute(
-    "aria-hidden",
-    String(!shouldFloat),
-  );
+  floatingHarmonyOptions.setAttribute("aria-hidden", String(!shouldFloat));
 }
 
 window.addEventListener("scroll", updateFloatingHarmonyDock, {
@@ -1639,10 +1627,7 @@ async function copyResult(value, successMessage) {
 
 document.querySelector("#copy-output").addEventListener("click", () => {
   if (!currentResult) return;
-  copyResult(
-    serializeTokens(currentResult.tokens),
-    "Token output copied",
-  );
+  copyResult(serializeTokens(currentResult.tokens), "Token output copied");
 });
 
 document.querySelector("#copy-css").addEventListener("click", () => {
@@ -1664,6 +1649,15 @@ document.addEventListener("click", (event) => {
   toast.textContent = "Preview only · no action performed";
   toast.classList.add("visible");
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
+});
+
+document.querySelectorAll("[data-preview-form]").forEach((previewForm) => {
+  previewForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    toast.textContent = "Preview only · nothing was submitted";
+    toast.classList.add("visible");
+    window.setTimeout(() => toast.classList.remove("visible"), 1600);
+  });
 });
 
 document.addEventListener("keydown", (event) => {

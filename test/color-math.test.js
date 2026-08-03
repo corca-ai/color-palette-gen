@@ -21,13 +21,7 @@ function approximately(actual, expected, tolerance, message) {
 }
 
 test("hex and normalized RGB round-trip without changing 8-bit values", () => {
-  for (const hex of [
-    "#000000",
-    "#FFFFFF",
-    "#FF0000",
-    "#00A59B",
-    "#7A4FE0",
-  ]) {
+  for (const hex of ["#000000", "#FFFFFF", "#FF0000", "#00A59B", "#7A4FE0"]) {
     assert.equal(rgbToHex(hexToRgb(hex)), hex);
   }
 });
@@ -103,19 +97,10 @@ test("gamut mapping yields sRGB output across representative OKLCH coordinates",
 });
 
 test("gamut tolerance accepts floating-point boundary noise only", () => {
-  assert.equal(
-    inGamut({ r: -SRGB_GAMUT_EPSILON / 2, g: 0.5, b: 1 }),
-    true,
-  );
-  assert.equal(
-    inGamut({ r: -SRGB_GAMUT_EPSILON * 2, g: 0.5, b: 1 }),
-    false,
-  );
+  assert.equal(inGamut({ r: -SRGB_GAMUT_EPSILON / 2, g: 0.5, b: 1 }), true);
+  assert.equal(inGamut({ r: -SRGB_GAMUT_EPSILON * 2, g: 0.5, b: 1 }), false);
 });
 
 test("raw conversion identifies a deliberately extreme color as out of gamut", () => {
-  assert.equal(
-    inGamut(oklchToRawRgb({ l: 0.7, c: 0.45, h: 140 })),
-    false,
-  );
+  assert.equal(inGamut(oklchToRawRgb({ l: 0.7, c: 0.45, h: 140 })), false);
 });

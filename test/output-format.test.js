@@ -14,7 +14,7 @@ import { REQUIRED_FUNCTIONS } from "../lib/palette-config.js";
 const result = generatePalette({
   primary: "#FF0000",
   secondary: null,
-  additional: null,
+  additionalColors: [],
   vibe: "balanced",
   harmonyId: "default",
 });

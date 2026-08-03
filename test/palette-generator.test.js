@@ -11,9 +11,9 @@ import {
 
 const primaries = ["#FF0000", "#2878D0", "#25A55F", "#8055CC"];
 const modes = [
-  { secondary: null, additional: null },
-  { secondary: "#00AA88", additional: null },
-  { secondary: "#00AA88", additional: "#2255CC" },
+  { secondary: null, additionalColors: [] },
+  { secondary: "#00AA88", additionalColors: [] },
+  { secondary: "#00AA88", additionalColors: ["#2255CC"] },
 ];
 
 test("complete palette contains every semantic function exactly once", () => {
@@ -21,21 +21,24 @@ test("complete palette contains every semantic function exactly once", () => {
     primary: "#FF0000",
     rawPrimary: "red",
     secondary: null,
-    additional: null,
+    additionalColors: [],
     vibe: "balanced",
     harmonyId: "default",
   });
   const names = result.tokens.map(([, name]) => name);
   assert.deepEqual(new Set(names), new Set(REQUIRED_FUNCTIONS));
   assert.equal(names.length, REQUIRED_FUNCTIONS.length);
-  assert.equal(result.warnings.some((warning) => warning.startsWith("MISSING_FUNCTIONS")), false);
+  assert.equal(
+    result.warnings.some((warning) => warning.startsWith("MISSING_FUNCTIONS")),
+    false,
+  );
 });
 
 test("every generated token has a complete inspectable trace", () => {
   const result = generatePalette({
     primary: "#2878D0",
     secondary: "#00AA88",
-    additional: null,
+    additionalColors: [],
     vibe: "soft",
     harmonyId: "default",
   });

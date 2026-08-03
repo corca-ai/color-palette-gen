@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  axisMarkerPosition,
-  parseMeasurement,
-} from "../lib/debug-visual.js";
+import { axisMarkerPosition, parseMeasurement } from "../lib/debug-visual.js";
 
 test("constraint labels yield finite visual meter values", () => {
   assert.equal(parseMeasurement("≥ 4.5:1 in every state"), 4.5);
