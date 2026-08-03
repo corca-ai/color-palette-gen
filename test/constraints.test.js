@@ -7,8 +7,11 @@ import { rgbToOklch, hexToRgb } from "../lib/color-math.js";
 function makeResult() {
   const tokens = [
     ["#FFFFFF", "background"],
+    ["#FFFFFF", "surface"],
     ["#111111", "main text"],
     ["#555555", "secondary text"],
+    ["#DDDDDD", "border"],
+    ["#767676", "border control"],
     ["#B42318", "primary button default"],
     ["#921F17", "primary button hover"],
     ["#731A14", "primary button active"],

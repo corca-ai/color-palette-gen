@@ -11,6 +11,7 @@ import {
   oklchToRawRgb,
   rgbToHex,
   rgbToOklch,
+  solveOklchContrast,
 } from "../lib/color-math.js";
 
 function approximately(actual, expected, tolerance, message) {
@@ -54,6 +55,48 @@ test("WCAG contrast calculation has known endpoints and is symmetric", () => {
     contrastRatio("#6F5D5A", "#FFFFFF"),
     contrastRatio("#FFFFFF", "#6F5D5A"),
   );
+});
+
+test("contrast solver finds the closest darker OKLCH color after sRGB export", () => {
+  const source = { l: 0.72, c: 0.16, h: 250 };
+  const solved = solveOklchContrast({
+    color: source,
+    against: "#FFFFFF",
+    target: 4.5,
+    direction: "darker",
+  });
+
+  assert.equal(solved.passed, true);
+  assert.ok(solved.color.l < source.l);
+  assert.ok(solved.ratio >= 4.5);
+  assert.equal(solved.color.h, source.h);
+  assert.ok(
+    contrastRatio(solved.hex, "#FFFFFF") >= 4.5,
+    "the rounded hex output must satisfy the target",
+  );
+});
+
+test("contrast solver evaluates the worst case across multiple backgrounds", () => {
+  const solved = solveOklchContrast({
+    color: { l: 0.64, c: 0.1, h: 30 },
+    against: ["#FFFFFF", "#F0F0F0"],
+    target: 4.5,
+  });
+
+  assert.equal(solved.passed, true);
+  assert.ok(contrastRatio(solved.hex, "#FFFFFF") >= 4.5);
+  assert.ok(contrastRatio(solved.hex, "#F0F0F0") >= 4.5);
+});
+
+test("contrast solver reports impossible multi-background requests", () => {
+  const solved = solveOklchContrast({
+    color: { l: 0.5, c: 0.1, h: 200 },
+    against: ["#000000", "#FFFFFF"],
+    target: 7,
+  });
+
+  assert.equal(solved.strategy, "neutral-fallback");
+  assert.equal(solved.passed, false);
 });
 
 test("out-of-gamut mapping preserves lightness and hue while reducing chroma", () => {

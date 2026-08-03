@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  CONTRAST_CONTRACTS,
   HARMONY_CANDIDATES,
   REQUIRED_FUNCTIONS,
   VIBES,
@@ -65,4 +66,14 @@ test("vibe parameters stay inside their declared domains", () => {
 
 test("required semantic functions are unique", () => {
   assert.equal(new Set(REQUIRED_FUNCTIONS).size, REQUIRED_FUNCTIONS.length);
+});
+
+test("contrast contracts reference declared semantic functions", () => {
+  for (const contract of CONTRAST_CONTRACTS) {
+    assert.ok(REQUIRED_FUNCTIONS.includes(contract.foreground));
+    assert.ok(contract.target >= 3);
+    for (const background of contract.backgrounds) {
+      assert.ok(REQUIRED_FUNCTIONS.includes(background));
+    }
+  }
 });
