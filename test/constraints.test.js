@@ -128,6 +128,8 @@ test("gamut adjustments remain visible in the report", () => {
       token === "decorative accent" && category === "gamut",
   );
   assert.equal(check.status, "adjusted");
+  assert.ok(check.metrics.boundary > 0);
+  assert.ok(check.metrics.candidate.c > check.metrics.boundary);
   assert.equal(
     check.explanation,
     "oklch(70.0% 0.300 30.0) → oklch(70.0% 0.264 30.0)",

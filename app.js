@@ -53,7 +53,7 @@ const floatingHarmonyOptions = document.querySelector(
 const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
 const hueRelationshipCard = document.querySelector("#hue-relationship-card");
 const constraintSummary = document.querySelector("#constraint-summary");
-const constraintMatrixBody = document.querySelector("#constraint-matrix-body");
+const constraintChapters = document.querySelector("#constraint-chapters");
 const constraintCertificate = document.querySelector("#constraint-certificate");
 const toast = document.querySelector("#toast");
 
@@ -61,7 +61,6 @@ let currentResult;
 let currentConstraintReport;
 let activeDebugFunction = "primary button default";
 let activeConstraintFunction = "main text";
-let activeConstraintCategory = null;
 let activeHarmonyId = "default";
 
 function tokenMap(tokens) {
@@ -977,13 +976,142 @@ function closeInspector() {
   constraintCertificate.setAttribute("aria-hidden", "true");
 }
 
+function constraintStatusSummary(checks) {
+  const failed = checks.filter((check) => check.status === "fail").length;
+  const adjusted = checks.filter((check) => check.status === "adjusted").length;
+  return {
+    failed,
+    adjusted,
+    status: failed > 0 ? "fail" : adjusted > 0 ? "adjusted" : "pass",
+  };
+}
+
+function contrastConstraintVisual(check) {
+  const { actual, target, pairs } = check.metrics;
+  const actualPosition = Math.min(100, Math.max(0, ((actual - 1) / 20) * 100));
+  const targetPosition = Math.min(100, Math.max(0, ((target - 1) / 20) * 100));
+  return `
+    <div class="constraint-pair-list">
+      ${pairs
+        .map(
+          (pair) => `
+            <div class="constraint-pair">
+              <span class="constraint-pair-sample" style="color:${pair.foreground};background:${pair.background}">Aa</span>
+              <span><strong>${pair.ratio.toFixed(2)}:1</strong><small>on ${pair.backgroundName}</small></span>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+    <div class="measure-rail contrast-rail" aria-label="Actual contrast ${actual.toFixed(2)} to 1; target ${target.toFixed(1)} to 1">
+      <span class="measure-safe-zone" style="left:${targetPosition}%"></span>
+      <span class="measure-threshold" style="left:${targetPosition}%"><i>${target.toFixed(1)} target</i></span>
+      <span class="measure-point final" style="left:${actualPosition}%"><i>${actual.toFixed(2)}</i></span>
+    </div>
+    <div class="measure-scale"><span>1:1</span><span>21:1</span></div>
+  `;
+}
+
+function gamutConstraintVisual(check, color) {
+  const candidate = check.metrics.candidate;
+  const output = check.metrics.output;
+  const boundary = check.metrics.boundary;
+  const maxChroma = Math.max(0.4, candidate.c * 1.12, boundary * 1.12);
+  const candidatePosition = Math.min(100, (candidate.c / maxChroma) * 100);
+  const outputPosition = Math.min(100, (output.c / maxChroma) * 100);
+  const boundaryPosition = Math.min(100, (boundary / maxChroma) * 100);
+  const delta = output.c - candidate.c;
+  const moved = Math.abs(delta) >= 0.0005;
+  return `
+    <div class="gamut-swatches">
+      <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate)}"></span>
+      <span aria-hidden="true">→</span>
+      <span class="gamut-swatch" style="background:${color}"></span>
+      <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>
+    </div>
+    <div class="measure-rail gamut-rail" aria-label="Candidate chroma ${candidate.c.toFixed(3)}; output chroma ${output.c.toFixed(3)}">
+      <span class="gamut-safe-zone" style="width:${boundaryPosition}%"></span>
+      <span class="measure-threshold gamut-boundary" style="left:${boundaryPosition}%"><i>sRGB edge ${boundary.toFixed(3)}</i></span>
+      ${moved ? `<span class="measure-movement" style="left:${Math.min(candidatePosition, outputPosition)}%;width:${Math.abs(candidatePosition - outputPosition)}%"></span><span class="measure-point candidate" style="left:${candidatePosition}%"><i>candidate ${candidate.c.toFixed(3)}</i></span>` : ""}
+      <span class="measure-point final" style="left:${outputPosition}%"><i>output ${output.c.toFixed(3)}</i></span>
+    </div>
+    <div class="measure-scale"><span>C 0</span><span>C ${maxChroma.toFixed(2)}</span></div>
+  `;
+}
+
+function relationConstraintVisual(check, color) {
+  const { actualHue, targetHue, tolerance, deviation } = check.metrics;
+  const start = targetHue - tolerance;
+  const span = tolerance * 2;
+  return `
+    <div class="relation-visual">
+      <div class="constraint-wheel" style="--target-hue:${targetHue};--actual-hue:${actualHue};--target-start:${start}deg;--target-span:${span}deg">
+        <span class="wheel-target" aria-hidden="true"></span>
+        <span class="wheel-actual" style="--actual-color:${color}" aria-hidden="true"></span>
+        <span class="wheel-center">H</span>
+      </div>
+      <dl class="relation-values">
+        <div><dt>Target</dt><dd>${targetHue.toFixed(1)}° ± ${tolerance.toFixed(1)}°</dd></div>
+        <div><dt>Actual</dt><dd>${actualHue.toFixed(1)}°</dd></div>
+        <div><dt>Deviation</dt><dd>${deviation.toFixed(1)}°</dd></div>
+      </dl>
+    </div>
+  `;
+}
+
+function stateConstraintVisual(check, color) {
+  const delta = Math.abs(check.metrics.deltaL);
+  const target = check.targetValue;
+  const maxDelta = Math.max(0.08, target * 1.5, delta * 1.25);
+  const actualPosition = Math.min(100, (delta / maxDelta) * 100);
+  const targetPosition = Math.min(100, (target / maxDelta) * 100);
+  return `
+    <div class="state-visual">
+      <span class="state-color-preview" style="background:${color}"></span>
+      <div>
+        <div class="measure-rail state-rail" aria-label="Actual lightness change ${delta.toFixed(3)}; requested ${target.toFixed(3)}">
+          <span class="measure-safe-zone" style="left:${targetPosition}%"></span>
+          <span class="measure-threshold" style="left:${targetPosition}%"><i>requested ${target.toFixed(3)}</i></span>
+          <span class="measure-point final" style="left:${actualPosition}%"><i>ΔL ${delta.toFixed(3)}</i></span>
+        </div>
+        <div class="measure-scale"><span>No visible step</span><span>Stronger step</span></div>
+      </div>
+    </div>
+  `;
+}
+
+function constraintVisual(check, result) {
+  const color = tokenMap(result.tokens)[check.token];
+  if (check.category === "contrast") return contrastConstraintVisual(check);
+  if (check.category === "gamut") return gamutConstraintVisual(check, color);
+  if (check.category === "relation")
+    return relationConstraintVisual(check, color);
+  return stateConstraintVisual(check, color);
+}
+
 function renderConstraintMap(result) {
   const report = buildConstraintReport(result);
   const categories = [
-    ["contrast", "Contrast"],
-    ["gamut", "sRGB gamut"],
-    ["relation", "Hue relation"],
-    ["state", "State distinction"],
+    [
+      "contrast",
+      "Contrast",
+      "Foreground and background pairs measured against their readability target.",
+    ],
+    [
+      "gamut",
+      "sRGB gamut",
+      "Candidate chroma compared with the color that can be exported to sRGB.",
+    ],
+    [
+      "relation",
+      "Hue relation",
+      "Actual supporting hues positioned against the selected harmony target.",
+    ],
+    [
+      "state",
+      "State distinction",
+      "Interaction colors measured against the lightness step requested by the vibe.",
+    ],
   ];
 
   constraintSummary.innerHTML = categories
@@ -991,19 +1119,14 @@ function renderConstraintMap(result) {
       const categoryChecks = report.checks.filter(
         (check) => check.category === category,
       );
-      const failed = categoryChecks.filter(
-        (check) => check.status === "fail",
-      ).length;
-      const adjusted = categoryChecks.filter(
-        (check) => check.status === "adjusted",
-      ).length;
-      const status = failed > 0 ? "fail" : adjusted > 0 ? "adjusted" : "pass";
+      const { failed, adjusted, status } =
+        constraintStatusSummary(categoryChecks);
       return `
         <button
           type="button"
-          class="constraint-summary-item ${status}${activeConstraintCategory === category ? " active" : ""}"
+          class="constraint-summary-item ${status}"
           data-constraint-category="${category}"
-          aria-pressed="${activeConstraintCategory === category}"
+          aria-label="Jump to ${label} checks"
         >
           <span class="constraint-mark" aria-hidden="true"></span>
           <span>
@@ -1015,88 +1138,76 @@ function renderConstraintMap(result) {
     })
     .join("");
 
-  const matrixCategories = ["contrast", "gamut", "relation", "state"];
-  const renderMatrixRows = () => {
-    const visibleChecks = activeConstraintCategory
-      ? report.checks.filter(
-          (check) => check.category === activeConstraintCategory,
-        )
-      : report.checks;
-    const matrixTokens = [
-      ...new Set(visibleChecks.map((check) => check.token)),
-    ];
-    constraintMatrixBody.innerHTML = matrixTokens
-      .map((functionName) => {
-        const cells = matrixCategories
-          .map((category) => {
-            const matchingChecks = report.checks.filter(
-              (item) =>
-                item.token === functionName && item.category === category,
-            );
-            if (matchingChecks.length === 0) {
-              return '<td class="constraint-empty">—</td>';
-            }
-            const severity = { pass: 0, adjusted: 1, fail: 2 };
-            const check = [...matchingChecks].sort(
-              (first, second) =>
-                severity[second.status] - severity[first.status],
-            )[0];
-            const cellValue =
-              matchingChecks.length > 1
-                ? `${matchingChecks.length} checks · ${constraintStatusLabel(check.status)}`
-                : check.actual;
-            return `
-              <td>
-                <span class="matrix-result ${check.status}">
-                  <span class="constraint-mark" aria-hidden="true"></span>
-                  ${cellValue}
-                </span>
-              </td>
-            `;
-          })
-          .join("");
-        return `
-          <tr>
-            <th scope="row">
-              <button type="button" data-constraint-token="${functionName}">
-                ${functionName}
-              </button>
-            </th>
-            ${cells}
-          </tr>
-        `;
-      })
-      .join("");
+  constraintChapters.innerHTML = categories
+    .map(([category, label, description], index) => {
+      const checks = report.checks.filter(
+        (check) => check.category === category,
+      );
+      const { failed, adjusted, status } = constraintStatusSummary(checks);
+      return `
+        <section class="constraint-chapter" id="constraint-${category}" data-constraint-section="${category}">
+          <div class="constraint-chapter-heading">
+            <span class="constraint-chapter-index">0${index + 1}</span>
+            <div>
+              <h4>${label}</h4>
+              <p>${description}</p>
+            </div>
+            <span class="constraint-chapter-status ${status}">
+              <span class="constraint-mark" aria-hidden="true"></span>
+              ${checks.length - failed}/${checks.length} met${adjusted ? ` · ${adjusted} adjusted` : ""}
+            </span>
+          </div>
+          <div class="constraint-card-grid ${category}">
+            ${checks
+              .map(
+                (check) => `
+                  <article class="constraint-visual-card ${check.status}">
+                    <div class="constraint-card-heading">
+                      <div>
+                        <span class="constraint-token-name">${check.token}</span>
+                        <h5>${check.label}</h5>
+                      </div>
+                      <span class="constraint-result-label ${check.status}">
+                        <span class="constraint-mark" aria-hidden="true"></span>
+                        ${constraintStatusLabel(check.status)}
+                      </span>
+                    </div>
+                    ${constraintVisual(check, result)}
+                    <p class="constraint-explanation">${check.explanation}</p>
+                    <button type="button" class="constraint-inspect-button" data-constraint-token="${check.token}">
+                      Show calculation <span aria-hidden="true">→</span>
+                    </button>
+                  </article>
+                `,
+              )
+              .join("")}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
 
-    constraintMatrixBody
-      .querySelectorAll("[data-constraint-token]")
-      .forEach((button) => {
-        button.addEventListener("click", () => {
-          openInspector(result, button.dataset.constraintToken, report);
-        });
+  constraintChapters
+    .querySelectorAll("[data-constraint-token]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        openInspector(result, button.dataset.constraintToken, report);
       });
-  };
-
-  renderMatrixRows();
+    });
 
   constraintSummary
     .querySelectorAll("[data-constraint-category]")
     .forEach((button) => {
       button.addEventListener("click", () => {
-        activeConstraintCategory =
-          activeConstraintCategory === button.dataset.constraintCategory
-            ? null
-            : button.dataset.constraintCategory;
-        constraintSummary
-          .querySelectorAll("[data-constraint-category]")
-          .forEach((summaryButton) => {
-            const selected =
-              summaryButton.dataset.constraintCategory ===
-              activeConstraintCategory;
-            summaryButton.classList.toggle("active", selected);
-            summaryButton.setAttribute("aria-pressed", String(selected));
+        document
+          .querySelector(`#constraint-${button.dataset.constraintCategory}`)
+          .scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+              .matches
+              ? "auto"
+              : "smooth",
+            block: "start",
           });
-        renderMatrixRows();
       });
     });
 

@@ -60,6 +60,41 @@ Generated samples에서는 실제 쓰임새를 먼저 이해할 수 있도록 Co
 Content가 기본 탭이라는 사실은 lineage를 결과 뒤로 옮기는 근거가 아니다. 하나는 결과
 영역 내부의 기본 관점이고, 다른 하나는 전체 생성·비교 흐름의 순서다.
 
+## Constraint Map
+
+Constraint Map의 목적은 검사 개수를 압축해서 보여주는 것이 아니라, 디자이너가 다음
+질문에 시각적으로 답할 수 있게 하는 것이다.
+
+1. 무엇과 무엇을 검사했는가?
+2. 통과 조건과 허용 범위는 어디인가?
+3. 후보값과 최종값은 그 범위의 어디에 있는가?
+4. 조건을 만족시키기 위해 어떤 축을 얼마나 움직였는가?
+
+검사는 `Overview → Contrast → sRGB gamut → Hue relation → State distinction`
+순서의 세로 챕터로 모두 노출한다. 상단 category control은 내용을 숨기는 filter tab이
+아니라 해당 챕터로 이동하는 목차다. 별도의 floating navigation으로 만들지 않으며,
+harmony switcher의 위치 연속성을 방해해서는 안 된다.
+
+모든 그래프는 가능한 한 동일한 문법을 사용한다.
+
+- track 또는 영역은 측정 가능한 전체 범위를 뜻한다.
+- 강조된 영역은 명시적인 목표 또는 허용 범위다.
+- 가는 점은 후보값, 굵은 점은 최종값이다.
+- 화살표나 연결선은 후보에서 최종값까지의 실제 이동을 뜻한다.
+- 기준선은 contrast threshold, gamut boundary처럼 판정에 사용한 경계다.
+- pass, adjusted, fail 색만으로 의미를 전달하지 않고 label과 수치를 함께 쓴다.
+
+각 category의 기본 시각화는 다음과 같다.
+
+- Contrast: foreground/background swatch, 실제 텍스트 sample, ratio track과 threshold
+- sRGB gamut: OKLCH chroma track 위 candidate/output과 chroma 감소량
+- Hue relation: 작은 color wheel 위 target arc, actual hue, angular deviation
+- State distinction: default/hover/active의 lightness sequence와 단계별 delta
+
+핵심 판정 근거는 카드 안에 항상 보인다. 전체 OKLCH 값, recipe, 상세 계산은
+`Show calculation`이나 token inspector에 둘 수 있지만, inspector를 열어야만 통과 이유를
+알 수 있게 만들지 않는다. 빈 matrix cell과 상태만 표시하는 축약 표는 사용하지 않는다.
+
 ## Change review checklist
 
 페이지 구조나 sticky/floating UI를 수정할 때는 최소한 다음을 확인한다.
