@@ -32,7 +32,7 @@
 
 ## 출력
 
-현재 프로토타입은 17개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
+현재 프로토타입은 19개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
 
 ```text
 list[(color, function)]
@@ -44,8 +44,8 @@ list[(color, function)]
 - main text, secondary text
 - primary button default, hover, active, text
 - focus ring
-- secondary accent, soft, text
-- decorative accent, soft, text
+- secondary accent, soft, text, on-color
+- decorative accent, soft, text, on-color
 
 ## 목표
 
@@ -120,12 +120,14 @@ lightness를 이진 탐색합니다.
 - main/secondary text와 background/surface
 - 하나의 primary button text와 default/hover/active 상태 전체
 - secondary/decorative accent text와 soft/background/surface
+- secondary/decorative accent on-color와 각 accent fill
 - focus ring과 background/surface
 - control border와 surface
 
 `border`는 장식적인 구분선이고 `border control`은 입력 및 조작 가능한
 컴포넌트의 경계입니다. 장식용 accent 원색 역시 텍스트 역할과 분리하며,
-작은 텍스트에는 반드시 대응하는 `accent text` 토큰을 사용합니다.
+soft surface 위 텍스트에는 대응하는 `accent text`, accent fill 위 텍스트에는
+대응하는 `accent on-color` 토큰을 사용합니다.
 
 ## 현재 범위
 

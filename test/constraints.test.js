@@ -19,9 +19,11 @@ function makeResult() {
     ["#555555", "focus ring"],
     ["#DDEEFF", "secondary accent soft"],
     ["#12345A", "secondary accent text"],
+    ["#FFFFFF", "secondary accent on-color"],
     ["#336699", "secondary accent"],
     ["#FFF0D5", "decorative accent soft"],
     ["#5A3212", "decorative accent text"],
+    ["#000000", "decorative accent on-color"],
     ["#CC7722", "decorative accent"],
   ];
   const traces = Object.fromEntries(

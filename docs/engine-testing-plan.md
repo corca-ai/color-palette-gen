@@ -81,7 +81,7 @@ representative primary hues
 
 완성 팔레트 단계에서 추가된 검증:
 
-- 필수 17개 function이 정확히 한 번씩 생성됨
+- 필수 19개 function이 정확히 한 번씩 생성됨
 - 모든 token에 inspectable trace가 존재하고 `final` 단계로 종료됨
 - 대표 primary 4종 × 모든 vibe × 모든 harmony × 세 입력 모드에서 완성
   팔레트와 Constraint Report 생성

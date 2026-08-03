@@ -24,9 +24,11 @@
   --color-secondary-accent: #0066ff;
   --color-secondary-accent-soft: #eef4ff;
   --color-secondary-accent-text: #174c9b;
+  --color-secondary-accent-on-color: #ffffff;
   --color-decorative-accent: #ffd60a;
   --color-decorative-accent-soft: #fff8d8;
   --color-decorative-accent-text: #665400;
+  --color-decorative-accent-on-color: #000000;
   --lineage-bg: #201f1d;
   --lineage-node-bg: #2b2926;
   --lineage-node-hover: #34312d;
@@ -756,6 +758,14 @@ h1 {
   font-size: 14px;
   line-height: 1.35;
   margin: 0;
+}
+
+.constraint-usage {
+  color: var(--lineage-muted);
+  display: block;
+  font-size: 10px;
+  line-height: 1.4;
+  margin-top: 5px;
 }
 
 .constraint-pair-list {
@@ -2107,9 +2117,11 @@ input[type="color"]::-webkit-color-swatch {
 
 .accent-family-badge {
   border: 1px solid currentColor;
+  color: var(--color-decorative-accent-on-color);
   display: inline-block;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 700;
   padding: 6px 8px;
   text-transform: uppercase;
 }

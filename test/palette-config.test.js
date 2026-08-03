@@ -69,7 +69,13 @@ test("required semantic functions are unique", () => {
 });
 
 test("contrast contracts reference declared semantic functions", () => {
+  assert.equal(
+    new Set(CONTRAST_CONTRACTS.map(({ id }) => id)).size,
+    CONTRAST_CONTRACTS.length,
+  );
   for (const contract of CONTRAST_CONTRACTS) {
+    assert.equal(typeof contract.id, "string");
+    assert.ok(contract.id.length > 0);
     assert.ok(REQUIRED_FUNCTIONS.includes(contract.foreground));
     assert.ok(contract.target >= 3);
     for (const background of contract.backgrounds) {

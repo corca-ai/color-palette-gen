@@ -95,6 +95,17 @@ harmony switcher의 위치 연속성을 방해해서는 안 된다.
 `Show calculation`이나 token inspector에 둘 수 있지만, inspector를 열어야만 통과 이유를
 알 수 있게 만들지 않는다. 빈 matrix cell과 상태만 표시하는 축약 표는 사용하지 않는다.
 
+### Component usage contracts
+
+Contrast 검사는 토큰이 존재하는지만 보지 않고 실제 component가 사용하는 foreground와
+background 조합을 기준으로 한다. 이 조합은 `CONTRAST_CONTRACTS`에 usage 이름과 함께
+한 번만 선언하고, palette engine과 Constraint Map이 같은 목록을 참조한다.
+
+Soft accent surface용 `accent text`를 채도가 높은 accent fill 위에 재사용하지 않는다.
+채워진 accent 위의 글자는 별도 `accent on-color` 역할을 사용하며, 엔진이 해당 fill을
+기준으로 black/white 중 더 강한 foreground를 선택한다. 새로운 component fixture가 색을
+조합할 때는 공개 전에 그 조합을 usage contract에 추가해야 한다.
+
 ## Change review checklist
 
 페이지 구조나 sticky/floating UI를 수정할 때는 최소한 다음을 확인한다.

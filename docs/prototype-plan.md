@@ -86,7 +86,7 @@ vibe는 초기에는 자유 텍스트가 아니라 허용 값을 선택하는 co
 
 ### 고정 출력 role
 
-초기 기준은 다음 10개였으며, 현재는 supporting family 6개와 control border를 포함한 17개를
+초기 기준은 다음 10개였으며, 현재는 supporting family 8개와 control border를 포함한 19개를
 생성한다.
 
 ```text

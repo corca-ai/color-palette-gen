@@ -8,7 +8,11 @@ import {
   oklchToHex,
   rgbToOklch,
 } from "./lib/color-math.js";
-import { HARMONY_CANDIDATES, VIBES } from "./lib/palette-config.js";
+import {
+  CONTRAST_CONTRACTS,
+  HARMONY_CANDIDATES,
+  VIBES,
+} from "./lib/palette-config.js";
 import {
   completeHarmonyColor,
   deriveHarmonyColor,
@@ -86,6 +90,20 @@ function applyCssVariables(tokens) {
       tokenMap(tokens)["primary button default"],
     );
   }
+}
+
+function applyDeclaredUsageContracts() {
+  document.querySelectorAll("[data-color-usage]").forEach((element) => {
+    const contract = CONTRAST_CONTRACTS.find(
+      ({ id }) => id === element.dataset.colorUsage,
+    );
+    if (!contract || contract.backgrounds.length !== 1) return;
+    const foregroundVariable = FUNCTION_TO_VAR[contract.foreground];
+    const backgroundVariable = FUNCTION_TO_VAR[contract.backgrounds[0]];
+    if (!foregroundVariable || !backgroundVariable) return;
+    element.style.color = `var(${foregroundVariable})`;
+    element.style.backgroundColor = `var(${backgroundVariable})`;
+  });
 }
 
 function titleForColor(hex) {
@@ -1166,6 +1184,7 @@ function renderConstraintMap(result) {
                       <div>
                         <span class="constraint-token-name">${check.token}</span>
                         <h5>${check.label}</h5>
+                        ${check.usage ? `<span class="constraint-usage">Used by ${check.usage}</span>` : ""}
                       </div>
                       <span class="constraint-result-label ${check.status}">
                         <span class="constraint-mark" aria-hidden="true"></span>
@@ -1581,6 +1600,7 @@ function renderLineage(result) {
 function renderResult(result) {
   currentResult = result;
   applyCssVariables(result.tokens);
+  applyDeclaredUsageContracts();
   renderHarmonyOptions(result);
   renderHueRelationship(result);
   currentConstraintReport = renderConstraintMap(result);

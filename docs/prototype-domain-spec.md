@@ -196,12 +196,14 @@ type PrototypeColorFunction =
   | "secondary accent"
   | "secondary accent soft"
   | "secondary accent text"
+  | "secondary accent on-color"
   | "decorative accent"
   | "decorative accent soft"
-  | "decorative accent text";
+  | "decorative accent text"
+  | "decorative accent on-color";
 ```
 
-마지막 여섯 값은 사용자 입력 또는 vibe harmony로 만든 supporting color family다.
+마지막 여덟 값은 사용자 입력 또는 vibe harmony로 만든 supporting color family다.
 
 ### 필수 여부와 적용 위치
 
@@ -221,9 +223,11 @@ type PrototypeColorFunction =
 | `secondary accent`       | 예   | link, indicator                        | secondary family의 anchor        |
 | `secondary accent soft`  | 예   | supporting card와 action background    | secondary의 낮은 chroma surface  |
 | `secondary accent text`  | 예   | supporting card와 action text          | soft surface에서 대비 보정       |
+| `secondary accent on-color` | 예 | filled accent의 `color`                | accent fill 위 전용 foreground   |
 | `decorative accent`      | 예   | badge, indicator                       | decorative family의 anchor       |
 | `decorative accent soft` | 예   | highlight와 callout background         | additional의 낮은 chroma surface |
 | `decorative accent text` | 예   | highlight와 callout text               | soft surface에서 대비 보정       |
+| `decorative accent on-color` | 예 | filled badge의 `color`                 | accent fill 위 전용 foreground   |
 
 ### 적용 규칙
 
@@ -253,9 +257,11 @@ type PrototypeColorFunction =
   --color-secondary-accent: /* function: secondary accent */;
   --color-secondary-accent-soft: /* function: secondary accent soft */;
   --color-secondary-accent-text: /* function: secondary accent text */;
+  --color-secondary-accent-on-color: /* function: secondary accent on-color */;
   --color-decorative-accent: /* function: decorative accent */;
   --color-decorative-accent-soft: /* function: decorative accent soft */;
   --color-decorative-accent-text: /* function: decorative accent text */;
+  --color-decorative-accent-on-color: /* function: decorative accent on-color */;
 }
 ```
 
