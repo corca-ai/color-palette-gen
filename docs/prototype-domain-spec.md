@@ -8,13 +8,13 @@
 
 ```typescript
 interface PaletteInput {
-  primary: string
-  secondary?: string
-  additionalColors?: string[]
-  vibe?: string
+  primary: string;
+  secondary?: string;
+  additionalColors?: string[];
+  vibe?: string;
 }
 
-type PaletteOutput = Array<[color: string, function: string]>
+type PaletteOutput = Array<[color: string, function: string]>;
 ```
 
 ## 1. Vibe
@@ -53,11 +53,7 @@ accessibility and role constraints
 
 ```typescript
 type PrototypeVibe =
-  | "balanced"
-  | "calm"
-  | "soft"
-  | "energetic"
-  | "high contrast"
+  "balanced" | "calm" | "soft" | "energetic" | "high contrast";
 ```
 
 `vibe`가 생략되면 `balanced`를 사용한다. `balanced`는 사용자가 실제로 입력할 수도 있다.
@@ -68,13 +64,13 @@ type PrototypeVibe =
 
 ```typescript
 interface VibeParameters {
-  harmony: string
-  hueOffsets: [number, number]
-  chromaScale: number
-  derivedChromaScale: number
-  surfaceTint: number
-  stateLightnessStep: number
-  borderEmphasis: number
+  harmony: string;
+  hueOffsets: [number, number];
+  chromaScale: number;
+  derivedChromaScale: number;
+  surfaceTint: number;
+  stateLightnessStep: number;
+  borderEmphasis: number;
 }
 ```
 
@@ -90,13 +86,13 @@ interface VibeParameters {
 
 수치는 첫 구현을 위한 가설이며, 샘플 페이지를 비교하면서 조정한다.
 
-| Vibe | Harmony | Hue offsets | Chroma | Derived chroma | Surface tint | State L step | 의도 |
-|---|---|---|---:|---:|---:|---:|---|
-| `balanced` | split complementary | +150°, +210° | 1.00 | 0.82 | 0.02 | 0.05 | 반대편 hue의 긴장을 완화해 균형 있게 분산 |
-| `calm` | analogous | -24°, +24° | 0.78 | 0.68 | 0.03 | 0.035 | 가까운 hue와 낮은 chroma로 긴장을 억제 |
-| `soft` | soft analogous | +18°, +42° | 0.72 | 0.56 | 0.08 | 0.025 | 가까운 한 방향 hue와 tinted surface 사용 |
-| `energetic` | split complementary | +150°, +210° | 1.12 | 1.08 | 0.02 | 0.07 | 멀리 떨어진 hue와 높은 chroma로 역동성 강화 |
-| `high contrast` | complementary | +180°, +165° | 1.00 | 1.00 | 0.00 | 0.08 | 정반대 hue와 강한 명도·경계 차이 사용 |
+| Vibe            | Harmony             | Hue offsets  | Chroma | Derived chroma | Surface tint | State L step | 의도                                        |
+| --------------- | ------------------- | ------------ | -----: | -------------: | -----------: | -----------: | ------------------------------------------- |
+| `balanced`      | split complementary | +150°, +210° |   1.00 |           0.82 |         0.02 |         0.05 | 반대편 hue의 긴장을 완화해 균형 있게 분산   |
+| `calm`          | analogous           | -24°, +24°   |   0.78 |           0.68 |         0.03 |        0.035 | 가까운 hue와 낮은 chroma로 긴장을 억제      |
+| `soft`          | soft analogous      | +18°, +42°   |   0.72 |           0.56 |         0.08 |        0.025 | 가까운 한 방향 hue와 tinted surface 사용    |
+| `energetic`     | split complementary | +150°, +210° |   1.12 |           1.08 |         0.02 |         0.07 | 멀리 떨어진 hue와 높은 chroma로 역동성 강화 |
+| `high contrast` | complementary       | +180°, +165° |   1.00 |           1.00 |         0.00 |         0.08 | 정반대 hue와 강한 명도·경계 차이 사용       |
 
 모든 계산 후에는 sRGB gamut에 맞게 chroma를 줄일 수 있다.
 
@@ -105,13 +101,13 @@ interface VibeParameters {
 Vibe는 하나의 harmony 결과만 강제하지 않는다. 각 vibe는 동일한 role과 sample에
 즉시 적용해 비교할 수 있는 세 후보를 제공한다.
 
-| Vibe | 기본 후보 | 대안 1 | 대안 2 |
-|---|---|---|---|
-| `balanced` | split complementary | analogous | triadic |
-| `calm` | analogous | monochromatic | wide analogous |
-| `soft` | soft analogous | monochromatic | wide analogous |
-| `energetic` | split complementary | triadic | complementary |
-| `high contrast` | complementary | split complementary | triadic |
+| Vibe            | 기본 후보           | 대안 1              | 대안 2         |
+| --------------- | ------------------- | ------------------- | -------------- |
+| `balanced`      | split complementary | analogous           | triadic        |
+| `calm`          | analogous           | monochromatic       | wide analogous |
+| `soft`          | soft analogous      | monochromatic       | wide analogous |
+| `energetic`     | split complementary | triadic             | complementary  |
+| `high contrast` | complementary       | split complementary | triadic        |
 
 기본 후보는 현재의 가설이지 심미적으로 가장 우수하다고 검증된 결과가 아니다.
 후보 탭은 같은 입력과 sample fixture에서 차이를 빠르게 비교하고 이후 사용자
@@ -191,6 +187,7 @@ type PrototypeColorFunction =
   | "main text"
   | "secondary text"
   | "border"
+  | "border control"
   | "primary button default"
   | "primary button hover"
   | "primary button active"
@@ -201,31 +198,32 @@ type PrototypeColorFunction =
   | "secondary accent text"
   | "decorative accent"
   | "decorative accent soft"
-  | "decorative accent text"
+  | "decorative accent text";
 ```
 
 마지막 여섯 값은 사용자 입력 또는 vibe harmony로 만든 supporting color family다.
 
 ### 필수 여부와 적용 위치
 
-| Function | 필수 | CSS 적용 | 샘플 용도 |
-|---|---|---|---|
-| `background` | 예 | `body { background }` | 페이지 전체 배경 |
-| `surface` | 예 | card, input, panel의 `background` | 배경 위에 놓인 영역 |
-| `main text` | 예 | heading, body의 `color` | 핵심 텍스트 |
-| `secondary text` | 예 | caption, metadata의 `color` | 보조 정보 |
-| `border` | 예 | card, input, divider의 `border-color` | 영역과 컨트롤 경계 |
-| `primary button default` | 예 | primary button `background` | 기본 상태 |
-| `primary button hover` | 예 | primary button `:hover` | hover 및 상태 비교 |
-| `primary button active` | 예 | primary button `:active` | active 및 상태 비교 |
-| `primary button text` | 예 | primary button `color` | 세 버튼 배경 위의 텍스트 |
-| `focus ring` | 예 | `:focus-visible` outline/box-shadow | 키보드 focus 표시 |
-| `secondary accent` | 예 | link, indicator | secondary family의 anchor |
-| `secondary accent soft` | 예 | supporting card와 action background | secondary의 낮은 chroma surface |
-| `secondary accent text` | 예 | supporting card와 action text | soft surface에서 대비 보정 |
-| `decorative accent` | 예 | badge, indicator | decorative family의 anchor |
-| `decorative accent soft` | 예 | highlight와 callout background | additional의 낮은 chroma surface |
-| `decorative accent text` | 예 | highlight와 callout text | soft surface에서 대비 보정 |
+| Function                 | 필수 | CSS 적용                               | 샘플 용도                        |
+| ------------------------ | ---- | -------------------------------------- | -------------------------------- |
+| `background`             | 예   | `body { background }`                  | 페이지 전체 배경                 |
+| `surface`                | 예   | card, input, panel의 `background`      | 배경 위에 놓인 영역              |
+| `main text`              | 예   | heading, body의 `color`                | 핵심 텍스트                      |
+| `secondary text`         | 예   | caption, metadata의 `color`            | 보조 정보                        |
+| `border`                 | 예   | card, divider의 `border-color`         | 장식적인 영역 구분선             |
+| `border control`         | 예   | input과 quiet control의 `border-color` | surface 대비 3:1인 조작 경계     |
+| `primary button default` | 예   | primary button `background`            | 기본 상태                        |
+| `primary button hover`   | 예   | primary button `:hover`                | hover 및 상태 비교               |
+| `primary button active`  | 예   | primary button `:active`               | active 및 상태 비교              |
+| `primary button text`    | 예   | primary button `color`                 | 세 버튼 배경 위의 텍스트         |
+| `focus ring`             | 예   | `:focus-visible` outline/box-shadow    | 키보드 focus 표시                |
+| `secondary accent`       | 예   | link, indicator                        | secondary family의 anchor        |
+| `secondary accent soft`  | 예   | supporting card와 action background    | secondary의 낮은 chroma surface  |
+| `secondary accent text`  | 예   | supporting card와 action text          | soft surface에서 대비 보정       |
+| `decorative accent`      | 예   | badge, indicator                       | decorative family의 anchor       |
+| `decorative accent soft` | 예   | highlight와 callout background         | additional의 낮은 chroma surface |
+| `decorative accent text` | 예   | highlight와 callout text               | soft surface에서 대비 보정       |
 
 ### 적용 규칙
 
@@ -246,6 +244,7 @@ type PrototypeColorFunction =
   --color-main-text: /* function: main text */;
   --color-secondary-text: /* function: secondary text */;
   --color-border: /* function: border */;
+  --color-border-control: /* function: border control */;
   --color-primary-button: /* function: primary button default */;
   --color-primary-button-hover: /* function: primary button hover */;
   --color-primary-button-active: /* function: primary button active */;

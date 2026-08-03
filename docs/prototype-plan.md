@@ -27,10 +27,10 @@
 
 ```typescript
 interface PaletteInput {
-  primary: string
-  secondary?: string
-  additionalColors?: string[]
-  vibe?: string
+  primary: string;
+  secondary?: string;
+  additionalColors?: string[];
+  vibe?: string;
 }
 ```
 
@@ -41,7 +41,7 @@ interface PaletteInput {
 ### 출력
 
 ```typescript
-type PaletteOutput = Array<[color: string, function: string]>
+type PaletteOutput = Array<[color: string, function: string]>;
 ```
 
 예:
@@ -86,7 +86,7 @@ vibe는 초기에는 자유 텍스트가 아니라 허용 값을 선택하는 co
 
 ### 고정 출력 role
 
-초기 기준은 다음 10개였으며, 현재는 supporting family 6개를 포함한 16개를
+초기 기준은 다음 10개였으며, 현재는 supporting family 6개와 control border를 포함한 17개를
 생성한다.
 
 ```text
@@ -95,6 +95,7 @@ surface
 main text
 secondary text
 border
+border control
 primary button default
 primary button hover
 primary button active
@@ -158,11 +159,12 @@ diff view, pairing matrix는 아직 포함하지 않는다.
 
 ```typescript
 interface DebugStep {
-  function: string
-  stage: "input" | "convert" | "vibe" | "derive" | "contrast" | "gamut" | "final"
-  before?: string
-  after?: string
-  message: string
+  function: string;
+  stage:
+    "input" | "convert" | "vibe" | "derive" | "contrast" | "gamut" | "final";
+  before?: string;
+  after?: string;
+  message: string;
 }
 ```
 

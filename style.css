@@ -2202,7 +2202,7 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 .button-usage-card p {
-  color: var(--color-secondary-accent);
+  color: var(--color-secondary-accent-text);
   font-family: var(--mono);
   font-size: 8px;
   margin: 0 0 8px;

@@ -32,7 +32,7 @@
 
 ## 출력
 
-현재 프로토타입은 16개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
+현재 프로토타입은 17개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
 
 ```text
 list[(color, function)]
@@ -40,7 +40,7 @@ list[(color, function)]
 
 현재 고정된 `function`은 다음과 같습니다.
 
-- background, surface, border
+- background, surface, border, border control
 - main text, secondary text
 - primary button default, hover, active, text
 - focus ring
@@ -104,6 +104,26 @@ npm run check
 
 테스트는 대표 primary 색상과 모든 vibe, harmony 후보, 입력 모드를
 조합하여 필수 function, trace, 대비 및 관계 조건을 검사합니다.
+
+## 접근성 대비 모델
+
+팔레트는 OKLCH의 지각 명도 축으로 후보를 만든 뒤, gamut mapping과 8-bit HEX
+반올림까지 끝난 실제 sRGB 결과로 WCAG 대비를 다시 계산합니다. 원래 후보가
+기준을 충족하지 않으면 hue와 chroma를 우선 보존한 채 가장 가까운 OKLCH
+lightness를 이진 탐색합니다.
+
+대비 관계는 `lib/palette-config.js`의 `CONTRAST_CONTRACTS`에 선언되어 있으며,
+현재 다음 관계를 보장합니다.
+
+- main/secondary text와 background/surface
+- 하나의 primary button text와 default/hover/active 상태 전체
+- secondary/decorative accent text와 soft/background/surface
+- focus ring과 background/surface
+- control border와 surface
+
+`border`는 장식적인 구분선이고 `border control`은 입력 및 조작 가능한
+컴포넌트의 경계입니다. 장식용 accent 원색 역시 텍스트 역할과 분리하며,
+작은 텍스트에는 반드시 대응하는 `accent text` 토큰을 사용합니다.
 
 ## 현재 범위
 

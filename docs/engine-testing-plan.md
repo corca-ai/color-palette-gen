@@ -81,7 +81,7 @@ representative primary hues
 
 완성 팔레트 단계에서 추가된 검증:
 
-- 필수 16개 function이 정확히 한 번씩 생성됨
+- 필수 17개 function이 정확히 한 번씩 생성됨
 - 모든 token에 inspectable trace가 존재하고 `final` 단계로 종료됨
 - 대표 primary 4종 × 모든 vibe × 모든 harmony × 세 입력 모드에서 완성
   팔레트와 Constraint Report 생성
@@ -94,6 +94,8 @@ representative primary hues
 - main/secondary text가 각 목표 대비 충족
 - primary button text가 default/hover/active 모두에서 4.5:1 이상
 - focus ring이 page background에서 내부 3:1 목표 충족
+- control border가 surface에서 3:1 목표 충족
+- OKLCH 입력 공간 1,350개 조합에서 모든 contrast contract 충족
 - hover/active가 default와 같은 방향으로 이동
 - harmony mapping이 입력 hue를 임의로 변경하지 않음
 - gamut mapping 전후 hue와 lightness가 허용 범위 안에서 보존됨
@@ -105,7 +107,7 @@ OKLCH Picker에서 확인한 구조를 따라 token의 생성 후보와 export�
 ```text
 candidate.oklch
 output.srgb
-output.p3? 
+output.p3?
 diagnostic.gamut
 ```
 

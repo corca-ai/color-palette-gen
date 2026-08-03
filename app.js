@@ -212,7 +212,7 @@ function renderStates(result) {
       </div>
       <ul class="button-token-list">
         ${provenanceLine("surface")}
-        ${provenanceLine("border")}
+        ${provenanceLine("border control")}
         ${provenanceLine("main text")}
         ${provenanceLine("focus ring")}
       </ul>
