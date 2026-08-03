@@ -719,7 +719,7 @@ h1 {
 }
 
 .constraint-card-grid.gamut {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .constraint-visual-card {
@@ -758,6 +758,180 @@ h1 {
   font-size: 14px;
   line-height: 1.35;
   margin: 0;
+}
+
+.decision-journey {
+  background: color-mix(in srgb, var(--lineage-bg) 58%, transparent);
+  border: 1px solid var(--lineage-node-border);
+  margin-top: 18px;
+  padding: 13px;
+}
+
+.decision-mode-row {
+  align-items: center;
+  color: var(--lineage-muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 9px;
+  justify-content: space-between;
+  text-transform: uppercase;
+}
+
+.decision-mode {
+  border: 1px solid currentColor;
+  color: #89d6aa;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 6px;
+}
+
+.decision-journey.mapped .decision-mode {
+  color: #efc36b;
+}
+
+.decision-journey.selected .decision-mode {
+  color: #7fc9ff;
+}
+
+.decision-journey.validated .decision-mode {
+  color: var(--lineage-muted);
+}
+
+.decision-journey.heuristic .decision-mode {
+  color: #d4a7ff;
+}
+
+.decision-flow {
+  align-items: stretch;
+  display: grid;
+  gap: 6px;
+  grid-template-columns:
+    minmax(0, 1.2fr) 16px minmax(0, 0.9fr) 16px minmax(0, 0.8fr) 16px
+    minmax(0, 1fr);
+  margin-top: 13px;
+}
+
+.decision-step {
+  min-width: 0;
+}
+
+.decision-step > span,
+.decision-step strong,
+.decision-step small {
+  display: block;
+}
+
+.decision-step > span {
+  color: var(--lineage-line);
+  font-family: var(--mono);
+  font-size: 8px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.decision-step strong {
+  color: #f8f5ef;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.decision-step small {
+  color: var(--lineage-muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  margin-top: 4px;
+}
+
+.decision-swatch {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  display: block;
+  height: 18px;
+  margin-bottom: 6px;
+  width: 18px;
+}
+
+.decision-connector {
+  align-self: center;
+  border-top: 1px solid #89d6aa;
+  height: 1px;
+  position: relative;
+}
+
+.decision-connector::after {
+  border-bottom: 3px solid transparent;
+  border-left: 5px solid #89d6aa;
+  border-top: 3px solid transparent;
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -3px;
+}
+
+.decision-connector.validated {
+  border-top-color: var(--lineage-line);
+  border-top-style: dashed;
+}
+
+.decision-connector.validated::after {
+  border-left-color: var(--lineage-line);
+}
+
+.decision-choices {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 13px;
+}
+
+.decision-choices > span {
+  align-items: center;
+  border: 1px solid var(--lineage-node-border);
+  color: var(--lineage-muted);
+  display: grid;
+  gap: 7px;
+  grid-template-columns: 18px 1fr auto;
+  padding: 7px;
+}
+
+.decision-choices > span.selected {
+  border-color: #7fc9ff;
+  color: #f8f5ef;
+}
+
+.decision-choices i {
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  height: 18px;
+  width: 18px;
+}
+
+.decision-choices strong,
+.decision-choices small {
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.decision-rationale {
+  border-top: 1px solid var(--lineage-node-border);
+  margin-top: 13px;
+  padding-top: 10px;
+}
+
+.decision-rationale p {
+  color: #f8f5ef;
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.decision-rationale span {
+  color: var(--lineage-muted);
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  line-height: 1.5;
+  margin-top: 5px;
 }
 
 .constraint-usage {
@@ -3565,6 +3739,39 @@ footer {
   .constraint-card-grid,
   .constraint-card-grid.gamut {
     grid-template-columns: 1fr;
+  }
+
+  .decision-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-connector {
+    border-left: 1px solid #89d6aa;
+    border-top: 0;
+    height: 16px;
+    justify-self: start;
+    margin-left: 9px;
+    width: 1px;
+  }
+
+  .decision-connector::after {
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 5px solid #89d6aa;
+    bottom: -1px;
+    left: -3px;
+    right: auto;
+    top: auto;
+  }
+
+  .decision-connector.validated {
+    border-left-color: var(--lineage-line);
+    border-left-style: dashed;
+  }
+
+  .decision-connector.validated::after {
+    border-left-color: transparent;
+    border-top-color: var(--lineage-line);
   }
 
   .constraint-chapter-heading {

@@ -93,6 +93,27 @@ test("constraint report covers every declared rule category", () => {
   );
 });
 
+test("constraint checks identify how each value was decided", () => {
+  const report = buildConstraintReport(makeResult());
+  const find = (token, category) =>
+    report.checks.find(
+      (check) => check.token === token && check.category === category,
+    );
+
+  assert.equal(find("main text", "contrast").decision.mode, "solved");
+  assert.equal(
+    find("primary button text", "contrast").decision.mode,
+    "selected",
+  );
+  assert.equal(find("surface", "gamut").decision.mode, "validated");
+  assert.equal(find("secondary accent", "relation").decision.mode, "validated");
+  assert.equal(
+    find("primary button hover", "state").decision.mode,
+    "heuristic",
+  );
+  assert.match(find("main text", "contrast").decision.optimization, /nearest/i);
+});
+
 test("constraint report exposes failing contrast rather than hiding it", () => {
   const result = makeResult();
   result.tokens = result.tokens.map(([hex, name]) =>
@@ -130,6 +151,7 @@ test("gamut adjustments remain visible in the report", () => {
       token === "decorative accent" && category === "gamut",
   );
   assert.equal(check.status, "adjusted");
+  assert.equal(check.decision.mode, "mapped");
   assert.ok(check.metrics.boundary > 0);
   assert.ok(check.metrics.candidate.c > check.metrics.boundary);
   assert.equal(

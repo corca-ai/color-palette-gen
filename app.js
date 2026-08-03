@@ -1004,10 +1004,85 @@ function constraintStatusSummary(checks) {
   };
 }
 
+function decisionJourney(check) {
+  const decision = check.decision;
+  if (!decision) return "";
+  const modeLabel = decision.mode.toUpperCase();
+  const connector = decision.mode === "validated" ? "validated" : "changed";
+  const delta = decision.delta
+    ? `ΔL ${decision.delta.deltaL.toFixed(3)} · ΔC ${decision.delta.deltaC.toFixed(3)} · ΔH ${decision.delta.deltaH.toFixed(1)}° · ΔE ${decision.delta.deltaE.toFixed(3)}`
+    : "";
+  const outcome =
+    decision.mode === "selected"
+      ? "Choice made"
+      : decision.changed
+        ? "Color changed"
+        : "No color change";
+  return `
+    <div class="decision-journey ${decision.mode}">
+      <div class="decision-mode-row">
+        <span class="decision-mode">${modeLabel}</span>
+        <span>${outcome}</span>
+      </div>
+      <div class="decision-flow">
+        <div class="decision-step intent">
+          <span>01 Intent</span>
+          <strong>${decision.intent}</strong>
+        </div>
+        <i class="decision-connector ${connector}" aria-hidden="true"></i>
+        <div class="decision-step candidate">
+          <span>02 Candidate</span>
+          ${decision.candidate.color ? `<i class="decision-swatch" style="background:${decision.candidate.color}"></i>` : ""}
+          <strong>${decision.candidate.label}</strong>
+          ${Number.isFinite(decision.candidate.value) ? `<small>${decision.candidate.value.toFixed(2)}:1</small>` : ""}
+        </div>
+        <i class="decision-connector ${connector}" aria-hidden="true"></i>
+        <div class="decision-step action">
+          <span>03 Decision</span>
+          <strong>${modeLabel}</strong>
+          <small>${decision.axis}</small>
+        </div>
+        <i class="decision-connector ${connector}" aria-hidden="true"></i>
+        <div class="decision-step resolved">
+          <span>04 Resolved</span>
+          ${decision.resolved.color ? `<i class="decision-swatch" style="background:${decision.resolved.color}"></i>` : ""}
+          <strong>${decision.resolved.label}</strong>
+          ${Number.isFinite(decision.resolved.value) ? `<small>${decision.resolved.value.toFixed(2)}:1</small>` : ""}
+        </div>
+      </div>
+      ${
+        decision.choices
+          ? `<div class="decision-choices" aria-label="Compared candidates">
+              ${decision.choices
+                .map(
+                  ({ color, value }) => `
+                    <span class="${color === decision.resolved.color ? "selected" : ""}">
+                      <i style="background:${color}"></i>
+                      <strong>${color}</strong>
+                      <small>${value.toFixed(2)}:1</small>
+                    </span>
+                  `,
+                )
+                .join("")}
+            </div>`
+          : ""
+      }
+      <div class="decision-rationale">
+        <p>${decision.optimization}</p>
+        <span>${decision.lockedAxes.length ? `${decision.lockedAxes.map((axis) => `${axis} locked`).join(" · ")} · ` : ""}${delta || decision.axis}</span>
+      </div>
+    </div>
+  `;
+}
+
 function contrastConstraintVisual(check) {
   const { actual, target, pairs } = check.metrics;
   const actualPosition = Math.min(100, Math.max(0, ((actual - 1) / 20) * 100));
   const targetPosition = Math.min(100, Math.max(0, ((target - 1) / 20) * 100));
+  const candidateValue = check.decision?.candidate?.value;
+  const candidatePosition = Number.isFinite(candidateValue)
+    ? Math.min(100, Math.max(0, ((candidateValue - 1) / 20) * 100))
+    : null;
   return `
     <div class="constraint-pair-list">
       ${pairs
@@ -1024,6 +1099,7 @@ function contrastConstraintVisual(check) {
     <div class="measure-rail contrast-rail" aria-label="Actual contrast ${actual.toFixed(2)} to 1; target ${target.toFixed(1)} to 1">
       <span class="measure-safe-zone" style="left:${targetPosition}%"></span>
       <span class="measure-threshold" style="left:${targetPosition}%"><i>${target.toFixed(1)} target</i></span>
+      ${candidatePosition !== null && Math.abs(candidateValue - actual) > 0.005 ? `<span class="measure-movement" style="left:${Math.min(candidatePosition, actualPosition)}%;width:${Math.abs(candidatePosition - actualPosition)}%"></span><span class="measure-point candidate" style="left:${candidatePosition}%"><i>candidate ${candidateValue.toFixed(2)}</i></span>` : ""}
       <span class="measure-point final" style="left:${actualPosition}%"><i>${actual.toFixed(2)}</i></span>
     </div>
     <div class="measure-scale"><span>1:1</span><span>21:1</span></div>
@@ -1191,6 +1267,7 @@ function renderConstraintMap(result) {
                         ${constraintStatusLabel(check.status)}
                       </span>
                     </div>
+                    ${decisionJourney(check)}
                     ${constraintVisual(check, result)}
                     <p class="constraint-explanation">${check.explanation}</p>
                     <button type="button" class="constraint-inspect-button" data-constraint-token="${check.token}">

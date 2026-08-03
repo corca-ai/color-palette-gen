@@ -84,6 +84,19 @@ harmony switcher의 위치 연속성을 방해해서는 안 된다.
 - 기준선은 contrast threshold, gamut boundary처럼 판정에 사용한 경계다.
 - pass, adjusted, fail 색만으로 의미를 전달하지 않고 label과 수치를 함께 쓴다.
 
+각 검사는 통과 상태보다 먼저 색 결정 방식을 명시한다.
+
+- `SOLVED`: 조건이 최종값을 직접 결정하며 가장 가까운 통과값을 탐색한다.
+- `MAPPED`: 허용 영역의 경계까지 한 축을 최소한으로 이동한다.
+- `SELECTED`: 검정/흰색처럼 유한한 후보 중 조건에 가장 적합한 값을 선택한다.
+- `VALIDATED`: 이미 결정된 색을 검사하며 이 단계에서는 색을 변경하지 않는다.
+- `HEURISTIC`: vibe나 recipe 상수로 값을 만들며 수학적 최적해라고 주장하지 않는다.
+
+카드는 `Intent → Candidate → Decision → Resolved` 순서를 보여준다. 실선 화살표는 실제
+값 변경, 점선은 변경 없는 검사, 갈라지는 선은 후보 선택을 뜻한다. OKLCH 축 중 고정된
+축은 lock으로 표시하고, 변경된 축과 delta를 함께 쓴다. `Passed`는 이 provenance보다
+낮은 위계의 결과 상태다.
+
 각 category의 기본 시각화는 다음과 같다.
 
 - Contrast: foreground/background swatch, 실제 텍스트 sample, ratio track과 threshold
