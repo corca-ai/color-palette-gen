@@ -183,7 +183,7 @@
           <div class="constraint-map-heading">
             <div>
               <p class="eyebrow">Constraint map</p>
-              <h3 id="constraint-map-title">What the system can prove.</h3>
+              <h3 id="constraint-map-title">Checks against explicit targets.</h3>
             </div>
             <p>
               Every mark compares an actual value with an explicit target.
@@ -241,7 +241,7 @@
             <span id="result-count">10 roles</span>
             <span class="status-pill" id="result-status">
               <span aria-hidden="true"></span>
-              All checks pass
+              Targets met
             </span>
           </div>
         </div>
@@ -250,18 +250,18 @@
           <button
             id="tab-palette"
             role="tab"
-            aria-selected="true"
+            aria-selected="false"
             aria-controls="panel-palette"
-            tabindex="0"
+            tabindex="-1"
           >
             Palette
           </button>
           <button
             id="tab-content"
             role="tab"
-            aria-selected="false"
+            aria-selected="true"
             aria-controls="panel-content"
-            tabindex="-1"
+            tabindex="0"
           >
             Content
           </button>
@@ -310,6 +310,7 @@
           id="panel-palette"
           role="tabpanel"
           aria-labelledby="tab-palette"
+          hidden
         >
           <div class="palette-intro">
             <p>
@@ -335,7 +336,6 @@
           id="panel-content"
           role="tabpanel"
           aria-labelledby="tab-content"
-          hidden
         >
           <div class="scenario-frame">
             <p class="preview-note">Color fixture · controls do not navigate</p>

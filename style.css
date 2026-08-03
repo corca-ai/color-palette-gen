@@ -4,10 +4,10 @@
   --paper: #f4f1eb;
   --line: #d6d0c7;
   --muted: #6f6a63;
-  --display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+  --display: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
   --color-background: #fff8f7;
@@ -53,6 +53,7 @@ body {
   color: var(--ink);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 button,
@@ -110,8 +111,11 @@ button {
 }
 
 main {
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
   max-width: 1480px;
+  min-width: 0;
   padding: 0 clamp(20px, 4vw, 64px) 80px;
 }
 
@@ -121,11 +125,13 @@ main {
   gap: clamp(36px, 6vw, 88px);
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
   padding: clamp(54px, 7vw, 88px) 0;
+  order: 1;
 }
 
 .hero-copy {
   align-self: center;
   max-width: 720px;
+  min-width: 0;
 }
 
 .eyebrow,
@@ -149,9 +155,9 @@ p {
 h1 {
   font-family: var(--display);
   font-size: clamp(48px, 5.8vw, 82px);
-  font-weight: 760;
-  letter-spacing: -0.055em;
-  line-height: 0.98;
+  font-weight: 730;
+  letter-spacing: -0.026em;
+  line-height: 1.04;
   margin-bottom: 26px;
   max-width: 720px;
   text-wrap: balance;
@@ -167,11 +173,9 @@ h1 {
 .prototype-disclaimer {
   max-width: 560px;
   margin: 24px 0 0;
-  padding: 12px 14px;
-  border-left: 3px solid var(--color-primary-button);
-  background: color-mix(in srgb, var(--color-primary-button) 5%, transparent);
+  padding: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.55;
 }
 
@@ -179,17 +183,20 @@ h1 {
   align-self: center;
   background: rgba(255, 255, 255, 0.76);
   border: 1px solid var(--line);
-  box-shadow: 10px 10px 0 rgba(24, 23, 22, 0.08);
+  box-shadow: 0 12px 32px rgba(24, 23, 22, 0.08);
   padding: clamp(22px, 2.5vw, 32px);
+  min-width: 0;
 }
 
 .lineage-section {
   background: var(--lineage-bg);
   border: 1px solid var(--line);
-  box-shadow: 14px 14px 0 rgba(24, 23, 22, 0.08);
+  box-shadow: 0 14px 36px rgba(24, 23, 22, 0.1);
   color: #f8f5ef;
   margin-bottom: clamp(52px, 7vw, 88px);
   padding: clamp(28px, 4vw, 52px);
+  order: 3;
+  min-width: 0;
 }
 
 .lineage-heading {
@@ -206,8 +213,8 @@ h1 {
 .lineage-heading h2 {
   font-family: var(--display);
   font-size: clamp(34px, 4.5vw, 54px);
-  letter-spacing: -0.05em;
-  line-height: 1;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
   margin: 0;
 }
 
@@ -247,7 +254,7 @@ h1 {
 .harmony-switcher small {
   color: var(--lineage-muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   text-transform: uppercase;
 }
 
@@ -326,7 +333,7 @@ h1 {
   color: var(--lineage-muted);
   display: block;
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: 10px;
   margin-top: 3px;
 }
 
@@ -625,7 +632,7 @@ h1 {
 .constraint-summary-item small {
   color: var(--lineage-muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   margin-top: 3px;
   text-transform: uppercase;
 }
@@ -662,7 +669,7 @@ h1 {
   border-collapse: collapse;
   color: var(--lineage-muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   min-width: 660px;
   width: 100%;
 }
@@ -678,7 +685,7 @@ h1 {
 .constraint-matrix thead th {
   background: var(--lineage-bg);
   color: var(--lineage-line);
-  font-size: 7px;
+  font-size: 10px;
   letter-spacing: 0.1em;
   position: sticky;
   top: 0;
@@ -925,7 +932,7 @@ h1 {
 .lineage-legend {
   display: flex;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   gap: 22px;
   margin-top: 32px;
   text-transform: uppercase;
@@ -987,7 +994,7 @@ h1 {
 .lineage-edge-label {
   fill: var(--lineage-muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -995,7 +1002,7 @@ h1 {
 .lineage-column-label {
   fill: var(--lineage-line);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -1029,14 +1036,14 @@ h1 {
 .lineage-node .node-title {
   fill: #f8f5ef;
   font-family: var(--body);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
 .lineage-node .node-value {
   fill: var(--lineage-muted);
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 10px;
 }
 
 .lineage-node.input rect {
@@ -1099,6 +1106,8 @@ input[type="color"]::-webkit-color-swatch {
   outline: none;
   padding: 0 15px;
   text-transform: uppercase;
+  min-width: 0;
+  width: 100%;
 }
 
 .generator-card input[type="text"]:focus {
@@ -1132,7 +1141,8 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 .optional-color-input-row input[type="color"].is-empty {
-  opacity: 0.38;
+  filter: grayscale(1);
+  opacity: 0.22;
 }
 
 .optional-color-input-row input[type="color"].is-empty:hover,
@@ -1208,7 +1218,10 @@ input[type="color"]::-webkit-color-swatch {
 .workspace {
   background: #fbfaf7;
   border: 1px solid var(--line);
-  box-shadow: 14px 14px 0 rgba(24, 23, 22, 0.08);
+  box-shadow: 0 14px 36px rgba(24, 23, 22, 0.09);
+  margin-bottom: clamp(52px, 7vw, 88px);
+  min-width: 0;
+  order: 2;
 }
 
 .workspace-heading {
@@ -1225,7 +1238,7 @@ input[type="color"]::-webkit-color-swatch {
 .workspace h2 {
   font-family: var(--display);
   font-size: clamp(32px, 4vw, 48px);
-  letter-spacing: -0.045em;
+  letter-spacing: -0.025em;
   line-height: 1.05;
   margin: 0;
 }
@@ -3079,6 +3092,13 @@ footer {
 }
 
 @media (max-width: 560px) {
+  main {
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+    width: 100%;
+  }
+
   .debug-visual-heading,
   .color-axis-heading,
   .color-axis-values {
@@ -3139,9 +3159,49 @@ footer {
   }
 
   h1 {
-    font-size: 46px;
-    letter-spacing: -0.045em;
-    line-height: 1;
+    font-size: clamp(38px, 11.5vw, 42px);
+    letter-spacing: -0.018em;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-description {
+    line-height: 1.55;
+  }
+
+  .generator-card,
+  .lineage-section,
+  .workspace {
+    align-self: stretch;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .color-input-row,
+  .optional-color-input-row,
+  .vibe-field,
+  .vibe-options {
+    min-width: 0;
+  }
+
+  .lineage-section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .harmony-option {
+    min-width: 126px;
+  }
+
+  .tabs {
+    padding-left: 20px;
+    padding-right: 20px;
+    scrollbar-width: thin;
+  }
+
+  .tabs button:first-child {
+    padding-left: 8px;
   }
 
   .optional-row,

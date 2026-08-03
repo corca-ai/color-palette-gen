@@ -1512,7 +1512,7 @@ function renderResult(result) {
   resultStatus.lastChild.textContent =
     result.warnings.length > 0
       ? ` ${result.warnings.length} adjustment${result.warnings.length === 1 ? "" : "s"}`
-      : " All checks pass";
+      : " Targets met";
 }
 
 function readInput() {
@@ -1641,7 +1641,8 @@ form.addEventListener("submit", (event) => {
   const input = readInput();
   if (!input) return;
   renderResult(generatePalette(input));
-  document.querySelector(".constraint-map").scrollIntoView({
+  activateTab("content");
+  document.querySelector(".workspace").scrollIntoView({
     behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ? "auto"
       : "smooth",
