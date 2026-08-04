@@ -2,10 +2,13 @@ import {
   contrastLabel,
   contrastRatio,
   hexToRgb,
+  inGamut,
   isHex,
   normalizeHex,
   oklchDifference,
   oklchToHex,
+  oklchToRawRgb,
+  relativeLuminance,
   rgbToOklch,
 } from "./lib/color-math.js";
 import {
@@ -792,6 +795,56 @@ function huePoint(hue, radius = 39) {
 function renderHueRelationship(result) {
   const secondary = result.supportingColors.secondary;
   const additional = result.supportingColors.additional;
+  const additionalInput = result.input.additionalColors[0] ?? null;
+  const harmonyComparisons = HARMONY_CANDIDATES[result.params.name].map(
+    (candidate) => {
+      const candidateParams = {
+        ...VIBES[result.params.name],
+        name: result.params.name,
+        harmony: candidate.label.toLowerCase(),
+        hueOffsets: candidate.offsets,
+      };
+      const secondaryHex = result.input.secondary
+        ? result.input.secondary
+        : deriveHarmonyColor(
+            result.primary,
+            candidateParams,
+            candidate.offsets[0],
+            "secondary",
+          ).hex;
+      const additionalHex = additionalInput
+        ? additionalInput
+        : result.input.secondary
+          ? completeHarmonyColor(
+              result.primary,
+              result.input.secondary,
+              candidateParams,
+            ).hex
+          : deriveHarmonyColor(
+              result.primary,
+              candidateParams,
+              candidate.offsets[1],
+              "additional",
+            ).hex;
+      return {
+        ...candidate,
+        selected: candidate.id === result.params.harmonyId,
+        colors: [secondaryHex, additionalHex],
+        hues: [secondaryHex, additionalHex].map(
+          (hex) => rgbToOklch(hexToRgb(hex)).h,
+        ),
+      };
+    },
+  );
+  const alternativeHueMarks = harmonyComparisons
+    .filter(({ selected }) => !selected)
+    .flatMap((candidate) =>
+      candidate.hues.map((hue, index) => ({
+        candidate: candidate.label,
+        color: candidate.colors[index],
+        point: huePoint(hue, 43),
+      })),
+    );
   const hues = [
     {
       key: "P",
@@ -859,6 +912,18 @@ function renderHueRelationship(result) {
     <div class="hue-wheel-panel">
       <div class="hue-wheel" aria-label="Current hues positioned on a color wheel">
         <svg viewBox="0 0 100 100" aria-hidden="true">
+          <g class="harmony-alternative-marks">
+            ${alternativeHueMarks
+              .map(
+                ({ candidate, color, point }) => `
+                  <line x1="50" y1="50" x2="${point.x}" y2="${point.y}"></line>
+                  <circle cx="${point.x}" cy="${point.y}" r="1.8" style="fill:${color}">
+                    <title>${candidate}</title>
+                  </circle>
+                `,
+              )
+              .join("")}
+          </g>
           <polyline
             points="${points.map(({ point }) => `${point.x},${point.y}`).join(" ")} ${points[0].point.x},${points[0].point.y}"
           ></polyline>
@@ -886,6 +951,22 @@ function renderHueRelationship(result) {
                   <strong>${label} · H ${hue.toFixed(1)}°</strong>
                   <small>${relation}</small>
                 </span>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+      <div class="hue-comparison-list" aria-label="Compared harmony candidates">
+        ${harmonyComparisons
+          .map(
+            (candidate) => `
+              <div class="${candidate.selected ? "selected" : ""}">
+                <span class="hue-comparison-swatches" aria-hidden="true">
+                  <i style="background:${result.input.primary}"></i>
+                  <i style="background:${candidate.colors[0]}"></i>
+                  <i style="background:${candidate.colors[1]}"></i>
+                </span>
+                <span><strong>${candidate.label}</strong><small>${candidate.selected ? "Selected relationship" : "Not selected"}</small></span>
               </div>
             `,
           )
@@ -1075,34 +1156,438 @@ function decisionJourney(check) {
   `;
 }
 
-function contrastConstraintVisual(check) {
-  const { actual, target, pairs } = check.metrics;
-  const actualPosition = Math.min(100, Math.max(0, ((actual - 1) / 20) * 100));
-  const targetPosition = Math.min(100, Math.max(0, ((target - 1) / 20) * 100));
-  const candidateValue = check.decision?.candidate?.value;
-  const candidatePosition = Number.isFinite(candidateValue)
-    ? Math.min(100, Math.max(0, ((candidateValue - 1) / 20) * 100))
+const REGION_WIDTH = 360;
+const REGION_HEIGHT = 190;
+const REGION_MARGIN = { left: 34, right: 14, top: 14, bottom: 28 };
+const REGION_MAX_CHROMA = 0.4;
+
+function regionX(lightness) {
+  return (
+    REGION_MARGIN.left +
+    lightness * (REGION_WIDTH - REGION_MARGIN.left - REGION_MARGIN.right)
+  );
+}
+
+function regionY(chroma) {
+  return (
+    REGION_HEIGHT -
+    REGION_MARGIN.bottom -
+    (chroma / REGION_MAX_CHROMA) *
+      (REGION_HEIGHT - REGION_MARGIN.top - REGION_MARGIN.bottom)
+  );
+}
+
+function sampledChromaBoundary(hue, predicate = () => true) {
+  const points = [];
+  const lightnessSteps = 192;
+  const coarseChromaSteps = 48;
+  const accepts = (color) => {
+    const raw = oklchToRawRgb(color);
+    return inGamut(raw) && predicate(oklchToHex(color).hex, color);
+  };
+  for (let index = 0; index <= lightnessSteps; index += 1) {
+    const lightness = 0.02 + (index / lightnessSteps) * 0.96;
+    let maximum = null;
+    for (let step = 0; step <= coarseChromaSteps; step += 1) {
+      const chroma = (step / coarseChromaSteps) * REGION_MAX_CHROMA;
+      const color = { l: lightness, c: chroma, h: hue };
+      if (accepts(color)) maximum = chroma;
+    }
+    let upper =
+      maximum === null || maximum >= REGION_MAX_CHROMA
+        ? null
+        : Math.min(
+            REGION_MAX_CHROMA,
+            maximum + REGION_MAX_CHROMA / coarseChromaSteps,
+          );
+    if (maximum !== null && upper !== null) {
+      let lower = maximum;
+      for (let refinement = 0; refinement < 14; refinement += 1) {
+        const chroma = (lower + upper) / 2;
+        if (accepts({ l: lightness, c: chroma, h: hue })) lower = chroma;
+        else upper = chroma;
+      }
+      maximum = lower;
+    }
+    points.push(maximum !== null ? { lightness, chroma: maximum } : null);
+  }
+  return points;
+}
+
+function regionCurvePath(points) {
+  let startsSegment = true;
+  return points
+    .map((point) => {
+      if (!point) {
+        startsSegment = true;
+        return "";
+      }
+      const command = `${startsSegment ? "M" : "L"} ${regionX(point.lightness)} ${regionY(point.chroma)}`;
+      startsSegment = false;
+      return command;
+    })
+    .join(" ");
+}
+
+function regionPoint(color, kind) {
+  if (!color) return "";
+  const x = regionX(color.l);
+  const y = regionY(color.c);
+  const fill = oklchToHex(color).hex;
+  if (kind === "candidate") {
+    const path = `M ${x} ${y - 3.5} L ${x + 3.5} ${y} L ${x} ${y + 3.5} L ${x - 3.5} ${y} Z`;
+    return `<g class="region-point candidate"><path class="marker-halo" d="${path}"></path><path class="marker-color" style="fill:${fill}" d="${path}"></path></g>`;
+  }
+  const path = `M ${x} ${y - 4.5} L ${x + 4} ${y + 3.5} L ${x - 4} ${y + 3.5} Z`;
+  return `
+    <g class="region-point resolved"><path class="marker-halo" d="${path}"></path><path class="marker-color" style="fill:${fill}" d="${path}"></path></g>
+  `;
+}
+
+function regionAlternativePoint(color) {
+  if (!color) return "";
+  const x = regionX(color.l);
+  const y = regionY(color.c);
+  const fill = oklchToHex(color).hex;
+  const path = `M ${x - 3.5} ${y - 3.5} H ${x + 3.5} V ${y + 3.5} H ${x - 3.5} Z`;
+  return `<g class="region-point alternative"><path class="marker-halo" d="${path}"></path><path class="marker-color" style="fill:${fill}" d="${path}"></path></g>`;
+}
+
+function lcFieldDataUrl(hue, predicate = () => true) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 624;
+  canvas.height = 296;
+  const context = canvas.getContext("2d");
+  const image = context.createImageData(canvas.width, canvas.height);
+  for (let y = 0; y < canvas.height; y += 1) {
+    const chroma = (1 - y / (canvas.height - 1)) * REGION_MAX_CHROMA;
+    for (let x = 0; x < canvas.width; x += 1) {
+      const lightness = x / (canvas.width - 1);
+      const color = { l: lightness, c: chroma, h: hue };
+      const raw = oklchToRawRgb(color);
+      const gamut = inGamut(raw);
+      const feasible = gamut && predicate(oklchToHex(color).hex, color);
+      const offset = (y * canvas.width + x) * 4;
+      const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
+      const visibility = feasible ? 1 : gamut ? 0.2 : 1;
+      const base = gamut ? 0.065 : 0;
+      image.data[offset] = Math.round((source.r * visibility + base) * 255);
+      image.data[offset + 1] = Math.round((source.g * visibility + base) * 255);
+      image.data[offset + 2] = Math.round((source.b * visibility + base) * 255);
+      image.data[offset + 3] = 255;
+    }
+  }
+  context.putImageData(image, 0, 0);
+  return canvas.toDataURL();
+}
+
+function regionColorKey(color, kind, label) {
+  if (!color) return "";
+  const display = oklchToHex(color).hex;
+  return `
+    <div class="region-color-key ${kind}">
+      <span class="region-key-marker" aria-hidden="true"></span>
+      <span class="region-key-swatch" style="background:${display}"></span>
+      <span><strong>${label}</strong><small>${display} · L ${color.l.toFixed(3)} C ${color.c.toFixed(3)}</small></span>
+    </div>
+  `;
+}
+
+function lcRegionMap({
+  hue,
+  predicate,
+  candidate,
+  resolved,
+  label,
+  feasibleLabel,
+  boundaries = [],
+  alternatives = [],
+}) {
+  const boundary = sampledChromaBoundary(hue, predicate);
+  const boundaryLayers = boundaries.map((item) => ({
+    ...item,
+    points: sampledChromaBoundary(hue, item.predicate),
+  }));
+  const field = lcFieldDataUrl(hue, predicate);
+  const candidatePoint = candidate
+    ? `${regionX(candidate.l)},${regionY(candidate.c)}`
     : null;
+  const resolvedPoint = resolved
+    ? `${regionX(resolved.l)},${regionY(resolved.c)}`
+    : null;
+  const unchanged =
+    candidate &&
+    resolved &&
+    oklchDifference(candidate, resolved).deltaE < 0.0005;
+  const coincident =
+    candidate &&
+    resolved &&
+    Math.hypot(
+      regionX(candidate.l) - regionX(resolved.l),
+      regionY(candidate.c) - regionY(resolved.c),
+    ) < 14;
+  return `
+    <figure class="feasible-region-figure">
+      <svg viewBox="0 0 ${REGION_WIDTH} ${REGION_HEIGHT}" role="img" aria-label="${label}">
+        <image class="region-color-field" href="${field}" x="${REGION_MARGIN.left}" y="${REGION_MARGIN.top}" width="${REGION_WIDTH - REGION_MARGIN.left - REGION_MARGIN.right}" height="${REGION_HEIGHT - REGION_MARGIN.top - REGION_MARGIN.bottom}" preserveAspectRatio="none"></image>
+        <g class="region-grid">
+          <line x1="${regionX(0.25)}" x2="${regionX(0.25)}" y1="${REGION_MARGIN.top}" y2="${REGION_HEIGHT - REGION_MARGIN.bottom}"></line>
+          <line x1="${regionX(0.5)}" x2="${regionX(0.5)}" y1="${REGION_MARGIN.top}" y2="${REGION_HEIGHT - REGION_MARGIN.bottom}"></line>
+          <line x1="${regionX(0.75)}" x2="${regionX(0.75)}" y1="${REGION_MARGIN.top}" y2="${REGION_HEIGHT - REGION_MARGIN.bottom}"></line>
+          <line x1="${REGION_MARGIN.left}" x2="${REGION_WIDTH - REGION_MARGIN.right}" y1="${regionY(0.1)}" y2="${regionY(0.1)}"></line>
+          <line x1="${REGION_MARGIN.left}" x2="${REGION_WIDTH - REGION_MARGIN.right}" y1="${regionY(0.2)}" y2="${regionY(0.2)}"></line>
+          <line x1="${REGION_MARGIN.left}" x2="${REGION_WIDTH - REGION_MARGIN.right}" y1="${regionY(0.3)}" y2="${regionY(0.3)}"></line>
+        </g>
+        ${boundaryLayers
+          .map(
+            (item, index) =>
+              `<path class="region-constraint-boundary ${item.limiting ? "limiting" : ""}" style="--boundary-color:${item.color}" d="${regionCurvePath(item.points)}" data-boundary-index="${index}"></path>`,
+          )
+          .join("")}
+        ${boundaryLayers.length ? "" : `<path class="region-boundary aggregate" d="${regionCurvePath(boundary)}"></path>`}
+        ${candidatePoint && resolvedPoint && !coincident ? `<path class="region-movement" d="M ${candidatePoint} L ${resolvedPoint}"></path>` : ""}
+        ${alternatives.map(({ color }) => regionAlternativePoint(color)).join("")}
+        ${coincident ? regionPoint(resolved, "resolved") : `${regionPoint(candidate, "candidate")}${regionPoint(resolved, "resolved")}`}
+        <g class="region-axis-labels">
+          <text x="${REGION_WIDTH / 2}" y="${REGION_HEIGHT - 4}" text-anchor="middle">OKLCH lightness →</text>
+          <text x="10" y="${REGION_HEIGHT / 2}" transform="rotate(-90 10 ${REGION_HEIGHT / 2})" text-anchor="middle">Chroma →</text>
+        </g>
+      </svg>
+      <div class="region-color-keys">
+        ${unchanged ? regionColorKey(resolved, "unchanged", "Candidate = resolved") : `${regionColorKey(candidate, "candidate", "Candidate")}${regionColorKey(resolved, "resolved", "Resolved")}`}
+        ${alternatives
+          .map(({ color, label: alternativeLabel }) =>
+            regionColorKey(color, "alternative", alternativeLabel),
+          )
+          .join("")}
+      </div>
+      ${
+        boundaryLayers.length
+          ? `<div class="region-constraint-legend">${boundaryLayers
+              .map(
+                (item, index) =>
+                  `<span class="${item.limiting ? "limiting" : ""}"><i style="--boundary-color:${item.color}"></i>${index + 1}. ${item.label}${item.limiting ? " · limiting" : ""}</span>`,
+              )
+              .join("")}</div>`
+          : ""
+      }
+      <figcaption><span><i></i>${feasibleLabel}</span><span>${coincident && !unchanged ? "Markers coincide at this scale · " : ""}Dimmed = rejected · Fixed H ${hue.toFixed(1)}°</span></figcaption>
+    </figure>
+  `;
+}
+
+function contrastSelectionPlane(check) {
+  const target = check.metrics.target;
+  const backgrounds = check.metrics.pairs;
+  const choices = check.decision.choices;
+  const selectedColor = check.decision.resolved.color;
+  const plot = (value) => 24 + value * 142;
+  const darkBoundary = [];
+  const lightBoundary = [];
+  for (let index = 0; index <= 32; index += 1) {
+    const background = index / 32;
+    darkBoundary.push({
+      background,
+      foreground: Math.max(0, (background + 0.05) / target - 0.05),
+    });
+    lightBoundary.push({
+      background,
+      foreground: Math.min(1, target * (background + 0.05) - 0.05),
+    });
+  }
+  const line = (items) =>
+    items
+      .map(
+        ({ foreground, background }, index) =>
+          `${index ? "L" : "M"} ${plot(foreground)} ${166 - background * 142}`,
+      )
+      .join(" ");
+  const choiceMarker = (choice, background, backgroundIndex) => {
+    const foregroundLuminance = relativeLuminance(choice.color);
+    const backgroundLuminance = relativeLuminance(background.background);
+    const x = plot(foregroundLuminance);
+    const y = 166 - backgroundLuminance * 142;
+    const selected = choice.color === selectedColor;
+    const path = selected
+      ? `M ${x} ${y - 4.5} L ${x + 4} ${y + 3.5} L ${x - 4} ${y + 3.5} Z`
+      : `M ${x} ${y - 3.5} L ${x + 3.5} ${y} L ${x} ${y + 3.5} L ${x - 3.5} ${y} Z`;
+    const labelX = x + (foregroundLuminance > 0.5 ? -6 : 6);
+    return `<g class="region-point ${selected ? "resolved" : "candidate"}"><path class="marker-halo" d="${path}"></path><path class="marker-color" style="fill:${choice.color}" d="${path}"></path><text class="contrast-choice-label" x="${labelX}" y="${y - 7}" text-anchor="${foregroundLuminance > 0.5 ? "end" : "start"}">${backgroundIndex + 1}</text></g>`;
+  };
+  return `
+    <figure class="feasible-region-figure contrast-plane">
+      <svg viewBox="0 0 190 190" role="img" aria-label="Foreground and background luminance combinations meeting ${target.toFixed(1)} to 1">
+        <rect class="contrast-plane-bg" x="24" y="24" width="142" height="142"></rect>
+        <path class="region-feasible" d="${line(darkBoundary)} L 24 24 L 24 166 Z"></path>
+        <path class="region-feasible" d="${line(lightBoundary)} L 166 24 L 166 166 Z"></path>
+        <path class="contrast-boundary" d="${line(darkBoundary)}"></path>
+        <path class="contrast-boundary" d="${line(lightBoundary)}"></path>
+        ${choices
+          .flatMap((choice) =>
+            backgrounds.map((background, index) =>
+              choiceMarker(choice, background, index),
+            ),
+          )
+          .join("")}
+        <g class="region-axis-labels">
+          <text x="95" y="186" text-anchor="middle">Foreground luminance →</text>
+          <text x="9" y="95" transform="rotate(-90 9 95)" text-anchor="middle">Background luminance →</text>
+        </g>
+      </svg>
+      <div class="region-color-keys selection-choices">
+        ${choices
+          .map((choice) => {
+            const selected = choice.color === selectedColor;
+            return regionColorKey(
+              rgbToOklch(hexToRgb(choice.color)),
+              selected ? "resolved" : "candidate",
+              `${selected ? "Selected" : "Not selected"} · worst ${choice.value.toFixed(2)}:1`,
+            );
+          })
+          .join("")}
+      </div>
+      <figcaption><span><i></i>Contrast ≥ ${target.toFixed(1)}:1 regions beyond the curves</span><span>Numbers match declared backgrounds</span></figcaption>
+    </figure>
+  `;
+}
+
+function polarPoint(hue, chroma, radius = 70) {
+  const angle = (hue * Math.PI) / 180;
+  const distance = Math.min(1, chroma / REGION_MAX_CHROMA) * radius;
+  return {
+    x: 95 + Math.sin(angle) * distance,
+    y: 95 - Math.cos(angle) * distance,
+  };
+}
+
+function polarFieldDataUrl(lightness) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 284;
+  canvas.height = 284;
+  const context = canvas.getContext("2d");
+  const image = context.createImageData(canvas.width, canvas.height);
+  const radius = canvas.width / 2;
+  for (let y = 0; y < canvas.height; y += 1) {
+    for (let x = 0; x < canvas.width; x += 1) {
+      const dx = x + 0.5 - radius;
+      const dy = y + 0.5 - radius;
+      const distance = Math.hypot(dx, dy);
+      const offset = (y * canvas.width + x) * 4;
+      if (distance > radius) {
+        image.data[offset + 3] = 0;
+        continue;
+      }
+      const hue = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
+      const chroma = (distance / radius) * REGION_MAX_CHROMA;
+      const raw = oklchToRawRgb({ l: lightness, c: chroma, h: hue });
+      const gamut = inGamut(raw);
+      const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
+      image.data[offset] = Math.round(source.r * 255);
+      image.data[offset + 1] = Math.round(source.g * 255);
+      image.data[offset + 2] = Math.round(source.b * 255);
+      image.data[offset + 3] = 255;
+    }
+  }
+  context.putImageData(image, 0, 0);
+  return canvas.toDataURL();
+}
+
+function polarGamutMap(check, color) {
+  const actual = rgbToOklch(hexToRgb(color));
+  const points = [];
+  for (let hue = 0; hue < 360; hue += 6) {
+    let low = 0;
+    let high = REGION_MAX_CHROMA;
+    for (let index = 0; index < 18; index += 1) {
+      const mid = (low + high) / 2;
+      if (inGamut(oklchToRawRgb({ l: actual.l, c: mid, h: hue }))) low = mid;
+      else high = mid;
+    }
+    points.push(polarPoint(hue, low));
+  }
+  const target = polarPoint(check.metrics.targetHue, actual.c);
+  const actualPoint = polarPoint(actual.h, actual.c);
+  const field = polarFieldDataUrl(actual.l);
+  const wedgeStart = polarPoint(
+    check.metrics.targetHue - check.metrics.tolerance,
+    REGION_MAX_CHROMA,
+  );
+  const wedgeEnd = polarPoint(
+    check.metrics.targetHue + check.metrics.tolerance,
+    REGION_MAX_CHROMA,
+  );
+  return `
+    <figure class="feasible-region-figure polar-region">
+      <svg viewBox="0 0 190 190" role="img" aria-label="Hue and chroma gamut at lightness ${actual.l.toFixed(3)}">
+        <circle class="polar-frame" cx="95" cy="95" r="70"></circle>
+        <image class="polar-color-field" href="${field}" x="24" y="24" width="142" height="142"></image>
+        <path class="region-boundary" d="${points.map(({ x, y }, index) => `${index ? "L" : "M"} ${x} ${y}`).join(" ")} Z"></path>
+        <path class="target-sector" d="M 95 95 L ${wedgeStart.x} ${wedgeStart.y} A 70 70 0 0 1 ${wedgeEnd.x} ${wedgeEnd.y} Z"></path>
+        <path class="region-movement validated" d="M ${target.x} ${target.y} L ${actualPoint.x} ${actualPoint.y}"></path>
+        <g class="region-point resolved"><path class="marker-halo" d="M ${actualPoint.x} ${actualPoint.y - 4.5} L ${actualPoint.x + 4} ${actualPoint.y + 3.5} L ${actualPoint.x - 4} ${actualPoint.y + 3.5} Z"></path><path class="marker-color" style="fill:${color}" d="M ${actualPoint.x} ${actualPoint.y - 4.5} L ${actualPoint.x + 4} ${actualPoint.y + 3.5} L ${actualPoint.x - 4} ${actualPoint.y + 3.5} Z"></path></g>
+        <text class="polar-center-label" x="95" y="99" text-anchor="middle">H × C</text>
+      </svg>
+      <div class="region-color-keys">
+        ${regionColorKey({ ...actual, h: check.metrics.targetHue }, "candidate", "Target relation")}
+        ${regionColorKey(actual, "resolved", "Actual color")}
+      </div>
+      <figcaption><span><i></i>Reproducible sRGB region</span><span>Fixed L ${actual.l.toFixed(3)}</span></figcaption>
+    </figure>
+  `;
+}
+
+function contrastConstraintVisual(check) {
+  const { target, pairs } = check.metrics;
+  const map =
+    check.decision.mode === "selected"
+      ? contrastSelectionPlane(check)
+      : (() => {
+          const candidate = rgbToOklch(
+            hexToRgb(check.decision.candidate.color),
+          );
+          const resolved = rgbToOklch(hexToRgb(check.decision.resolved.color));
+          const boundaryColors = ["#B7A7FF", "#FFB077", "#72D8C2", "#F08BA8"];
+          const alternatives = (check.decision.solutions ?? [])
+            .filter(({ selected }) => !selected)
+            .map((solution) => ({
+              color: solution.color,
+              label: `${solution.direction === "lighter" ? "Lighter" : "Darker"} ${solution.available ? "solution" : "endpoint"} · ${solution.available ? (solution.eligible ? "not nearest" : "rejected by role policy") : `fails at ${solution.ratio.toFixed(2)}:1`}`,
+            }));
+          return lcRegionMap({
+            hue: candidate.h,
+            predicate: (color) =>
+              pairs.every(
+                ({ background }) => contrastRatio(color, background) >= target,
+              ),
+            candidate,
+            resolved,
+            label: `Lightness and chroma combinations meeting ${target.toFixed(1)} to 1 contrast`,
+            feasibleLabel: `sRGB colors meeting ≥ ${target.toFixed(1)}:1 on every declared background`,
+            boundaries: pairs.map((pair, index) => ({
+              label: pair.backgroundName,
+              color: boundaryColors[index % boundaryColors.length],
+              limiting:
+                pair.backgroundName === check.metrics.limitingBackground,
+              predicate: (color) =>
+                contrastRatio(color, pair.background) >= target,
+            })),
+            alternatives,
+          });
+        })();
   return `
     <div class="constraint-pair-list">
       ${pairs
         .map(
-          (pair) => `
+          (pair, index) => `
             <div class="constraint-pair">
               <span class="constraint-pair-sample" style="color:${pair.foreground};background:${pair.background}">Aa</span>
-              <span><strong>${pair.ratio.toFixed(2)}:1</strong><small>on ${pair.backgroundName}</small></span>
+              <span><strong><b>${index + 1}</b>${pair.ratio.toFixed(2)}:1</strong><small>on ${pair.backgroundName}</small></span>
             </div>
           `,
         )
         .join("")}
     </div>
-    <div class="measure-rail contrast-rail" aria-label="Actual contrast ${actual.toFixed(2)} to 1; target ${target.toFixed(1)} to 1">
-      <span class="measure-safe-zone" style="left:${targetPosition}%"></span>
-      <span class="measure-threshold" style="left:${targetPosition}%"><i>${target.toFixed(1)} target</i></span>
-      ${candidatePosition !== null && Math.abs(candidateValue - actual) > 0.005 ? `<span class="measure-movement" style="left:${Math.min(candidatePosition, actualPosition)}%;width:${Math.abs(candidatePosition - actualPosition)}%"></span><span class="measure-point candidate" style="left:${candidatePosition}%"><i>candidate ${candidateValue.toFixed(2)}</i></span>` : ""}
-      <span class="measure-point final" style="left:${actualPosition}%"><i>${actual.toFixed(2)}</i></span>
-    </div>
-    <div class="measure-scale"><span>1:1</span><span>21:1</span></div>
+    ${map}
   `;
 }
 
@@ -1110,40 +1595,30 @@ function gamutConstraintVisual(check, color) {
   const candidate = check.metrics.candidate;
   const output = check.metrics.output;
   const boundary = check.metrics.boundary;
-  const maxChroma = Math.max(0.4, candidate.c * 1.12, boundary * 1.12);
-  const candidatePosition = Math.min(100, (candidate.c / maxChroma) * 100);
-  const outputPosition = Math.min(100, (output.c / maxChroma) * 100);
-  const boundaryPosition = Math.min(100, (boundary / maxChroma) * 100);
   const delta = output.c - candidate.c;
-  const moved = Math.abs(delta) >= 0.0005;
   return `
     <div class="gamut-swatches">
-      <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate)}"></span>
+      <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate).hex}"></span>
       <span aria-hidden="true">→</span>
       <span class="gamut-swatch" style="background:${color}"></span>
       <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>
     </div>
-    <div class="measure-rail gamut-rail" aria-label="Candidate chroma ${candidate.c.toFixed(3)}; output chroma ${output.c.toFixed(3)}">
-      <span class="gamut-safe-zone" style="width:${boundaryPosition}%"></span>
-      <span class="measure-threshold gamut-boundary" style="left:${boundaryPosition}%"><i>sRGB edge ${boundary.toFixed(3)}</i></span>
-      ${moved ? `<span class="measure-movement" style="left:${Math.min(candidatePosition, outputPosition)}%;width:${Math.abs(candidatePosition - outputPosition)}%"></span><span class="measure-point candidate" style="left:${candidatePosition}%"><i>candidate ${candidate.c.toFixed(3)}</i></span>` : ""}
-      <span class="measure-point final" style="left:${outputPosition}%"><i>output ${output.c.toFixed(3)}</i></span>
-    </div>
-    <div class="measure-scale"><span>C 0</span><span>C ${maxChroma.toFixed(2)}</span></div>
+    ${lcRegionMap({
+      hue: candidate.h,
+      candidate,
+      resolved: output,
+      label: `sRGB lightness and chroma gamut at hue ${candidate.h.toFixed(1)} degrees`,
+      feasibleLabel: "Reproducible sRGB colors",
+    })}
+    <p class="region-data-note">At candidate L ${candidate.l.toFixed(3)}, the sRGB edge is C ${boundary.toFixed(3)}.</p>
   `;
 }
 
 function relationConstraintVisual(check, color) {
   const { actualHue, targetHue, tolerance, deviation } = check.metrics;
-  const start = targetHue - tolerance;
-  const span = tolerance * 2;
   return `
     <div class="relation-visual">
-      <div class="constraint-wheel" style="--target-hue:${targetHue};--actual-hue:${actualHue};--target-start:${start}deg;--target-span:${span}deg">
-        <span class="wheel-target" aria-hidden="true"></span>
-        <span class="wheel-actual" style="--actual-color:${color}" aria-hidden="true"></span>
-        <span class="wheel-center">H</span>
-      </div>
+      ${polarGamutMap(check, color)}
       <dl class="relation-values">
         <div><dt>Target</dt><dd>${targetHue.toFixed(1)}° ± ${tolerance.toFixed(1)}°</dd></div>
         <div><dt>Actual</dt><dd>${actualHue.toFixed(1)}°</dd></div>
@@ -1153,24 +1628,34 @@ function relationConstraintVisual(check, color) {
   `;
 }
 
-function stateConstraintVisual(check, color) {
+function stateConstraintVisual(check, color, result) {
   const delta = Math.abs(check.metrics.deltaL);
   const target = check.targetValue;
-  const maxDelta = Math.max(0.08, target * 1.5, delta * 1.25);
-  const actualPosition = Math.min(100, (delta / maxDelta) * 100);
-  const targetPosition = Math.min(100, (target / maxDelta) * 100);
+  const tokens = tokenMap(result.tokens);
+  const origin = rgbToOklch(hexToRgb(tokens["primary button default"]));
+  const resolved = rgbToOklch(hexToRgb(color));
+  const direction = Math.sign(check.metrics.deltaL) || -1;
+  const candidate = {
+    l: Math.min(1, Math.max(0, origin.l + direction * target)),
+    c: origin.c,
+    h: origin.h,
+  };
+  const foreground = tokens["primary button text"];
   return `
     <div class="state-visual">
       <span class="state-color-preview" style="background:${color}"></span>
-      <div>
-        <div class="measure-rail state-rail" aria-label="Actual lightness change ${delta.toFixed(3)}; requested ${target.toFixed(3)}">
-          <span class="measure-safe-zone" style="left:${targetPosition}%"></span>
-          <span class="measure-threshold" style="left:${targetPosition}%"><i>requested ${target.toFixed(3)}</i></span>
-          <span class="measure-point final" style="left:${actualPosition}%"><i>ΔL ${delta.toFixed(3)}</i></span>
-        </div>
-        <div class="measure-scale"><span>No visible step</span><span>Stronger step</span></div>
-      </div>
+      ${lcRegionMap({
+        hue: origin.h,
+        predicate: (mapped, candidateColor) =>
+          contrastRatio(foreground, mapped) >= 4.5 &&
+          Math.abs(candidateColor.l - origin.l) >= target * 0.85,
+        candidate,
+        resolved,
+        label: `State colors meeting contrast and requested lightness distinction`,
+        feasibleLabel: `sRGB + text contrast + ΔL ≥ ${(target * 0.85).toFixed(3)}`,
+      })}
     </div>
+    <p class="region-data-note">Default L ${origin.l.toFixed(3)} · requested ΔL ${target.toFixed(3)} · resolved ΔL ${delta.toFixed(3)}</p>
   `;
 }
 
@@ -1180,7 +1665,7 @@ function constraintVisual(check, result) {
   if (check.category === "gamut") return gamutConstraintVisual(check, color);
   if (check.category === "relation")
     return relationConstraintVisual(check, color);
-  return stateConstraintVisual(check, color);
+  return stateConstraintVisual(check, color, result);
 }
 
 function renderConstraintMap(result) {

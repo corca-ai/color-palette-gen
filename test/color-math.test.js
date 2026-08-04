@@ -86,6 +86,50 @@ test("contrast solver finds the closest darker OKLCH color after sRGB export", (
     contrastRatio(solved.hex, "#FFFFFF") >= 4.5,
     "the rounded hex output must satisfy the target",
   );
+  assert.equal(
+    solved.solutions.find(({ selected }) => selected).direction,
+    "darker",
+  );
+  assert.ok(
+    solved.solutions.every(({ limitingBackground }) => limitingBackground),
+  );
+});
+
+test("contrast solver preserves rejected directional solutions for inspection", () => {
+  const solved = solveOklchContrast({
+    color: { l: 0.58, c: 0.04, h: 30 },
+    against: "#777777",
+    target: 3,
+    direction: "darker",
+  });
+
+  assert.equal(solved.strategy, "lightness");
+  assert.equal(
+    solved.solutions.some(({ direction }) => direction === "darker"),
+    true,
+  );
+  assert.equal(
+    solved.solutions.some(
+      ({ direction, eligible }) => direction === "lighter" && !eligible,
+    ),
+    true,
+  );
+});
+
+test("contrast solver preserves a failed directional endpoint", () => {
+  const solved = solveOklchContrast({
+    color: { l: 0.58, c: 0.04, h: 30 },
+    against: "#FFFFFF",
+    target: 4.5,
+    direction: "darker",
+  });
+  const lighter = solved.solutions.find(
+    ({ direction }) => direction === "lighter",
+  );
+
+  assert.equal(lighter.available, false);
+  assert.equal(lighter.selected, false);
+  assert.ok(lighter.ratio < 4.5);
 });
 
 test("contrast solver evaluates the worst case across multiple backgrounds", () => {

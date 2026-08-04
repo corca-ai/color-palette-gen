@@ -62,6 +62,30 @@ test("every generated token has a complete inspectable trace", () => {
   }
 });
 
+test("contrast artifacts preserve directional alternatives and their limiting backgrounds", () => {
+  const result = generatePalette({
+    primary: "#FF0000",
+    secondary: null,
+    additionalColors: [],
+    vibe: "balanced",
+    harmonyId: "default",
+  });
+  const diagnostic = result.artifacts["main text"].diagnostic.contrast;
+
+  assert.equal(diagnostic.solutions.length, 2);
+  assert.ok(
+    diagnostic.solutions.every(
+      ({ limitingBackground }) => typeof limitingBackground === "string",
+    ),
+  );
+  assert.equal(
+    diagnostic.solutions.some(
+      ({ direction, available }) => direction === "lighter" && !available,
+    ),
+    true,
+  );
+});
+
 test("representative full palettes remain computable and reportable", () => {
   for (const primary of primaries) {
     for (const vibe of Object.keys(VIBES)) {

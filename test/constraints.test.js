@@ -112,6 +112,11 @@ test("constraint checks identify how each value was decided", () => {
     "heuristic",
   );
   assert.match(find("main text", "contrast").decision.optimization, /nearest/i);
+  assert.equal(
+    typeof find("main text", "contrast").metrics.limitingBackground,
+    "string",
+  );
+  assert.deepEqual(find("main text", "contrast").decision.solutions, []);
 });
 
 test("constraint report exposes failing contrast rather than hiding it", () => {

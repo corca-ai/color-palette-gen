@@ -60,6 +60,10 @@ Generated samples에서는 실제 쓰임새를 먼저 이해할 수 있도록 Co
 Content가 기본 탭이라는 사실은 lineage를 결과 뒤로 옮기는 근거가 아니다. 하나는 결과
 영역 내부의 기본 관점이고, 다른 하나는 전체 생성·비교 흐름의 순서다.
 
+여섯 workspace tab은 항상 한눈에 보여야 하며 tab strip 자체를 좌우로 스크롤하지 않는다.
+넓은 화면에서는 한 줄, 좁은 화면에서는 `3열 × 2행`으로 배치한다. 화살표 키 탐색 순서는
+DOM 순서를 유지하며, 줄이 바뀌어도 숨겨진 tab이 생기지 않아야 한다.
+
 ## Constraint Map
 
 Constraint Map의 목적은 검사 개수를 압축해서 보여주는 것이 아니라, 디자이너가 다음
@@ -99,10 +103,47 @@ harmony switcher의 위치 연속성을 방해해서는 안 된다.
 
 각 category의 기본 시각화는 다음과 같다.
 
-- Contrast: foreground/background swatch, 실제 텍스트 sample, ratio track과 threshold
-- sRGB gamut: OKLCH chroma track 위 candidate/output과 chroma 감소량
-- Hue relation: 작은 color wheel 위 target arc, actual hue, angular deviation
-- State distinction: default/hover/active의 lightness sequence와 단계별 delta
+- Contrast solver: hue를 고정한 `OKLCH lightness × chroma` 평면의 통과 가능 영역
+- Black/white selection: foreground × background 상대 휘도 평면의 contrast 가능 영역
+- sRGB gamut: hue를 고정한 `OKLCH lightness × chroma` 평면의 재현 가능 영역
+- Hue relation: lightness를 고정한 `hue × chroma` polar gamut과 target sector
+- State distinction: hue를 고정한 `lightness × chroma` 평면의 gamut·contrast·step 교집합
+
+2차원 map의 면은 해당 좌표의 실제 색을 렌더링한다. 조건을 만족하지 못하는 색은 같은
+색 공간 안에서 어둡게 마스킹하고, feasible boundary는 확대되어도 두꺼워지지 않는 가는
+선으로만 표시한다. 따라서 단색 status fill이나 장식적인 gradient를 색 공간처럼 쓰지
+않는다. candidate는 diamond, resolved는 triangle로 표시하되 둘 다 해당 색으로 채운다.
+마커는 밝거나 어두운 색 공간 어디에서도 사라지지 않도록 검정 halo와 흰색 inner stroke를
+함께 사용한다. 두 값이 사실상 같거나 현재
+축척에서 겹치면 마커를 하나로 합치고 caption에 겹침을 알린다. 그래프 아래에는 각 점의 큰 swatch, HEX, OKLCH 값을 항상 노출해 작은 점의
+색만 보고 값을 추측하게 하지 않는다. 이동 path는 실제 좌표 차이가 있을 때만 그린다.
+그래프가 보여주는 축 이외의 값은 caption에 고정값으로 명시한다.
+
+그래프 안의 marker는 위치 확인만 담당하며 색상 식별용 swatch보다 작아야 한다. 인접한
+marker가 서로의 형태를 가릴 거리라면 둘을 겹쳐 그리지 않고 resolved marker 하나만
+표시한다.
+
+`SELECTED` 결정은 선택된 값만 표시하지 않는다. 허용된 모든 후보를 같은 좌표계에
+표시하고, 선택된 후보는 resolved triangle, 선택되지 않은 후보는 candidate diamond로
+구분한다. 각 후보의 swatch와 worst-case score를 그래프 아래에 함께 보여줘 무엇이
+탈락했고 왜 선택되지 않았는지 비교할 수 있어야 한다.
+
+연속형 contrast solver도 탐색한 darker/lighter 해를 provenance에 보존한다. 역할 정책이나
+최소 이동 기준으로 선택되지 않은 해는 square marker와 swatch로 표시한다. 여러 배경을
+동시에 검사하면 배경별 경계를 모두 그리고, 최종값에서 대비가 가장 낮은 limiting
+background의 경계를 강조한다. 전체 feasible field는 이 경계들의 교집합이다.
+교집합은 밝은 실제 색과 어두운 rejected 색의 경계로 이미 읽히므로 그 위에 별도의 흰색
+aggregate outline을 중복해서 그리지 않는다. Gamut처럼 단일 경계만 존재하는 경우에는
+고정밀도로 계산한 가는 outline을 유지한다.
+
+Harmony는 사용자가 상단 candidate를 전환하기 전에도 비교 가능해야 한다. Hue relationship
+wheel에는 선택되지 않은 harmony가 만들 secondary/additional 방향을 낮은 위계의 radial
+mark로 표시하고, 아래 비교 목록에서 세 색의 조합과 선택 상태를 함께 보여준다. 명시적
+사용자 색은 harmony가 변경하지 않으므로 모든 후보에서 같은 위치로 표시한다.
+
+색 공간 raster는 외부 이미지가 아니라 현재 입력과 constraint로 브라우저에서 생성한다.
+고해상도 화면에서도 보간이나 확대 때문에 경계가 계단처럼 보이지 않도록, 화면 표시
+크기의 최소 2배 해상도로 계산한다. 성능을 위해 저해상도 이미지를 확대하지 않는다.
 
 핵심 판정 근거는 카드 안에 항상 보인다. 전체 OKLCH 값, recipe, 상세 계산은
 `Show calculation`이나 token inspector에 둘 수 있지만, inspector를 열어야만 통과 이유를
