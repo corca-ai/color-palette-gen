@@ -74,10 +74,30 @@ Constraint Map의 목적은 검사 개수를 압축해서 보여주는 것이 �
 3. 후보값과 최종값은 그 범위의 어디에 있는가?
 4. 조건을 만족시키기 위해 어떤 축을 얼마나 움직였는가?
 
-검사는 `Overview → Contrast → sRGB gamut → Hue relation → State distinction`
-순서의 세로 챕터로 모두 노출한다. 상단 category control은 내용을 숨기는 filter tab이
-아니라 해당 챕터로 이동하는 목차다. 별도의 floating navigation으로 만들지 않으며,
-harmony switcher의 위치 연속성을 방해해서는 안 된다.
+검사는 `Overview → Contrast → sRGB gamut → Hue relation → State distinction` 순서를
+유지하지만 모든 상세 카드를 기본 노출하지 않는다. 기본 `Overview`는 category 상태만
+보여준다. category를 선택하면 그래프 전체가 아니라 가벼운 check index를 먼저 보여주고,
+check를 선택했을 때 카드 하나를 렌더링한다. `Corrections only`는 독립 navigation이 아닌
+현재 category 또는 token 범위에 적용되는 상태 filter다. `← All constraints`는 Overview로
+돌아가는 breadcrumb 역할을 한다. Constraint Map 상단의 `View applied samples`는 상세
+목록을 건너뛰고 Generated samples로 이동한다.
+
+Lineage graph는 같은 detail panel의 또 다른 진입점이다. 모든 node와 edge는 keyboard와
+pointer로 선택 가능하다. token node는 그 token에 연결된 모든 check 카드를, source node는
+source 설명을, edge는 해당 derivation 또는 constraint 관계 카드를 보여준다. Lineage
+선택이 곧바로 side inspector를 열어서는 안 된다. Side inspector는 상세 카드의
+`Full calculation`에서만 전체 token trace를 보여준다. 클릭할 수 없는 것처럼 보이는
+interactive node나, 클릭할 수 있는 것처럼 보이지만 아무 동작도 없는 edge를 만들지 않는다.
+
+Constraint report는 입력 또는 harmony가 변경될 때 한 번만 생성한다. category, node, edge
+사이를 이동할 때는 기존 report를 필터링하며 다시 계산하지 않는다. 색 공간 raster와
+boundary는 입력 조건을 포함한 key로 cache하고, 같은 카드를 다시 열 때 재사용한다.
+
+카드 안에서도 모든 provenance를 동시에 펼치지 않는다. 기본 상태는 mode와
+candidate → resolved 요약만 보여주고, 전체 `Intent → Candidate → Decision → Resolved`,
+optimization, locked axis는 `Full decision path`를 열어 확인한다. 이는 정보를 삭제하는
+것이 아니라 같은 카드 안에서 progressive disclosure를 적용하는 것이다. 글자 크기를
+줄여 밀도를 확보하지 않는다.
 
 모든 그래프는 가능한 한 동일한 문법을 사용한다.
 
@@ -148,6 +168,20 @@ mark로 표시하고, 아래 비교 목록에서 세 색의 조합과 선택 상
 핵심 판정 근거는 카드 안에 항상 보인다. 전체 OKLCH 값, recipe, 상세 계산은
 `Show calculation`이나 token inspector에 둘 수 있지만, inspector를 열어야만 통과 이유를
 알 수 있게 만들지 않는다. 빈 matrix cell과 상태만 표시하는 축약 표는 사용하지 않는다.
+
+Constraint 카드는 heading, decision summary, measured-value summary, graph, interpretation,
+calculation link 순서를 공통으로 사용한다. 나란한 카드의 graph가 위아래로 흔들리지 않도록
+heading과 measured-value summary의 공간을 맞추고 모든 graph plot에 같은 최대 너비를
+적용한다. 글자 크기를 줄여 정렬하지 않는다.
+
+인접한 위치에 같은 상태를 두 번 쓰지 않는다. 카드 상단 result는 constraint의 통과·보정
+여부를, decision badge는 수행된 연산을 설명한다. 반면 정확한 수치, graph legend,
+접혀 있는 full decision path는 각각 빠른 판정, 시각적 해석, 상세 검증이라는 서로 다른
+역할이 있으므로 유지한다.
+
+Hue relation의 target과 actual이 표시 정밀도상 같으면 두 수치와 marker를 반복하지 않고
+`Target matched`인 단일 결과로 합친다. 실제 편차가 있을 때만 target, actual, deviation과
+두 지점 사이의 이동선을 각각 표시한다.
 
 ### Component usage contracts
 

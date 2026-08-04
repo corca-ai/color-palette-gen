@@ -12,7 +12,11 @@
   </head>
   <body>
     <header class="site-header">
-      <a class="wordmark" href="#page-title" aria-label="Back to palette inputs">
+      <a
+        class="wordmark"
+        href="#page-title"
+        aria-label="Back to palette inputs"
+      >
         <span class="wordmark-mark" aria-hidden="true"></span>
         <span>Color Lab</span>
       </a>
@@ -176,14 +180,13 @@
           id="hue-relationship-card"
           aria-labelledby="hue-relationship-title"
         ></section>
-        <section
-          class="constraint-map"
-          aria-labelledby="constraint-map-title"
-        >
+        <section class="constraint-map" aria-labelledby="constraint-map-title">
           <div class="constraint-map-heading">
             <div>
               <p class="eyebrow">Constraint map</p>
-              <h3 id="constraint-map-title">Checks against explicit targets.</h3>
+              <h3 id="constraint-map-title">
+                Checks against explicit targets.
+              </h3>
             </div>
             <p>
               Every mark compares an actual value with an explicit target.
@@ -195,6 +198,28 @@
             id="constraint-summary"
             aria-label="Constraint summary"
           ></div>
+          <div
+            class="constraint-view-toolbar"
+            aria-label="Constraint detail view"
+          >
+            <div class="constraint-detail-context">
+              <button type="button" id="constraint-back-button">
+                ← All constraints
+              </button>
+              <span id="constraint-current-view">Overview</span>
+            </div>
+            <label class="constraint-corrections-filter">
+              <input type="checkbox" id="constraint-corrections-only" />
+              Corrections only
+            </label>
+            <button
+              type="button"
+              class="constraint-skip-button"
+              id="constraint-skip-button"
+            >
+              View applied samples <span aria-hidden="true">↓</span>
+            </button>
+          </div>
           <div class="constraint-detail-layout">
             <div class="constraint-chapters" id="constraint-chapters"></div>
           </div>
@@ -331,7 +356,11 @@
               <div>
                 <a aria-disabled="true" data-preview-only>Stories</a>
                 <a aria-disabled="true" data-preview-only>About</a>
-                <button class="sample-primary-button" type="button" data-preview-only>
+                <button
+                  class="sample-primary-button"
+                  type="button"
+                  data-preview-only
+                >
                   Subscribe
                 </button>
               </div>
@@ -362,20 +391,29 @@
               </div>
             </article>
             <div class="accent-family-grid">
-              <article class="accent-family-card secondary-family-card" id="secondary-family-card">
+              <article
+                class="accent-family-card secondary-family-card"
+                id="secondary-family-card"
+              >
                 <span class="accent-family-dot" aria-hidden="true"></span>
                 <p>Secondary family</p>
                 <h4>A supporting action with its own visual voice.</h4>
-                <a aria-disabled="true" data-preview-only>Explore the secondary path <span>→</span></a>
+                <a aria-disabled="true" data-preview-only
+                  >Explore the secondary path <span>→</span></a
+                >
               </article>
-              <article class="accent-family-card decorative-family-card" id="decorative-family-card">
+              <article
+                class="accent-family-card decorative-family-card"
+                id="decorative-family-card"
+              >
                 <span class="accent-family-dot" aria-hidden="true"></span>
                 <p>Additional family</p>
                 <h4>A distinct highlight for optional content.</h4>
                 <span
                   class="accent-family-badge"
                   data-color-usage="featured-note-badge"
-                >Featured note</span>
+                  >Featured note</span
+                >
               </article>
             </div>
           </div>
@@ -394,8 +432,8 @@
               <p class="sample-kicker">Early access</p>
               <h3>Inspect a palette before you use it.</h3>
               <p>
-                This non-submitting fixture checks text hierarchy,
-                field boundaries, button contrast, and keyboard focus.
+                This non-submitting fixture checks text hierarchy, field
+                boundaries, button contrast, and keyboard focus.
               </p>
             </div>
             <form class="sample-form" data-preview-form>
@@ -405,17 +443,16 @@
                 type="email"
                 value="designer@example.com"
               />
-              <span class="sample-help">Preview value only. Nothing is collected or sent.</span>
+              <span class="sample-help"
+                >Preview value only. Nothing is collected or sent.</span
+              >
               <label for="sample-role">Your role</label>
               <select id="sample-role">
                 <option>Designer</option>
                 <option>Developer</option>
                 <option>Researcher</option>
               </select>
-              <div
-                class="sample-form-accent-note"
-                id="form-decorative-note"
-              >
+              <div class="sample-form-accent-note" id="form-decorative-note">
                 <i aria-hidden="true"></i>
                 <span>
                   <strong>Palette note</strong>
@@ -432,7 +469,11 @@
                 >
                   Save draft
                 </button>
-                <button class="sample-primary-button" type="submit" data-preview-only>
+                <button
+                  class="sample-primary-button"
+                  type="submit"
+                  data-preview-only
+                >
                   Request access
                 </button>
               </div>
@@ -458,11 +499,16 @@
             </p>
           </div>
           <div class="state-grid" id="state-grid"></div>
-          <section class="button-lab-section" aria-labelledby="button-hierarchy-title">
+          <section
+            class="button-lab-section"
+            aria-labelledby="button-hierarchy-title"
+          >
             <div class="button-lab-heading">
               <div>
                 <p class="sample-kicker">Action hierarchy</p>
-                <h4 id="button-hierarchy-title">Generated roles and composed examples.</h4>
+                <h4 id="button-hierarchy-title">
+                  Generated roles and composed examples.
+                </h4>
               </div>
               <p>
                 Primary is a generated button role. Secondary and quiet actions
@@ -471,11 +517,16 @@
             </div>
             <div class="button-hierarchy-grid" id="button-hierarchy-grid"></div>
           </section>
-          <section class="button-lab-section button-context-section" aria-labelledby="button-context-title">
+          <section
+            class="button-lab-section button-context-section"
+            aria-labelledby="button-context-title"
+          >
             <div class="button-lab-heading">
               <div>
                 <p class="sample-kicker">Usage contexts</p>
-                <h4 id="button-context-title">The same hierarchy in working layouts.</h4>
+                <h4 id="button-context-title">
+                  The same hierarchy in working layouts.
+                </h4>
               </div>
               <p>
                 Compare dominant, supporting, and quiet actions on page and
@@ -525,7 +576,10 @@
     </main>
 
     <footer>
-      <p>Color Lab prototype · Values are calculated in OKLCH and exported as sRGB hex.</p>
+      <p>
+        Color Lab prototype · Values are calculated in OKLCH and exported as
+        sRGB hex.
+      </p>
     </footer>
 
     <aside

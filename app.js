@@ -61,6 +61,14 @@ const harmonySwitcherNote = document.querySelector("#harmony-switcher-note");
 const hueRelationshipCard = document.querySelector("#hue-relationship-card");
 const constraintSummary = document.querySelector("#constraint-summary");
 const constraintChapters = document.querySelector("#constraint-chapters");
+const constraintBackButton = document.querySelector("#constraint-back-button");
+const constraintCurrentView = document.querySelector(
+  "#constraint-current-view",
+);
+const constraintCorrectionsOnly = document.querySelector(
+  "#constraint-corrections-only",
+);
+const constraintSkipButton = document.querySelector("#constraint-skip-button");
 const constraintCertificate = document.querySelector("#constraint-certificate");
 const toast = document.querySelector("#toast");
 
@@ -69,6 +77,8 @@ let currentConstraintReport;
 let activeDebugFunction = "primary button default";
 let activeConstraintFunction = "main text";
 let activeHarmonyId = "default";
+let activeConstraintSelection = { kind: "overview" };
+let correctionsOnly = false;
 
 function tokenMap(tokens) {
   return Object.fromEntries(
@@ -1088,70 +1098,90 @@ function constraintStatusSummary(checks) {
 function decisionJourney(check) {
   const decision = check.decision;
   if (!decision) return "";
+  const matchedRelation =
+    check.category === "relation" &&
+    decision.resolved.color &&
+    relationTargetMatchesActual(check, decision.resolved.color);
   const modeLabel = decision.mode.toUpperCase();
   const connector = decision.mode === "validated" ? "validated" : "changed";
   const delta = decision.delta
     ? `ΔL ${decision.delta.deltaL.toFixed(3)} · ΔC ${decision.delta.deltaC.toFixed(3)} · ΔH ${decision.delta.deltaH.toFixed(1)}° · ΔE ${decision.delta.deltaE.toFixed(3)}`
     : "";
-  const outcome =
-    decision.mode === "selected"
-      ? "Choice made"
-      : decision.changed
-        ? "Color changed"
-        : "No color change";
   return `
     <div class="decision-journey ${decision.mode}">
       <div class="decision-mode-row">
         <span class="decision-mode">${modeLabel}</span>
-        <span>${outcome}</span>
-      </div>
-      <div class="decision-flow">
-        <div class="decision-step intent">
-          <span>01 Intent</span>
-          <strong>${decision.intent}</strong>
-        </div>
-        <i class="decision-connector ${connector}" aria-hidden="true"></i>
-        <div class="decision-step candidate">
-          <span>02 Candidate</span>
-          ${decision.candidate.color ? `<i class="decision-swatch" style="background:${decision.candidate.color}"></i>` : ""}
-          <strong>${decision.candidate.label}</strong>
-          ${Number.isFinite(decision.candidate.value) ? `<small>${decision.candidate.value.toFixed(2)}:1</small>` : ""}
-        </div>
-        <i class="decision-connector ${connector}" aria-hidden="true"></i>
-        <div class="decision-step action">
-          <span>03 Decision</span>
-          <strong>${modeLabel}</strong>
-          <small>${decision.axis}</small>
-        </div>
-        <i class="decision-connector ${connector}" aria-hidden="true"></i>
-        <div class="decision-step resolved">
-          <span>04 Resolved</span>
-          ${decision.resolved.color ? `<i class="decision-swatch" style="background:${decision.resolved.color}"></i>` : ""}
-          <strong>${decision.resolved.label}</strong>
-          ${Number.isFinite(decision.resolved.value) ? `<small>${decision.resolved.value.toFixed(2)}:1</small>` : ""}
-        </div>
       </div>
       ${
-        decision.choices
-          ? `<div class="decision-choices" aria-label="Compared candidates">
-              ${decision.choices
-                .map(
-                  ({ color, value }) => `
-                    <span class="${color === decision.resolved.color ? "selected" : ""}">
-                      <i style="background:${color}"></i>
-                      <strong>${color}</strong>
-                      <small>${value.toFixed(2)}:1</small>
-                    </span>
-                  `,
-                )
-                .join("")}
-            </div>`
-          : ""
+        matchedRelation
+          ? `<div class="decision-compact-path matched">
+               <div>
+                 <i class="decision-swatch" style="background:${decision.resolved.color}"></i>
+                 <span><small>Resolved relation</small><strong>Target matched · ${decision.resolved.label}</strong></span>
+               </div>
+             </div>`
+          : `<div class="decision-compact-path">
+               <div>
+                 ${decision.candidate.color ? `<i class="decision-swatch" style="background:${decision.candidate.color}"></i>` : ""}
+                 <span><small>Candidate</small><strong>${decision.candidate.label}</strong></span>
+               </div>
+               <span aria-hidden="true">→</span>
+               <div>
+                 ${decision.resolved.color ? `<i class="decision-swatch" style="background:${decision.resolved.color}"></i>` : ""}
+                 <span><small>Resolved</small><strong>${decision.resolved.label}</strong></span>
+               </div>
+             </div>`
       }
-      <div class="decision-rationale">
-        <p>${decision.optimization}</p>
-        <span>${decision.lockedAxes.length ? `${decision.lockedAxes.map((axis) => `${axis} locked`).join(" · ")} · ` : ""}${delta || decision.axis}</span>
-      </div>
+      <details class="decision-details">
+        <summary>Full decision path</summary>
+        <div class="decision-flow">
+          <div class="decision-step intent">
+            <span>01 Intent</span>
+            <strong>${decision.intent}</strong>
+          </div>
+          <i class="decision-connector ${connector}" aria-hidden="true"></i>
+          <div class="decision-step candidate">
+            <span>02 Candidate</span>
+            ${decision.candidate.color ? `<i class="decision-swatch" style="background:${decision.candidate.color}"></i>` : ""}
+            <strong>${decision.candidate.label}</strong>
+            ${Number.isFinite(decision.candidate.value) ? `<small>${decision.candidate.value.toFixed(2)}:1</small>` : ""}
+          </div>
+          <i class="decision-connector ${connector}" aria-hidden="true"></i>
+          <div class="decision-step action">
+            <span>03 Decision</span>
+            <strong>${modeLabel}</strong>
+            <small>${decision.axis}</small>
+          </div>
+          <i class="decision-connector ${connector}" aria-hidden="true"></i>
+          <div class="decision-step resolved">
+            <span>04 Resolved</span>
+            ${decision.resolved.color ? `<i class="decision-swatch" style="background:${decision.resolved.color}"></i>` : ""}
+            <strong>${decision.resolved.label}</strong>
+            ${Number.isFinite(decision.resolved.value) ? `<small>${decision.resolved.value.toFixed(2)}:1</small>` : ""}
+          </div>
+        </div>
+        ${
+          decision.choices
+            ? `<div class="decision-choices" aria-label="Compared candidates">
+                ${decision.choices
+                  .map(
+                    ({ color, value }) => `
+                      <span class="${color === decision.resolved.color ? "selected" : ""}">
+                        <i style="background:${color}"></i>
+                        <strong>${color}</strong>
+                        <small>${value.toFixed(2)}:1</small>
+                      </span>
+                    `,
+                  )
+                  .join("")}
+              </div>`
+            : ""
+        }
+        <div class="decision-rationale">
+          <p>${decision.optimization}</p>
+          <span>${decision.lockedAxes.length ? `${decision.lockedAxes.map((axis) => `${axis} locked`).join(" · ")} · ` : ""}${delta || decision.axis}</span>
+        </div>
+      </details>
     </div>
   `;
 }
@@ -1160,6 +1190,18 @@ const REGION_WIDTH = 360;
 const REGION_HEIGHT = 190;
 const REGION_MARGIN = { left: 34, right: 14, top: 14, bottom: 28 };
 const REGION_MAX_CHROMA = 0.4;
+const regionFieldCache = new Map();
+const regionBoundaryCache = new Map();
+const polarFieldCache = new Map();
+
+function cacheResult(cache, key, create) {
+  if (!key) return create();
+  if (cache.has(key)) return cache.get(key);
+  if (cache.size >= 80) cache.clear();
+  const value = create();
+  cache.set(key, value);
+  return value;
+}
 
 function regionX(lightness) {
   return (
@@ -1177,41 +1219,43 @@ function regionY(chroma) {
   );
 }
 
-function sampledChromaBoundary(hue, predicate = () => true) {
-  const points = [];
-  const lightnessSteps = 192;
-  const coarseChromaSteps = 48;
-  const accepts = (color) => {
-    const raw = oklchToRawRgb(color);
-    return inGamut(raw) && predicate(oklchToHex(color).hex, color);
-  };
-  for (let index = 0; index <= lightnessSteps; index += 1) {
-    const lightness = 0.02 + (index / lightnessSteps) * 0.96;
-    let maximum = null;
-    for (let step = 0; step <= coarseChromaSteps; step += 1) {
-      const chroma = (step / coarseChromaSteps) * REGION_MAX_CHROMA;
-      const color = { l: lightness, c: chroma, h: hue };
-      if (accepts(color)) maximum = chroma;
-    }
-    let upper =
-      maximum === null || maximum >= REGION_MAX_CHROMA
-        ? null
-        : Math.min(
-            REGION_MAX_CHROMA,
-            maximum + REGION_MAX_CHROMA / coarseChromaSteps,
-          );
-    if (maximum !== null && upper !== null) {
-      let lower = maximum;
-      for (let refinement = 0; refinement < 14; refinement += 1) {
-        const chroma = (lower + upper) / 2;
-        if (accepts({ l: lightness, c: chroma, h: hue })) lower = chroma;
-        else upper = chroma;
+function sampledChromaBoundary(hue, predicate = () => true, cacheKey = null) {
+  return cacheResult(regionBoundaryCache, cacheKey, () => {
+    const points = [];
+    const lightnessSteps = 192;
+    const coarseChromaSteps = 48;
+    const accepts = (color) => {
+      const raw = oklchToRawRgb(color);
+      return inGamut(raw) && predicate(oklchToHex(color).hex, color);
+    };
+    for (let index = 0; index <= lightnessSteps; index += 1) {
+      const lightness = 0.02 + (index / lightnessSteps) * 0.96;
+      let maximum = null;
+      for (let step = 0; step <= coarseChromaSteps; step += 1) {
+        const chroma = (step / coarseChromaSteps) * REGION_MAX_CHROMA;
+        const color = { l: lightness, c: chroma, h: hue };
+        if (accepts(color)) maximum = chroma;
       }
-      maximum = lower;
+      let upper =
+        maximum === null || maximum >= REGION_MAX_CHROMA
+          ? null
+          : Math.min(
+              REGION_MAX_CHROMA,
+              maximum + REGION_MAX_CHROMA / coarseChromaSteps,
+            );
+      if (maximum !== null && upper !== null) {
+        let lower = maximum;
+        for (let refinement = 0; refinement < 14; refinement += 1) {
+          const chroma = (lower + upper) / 2;
+          if (accepts({ l: lightness, c: chroma, h: hue })) lower = chroma;
+          else upper = chroma;
+        }
+        maximum = lower;
+      }
+      points.push(maximum !== null ? { lightness, chroma: maximum } : null);
     }
-    points.push(maximum !== null ? { lightness, chroma: maximum } : null);
-  }
-  return points;
+    return points;
+  });
 }
 
 function regionCurvePath(points) {
@@ -1253,32 +1297,38 @@ function regionAlternativePoint(color) {
   return `<g class="region-point alternative"><path class="marker-halo" d="${path}"></path><path class="marker-color" style="fill:${fill}" d="${path}"></path></g>`;
 }
 
-function lcFieldDataUrl(hue, predicate = () => true) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 624;
-  canvas.height = 296;
-  const context = canvas.getContext("2d");
-  const image = context.createImageData(canvas.width, canvas.height);
-  for (let y = 0; y < canvas.height; y += 1) {
-    const chroma = (1 - y / (canvas.height - 1)) * REGION_MAX_CHROMA;
-    for (let x = 0; x < canvas.width; x += 1) {
-      const lightness = x / (canvas.width - 1);
-      const color = { l: lightness, c: chroma, h: hue };
-      const raw = oklchToRawRgb(color);
-      const gamut = inGamut(raw);
-      const feasible = gamut && predicate(oklchToHex(color).hex, color);
-      const offset = (y * canvas.width + x) * 4;
-      const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
-      const visibility = feasible ? 1 : gamut ? 0.2 : 1;
-      const base = gamut ? 0.065 : 0;
-      image.data[offset] = Math.round((source.r * visibility + base) * 255);
-      image.data[offset + 1] = Math.round((source.g * visibility + base) * 255);
-      image.data[offset + 2] = Math.round((source.b * visibility + base) * 255);
-      image.data[offset + 3] = 255;
+function lcFieldDataUrl(hue, predicate = () => true, cacheKey = null) {
+  return cacheResult(regionFieldCache, cacheKey, () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 624;
+    canvas.height = 296;
+    const context = canvas.getContext("2d");
+    const image = context.createImageData(canvas.width, canvas.height);
+    for (let y = 0; y < canvas.height; y += 1) {
+      const chroma = (1 - y / (canvas.height - 1)) * REGION_MAX_CHROMA;
+      for (let x = 0; x < canvas.width; x += 1) {
+        const lightness = x / (canvas.width - 1);
+        const color = { l: lightness, c: chroma, h: hue };
+        const raw = oklchToRawRgb(color);
+        const gamut = inGamut(raw);
+        const feasible = gamut && predicate(oklchToHex(color).hex, color);
+        const offset = (y * canvas.width + x) * 4;
+        const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
+        const visibility = feasible ? 1 : gamut ? 0.2 : 1;
+        const base = gamut ? 0.065 : 0;
+        image.data[offset] = Math.round((source.r * visibility + base) * 255);
+        image.data[offset + 1] = Math.round(
+          (source.g * visibility + base) * 255,
+        );
+        image.data[offset + 2] = Math.round(
+          (source.b * visibility + base) * 255,
+        );
+        image.data[offset + 3] = 255;
+      }
     }
-  }
-  context.putImageData(image, 0, 0);
-  return canvas.toDataURL();
+    context.putImageData(image, 0, 0);
+    return canvas.toDataURL();
+  });
 }
 
 function regionColorKey(color, kind, label) {
@@ -1302,13 +1352,22 @@ function lcRegionMap({
   feasibleLabel,
   boundaries = [],
   alternatives = [],
+  cacheKey = null,
 }) {
-  const boundary = sampledChromaBoundary(hue, predicate);
+  const boundary = sampledChromaBoundary(
+    hue,
+    predicate,
+    cacheKey ? `${cacheKey}:aggregate-boundary` : null,
+  );
   const boundaryLayers = boundaries.map((item) => ({
     ...item,
-    points: sampledChromaBoundary(hue, item.predicate),
+    points: sampledChromaBoundary(hue, item.predicate, item.cacheKey),
   }));
-  const field = lcFieldDataUrl(hue, predicate);
+  const field = lcFieldDataUrl(
+    hue,
+    predicate,
+    cacheKey ? `${cacheKey}:field` : null,
+  );
   const candidatePoint = candidate
     ? `${regionX(candidate.l)},${regionY(candidate.c)}`
     : null;
@@ -1460,40 +1519,57 @@ function polarPoint(hue, chroma, radius = 70) {
   };
 }
 
+function relationTargetMatchesActual(check, color) {
+  if (check.category !== "relation" || !color) return false;
+  const actual = rgbToOklch(hexToRgb(color));
+  const targetColor = oklchToHex({
+    ...actual,
+    h: check.metrics.targetHue,
+  }).hex;
+  return (
+    targetColor.toUpperCase() === color.toUpperCase() ||
+    check.metrics.targetHue.toFixed(1) === check.metrics.actualHue.toFixed(1)
+  );
+}
+
 function polarFieldDataUrl(lightness) {
-  const canvas = document.createElement("canvas");
-  canvas.width = 284;
-  canvas.height = 284;
-  const context = canvas.getContext("2d");
-  const image = context.createImageData(canvas.width, canvas.height);
-  const radius = canvas.width / 2;
-  for (let y = 0; y < canvas.height; y += 1) {
-    for (let x = 0; x < canvas.width; x += 1) {
-      const dx = x + 0.5 - radius;
-      const dy = y + 0.5 - radius;
-      const distance = Math.hypot(dx, dy);
-      const offset = (y * canvas.width + x) * 4;
-      if (distance > radius) {
-        image.data[offset + 3] = 0;
-        continue;
+  const cacheKey = `polar:${lightness.toFixed(4)}`;
+  return cacheResult(polarFieldCache, cacheKey, () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 284;
+    canvas.height = 284;
+    const context = canvas.getContext("2d");
+    const image = context.createImageData(canvas.width, canvas.height);
+    const radius = canvas.width / 2;
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        const dx = x + 0.5 - radius;
+        const dy = y + 0.5 - radius;
+        const distance = Math.hypot(dx, dy);
+        const offset = (y * canvas.width + x) * 4;
+        if (distance > radius) {
+          image.data[offset + 3] = 0;
+          continue;
+        }
+        const hue = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
+        const chroma = (distance / radius) * REGION_MAX_CHROMA;
+        const raw = oklchToRawRgb({ l: lightness, c: chroma, h: hue });
+        const gamut = inGamut(raw);
+        const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
+        image.data[offset] = Math.round(source.r * 255);
+        image.data[offset + 1] = Math.round(source.g * 255);
+        image.data[offset + 2] = Math.round(source.b * 255);
+        image.data[offset + 3] = 255;
       }
-      const hue = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
-      const chroma = (distance / radius) * REGION_MAX_CHROMA;
-      const raw = oklchToRawRgb({ l: lightness, c: chroma, h: hue });
-      const gamut = inGamut(raw);
-      const source = gamut ? raw : { r: 0.065, g: 0.06, b: 0.055 };
-      image.data[offset] = Math.round(source.r * 255);
-      image.data[offset + 1] = Math.round(source.g * 255);
-      image.data[offset + 2] = Math.round(source.b * 255);
-      image.data[offset + 3] = 255;
     }
-  }
-  context.putImageData(image, 0, 0);
-  return canvas.toDataURL();
+    context.putImageData(image, 0, 0);
+    return canvas.toDataURL();
+  });
 }
 
 function polarGamutMap(check, color) {
   const actual = rgbToOklch(hexToRgb(color));
+  const targetMatchesActual = relationTargetMatchesActual(check, color);
   const points = [];
   for (let hue = 0; hue < 360; hue += 6) {
     let low = 0;
@@ -1523,13 +1599,17 @@ function polarGamutMap(check, color) {
         <image class="polar-color-field" href="${field}" x="24" y="24" width="142" height="142"></image>
         <path class="region-boundary" d="${points.map(({ x, y }, index) => `${index ? "L" : "M"} ${x} ${y}`).join(" ")} Z"></path>
         <path class="target-sector" d="M 95 95 L ${wedgeStart.x} ${wedgeStart.y} A 70 70 0 0 1 ${wedgeEnd.x} ${wedgeEnd.y} Z"></path>
-        <path class="region-movement validated" d="M ${target.x} ${target.y} L ${actualPoint.x} ${actualPoint.y}"></path>
+        ${targetMatchesActual ? "" : `<path class="region-movement validated" d="M ${target.x} ${target.y} L ${actualPoint.x} ${actualPoint.y}"></path>`}
         <g class="region-point resolved"><path class="marker-halo" d="M ${actualPoint.x} ${actualPoint.y - 4.5} L ${actualPoint.x + 4} ${actualPoint.y + 3.5} L ${actualPoint.x - 4} ${actualPoint.y + 3.5} Z"></path><path class="marker-color" style="fill:${color}" d="M ${actualPoint.x} ${actualPoint.y - 4.5} L ${actualPoint.x + 4} ${actualPoint.y + 3.5} L ${actualPoint.x - 4} ${actualPoint.y + 3.5} Z"></path></g>
         <text class="polar-center-label" x="95" y="99" text-anchor="middle">H × C</text>
       </svg>
       <div class="region-color-keys">
-        ${regionColorKey({ ...actual, h: check.metrics.targetHue }, "candidate", "Target relation")}
-        ${regionColorKey(actual, "resolved", "Actual color")}
+        ${
+          targetMatchesActual
+            ? regionColorKey(actual, "unchanged", "Target matched")
+            : `${regionColorKey({ ...actual, h: check.metrics.targetHue }, "candidate", "Target relation")}
+               ${regionColorKey(actual, "resolved", "Actual color")}`
+        }
       </div>
       <figcaption><span><i></i>Reproducible sRGB region</span><span>Fixed L ${actual.l.toFixed(3)}</span></figcaption>
     </figure>
@@ -1553,6 +1633,7 @@ function contrastConstraintVisual(check) {
               color: solution.color,
               label: `${solution.direction === "lighter" ? "Lighter" : "Darker"} ${solution.available ? "solution" : "endpoint"} · ${solution.available ? (solution.eligible ? "not nearest" : "rejected by role policy") : `fails at ${solution.ratio.toFixed(2)}:1`}`,
             }));
+          const contrastCacheKey = `contrast:${candidate.h.toFixed(3)}:${target}:${pairs.map(({ background }) => background).join(",")}`;
           return lcRegionMap({
             hue: candidate.h,
             predicate: (color) =>
@@ -1563,6 +1644,7 @@ function contrastConstraintVisual(check) {
             resolved,
             label: `Lightness and chroma combinations meeting ${target.toFixed(1)} to 1 contrast`,
             feasibleLabel: `sRGB colors meeting ≥ ${target.toFixed(1)}:1 on every declared background`,
+            cacheKey: contrastCacheKey,
             boundaries: pairs.map((pair, index) => ({
               label: pair.backgroundName,
               color: boundaryColors[index % boundaryColors.length],
@@ -1570,22 +1652,25 @@ function contrastConstraintVisual(check) {
                 pair.backgroundName === check.metrics.limitingBackground,
               predicate: (color) =>
                 contrastRatio(color, pair.background) >= target,
+              cacheKey: `${contrastCacheKey}:background:${pair.background}`,
             })),
             alternatives,
           });
         })();
   return `
-    <div class="constraint-pair-list">
-      ${pairs
-        .map(
-          (pair, index) => `
-            <div class="constraint-pair">
-              <span class="constraint-pair-sample" style="color:${pair.foreground};background:${pair.background}">Aa</span>
-              <span><strong><b>${index + 1}</b>${pair.ratio.toFixed(2)}:1</strong><small>on ${pair.backgroundName}</small></span>
-            </div>
-          `,
-        )
-        .join("")}
+    <div class="constraint-visual-summary">
+      <div class="constraint-pair-list">
+        ${pairs
+          .map(
+            (pair, index) => `
+              <div class="constraint-pair">
+                <span class="constraint-pair-sample" style="color:${pair.foreground};background:${pair.background}">Aa</span>
+                <span><strong><b>${index + 1}</b>${pair.ratio.toFixed(2)}:1</strong><small>on ${pair.backgroundName}</small></span>
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
     </div>
     ${map}
   `;
@@ -1597,11 +1682,13 @@ function gamutConstraintVisual(check, color) {
   const boundary = check.metrics.boundary;
   const delta = output.c - candidate.c;
   return `
-    <div class="gamut-swatches">
-      <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate).hex}"></span>
-      <span aria-hidden="true">→</span>
-      <span class="gamut-swatch" style="background:${color}"></span>
-      <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>
+    <div class="constraint-visual-summary">
+      <div class="gamut-swatches">
+        <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate).hex}"></span>
+        <span aria-hidden="true">→</span>
+        <span class="gamut-swatch" style="background:${color}"></span>
+        <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>
+      </div>
     </div>
     ${lcRegionMap({
       hue: candidate.h,
@@ -1609,6 +1696,7 @@ function gamutConstraintVisual(check, color) {
       resolved: output,
       label: `sRGB lightness and chroma gamut at hue ${candidate.h.toFixed(1)} degrees`,
       feasibleLabel: "Reproducible sRGB colors",
+      cacheKey: `gamut:${candidate.h.toFixed(3)}`,
     })}
     <p class="region-data-note">At candidate L ${candidate.l.toFixed(3)}, the sRGB edge is C ${boundary.toFixed(3)}.</p>
   `;
@@ -1616,15 +1704,21 @@ function gamutConstraintVisual(check, color) {
 
 function relationConstraintVisual(check, color) {
   const { actualHue, targetHue, tolerance, deviation } = check.metrics;
+  const targetMatchesActual = relationTargetMatchesActual(check, color);
   return `
-    <div class="relation-visual">
-      ${polarGamutMap(check, color)}
+    <div class="constraint-visual-summary">
       <dl class="relation-values">
-        <div><dt>Target</dt><dd>${targetHue.toFixed(1)}° ± ${tolerance.toFixed(1)}°</dd></div>
-        <div><dt>Actual</dt><dd>${actualHue.toFixed(1)}°</dd></div>
-        <div><dt>Deviation</dt><dd>${deviation.toFixed(1)}°</dd></div>
+        ${
+          targetMatchesActual
+            ? `<div><dt>Hue</dt><dd>${actualHue.toFixed(1)}°</dd></div>
+               <div><dt>Status</dt><dd>Matches target · tolerance ± ${tolerance.toFixed(1)}°</dd></div>`
+            : `<div><dt>Target</dt><dd>${targetHue.toFixed(1)}° ± ${tolerance.toFixed(1)}°</dd></div>
+               <div><dt>Actual</dt><dd>${actualHue.toFixed(1)}°</dd></div>
+               <div><dt>Deviation</dt><dd>${deviation.toFixed(1)}°</dd></div>`
+        }
       </dl>
     </div>
+    ${polarGamutMap(check, color)}
   `;
 }
 
@@ -1642,20 +1736,21 @@ function stateConstraintVisual(check, color, result) {
   };
   const foreground = tokens["primary button text"];
   return `
-    <div class="state-visual">
+    <div class="constraint-visual-summary state-summary">
       <span class="state-color-preview" style="background:${color}"></span>
-      ${lcRegionMap({
-        hue: origin.h,
-        predicate: (mapped, candidateColor) =>
-          contrastRatio(foreground, mapped) >= 4.5 &&
-          Math.abs(candidateColor.l - origin.l) >= target * 0.85,
-        candidate,
-        resolved,
-        label: `State colors meeting contrast and requested lightness distinction`,
-        feasibleLabel: `sRGB + text contrast + ΔL ≥ ${(target * 0.85).toFixed(3)}`,
-      })}
+      <p class="region-data-note">Default L ${origin.l.toFixed(3)} · requested ΔL ${target.toFixed(3)} · resolved ΔL ${delta.toFixed(3)}</p>
     </div>
-    <p class="region-data-note">Default L ${origin.l.toFixed(3)} · requested ΔL ${target.toFixed(3)} · resolved ΔL ${delta.toFixed(3)}</p>
+    ${lcRegionMap({
+      hue: origin.h,
+      predicate: (mapped, candidateColor) =>
+        contrastRatio(foreground, mapped) >= 4.5 &&
+        Math.abs(candidateColor.l - origin.l) >= target * 0.85,
+      candidate,
+      resolved,
+      label: `State colors meeting contrast and requested lightness distinction`,
+      feasibleLabel: `sRGB + text contrast + ΔL ≥ ${(target * 0.85).toFixed(3)}`,
+      cacheKey: `state:${origin.h.toFixed(3)}:${foreground}:${target.toFixed(4)}:${origin.l.toFixed(4)}`,
+    })}
   `;
 }
 
@@ -1668,8 +1763,36 @@ function constraintVisual(check, result) {
   return stateConstraintVisual(check, color, result);
 }
 
-function renderConstraintMap(result) {
-  const report = buildConstraintReport(result);
+function constraintCardMarkup(check, result) {
+  return `
+    <article class="constraint-visual-card ${check.status}">
+      <div class="constraint-card-heading">
+        <div>
+          <span class="constraint-token-name">${check.token}</span>
+          <h5>${check.label}</h5>
+          ${check.usage ? `<span class="constraint-usage">Used by ${check.usage}</span>` : ""}
+        </div>
+        <span class="constraint-result-label ${check.status}">
+          <span class="constraint-mark" aria-hidden="true"></span>
+          ${constraintStatusLabel(check.status)}
+        </span>
+      </div>
+      ${decisionJourney(check)}
+      <div class="constraint-visual-stage ${check.category}">
+        ${constraintVisual(check, result)}
+      </div>
+      <p class="constraint-explanation">${check.explanation}</p>
+      <button type="button" class="constraint-inspect-button" data-constraint-token="${check.token}">
+        Full calculation <span aria-hidden="true">→</span>
+      </button>
+    </article>
+  `;
+}
+
+function renderConstraintMap(
+  result,
+  report = currentConstraintReport ?? buildConstraintReport(result),
+) {
   const categories = [
     [
       "contrast",
@@ -1703,9 +1826,10 @@ function renderConstraintMap(result) {
       return `
         <button
           type="button"
-          class="constraint-summary-item ${status}"
+          class="constraint-summary-item ${status} ${activeConstraintSelection.kind === "category" && activeConstraintSelection.category === category ? "active" : ""}"
           data-constraint-category="${category}"
-          aria-label="Jump to ${label} checks"
+          aria-label="Show only ${label} checks"
+          aria-pressed="${activeConstraintSelection.kind === "category" && activeConstraintSelection.category === category}"
         >
           <span class="constraint-mark" aria-hidden="true"></span>
           <span>
@@ -1717,56 +1841,98 @@ function renderConstraintMap(result) {
     })
     .join("");
 
-  constraintChapters.innerHTML = categories
-    .map(([category, label, description], index) => {
-      const checks = report.checks.filter(
-        (check) => check.category === category,
-      );
-      const { failed, adjusted, status } = constraintStatusSummary(checks);
-      return `
-        <section class="constraint-chapter" id="constraint-${category}" data-constraint-section="${category}">
-          <div class="constraint-chapter-heading">
-            <span class="constraint-chapter-index">0${index + 1}</span>
-            <div>
-              <h4>${label}</h4>
-              <p>${description}</p>
-            </div>
-            <span class="constraint-chapter-status ${status}">
+  const categoryMeta = Object.fromEntries(
+    categories.map(([category, label, description]) => [
+      category,
+      { label, description },
+    ]),
+  );
+  let title = "Overview";
+  let detailMarkup = `<div class="constraint-overview-message">
+    <span class="constraint-overview-mark" aria-hidden="true">↓</span>
+    <div><strong>Select a category, lineage node, or connection.</strong><p>Categories browse checks. Nodes show every check for one token. Connections explain one derivation relationship.</p></div>
+  </div>`;
+
+  if (activeConstraintSelection.kind === "category") {
+    const { category } = activeConstraintSelection;
+    const meta = categoryMeta[category];
+    title = meta.label;
+    let checks = report.checks.filter((check) => check.category === category);
+    if (correctionsOnly)
+      checks = checks.filter((check) => check.status !== "pass");
+    detailMarkup = `
+      <section class="constraint-check-index">
+        <div class="constraint-index-heading"><h4>${meta.label}</h4><p>${meta.description}</p></div>
+        <div class="constraint-check-list">
+          ${
+            checks.length
+              ? checks
+                  .map((check) => {
+                    const checkIndex = report.checks.indexOf(check);
+                    const matchedRelation =
+                      check.category === "relation" &&
+                      relationTargetMatchesActual(
+                        check,
+                        tokenMap(result.tokens)[check.token],
+                      );
+                    return `<button type="button" class="constraint-check-row ${check.status}" data-constraint-check="${checkIndex}">
               <span class="constraint-mark" aria-hidden="true"></span>
-              ${checks.length - failed}/${checks.length} met${adjusted ? ` · ${adjusted} adjusted` : ""}
-            </span>
-          </div>
-          <div class="constraint-card-grid ${category}">
-            ${checks
-              .map(
-                (check) => `
-                  <article class="constraint-visual-card ${check.status}">
-                    <div class="constraint-card-heading">
-                      <div>
-                        <span class="constraint-token-name">${check.token}</span>
-                        <h5>${check.label}</h5>
-                        ${check.usage ? `<span class="constraint-usage">Used by ${check.usage}</span>` : ""}
-                      </div>
-                      <span class="constraint-result-label ${check.status}">
-                        <span class="constraint-mark" aria-hidden="true"></span>
-                        ${constraintStatusLabel(check.status)}
-                      </span>
-                    </div>
-                    ${decisionJourney(check)}
-                    ${constraintVisual(check, result)}
-                    <p class="constraint-explanation">${check.explanation}</p>
-                    <button type="button" class="constraint-inspect-button" data-constraint-token="${check.token}">
-                      Show calculation <span aria-hidden="true">→</span>
-                    </button>
-                  </article>
-                `,
-              )
-              .join("")}
-          </div>
-        </section>
-      `;
-    })
-    .join("");
+              <span><strong>${check.token}</strong><small>${check.label}</small></span>
+              <span><strong>${matchedRelation ? "Target matched" : check.actual}</strong><small>${matchedRelation ? check.actual : `Target ${check.target}`}</small></span>
+              <span aria-hidden="true">→</span>
+            </button>`;
+                  })
+                  .join("")
+              : `<p class="constraint-empty-state">No corrections in this category.</p>`
+          }
+        </div>
+      </section>`;
+  }
+
+  if (activeConstraintSelection.kind === "token") {
+    title = activeConstraintSelection.token;
+    let checks = report.checks.filter(
+      (check) => check.token === activeConstraintSelection.token,
+    );
+    if (correctionsOnly)
+      checks = checks.filter((check) => check.status !== "pass");
+    detailMarkup = checks.length
+      ? `<div class="constraint-card-grid contextual">${checks.map((check) => constraintCardMarkup(check, result)).join("")}</div>`
+      : `<p class="constraint-empty-state">No ${correctionsOnly ? "corrections" : "measured checks"} for this token.</p>`;
+  }
+
+  if (activeConstraintSelection.kind === "check") {
+    const check = report.checks[activeConstraintSelection.index];
+    title = `${categoryMeta[check.category].label} / ${check.token}`;
+    detailMarkup = `<div class="constraint-card-grid contextual single">${constraintCardMarkup(check, result)}</div>`;
+  }
+
+  if (activeConstraintSelection.kind === "edge") {
+    const edge = activeConstraintSelection;
+    title = `${edge.fromLabel} → ${edge.toLabel}`;
+    detailMarkup = `<article class="lineage-edge-detail">
+      <div class="edge-detail-colors"><i style="background:${edge.fromColor}"></i><span>→</span><i style="background:${edge.toColor}"></i></div>
+      <div><span class="constraint-token-name">Relationship</span><h4>${edge.label}</h4><p>${edge.constraint ? "This connection applies a measured constraint." : "This connection derives the target role from its source."}</p><code>${edge.fromLabel} ${edge.fromValue} → ${edge.toLabel} ${edge.toValue}</code></div>
+    </article>`;
+  }
+
+  if (activeConstraintSelection.kind === "source") {
+    title = activeConstraintSelection.label;
+    detailMarkup = `<article class="lineage-edge-detail"><div class="edge-detail-colors"><i style="background:${activeConstraintSelection.color}"></i></div><div><span class="constraint-token-name">Source node</span><h4>${activeConstraintSelection.label}</h4><p>This source influences the connected roles shown in the graph. Select one of its outgoing connections to inspect that relationship.</p><code>${activeConstraintSelection.value}</code></div></article>`;
+  }
+
+  constraintCurrentView.textContent = title;
+  constraintBackButton.disabled = activeConstraintSelection.kind === "overview";
+  constraintBackButton.textContent =
+    activeConstraintSelection.kind === "check" &&
+    activeConstraintSelection.parentCategory
+      ? `← ${categoryMeta[activeConstraintSelection.parentCategory].label}`
+      : "← All constraints";
+  constraintCorrectionsOnly.checked = correctionsOnly;
+  constraintCorrectionsOnly.disabled = !["category", "token"].includes(
+    activeConstraintSelection.kind,
+  );
+  constraintChapters.innerHTML = detailMarkup;
 
   constraintChapters
     .querySelectorAll("[data-constraint-token]")
@@ -1780,19 +1946,62 @@ function renderConstraintMap(result) {
     .querySelectorAll("[data-constraint-category]")
     .forEach((button) => {
       button.addEventListener("click", () => {
-        document
-          .querySelector(`#constraint-${button.dataset.constraintCategory}`)
-          .scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-              .matches
-              ? "auto"
-              : "smooth",
-            block: "start",
-          });
+        activeConstraintSelection = {
+          kind: "category",
+          category: button.dataset.constraintCategory,
+        };
+        clearLineageSelection();
+        renderConstraintMap(result, report);
       });
     });
 
+  constraintChapters
+    .querySelectorAll("[data-constraint-check]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        activeConstraintSelection = {
+          kind: "check",
+          index: Number(button.dataset.constraintCheck),
+          parentCategory: activeConstraintSelection.category,
+        };
+        renderConstraintMap(result, report);
+      });
+    });
+
+  constraintBackButton.onclick = () => {
+    activeConstraintSelection =
+      activeConstraintSelection.kind === "check" &&
+      activeConstraintSelection.parentCategory
+        ? {
+            kind: "category",
+            category: activeConstraintSelection.parentCategory,
+          }
+        : { kind: "overview" };
+    clearLineageSelection();
+    renderConstraintMap(result, report);
+  };
+
+  constraintCorrectionsOnly.onchange = () => {
+    correctionsOnly = constraintCorrectionsOnly.checked;
+    renderConstraintMap(result, report);
+  };
+
+  constraintSkipButton.onclick = () => {
+    document.querySelector(".workspace").scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+      block: "start",
+    });
+  };
+
   return report;
+}
+
+function clearLineageSelection() {
+  lineageCanvas
+    ?.querySelectorAll(".is-selected")
+    .forEach((element) => element.classList.remove("is-selected"));
 }
 
 function renderLineage(result) {
@@ -2109,14 +2318,17 @@ function renderLineage(result) {
       <text class="lineage-column-label" x="650" y="12">Derived roles</text>
       <text class="lineage-column-label" x="988" y="170">Shared decision</text>
       ${edges
-        .map(([fromId, toId, label, constraint]) => {
+        .map(([fromId, toId, label, constraint], edgeIndex) => {
           const from = byId[fromId];
           const to = byId[toId];
           const labelX = (from.x + nodeWidth + to.x) / 2;
           const labelY = (from.y + to.y) / 2 + nodeHeight / 2 - 5;
           return `
-            <path class="lineage-edge ${constraint ? "constraint" : ""}" d="${pathFor(from, to)}"></path>
-            <text class="lineage-edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${label}</text>
+            <g class="lineage-edge-control" tabindex="0" role="button" data-lineage-edge="${edgeIndex}" aria-label="Inspect ${from.label} to ${to.label}: ${label}">
+              <path class="lineage-edge-hit" d="${pathFor(from, to)}"></path>
+              <path class="lineage-edge ${constraint ? "constraint" : ""}" d="${pathFor(from, to)}"></path>
+              <text class="lineage-edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${label}</text>
+            </g>
           `;
         })
         .join("")}
@@ -2126,9 +2338,10 @@ function renderLineage(result) {
             <g
               class="lineage-node ${node.type}"
               transform="translate(${node.x} ${node.y})"
-              tabindex="${node.functionName ? "0" : "-1"}"
-              role="${node.functionName ? "button" : "img"}"
-              ${node.functionName ? `data-lineage-function="${node.functionName}" aria-label="Inspect ${node.label}"` : `aria-label="${node.label} ${node.value}"`}
+              tabindex="0"
+              role="button"
+              data-lineage-node="${node.id}"
+              aria-label="Inspect ${node.label}"
             >
               <rect class="node-body" width="${nodeWidth}" height="${nodeHeight}" rx="2"></rect>
               <rect class="node-swatch" x="10" y="10" width="28" height="28" rx="1" style="fill:${node.color}"></rect>
@@ -2141,19 +2354,68 @@ function renderLineage(result) {
     </svg>
   `;
 
-  lineageCanvas.querySelectorAll("[data-lineage-function]").forEach((node) => {
-    const openTrace = () => {
-      openInspector(
-        result,
-        node.dataset.lineageFunction,
-        currentConstraintReport,
-      );
+  lineageCanvas.querySelectorAll("[data-lineage-node]").forEach((element) => {
+    const selectNode = () => {
+      const node = byId[element.dataset.lineageNode];
+      clearLineageSelection();
+      element.classList.add("is-selected");
+      activeConstraintSelection = node.functionName
+        ? { kind: "token", token: node.functionName }
+        : {
+            kind: "source",
+            label: node.label,
+            value: node.value,
+            color: node.color,
+          };
+      renderConstraintMap(result, currentConstraintReport);
+      document.querySelector(".constraint-map").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
     };
-    node.addEventListener("click", openTrace);
-    node.addEventListener("keydown", (event) => {
+    element.addEventListener("click", selectNode);
+    element.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        openTrace();
+        selectNode();
+      }
+    });
+  });
+
+  lineageCanvas.querySelectorAll("[data-lineage-edge]").forEach((element) => {
+    const selectEdge = () => {
+      const [fromId, toId, label, constraint] =
+        edges[Number(element.dataset.lineageEdge)];
+      const from = byId[fromId];
+      const to = byId[toId];
+      clearLineageSelection();
+      element.classList.add("is-selected");
+      activeConstraintSelection = {
+        kind: "edge",
+        label,
+        constraint,
+        fromLabel: from.label,
+        fromValue: from.value,
+        fromColor: from.color,
+        toLabel: to.label,
+        toValue: to.value,
+        toColor: to.color,
+      };
+      renderConstraintMap(result, currentConstraintReport);
+      document.querySelector(".constraint-map").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    };
+    element.addEventListener("click", selectEdge);
+    element.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectEdge();
       }
     });
   });
@@ -2165,7 +2427,8 @@ function renderResult(result) {
   applyDeclaredUsageContracts();
   renderHarmonyOptions(result);
   renderHueRelationship(result);
-  currentConstraintReport = renderConstraintMap(result);
+  currentConstraintReport = buildConstraintReport(result);
+  renderConstraintMap(result, currentConstraintReport);
   renderLineage(result);
   if (constraintCertificate.classList.contains("is-open")) {
     openInspector(result, activeConstraintFunction, currentConstraintReport);

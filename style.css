@@ -693,6 +693,214 @@ h1 {
   display: block;
 }
 
+.constraint-view-toolbar {
+  align-items: center;
+  border-bottom: 1px solid var(--lineage-node-border);
+  border-top: 1px solid var(--lineage-node-border);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding: 10px 0;
+}
+
+.constraint-detail-context {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.constraint-detail-context button,
+.constraint-skip-button {
+  background: transparent;
+  border: 1px solid var(--lineage-node-border);
+  color: var(--lineage-muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  min-height: 32px;
+  padding: 7px 10px;
+}
+
+.constraint-detail-context button:hover,
+.constraint-detail-context button:focus-visible,
+.constraint-skip-button:hover,
+.constraint-skip-button:focus-visible {
+  border-color: #f8f5ef;
+  color: #f8f5ef;
+}
+
+.constraint-detail-context button:disabled {
+  border-color: transparent;
+  color: var(--lineage-line);
+  cursor: default;
+}
+
+.constraint-detail-context > span {
+  color: #f8f5ef;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.constraint-corrections-filter {
+  align-items: center;
+  color: var(--lineage-muted);
+  display: inline-flex;
+  font-family: var(--mono);
+  font-size: 9px;
+  gap: 7px;
+}
+
+.constraint-corrections-filter:has(input:disabled) {
+  opacity: 0.42;
+}
+
+.constraint-skip-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 12px;
+}
+
+.constraint-overview-message {
+  align-items: center;
+  background: var(--lineage-node-bg);
+  border: 1px solid var(--lineage-node-border);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 18px;
+}
+
+.constraint-overview-mark {
+  align-items: center;
+  border: 1px solid var(--lineage-node-border);
+  color: #f8f5ef;
+  display: flex;
+  font-size: 15px;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.constraint-overview-message strong {
+  color: #f8f5ef;
+  font-size: 12px;
+}
+
+.constraint-overview-message p {
+  color: var(--lineage-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 4px 0 0;
+}
+
+.constraint-check-index {
+  display: grid;
+  gap: 14px;
+}
+
+.constraint-index-heading h4,
+.lineage-edge-detail h4 {
+  color: #f8f5ef;
+  font-size: 18px;
+  margin: 0;
+}
+
+.constraint-index-heading p,
+.lineage-edge-detail p {
+  color: var(--lineage-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
+.constraint-check-list {
+  border-top: 1px solid var(--lineage-node-border);
+}
+
+.constraint-check-row {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--lineage-node-border);
+  color: #f8f5ef;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
+  min-height: 54px;
+  padding: 9px 4px;
+  text-align: left;
+  width: 100%;
+}
+
+.constraint-check-row:hover,
+.constraint-check-row:focus-visible {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.constraint-check-row strong,
+.constraint-check-row small {
+  display: block;
+}
+
+.constraint-check-row strong {
+  font-size: 10px;
+}
+
+.constraint-check-row small {
+  color: var(--lineage-muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  margin-top: 3px;
+}
+
+.constraint-card-grid.contextual {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr));
+}
+
+.constraint-card-grid.contextual.single {
+  grid-template-columns: minmax(0, 720px);
+}
+
+.constraint-empty-state {
+  color: var(--lineage-muted);
+  font-size: 11px;
+  margin: 0;
+  padding: 18px 0;
+}
+
+.lineage-edge-detail {
+  align-items: center;
+  background: var(--lineage-node-bg);
+  border: 1px solid var(--lineage-node-border);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 18px;
+}
+
+.edge-detail-colors {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.edge-detail-colors i {
+  border: 1px solid #f8f5ef;
+  height: 34px;
+  width: 34px;
+}
+
+.edge-detail-colors span {
+  color: var(--lineage-muted);
+}
+
+.lineage-edge-detail code {
+  color: #f8f5ef;
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  margin-top: 9px;
+}
+
 .constraint-summary-item strong {
   font-size: 10px;
 }
@@ -724,7 +932,7 @@ h1 {
 }
 
 .constraint-detail-layout {
-  margin-top: 34px;
+  margin-top: 22px;
 }
 
 .constraint-chapters {
@@ -795,8 +1003,10 @@ h1 {
 .constraint-visual-card {
   background: var(--lineage-node-bg);
   border: 1px solid var(--lineage-node-border);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
   min-width: 0;
-  padding: 18px;
+  padding: 16px;
 }
 
 .constraint-visual-card.adjusted {
@@ -812,6 +1022,7 @@ h1 {
   display: flex;
   gap: 16px;
   justify-content: space-between;
+  min-height: 54px;
 }
 
 .constraint-token-name {
@@ -833,8 +1044,8 @@ h1 {
 .decision-journey {
   background: color-mix(in srgb, var(--lineage-bg) 58%, transparent);
   border: 1px solid var(--lineage-node-border);
-  margin-top: 18px;
-  padding: 13px;
+  margin-top: 14px;
+  padding: 11px;
 }
 
 .decision-mode-row {
@@ -843,8 +1054,79 @@ h1 {
   display: flex;
   font-family: var(--mono);
   font-size: 9px;
-  justify-content: space-between;
   text-transform: uppercase;
+}
+
+.decision-compact-path {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  margin-top: 10px;
+}
+
+.decision-compact-path > div {
+  align-items: center;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
+}
+
+.decision-compact-path > span {
+  color: var(--lineage-line);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.decision-compact-path.matched {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.decision-compact-path .decision-swatch {
+  margin: 0;
+}
+
+.decision-compact-path small,
+.decision-compact-path strong {
+  display: block;
+}
+
+.decision-compact-path small {
+  color: var(--lineage-line);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.decision-compact-path strong {
+  color: #f8f5ef;
+  font-size: 10px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.decision-details {
+  border-top: 1px solid var(--lineage-node-border);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+
+.decision-details summary {
+  color: var(--lineage-muted);
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 9px;
+  list-style: none;
+}
+
+.decision-details summary::after {
+  content: "+";
+  float: right;
+}
+
+.decision-details[open] summary::after {
+  content: "−";
 }
 
 .decision-mode {
@@ -1014,15 +1296,30 @@ h1 {
 
 .constraint-pair-list {
   display: grid;
-  gap: 8px;
-  margin-top: 22px;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 0;
+  width: 100%;
+}
+
+.constraint-visual-stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.constraint-visual-summary {
+  align-items: center;
+  display: flex;
+  min-height: 64px;
+  padding-top: 14px;
 }
 
 .constraint-pair {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-columns: 42px minmax(0, 1fr);
 }
 
 .constraint-pair-sample {
@@ -1031,7 +1328,7 @@ h1 {
   display: flex;
   font-size: 18px;
   font-weight: 750;
-  height: 42px;
+  height: 34px;
   justify-content: center;
 }
 
@@ -1057,7 +1354,9 @@ h1 {
 }
 
 .feasible-region-figure {
-  margin: 20px 0 0;
+  margin: 14px auto 0;
+  max-width: 420px;
+  width: 100%;
 }
 
 .feasible-region-figure svg {
@@ -1303,9 +1602,7 @@ h1 {
 
 .contrast-plane,
 .polar-region {
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 340px;
+  max-width: 420px;
 }
 
 .contrast-plane-bg {
@@ -1342,7 +1639,6 @@ h1 {
   display: grid;
   gap: 8px;
   grid-template-columns: 34px auto 34px minmax(0, 1fr);
-  margin-top: 22px;
 }
 
 .gamut-swatch {
@@ -1355,18 +1651,11 @@ h1 {
   border-style: dashed;
 }
 
-.relation-visual {
-  align-items: center;
-  display: grid;
-  gap: 24px;
-  grid-template-columns: minmax(220px, 1fr) minmax(0, 0.7fr);
-  margin-top: 22px;
-}
-
 .relation-values {
   display: grid;
   gap: 8px;
   margin: 0;
+  width: 100%;
 }
 
 .relation-values div {
@@ -1391,12 +1680,12 @@ h1 {
   color: #f8f5ef;
 }
 
-.state-visual {
-  align-items: center;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: 48px minmax(0, 1fr);
-  margin-top: 18px;
+.state-summary {
+  gap: 12px;
+}
+
+.state-summary .region-data-note {
+  margin: 0;
 }
 
 .state-color-preview {
@@ -1693,6 +1982,30 @@ h1 {
   stroke-width: 1.25;
 }
 
+.lineage-edge-control {
+  cursor: pointer;
+  outline: none;
+}
+
+.lineage-edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+}
+
+.lineage-edge-control:hover .lineage-edge,
+.lineage-edge-control:focus .lineage-edge,
+.lineage-edge-control.is-selected .lineage-edge {
+  stroke: #f8f5ef;
+  stroke-width: 2;
+}
+
+.lineage-edge-control:hover .lineage-edge-label,
+.lineage-edge-control:focus .lineage-edge-label,
+.lineage-edge-control.is-selected .lineage-edge-label {
+  fill: #f8f5ef;
+}
+
 .lineage-edge.constraint {
   stroke-dasharray: 4 5;
 }
@@ -1726,7 +2039,8 @@ h1 {
 }
 
 .lineage-node:hover .node-body,
-.lineage-node:focus .node-body {
+.lineage-node:focus .node-body,
+.lineage-node.is-selected .node-body {
   fill: var(--lineage-node-hover);
   stroke: #f8f5ef;
 }
@@ -3955,6 +4269,34 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .constraint-view-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .constraint-detail-context {
+    justify-content: space-between;
+  }
+
+  .constraint-detail-context button,
+  .constraint-skip-button {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .constraint-corrections-filter {
+    min-height: 32px;
+  }
+
+  .constraint-check-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .constraint-check-row > span:nth-child(3) {
+    display: none;
+  }
+
   .constraint-card-grid,
   .constraint-card-grid.gamut {
     grid-template-columns: 1fr;
@@ -3999,11 +4341,6 @@ footer {
 
   .constraint-chapter-status {
     grid-column: 2;
-  }
-
-  .relation-visual {
-    gap: 16px;
-    grid-template-columns: 1fr;
   }
 
   .button-hierarchy-grid {
