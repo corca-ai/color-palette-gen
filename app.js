@@ -926,7 +926,8 @@ function renderHueRelationship(result) {
             ${alternativeHueMarks
               .map(
                 ({ candidate, color, point }) => `
-                  <line x1="50" y1="50" x2="${point.x}" y2="${point.y}"></line>
+                  <line class="alternative-underlay" x1="50" y1="50" x2="${point.x}" y2="${point.y}"></line>
+                  <line class="alternative-line" x1="50" y1="50" x2="${point.x}" y2="${point.y}"></line>
                   <circle cx="${point.x}" cy="${point.y}" r="1.8" style="fill:${color}">
                     <title>${candidate}</title>
                   </circle>
@@ -935,6 +936,11 @@ function renderHueRelationship(result) {
               .join("")}
           </g>
           <polyline
+            class="hue-relation-underlay"
+            points="${points.map(({ point }) => `${point.x},${point.y}`).join(" ")} ${points[0].point.x},${points[0].point.y}"
+          ></polyline>
+          <polyline
+            class="hue-relation-line"
             points="${points.map(({ point }) => `${point.x},${point.y}`).join(" ")} ${points[0].point.x},${points[0].point.y}"
           ></polyline>
         </svg>
@@ -1095,6 +1101,19 @@ function constraintStatusSummary(checks) {
   };
 }
 
+function gamutExportUnchanged(check) {
+  if (
+    check.category !== "gamut" ||
+    !check.metrics?.candidate ||
+    !check.metrics?.output
+  )
+    return false;
+  return (
+    oklchToHex(check.metrics.candidate).hex.toUpperCase() ===
+    oklchToHex(check.metrics.output).hex.toUpperCase()
+  );
+}
+
 function decisionJourney(check) {
   const decision = check.decision;
   if (!decision) return "";
@@ -1102,6 +1121,7 @@ function decisionJourney(check) {
     check.category === "relation" &&
     decision.resolved.color &&
     relationTargetMatchesActual(check, decision.resolved.color);
+  const exportUnchangedGamut = gamutExportUnchanged(check);
   const modeLabel = decision.mode.toUpperCase();
   const connector = decision.mode === "validated" ? "validated" : "changed";
   const delta = decision.delta
@@ -1113,14 +1133,21 @@ function decisionJourney(check) {
         <span class="decision-mode">${modeLabel}</span>
       </div>
       ${
-        matchedRelation
+        exportUnchangedGamut
           ? `<div class="decision-compact-path matched">
+               <div>
+                 <i class="decision-swatch" style="background:${decision.resolved.color}"></i>
+                 <span><small>Export unchanged</small><strong>${decision.resolved.color}</strong></span>
+               </div>
+             </div>`
+          : matchedRelation
+            ? `<div class="decision-compact-path matched">
                <div>
                  <i class="decision-swatch" style="background:${decision.resolved.color}"></i>
                  <span><small>Resolved relation</small><strong>Target matched · ${decision.resolved.label}</strong></span>
                </div>
              </div>`
-          : `<div class="decision-compact-path">
+            : `<div class="decision-compact-path">
                <div>
                  ${decision.candidate.color ? `<i class="decision-swatch" style="background:${decision.candidate.color}"></i>` : ""}
                  <span><small>Candidate</small><strong>${decision.candidate.label}</strong></span>
@@ -1353,6 +1380,7 @@ function lcRegionMap({
   boundaries = [],
   alternatives = [],
   cacheKey = null,
+  exportUnchanged = false,
 }) {
   const boundary = sampledChromaBoundary(
     hue,
@@ -1413,7 +1441,7 @@ function lcRegionMap({
         </g>
       </svg>
       <div class="region-color-keys">
-        ${unchanged ? regionColorKey(resolved, "unchanged", "Candidate = resolved") : `${regionColorKey(candidate, "candidate", "Candidate")}${regionColorKey(resolved, "resolved", "Resolved")}`}
+        ${exportUnchanged ? regionColorKey(resolved, "unchanged", "Export unchanged") : unchanged ? regionColorKey(resolved, "unchanged", "Candidate = resolved") : `${regionColorKey(candidate, "candidate", "Candidate")}${regionColorKey(resolved, "resolved", "Resolved")}`}
         ${alternatives
           .map(({ color, label: alternativeLabel }) =>
             regionColorKey(color, "alternative", alternativeLabel),
@@ -1430,7 +1458,7 @@ function lcRegionMap({
               .join("")}</div>`
           : ""
       }
-      <figcaption><span><i></i>${feasibleLabel}</span><span>${coincident && !unchanged ? "Markers coincide at this scale · " : ""}Dimmed = rejected · Fixed H ${hue.toFixed(1)}°</span></figcaption>
+      <figcaption><span><i></i>${feasibleLabel}</span><span>${coincident && !unchanged && !exportUnchanged ? "Markers coincide at this scale · " : ""}Dimmed = rejected · Fixed H ${hue.toFixed(1)}°</span></figcaption>
     </figure>
   `;
 }
@@ -1681,13 +1709,19 @@ function gamutConstraintVisual(check, color) {
   const output = check.metrics.output;
   const boundary = check.metrics.boundary;
   const delta = output.c - candidate.c;
+  const exportUnchanged = gamutExportUnchanged(check);
   return `
     <div class="constraint-visual-summary">
-      <div class="gamut-swatches">
-        <span class="gamut-swatch candidate" style="background:${oklchToHex(candidate).hex}"></span>
-        <span aria-hidden="true">→</span>
-        <span class="gamut-swatch" style="background:${color}"></span>
-        <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>
+      <div class="gamut-swatches ${exportUnchanged ? "unchanged" : ""}">
+        ${
+          exportUnchanged
+            ? `<span class="gamut-swatch" style="background:${color}"></span>
+               <span><strong>Export unchanged · ${color}</strong><small>C ${candidate.c.toFixed(3)} → ${output.c.toFixed(3)} · ΔC ${delta.toFixed(3)}</small></span>`
+            : `<span class="gamut-swatch candidate" style="background:${oklchToHex(candidate).hex}"></span>
+               <span aria-hidden="true">→</span>
+               <span class="gamut-swatch" style="background:${color}"></span>
+               <span><strong>${check.status === "adjusted" ? "Chroma reduced" : "Candidate retained"}</strong><small>ΔC ${delta.toFixed(3)} · L and H preserved</small></span>`
+        }
       </div>
     </div>
     ${lcRegionMap({
@@ -1697,6 +1731,7 @@ function gamutConstraintVisual(check, color) {
       label: `sRGB lightness and chroma gamut at hue ${candidate.h.toFixed(1)} degrees`,
       feasibleLabel: "Reproducible sRGB colors",
       cacheKey: `gamut:${candidate.h.toFixed(3)}`,
+      exportUnchanged,
     })}
     <p class="region-data-note">At candidate L ${candidate.l.toFixed(3)}, the sRGB edge is C ${boundary.toFixed(3)}.</p>
   `;
@@ -1764,6 +1799,7 @@ function constraintVisual(check, result) {
 }
 
 function constraintCardMarkup(check, result) {
+  const exportUnchanged = gamutExportUnchanged(check);
   return `
     <article class="constraint-visual-card ${check.status}">
       <div class="constraint-card-heading">
@@ -1774,14 +1810,14 @@ function constraintCardMarkup(check, result) {
         </div>
         <span class="constraint-result-label ${check.status}">
           <span class="constraint-mark" aria-hidden="true"></span>
-          ${constraintStatusLabel(check.status)}
+          ${exportUnchanged ? "Normalized" : constraintStatusLabel(check.status)}
         </span>
       </div>
       ${decisionJourney(check)}
       <div class="constraint-visual-stage ${check.category}">
         ${constraintVisual(check, result)}
       </div>
-      <p class="constraint-explanation">${check.explanation}</p>
+      <p class="constraint-explanation">${exportUnchanged ? "The internal chroma was reduced to fit sRGB, but the exported 8-bit HEX color did not change." : check.explanation}</p>
       <button type="button" class="constraint-inspect-button" data-constraint-token="${check.token}">
         Full calculation <span aria-hidden="true">→</span>
       </button>
@@ -2010,37 +2046,18 @@ function renderLineage(result) {
       .map((offset) => `${offset > 0 ? "+" : ""}${offset}°`)
       .join(" / ")}`;
 
+  const tokens = tokenMap(result.tokens);
   const theme = {
-    background: oklchToHex({
-      l: 0.18,
-      c: Math.min(0.055, result.primary.c * 0.2 * result.params.chromaScale),
-      h: result.primary.h,
-    }).hex,
-    node: oklchToHex({
-      l: 0.235,
-      c: Math.min(0.04, result.primary.c * 0.14 * result.params.chromaScale),
-      h: result.primary.h,
-    }).hex,
-    nodeHover: oklchToHex({
-      l: 0.285,
-      c: Math.min(0.045, result.primary.c * 0.16 * result.params.chromaScale),
-      h: result.primary.h,
-    }).hex,
-    nodeBorder: oklchToHex({
-      l: 0.44,
-      c: Math.min(0.055, result.primary.c * 0.18),
-      h: result.primary.h,
-    }).hex,
-    line: oklchToHex({
-      l: 0.56,
-      c: Math.min(0.045, result.primary.c * 0.12),
-      h: result.primary.h,
-    }).hex,
-    muted: oklchToHex({
-      l: 0.72,
-      c: Math.min(0.025, result.primary.c * 0.08),
-      h: result.primary.h,
-    }).hex,
+    background: tokens.background,
+    node: tokens.surface,
+    nodeHover: tokens["secondary accent soft"] ?? tokens.background,
+    nodeBorder: tokens.border,
+    line: tokens["border control"],
+    muted: tokens["secondary text"],
+    text: tokens["main text"],
+    focus: tokens["focus ring"],
+    primary: tokens["primary button default"],
+    secondary: tokens["secondary accent"] ?? tokens["primary button default"],
   };
   const rootStyle = document.documentElement.style;
   rootStyle.setProperty("--lineage-bg", theme.background);
@@ -2049,8 +2066,10 @@ function renderLineage(result) {
   rootStyle.setProperty("--lineage-node-border", theme.nodeBorder);
   rootStyle.setProperty("--lineage-line", theme.line);
   rootStyle.setProperty("--lineage-muted", theme.muted);
-
-  const tokens = tokenMap(result.tokens);
+  rootStyle.setProperty("--lineage-text", theme.text);
+  rootStyle.setProperty("--lineage-focus", theme.focus);
+  rootStyle.setProperty("--lineage-primary", theme.primary);
+  rootStyle.setProperty("--lineage-secondary", theme.secondary);
   const nodeWidth = 174;
   const nodeHeight = 48;
 
@@ -2313,6 +2332,15 @@ function renderLineage(result) {
     <svg viewBox="0 0 1180 ${byId.additionalInput ? 450 : byId.secondaryInput ? 366 : 318}" role="img" aria-labelledby="lineage-svg-title lineage-svg-desc">
       <title id="lineage-svg-title">Color influence graph</title>
       <desc id="lineage-svg-desc">The primary input influences foundations, which are transformed into semantic color roles. Dashed lines indicate contrast constraints.</desc>
+      <defs>
+        ${edges
+          .map(([fromId, toId], edgeIndex) => {
+            const from = byId[fromId];
+            const to = byId[toId];
+            return `<linearGradient id="lineage-gradient-${edgeIndex}" gradientUnits="userSpaceOnUse" x1="${from.x + nodeWidth}" y1="${from.y + nodeHeight / 2}" x2="${to.x}" y2="${to.y + nodeHeight / 2}"><stop offset="0" stop-color="${from.color}"/><stop offset="1" stop-color="${to.color}"/></linearGradient>`;
+          })
+          .join("")}
+      </defs>
       <text class="lineage-column-label" x="18" y="12">Input</text>
       <text class="lineage-column-label" x="316" y="12">Foundations</text>
       <text class="lineage-column-label" x="650" y="12">Derived roles</text>
@@ -2326,7 +2354,8 @@ function renderLineage(result) {
           return `
             <g class="lineage-edge-control" tabindex="0" role="button" data-lineage-edge="${edgeIndex}" aria-label="Inspect ${from.label} to ${to.label}: ${label}">
               <path class="lineage-edge-hit" d="${pathFor(from, to)}"></path>
-              <path class="lineage-edge ${constraint ? "constraint" : ""}" d="${pathFor(from, to)}"></path>
+              <path class="lineage-edge-underlay ${constraint ? "constraint" : ""}" d="${pathFor(from, to)}"></path>
+              <path class="lineage-edge ${constraint ? "constraint" : ""}" style="stroke:url(#lineage-gradient-${edgeIndex})" d="${pathFor(from, to)}"></path>
               <text class="lineage-edge-label" x="${labelX}" y="${labelY}" text-anchor="middle">${label}</text>
             </g>
           `;
@@ -2342,6 +2371,7 @@ function renderLineage(result) {
               role="button"
               data-lineage-node="${node.id}"
               aria-label="Inspect ${node.label}"
+              style="--node-color:${node.color}"
             >
               <rect class="node-body" width="${nodeWidth}" height="${nodeHeight}" rx="2"></rect>
               <rect class="node-swatch" x="10" y="10" width="28" height="28" rx="1" style="fill:${node.color}"></rect>

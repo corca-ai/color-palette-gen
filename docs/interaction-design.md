@@ -183,6 +183,24 @@ Hue relation의 target과 actual이 표시 정밀도상 같으면 두 수치와 
 `Target matched`인 단일 결과로 합친다. 실제 편차가 있을 때만 target, actual, deviation과
 두 지점 사이의 이동선을 각각 표시한다.
 
+Gamut mapping으로 내부 OKLCH 값이 바뀌었더라도 candidate와 resolved가 같은 8-bit HEX로
+직렬화되면 이를 큰 시각 변화처럼 표현하지 않는다. 카드의 주 결과는 `Normalized`와
+`Export unchanged`로 표시하고 swatch와 graph legend를 하나로 합친다. 내부 chroma 변화는
+요약 수치와 full calculation에 남겨 constraint correction의 기록을 잃지 않는다.
+
+Lineage는 독립적인 고정 dark theme가 아니라 현재 생성된 semantic palette를 사용한다.
+section background, node surface, text, muted text, border, focus는 각각 같은 이름의 출력
+token을 참조한다. Node 선택 surface는 해당 node color를 옅게 섞고, edge는 source에서
+target으로 이어지는 색 gradient를 사용한다. 밝거나 어두운 edge가 배경에서 사라지지 않도록
+main text 기반의 낮은 opacity underlay를 함께 그리며, focus stroke는 contrast contract를
+통과한 focus ring token을 사용한다. 색 공간 graph 내부의 좌표와 marker는 palette sample이
+아닌 진단 도구이므로 별도의 고정 diagnostic contrast를 유지한다.
+
+Hue wheel처럼 여러 밝기의 색 위를 가로지르는 흰색 점선은 단일 stroke로 그리지 않는다.
+같은 dash pattern의 어두운 underlay를 더 굵게 먼저 그리고 흰색 foreground stroke를 위에
+놓아 밝은 hue와 어두운 hue 모두에서 관계선의 형태가 유지되게 한다. Point도 흰 경계 바깥에
+어두운 1px ring을 둔다.
+
 ### Component usage contracts
 
 Contrast 검사는 토큰이 존재하는지만 보지 않고 실제 component가 사용하는 foreground와
