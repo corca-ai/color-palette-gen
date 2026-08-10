@@ -30,14 +30,14 @@ export const EVIDENCE = {
   calmMinimal: {
     class: "product-policy",
     label: "Color Lab v2 · Calm/minimal definition",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decision-justification.md",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#calm-and-minimal",
     scope:
       "One brand hue, neutral-dominant foundations, bounded tint, and no generated harmony hues.",
   },
   stateSeparation: {
     class: "heuristic",
     label: "Provisional state-separation threshold",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decision-justification.md",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#interactive-states",
     scope:
       "Oklab distance is provisional until a designer ranking study replaces it.",
     validationNeeded: true,
@@ -45,7 +45,7 @@ export const EVIDENCE = {
   destructiveSeparation: {
     class: "heuristic",
     label: "Provisional semantic separation",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decision-justification.md",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#destructive",
     scope:
       "Brand and destructive colors need perceptual separation; the current bound is not a published standard.",
     validationNeeded: true,

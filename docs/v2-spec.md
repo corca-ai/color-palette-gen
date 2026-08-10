@@ -5,6 +5,11 @@
 v2 is the primary color-palette prototype at the site root. v1 remains
 available as the broad, inspectable palette experiment at `/v1/`.
 
+The intended consumer of the generated palette is Craken. The neutral authoring
+UI remains independent, while its applied specimen follows the public Craken
+Design Atlas coverage and component-state structure. See
+[`v2-decisions/craken-integration.md`](v2-decisions/craken-integration.md).
+
 v2 intentionally accepts one input only:
 
 ```js
@@ -22,7 +27,7 @@ reports are permitted only as supporting inspection tools; they must not define
 the page hierarchy or expand the palette input contract.
 
 Every color decision follows the evidence and counterfactual model in
-[`v2-decision-justification.md`](v2-decision-justification.md). A passing color
+[`v2-decisions/`](v2-decisions/README.md). A passing color
 without rule provenance and a nearest-alternative explanation is incomplete.
 
 The v1 and v2 engines, UI state, semantic roles, and tests stay separate. Only

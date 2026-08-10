@@ -65,7 +65,7 @@ list[(color, function)]
 - [공개 표준 기반 설계 근거](docs/public-design-basis.md)
 - [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
 - [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
-- [v2 색상 결정 정당화 모델](docs/v2-decision-justification.md)
+- [v2 색상 결정 정당화 모델](docs/v2-decisions/README.md)
 
 ## 프로토타입 실행
 
@@ -83,6 +83,10 @@ http://localhost:4173/v1/   # v1 experiment
 기본 v2는 primary 하나로 light/dark color palette를 생성합니다. 기존
 v1에서는 초기 입력 `#FF0000`과 `balanced` vibe를 사용하며 Palette, Content,
 Form, States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
+
+v2 팔레트의 실제 소비처는 Craken입니다. 팔레트 작성 도구는 중립적인 기준면을
+유지하고, 적용 샘플은 공개 Craken Design Atlas의 Foundation, Navigation,
+Messages, Composer, component state 구성을 기준으로 검증합니다.
 
 v2는 입력을 achromatic, subdued, chromatic으로 분류하고, 입력 hue와 상대
 chroma를 보존하면서 모드별로 사용 가능한 primary 명도를 계산합니다. 텍스트는

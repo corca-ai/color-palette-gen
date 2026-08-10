@@ -96,21 +96,38 @@ function exampleStyle(modeResult) {
 
 function appliedExample(modeResult) {
   return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}">
-    <header class="example-header"><strong>${modeResult.mode}</strong><span>Palette roles in context</span></header>
+    <header class="example-header"><strong>Craken · ${modeResult.mode}</strong><span>Generated palette compatibility</span></header>
     <div class="example-canvas">
-      <section class="example-card">
-        <div class="role-label">surface · border</div>
-        <p class="example-kicker">muted text</p>
-        <h3>Foreground makes the hierarchy clear.</h3>
-        <p>Supporting copy uses the muted text color while remaining readable on the surface.</p>
-        <label><span>Input label · foreground</span><input value="Input border and focus ring" readonly /></label>
-        <div class="button-specimen">
-          <div><small>primary</small><button>Default</button></div>
-          <div><small>primary hover</small><button class="hover">Hover</button></div>
-          <div><small>primary active</small><button class="active">Active</button></div>
+      <div class="craken-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
+      <section class="craken-state-specimen">
+        <header><strong>Primary button</strong><small>Normal, forced pseudo-state, and focus in one scan</small></header>
+        <div class="craken-state-grid">
+          <div><span>Normal</span><button>✓ Save</button></div>
+          <div><span>Hover</span><button class="hover">✓ Save</button></div>
+          <div><span>Active</span><button class="active">✓ Save</button></div>
+          <div><span>Focus</span><button class="focused">✓ Save</button></div>
         </div>
-        <div class="destructive-specimen"><span><strong>Destructive</strong><small>Reserved feedback color</small></span><button>Remove</button></div>
       </section>
+      <section class="craken-shell">
+        <aside class="craken-sidebar">
+          <div class="craken-workspace"><i>C</i><span><strong>Color Lab</strong><small>Craken workspace</small></span></div>
+          <nav aria-label="Craken specimen navigation">
+            <a class="selected"><span>◫</span>General<b>3</b></a>
+            <a><span>◇</span>Design review</a>
+            <a><span>⌁</span>Files</a>
+          </nav>
+          <button class="craken-secondary">＋ New conversation</button>
+        </aside>
+        <div class="craken-main">
+          <header class="craken-channel"><div><strong># design-review</strong><small>Palette integration check</small></div><button>•••</button></header>
+          <div class="craken-messages">
+            <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the Craken hierarchy in both modes?</span></div></article>
+            <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, interaction states, focus, and feedback are rendered from the same semantic output.</span><em>Palette ready</em></div></article>
+          </div>
+          <form class="craken-composer"><label><span>Message #design-review</span><textarea rows="2" readonly>Review the generated colors…</textarea></label><div><button type="button" class="craken-secondary">Attach</button><button type="button" class="craken-primary">Send</button></div></form>
+        </div>
+      </section>
+      <footer class="craken-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button>Move to Trash</button></footer>
     </div>
   </article>`;
 }
