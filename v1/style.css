@@ -120,6 +120,35 @@ button {
   text-transform: uppercase;
 }
 
+.header-meta,
+.version-nav {
+  align-items: center;
+  display: flex;
+}
+
+.header-meta {
+  gap: 20px;
+}
+
+.version-nav {
+  gap: 4px;
+}
+
+.version-nav a {
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 6px 9px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.version-nav a[aria-current="page"] {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
 main {
   margin: 0 auto;
   max-width: 1480px;

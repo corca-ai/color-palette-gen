@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Color Lab v2: primary-only light and dark color palettes."
+    />
+    <title>Color Lab v2 — Light and dark palettes</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="../">Color Lab</a>
+      <nav aria-label="Version">
+        <a href="../v1/">v1</a><a href="./" aria-current="page">v2</a>
+      </nav>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="intro-copy">
+          <p class="eyebrow">Primary in · paired palettes out</p>
+          <h1>One color.<br />Two complete palettes.</h1>
+          <p class="lede">
+            A calm, minimal light and dark palette derived from a single primary
+            color. The palette is the product; everything below exists to make
+            its colors legible and inspectable.
+          </p>
+        </div>
+        <form id="v2-form" class="input-card">
+          <label for="v2-primary">Primary color</label>
+          <div class="input-row">
+            <input
+              id="v2-picker"
+              type="color"
+              value="#507096"
+              aria-label="Choose primary color"
+            />
+            <input
+              id="v2-primary"
+              type="text"
+              value="#507096"
+              maxlength="7"
+              spellcheck="false"
+              aria-describedby="v2-error"
+            />
+            <button type="submit">Generate palette</button>
+          </div>
+          <p id="v2-error" class="error" aria-live="polite"></p>
+          <p class="fixed-policy">
+            Fixed direction: calm and minimal. No vibe or supporting-color
+            inputs.
+          </p>
+        </form>
+      </section>
+
+      <section class="palette-section" aria-labelledby="palette-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Generated palette</p>
+            <h2 id="palette-title">#507096 · Light and dark</h2>
+          </div>
+          <button id="copy-css" type="button">Copy palette CSS</button>
+        </div>
+        <p class="palette-help">
+          Open <strong>Why?</strong> on any role to inspect its strategy and
+          rule provenance. Primary is open by default; searched roles compare
+          the selected color with rejected and next-passing candidates.
+        </p>
+        <div id="palettes" class="palettes"></div>
+      </section>
+
+      <section class="example-section" aria-labelledby="example-title">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Applied example</p>
+            <h2 id="example-title">What each color does.</h2>
+          </div>
+          <p>
+            A small specimen, not an application concept. Labels identify the
+            palette role used by each element.
+          </p>
+        </div>
+        <div id="examples" class="examples"></div>
+      </section>
+
+      <section
+        class="relationship-section"
+        aria-labelledby="relationship-title"
+      >
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Color relationships</p>
+            <h2 id="relationship-title">How the two palettes correspond.</h2>
+          </div>
+          <p>
+            Neutral foundations are fixed by mode. The input hue drives the
+            brand family while its lightness is resolved separately for each
+            palette.
+          </p>
+        </div>
+        <div id="relationships" class="relationships"></div>
+      </section>
+
+      <details class="validation">
+        <summary>
+          <span
+            ><small>Palette validation</small
+            ><strong id="validation-summary"
+              >Checking color pairs…</strong
+            ></span
+          ><span aria-hidden="true">View details</span>
+        </summary>
+        <div id="checks" class="checks"></div>
+        <p class="policy-note">
+          APCA validates text pairs. WCAG contrast and perceptual separation
+          validate interactive boundaries and state colors. These checks guide
+          this experimental palette; they are not a conformance claim.
+        </p>
+      </details>
+    </main>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

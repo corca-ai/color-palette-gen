@@ -1,5 +1,10 @@
 # Color Palette Generator
 
+Live pages:
+
+- [v2 — primary-only light/dark palette (default)](https://corca-ai.github.io/color-palette-gen/)
+- [v1 — inspectable palette experiment](https://corca-ai.github.io/color-palette-gen/v1/)
+
 사용자가 제공한 핵심 색상과 원하는 분위기(vibe)를 바탕으로, UI에서 바로 사용할 수 있는 색상 팔레트를 생성하는 프로젝트입니다.
 
 > **Experimental prototype**
@@ -60,6 +65,7 @@ list[(color, function)]
 - [공개 표준 기반 설계 근거](docs/public-design-basis.md)
 - [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
 - [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
+- [v2 색상 결정 정당화 모델](docs/v2-decision-justification.md)
 
 ## 프로토타입 실행
 
@@ -70,11 +76,19 @@ python3 -m http.server 4173
 ```
 
 ```text
-http://localhost:4173
+http://localhost:4173/       # v2 default
+http://localhost:4173/v1/   # v1 experiment
 ```
 
-초기 입력은 `#FF0000`과 `balanced` vibe입니다. Palette, Content, Form,
-States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
+기본 v2는 primary 하나로 light/dark color palette를 생성합니다. 기존
+v1에서는 초기 입력 `#FF0000`과 `balanced` vibe를 사용하며 Palette, Content,
+Form, States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
+
+v2는 입력을 achromatic, subdued, chromatic으로 분류하고, 입력 hue와 상대
+chroma를 보존하면서 모드별로 사용 가능한 primary 명도를 계산합니다. 텍스트는
+APCA, interactive boundary와 focus는 WCAG 비텍스트 대비, 상태와 destructive
+분리는 Oklab Delta E 계약으로 검증합니다. 자세한 정책은
+[`docs/v2-spec.md`](docs/v2-spec.md)에 기록되어 있습니다.
 
 Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 맞게 표시됩니다.
 
@@ -95,7 +109,9 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 - `lib/palette-engine.js`: 입력과 vibe/harmony 해석
 - `lib/palette-generator.js`: semantic token과 디버깅 trace 생성
 - `lib/constraints.js`: 대비, 색역, 상태 변화, hue 관계 검증
-- `app.js`: 입력 처리, 시각화, 사용자 인터랙션
+- `v1/`: 기존의 입력 처리, 시각화, 사용자 인터랙션
+- `v2/`: 기본 primary-only light/dark palette와 독립 UI
+- `docs/v2-spec.md`: v2 범위, Craken 참고 규칙, APCA 선택 근거
 
 브라우저 없이 계산 규칙과 진입 스크립트 문법을 함께 확인하려면 다음을
 실행합니다.
@@ -138,7 +154,7 @@ soft surface 위 텍스트에는 대응하는 `accent text`, accent fill 위 텍
 사용자가 입력한 색상은 브라우저 안에서만 계산하며 외부 API, analytics,
 cookie 또는 browser storage로 전송하거나 저장하지 않습니다.
 
-## GitHub Pages 배포 준비
+## GitHub Pages 배포
 
 이 프로젝트는 별도 번들러 없이 정적 파일을 GitHub Pages artifact로 배포한다.
 
@@ -149,9 +165,10 @@ npm run build
 
 의존성은 `package-lock.json`으로 고정하며 CI는 `npm ci`를 사용한다.
 
-`npm run build`는 공개 페이지에 필요한 `index.html`, `app.js`, `style.css`,
-`lib/*.js`와 `.nojekyll`만 `dist/`에 조립한다. `test/`와 `docs/`는 배포
-artifact에 포함하지 않는다.
+`npm run build`는 v2를 `dist/` 루트의 기본 페이지로, v1을 `dist/v1/`에
+조립한다. v2의 독립 asset은 `dist/v2/`에 유지한다. 두
+버전이 함께 사용하는 저수준 색 변환 모듈은 `dist/lib/`에 포함한다.
+`test/`와 `docs/`는 배포 artifact에 포함하지 않는다.
 
 `.github/workflows/deploy-pages.yml`은 `main` push 또는 수동 실행 시 다음 순서로
 동작한다.
@@ -160,9 +177,10 @@ artifact에 포함하지 않는다.
 check → build dist/ → upload Pages artifact → deploy
 ```
 
-원격 저장소를 만든 뒤 GitHub의 `Settings → Pages → Source`를
-`GitHub Actions`로 설정해야 실제 배포가 시작된다. 저장소 이름이 확정되기
-전까지는 현재의 상대 asset 경로를 유지하며 별도의 base path 설정은 필요 없다.
+GitHub의 `Settings → Pages → Source`는 `GitHub Actions`로 설정되어 있다.
+`main`에 반영된 빌드는 v2를 기본 URL에 배포하고 기존 실험은 `/v1/`에서
+볼 수 있게 한다. 두 앱 모두 상대 asset 경로를 사용하므로 프로젝트 Pages의
+base path에서도 동작한다.
 
 ## License
 

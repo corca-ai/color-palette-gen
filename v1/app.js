@@ -10,26 +10,26 @@ import {
   oklchToRawRgb,
   relativeLuminance,
   rgbToOklch,
-} from "./lib/color-math.js";
+} from "../lib/color-math.js";
 import {
   CONTRAST_CONTRACTS,
   HARMONY_CANDIDATES,
   VIBES,
-} from "./lib/palette-config.js";
+} from "../lib/palette-config.js";
 import {
   completeHarmonyColor,
   deriveHarmonyColor,
   hueDistance,
-} from "./lib/harmony.js";
-import { buildConstraintReport } from "./lib/constraints.js";
-import { generatePalette } from "./lib/palette-generator.js";
+} from "../lib/harmony.js";
+import { buildConstraintReport } from "../lib/constraints.js";
+import { generatePalette } from "../lib/palette-generator.js";
 import {
   FUNCTION_TO_VAR,
   serializeCss,
   serializeDebug,
   serializeTokens,
-} from "./lib/output-format.js";
-import { axisMarkerPosition, parseMeasurement } from "./lib/debug-visual.js";
+} from "../lib/output-format.js";
+import { axisMarkerPosition, parseMeasurement } from "../lib/debug-visual.js";
 
 const form = document.querySelector("#palette-form");
 const primaryInput = document.querySelector("#primary-color");

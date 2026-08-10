@@ -79,8 +79,11 @@ test("filled accent foregrounds stay readable across harmonies and input modes",
 });
 
 test("CSS uses semantic text, boundary, and focus tokens", () => {
-  const css = readFileSync(new URL("../style.css", import.meta.url), "utf8");
-  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../v1/style.css", import.meta.url), "utf8");
+  const html = readFileSync(
+    new URL("../v1/index.html", import.meta.url),
+    "utf8",
+  );
 
   assert.equal(
     css
