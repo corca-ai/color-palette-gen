@@ -97,7 +97,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-2");
+  assert.equal(result.policyVersion, "v2-policy-model-4");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -159,6 +159,11 @@ test("v2 contracts hold across an RGB input grid", () => {
           .join("")}`;
         const result = generatePaletteV2({ primary });
         assert.equal(result.passed, true, primary);
+        assert.equal(
+          result.quality.checks.every(({ value }) => Number.isFinite(value)),
+          true,
+          `${primary} paired quality metrics`,
+        );
       }
     }
   }
@@ -194,4 +199,68 @@ test("state traces report actual gamut-axis movement", () => {
     Number.isFinite(decision.selected.constraintResults[0].metrics.chromaShift),
     true,
   );
+});
+
+test("v2 reports paired quality separately from accessibility contracts", () => {
+  const result = generatePaletteV2({ primary: "#6633FF" });
+  assert.equal(result.passed, true);
+  assert.equal(typeof result.quality.passed, "boolean");
+  assert.equal(result.quality.crossMode.checks.length, 3);
+  assert.equal(result.quality.states.light.checks.length, 2);
+  assert.equal(result.quality.states.dark.checks.length, 2);
+  assert.ok(
+    result.quality.crossMode.checks.find(
+      ({ id }) => id === "pair.primary-lightness-gap",
+    ),
+  );
+});
+
+test("state progression remains monotonic across representative colors", () => {
+  for (const primary of ["#FF0000", "#F2C230", "#00A878", "#7A4ED8"]) {
+    const result = generatePaletteV2({ primary });
+    for (const mode of ["light", "dark"]) {
+      const progression = result.quality.states[mode];
+      assert.equal(progression.checks[1].pass, true, `${primary}/${mode}`);
+      assert.ok(progression.defaultToHover > 0);
+      assert.ok(progression.hoverToActive > 0);
+    }
+  }
+});
+
+test("joint search compares complete light and dark pairs", () => {
+  const result = generatePaletteV2({ primary: "#6633FF" });
+  assert.equal(result.pairDecision.strategy, "bounded joint light/dark search");
+  assert.ok(result.pairDecision.candidateCount > 1);
+  assert.ok(result.pairDecision.alternatives.nextRanked);
+  assert.ok(result.pairDecision.alternatives.sourceFidelity);
+  assert.ok(result.pairDecision.alternatives.qualityRejected);
+  assert.equal(
+    result.pairDecision.selected.light,
+    result.modes.light.values.primary,
+  );
+  assert.equal(
+    result.pairDecision.selected.dark,
+    result.modes.dark.values.primary,
+  );
+  assert.equal(result.quality.passed, true);
+});
+
+test("large shifts expose safe usage alternatives without weakening the main palette", () => {
+  const result = generatePaletteV2({ primary: "#F2C230" });
+  assert.ok(result.sourceAlternatives);
+  for (const mode of ["light", "dark"]) {
+    const alternatives = result.sourceAlternatives.modes[mode];
+    assert.equal(alternatives.filled.safe, true);
+    assert.ok(alternatives.filled.hover);
+    assert.ok(alternatives.filled.active);
+    assert.equal(alternatives.outline.color, "#F2C230");
+    assert.equal(alternatives.brandFaithful.color, "#F2C230");
+    assert.equal(typeof alternatives.outline.safe, "boolean");
+    assert.equal(typeof alternatives.brandFaithful.safe, "boolean");
+  }
+});
+
+test("ordinary source fidelity does not create unnecessary usage alternatives", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  assert.equal(result.sourceAlternatives, null);
 });

@@ -71,6 +71,48 @@
         <div id="palettes" class="palettes"></div>
       </section>
 
+      <section class="quality-section" aria-labelledby="quality-title">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Paired quality review</p>
+            <h2 id="quality-title">One identity across both modes.</h2>
+          </div>
+          <p>
+            Provisional product objectives inspect cross-mode identity and the
+            pacing from default to hover to active. They remain separate from
+            accessibility contracts.
+          </p>
+        </div>
+        <div id="quality" class="quality-grid"></div>
+        <div id="source-alternatives" class="source-alternatives"></div>
+      </section>
+
+      <details id="gallery-panel" class="gallery-section">
+        <summary>
+          <span
+            ><small>Representative evaluation set</small
+            ><strong>Compare 12 primary inputs</strong></span
+          >
+          <span aria-hidden="true">Open gallery</span>
+        </summary>
+        <p class="gallery-help">
+          This fixed set exposes hue, chroma, achromatic, and source-shift edge
+          cases. Load any card into the complete inspector above.
+        </p>
+        <div class="gallery-tools">
+          <span>Ratings are stored only in this browser.</span>
+          <button id="export-ratings" type="button">Export JSON</button>
+          <button id="import-ratings" type="button">Import JSON</button>
+          <input
+            id="ratings-file"
+            type="file"
+            accept="application/json"
+            hidden
+          />
+        </div>
+        <div id="gallery" class="evaluation-gallery"></div>
+      </details>
+
       <section class="example-section" aria-labelledby="example-title">
         <div class="section-heading compact">
           <div>

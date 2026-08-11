@@ -35,3 +35,5 @@ must fail the decision-record test.
   [Implementation status](status.md).
 - To understand why only the sample adopts Craken structure, read
   [Craken integration](craken-integration.md).
+- To understand designer ratings and their limits, read
+  [Evaluation protocol](evaluation.md).

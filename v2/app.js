@@ -34,10 +34,61 @@ const palettes = document.querySelector("#palettes");
 const examples = document.querySelector("#examples");
 const relationships = document.querySelector("#relationships");
 const checks = document.querySelector("#checks");
+const quality = document.querySelector("#quality");
+const gallery = document.querySelector("#gallery");
+const galleryPanel = document.querySelector("#gallery-panel");
+const sourceAlternatives = document.querySelector("#source-alternatives");
+const ratingsFile = document.querySelector("#ratings-file");
 const paletteTitle = document.querySelector("#palette-title");
 const validationSummary = document.querySelector("#validation-summary");
 const toast = document.querySelector("#toast");
 let currentResult;
+
+const EVALUATION_INPUTS = [
+  "#FF0000",
+  "#F97316",
+  "#F2C230",
+  "#00A878",
+  "#00A7C4",
+  "#507096",
+  "#2563EB",
+  "#6633FF",
+  "#D946EF",
+  "#777777",
+  "#000000",
+  "#FFFFFF",
+];
+const EVALUATION_STORAGE_KEY = "color-lab-v2-evaluations";
+const galleryResults = new Map();
+let evaluationRecords = loadEvaluationRecords();
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function loadEvaluationRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(EVALUATION_STORAGE_KEY)) ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function saveEvaluationRecords() {
+  try {
+    localStorage.setItem(
+      EVALUATION_STORAGE_KEY,
+      JSON.stringify(evaluationRecords),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function colorValues(tokens) {
   return Object.fromEntries(tokens.map(([color, role]) => [role, color]));
@@ -189,6 +240,86 @@ function renderRelationships() {
     </div>`;
 }
 
+function qualityValue(check) {
+  const value = check.unit === "ordered" ? "ordered" : check.value.toFixed(3);
+  const target =
+    check.unit === "ordered"
+      ? "required"
+      : Array.isArray(check.target)
+        ? `${check.target[0].toFixed(2)}–${check.target[1].toFixed(2)}`
+        : `≤ ${check.target}`;
+  return { value: `${value}${check.unit === "°" ? "°" : ""}`, target };
+}
+
+function qualityCheck(check) {
+  const display = qualityValue(check);
+  return `<li class="${check.pass ? "pass" : "review"}"><i>${check.pass ? "✓" : "!"}</i><span><strong>${check.label}</strong><small>${check.authority} · target ${display.target}</small></span><b>${display.value}</b></li>`;
+}
+
+function pairOption(label, pair, selectedPair) {
+  if (!pair) return "";
+  const sameAsSelected =
+    pair.light === selectedPair.light && pair.dark === selectedPair.dark;
+  return `<article class="pair-option ${label === "Selected" ? "selected" : ""}"><header><span>${label}</span>${sameAsSelected && label !== "Selected" ? `<small>Same as selected</small>` : ""}</header><div class="pair-swatches"><i style="background:${pair.light}"><b>${pair.light}</b></i><i style="background:${pair.dark}"><b>${pair.dark}</b></i></div><dl><div><dt>Quality misses</dt><dd>${pair.qualityMisses}</dd></div><div><dt>Worst source ΔE</dt><dd>${pair.maximumSourceDistance.toFixed(3)}</dd></div><div><dt>Hue drift</dt><dd>${pair.hueDrift.toFixed(2)}°</dd></div><div><dt>Lightness gap</dt><dd>${pair.lightnessGap.toFixed(3)}</dd></div></dl></article>`;
+}
+
+function renderQuality() {
+  const result = currentResult.quality;
+  const pair = currentResult.pairDecision;
+  quality.innerHTML = `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Quality boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} objectives</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>${[
+    "light",
+    "dark",
+  ]
+    .map((mode) => {
+      const state = result.states[mode];
+      return `<article><header><span>${mode} state pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;
+    })
+    .join("")}`;
+  renderSourceAlternatives();
+}
+
+function alternativeMode(mode, alternatives) {
+  const item = (name, value) => {
+    const swatchStyle =
+      name === "Source outline"
+        ? `background:transparent;border-color:${value.color};color:${value.text}`
+        : `background:${value.color};color:${value.text}`;
+    const component = value.hover
+      ? `<div class="usage-buttons"><button style="background:${value.color};color:${value.text}">Default</button><button style="background:${value.hover};color:${value.text}">Hover</button><button style="background:${value.active};color:${value.text}">Active</button></div>`
+      : `<button class="usage-base" style="${swatchStyle}">${name}</button>`;
+    return `<div class="usage-option ${value.safe ? "safe" : "unsafe"}"><span>${name}<b>${value.safe ? (value.hover ? "Complete family" : "Base viable") : "Not recommended"}</b></span>${component}<strong>${value.color}</strong><small>${value.note}${value.hover ? "" : " Interaction states are not generated for this alternative."}</small></div>`;
+  };
+  return `<article style="background:${alternatives.background};color:${alternatives.foreground}"><header><span>${mode}</span><strong>Source-shift alternatives</strong></header>${item("Generated fill", alternatives.filled)}${item("Source outline", alternatives.outline)}${item("Source fill", alternatives.brandFaithful)}</article>`;
+}
+
+function renderSourceAlternatives() {
+  const alternatives = currentResult.sourceAlternatives;
+  if (!alternatives) {
+    sourceAlternatives.innerHTML = "";
+    return;
+  }
+  sourceAlternatives.innerHTML = `<header><span>Large source shift</span><p>${alternatives.intent}</p></header><div>${["light", "dark"].map((mode) => alternativeMode(mode, alternatives.modes[mode])).join("")}</div>`;
+}
+
+function galleryCard(result) {
+  const light = result.modes.light.values;
+  const dark = result.modes.dark.values;
+  const passed = result.quality.checks.filter(({ pass }) => pass).length;
+  const record = evaluationRecords[result.input.primary] ?? {};
+  const ratingButton = (rating) =>
+    `<button type="button" data-rating="${rating}" aria-pressed="${record.rating === rating}">${rating}</button>`;
+  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-pair"><i style="background:${light.background}"><b style="background:${light.primary}"></b><em style="background:${light["primary hover"]}"></em><small style="background:${light["primary active"]}"></small></i><i style="background:${dark.background}"><b style="background:${dark.primary}"></b><em style="background:${dark["primary hover"]}"></em><small style="background:${dark["primary active"]}"></small></i></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} quality objectives · Inspect</span></button><div class="gallery-rating" aria-label="Designer rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
+}
+
+function renderGallery() {
+  gallery.innerHTML = EVALUATION_INPUTS.map((primary) => {
+    if (!galleryResults.has(primary)) {
+      galleryResults.set(primary, generatePaletteV2({ primary }));
+    }
+    return galleryCard(galleryResults.get(primary));
+  }).join("");
+}
+
 function checkValue(check) {
   if (check.kind === "text") {
     return {
@@ -233,6 +364,7 @@ function render(result) {
   renderPalettes();
   renderExamples();
   renderRelationships();
+  renderQuality();
   renderChecks();
 }
 
@@ -270,6 +402,106 @@ document.querySelector("#copy-css").addEventListener("click", async () => {
   }
   toast.classList.add("visible");
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
+});
+
+gallery.addEventListener("click", (event) => {
+  const card = event.target.closest("[data-primary]");
+  if (!card) return;
+  if (event.target.closest('[data-action="load"]')) {
+    primaryInput.value = card.dataset.primary;
+    picker.value = card.dataset.primary;
+    render(galleryResults.get(card.dataset.primary));
+    return;
+  }
+  const rating = event.target.closest("[data-rating]");
+  if (!rating) return;
+  evaluationRecords[card.dataset.primary] = {
+    ...(evaluationRecords[card.dataset.primary] ?? {}),
+    rating: rating.dataset.rating,
+    policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
+  };
+  saveEvaluationRecords();
+  card
+    .querySelectorAll("[data-rating]")
+    .forEach((button) =>
+      button.setAttribute("aria-pressed", button === rating ? "true" : "false"),
+    );
+});
+
+gallery.addEventListener("change", (event) => {
+  if (!event.target.matches("textarea")) return;
+  const card = event.target.closest("[data-primary]");
+  evaluationRecords[card.dataset.primary] = {
+    ...(evaluationRecords[card.dataset.primary] ?? {}),
+    note: event.target.value.trim(),
+    policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
+  };
+  saveEvaluationRecords();
+});
+
+document.querySelector("#export-ratings").addEventListener("click", () => {
+  const payload = {
+    schema: "color-lab-evaluation-1",
+    exportedAt: new Date().toISOString(),
+    records: evaluationRecords,
+  };
+  const url = URL.createObjectURL(
+    new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "color-lab-v2-evaluations.json";
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+});
+
+document
+  .querySelector("#import-ratings")
+  .addEventListener("click", () => ratingsFile.click());
+
+ratingsFile.addEventListener("change", async () => {
+  const file = ratingsFile.files?.[0];
+  if (!file) return;
+  try {
+    const payload = JSON.parse(await file.text());
+    if (payload.schema !== "color-lab-evaluation-1" || !payload.records) {
+      throw new TypeError("Unsupported evaluation file.");
+    }
+    const allowedRatings = new Set(["Prefer", "Acceptable", "Reject"]);
+    evaluationRecords = Object.fromEntries(
+      Object.entries(payload.records)
+        .filter(([primary, record]) => isHex(primary) && record)
+        .map(([primary, record]) => [
+          normalizeHex(primary),
+          {
+            ...(allowedRatings.has(record.rating)
+              ? { rating: record.rating }
+              : {}),
+            ...(typeof record.note === "string"
+              ? { note: record.note.slice(0, 1000) }
+              : {}),
+            ...(typeof record.policyVersion === "string"
+              ? { policyVersion: record.policyVersion }
+              : {}),
+          },
+        ]),
+    );
+    saveEvaluationRecords();
+    renderGallery();
+    toast.textContent = "Evaluation JSON imported";
+  } catch {
+    toast.textContent = "Could not import this evaluation file";
+  }
+  toast.classList.add("visible");
+  window.setTimeout(() => toast.classList.remove("visible"), 1600);
+  ratingsFile.value = "";
+});
+
+galleryPanel.addEventListener("toggle", () => {
+  if (galleryPanel.open && !gallery.childElementCount) {
+    gallery.innerHTML = `<p class="gallery-loading">Calculating 12 paired palettes…</p>`;
+    window.requestAnimationFrame(renderGallery);
+  }
 });
 
 render(generatePaletteV2({ primary: primaryInput.value }));

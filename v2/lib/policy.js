@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-2",
+  version: "v2-policy-model-4",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -61,7 +61,7 @@ export const V2_POLICY = {
   primary: {
     lightnessRange: {
       light: [0.46, 0.54],
-      dark: [0.56, 0.59],
+      dark: [0.58, 0.62],
     },
     chromaCap: 0.15,
     chromaTolerance: 0.002,
@@ -75,6 +75,12 @@ export const V2_POLICY = {
       hoverFromDefault: 0.035,
       activeFromDefault: 0.075,
     },
+    progressionRatio: [0.8, 1.5],
+  },
+  crossMode: {
+    maximumHueDrift: 4,
+    maximumChromaDifference: 0.035,
+    lightnessGap: [0.04, 0.16],
   },
   neutral: { tintCap: 0.012 },
   destructive: {

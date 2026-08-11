@@ -29,6 +29,11 @@ Source distance is also reported independently from pass/fail. A result beyond
 the provisional review threshold is marked as a large brand shift so a passing
 palette is not mistaken for a faithful one.
 
+Large shifts expose three usage-specific outputs instead of silently presenting
+one answer: the generated filled control, a source-colored outline when it has
+sufficient boundary contrast, and a source-faithful fill when it supports the
+text target. Unsafe alternatives remain visible but are marked not recommended.
+
 Light and dark use non-overlapping role ranges so dark primary remains lighter
 than light primary. The ranges are product policy backed by public design-system
 precedent, but their exact endpoints remain heuristic.
@@ -49,6 +54,26 @@ The state order is default, hover, active.
 
 Carbon and Spectrum support the direction and ordered progression. They do not
 establish the current `Delta E` thresholds, which remain `heuristic`.
+
+The paired quality review also compares the default-to-hover interval with the
+hover-to-active interval. Its provisional ratio band detects a weak first step
+or an abrupt second step. This quality signal does not replace the individual
+minimum-separation constraints.
+
+## Cross-mode identity
+
+Light and dark primary ranges are coordinated to provide a provisional minimum
+lightness gap. Both palettes are generated from the same bounded source hue and
+chroma, then evaluated together. The paired review reports hue drift, chroma
+difference, and the lightness gap between primary roles. These are provisional
+product objectives, not accessibility requirements, so a palette can pass every
+contract while still being marked for cross-mode review.
+
+The engine performs a bounded joint search over complete light/dark candidates.
+It first minimizes the number of paired-quality misses, then limits the worst
+single-mode source distance, total source distance, and remaining quality miss.
+The target bands and ordering remain provisional until designer evaluation
+provides stronger evidence.
 
 ## Neutral foundations
 
