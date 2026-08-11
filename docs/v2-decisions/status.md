@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-justification-1`.
+Current policy version: `v2-policy-model-2`.
 
 ## Candidate search implemented
 
@@ -11,6 +11,11 @@ Current policy version: `v2-justification-1`.
 
 These roles retain selected, closest rejected, and next passing candidates when
 available.
+
+Their policies explicitly separate named constraints, ordered product
+objectives, and deterministic tie-breakers. Constraint authority is classified
+as normative, product, provisional, or technical. The trace records every layer
+and the per-candidate result of each rule.
 
 ## Policy anchors
 

@@ -218,6 +218,15 @@ h1 {
 .palette-header strong {
   font-size: 14px;
 }
+.palette-header mark {
+  background: transparent;
+  color: inherit;
+  display: block;
+  font-family: var(--mono);
+  font-size: 8px;
+  margin-top: 5px;
+  text-transform: uppercase;
+}
 .palette-header i {
   border: 1px solid currentColor;
   height: 36px;
@@ -355,11 +364,52 @@ h1 {
   font-family: var(--mono);
   font-size: 9px;
 }
-.decision-candidate small {
+.decision-candidate em {
+  font-family: var(--mono);
+  font-size: 7px;
+  font-style: normal;
+  grid-column: 1 / -1;
+  opacity: 0.62;
+}
+.decision-candidate > small {
   grid-column: 1 / -1;
   line-height: 1.45;
-  min-height: 2.9em;
   opacity: 0.65;
+}
+.candidate-rules {
+  display: grid;
+  gap: 5px;
+  grid-column: 1 / -1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.candidate-rules li {
+  display: grid;
+  gap: 2px 5px;
+  grid-template-columns: 10px 1fr;
+}
+.candidate-rules li > b {
+  font-family: var(--mono);
+  font-size: 8px;
+}
+.candidate-rules li > span {
+  font-size: 8px;
+  font-weight: 650;
+}
+.candidate-rules li > em {
+  font-family: inherit;
+  font-size: 8px;
+  font-style: normal;
+  grid-column: 2;
+  opacity: 0.62;
+}
+.candidate-rules .pass > b,
+.candidate-summary.pass {
+  color: #23734b;
+}
+.candidate-rules .fail > b {
+  color: #b32822;
 }
 .decision-evidence {
   border-top: 1px solid #8884;
@@ -368,6 +418,62 @@ h1 {
   gap: 6px;
   margin-top: 12px;
   padding-top: 12px;
+}
+.decision-policy {
+  border: 1px solid #8885;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 12px;
+  padding: 10px;
+}
+.decision-policy header {
+  grid-column: 1 / -1;
+}
+.decision-policy header span,
+.decision-policy > div > span {
+  display: block;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+.decision-policy header small {
+  font-size: 9px;
+  opacity: 0.65;
+}
+.decision-policy > div {
+  display: grid;
+  gap: 5px;
+}
+.decision-policy b {
+  align-items: center;
+  display: flex;
+  font-size: 9px;
+  gap: 6px;
+}
+.decision-policy b > span {
+  display: grid;
+  gap: 1px;
+}
+.decision-policy b small {
+  font-family: var(--mono);
+  font-size: 7px;
+  font-weight: 400;
+  opacity: 0.58;
+  text-transform: uppercase;
+}
+.decision-policy b i {
+  align-items: center;
+  border: 1px solid #8887;
+  display: inline-flex;
+  flex: 0 0 17px;
+  font-family: var(--mono);
+  font-size: 7px;
+  font-style: normal;
+  height: 17px;
+  justify-content: center;
 }
 .decision-evidence > span {
   flex-basis: 100%;
@@ -1112,6 +1218,9 @@ h1 {
     grid-template-columns: 1fr;
   }
   .decision-candidates {
+    grid-template-columns: 1fr;
+  }
+  .decision-policy {
     grid-template-columns: 1fr;
   }
   .craken-coverage,

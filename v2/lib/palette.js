@@ -10,7 +10,7 @@ import {
 } from "../../lib/color-math.js";
 import { apcaCheck, apcaContrast } from "./apca.js";
 import { anchoredDecision, selectCandidate } from "./decision.js";
-import { V2_POLICY, evidence } from "./policy.js";
+import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 
 const MODE_RECIPE = {
   light: {
@@ -100,6 +100,12 @@ function brandCandidate(input, lightness) {
   return candidate(brandTone(input, lightness), { lightness });
 }
 
+function stateCandidate(base, lightness) {
+  return candidate(tone({ l: lightness, c: base.oklch.c, h: base.oklch.h }), {
+    lightness,
+  });
+}
+
 function destructiveTone(lightness) {
   return tone({ l: lightness, c: 0.19, h: 27 });
 }
@@ -151,55 +157,82 @@ function distance(first, second) {
   return oklchDifference(first.oklch, second.oklch).deltaE;
 }
 
-function stateSearch({ input, mode, base, role, target }) {
-  const direction = V2_POLICY.stateDirection[mode];
+function bindRule(policy, group, id, evaluate) {
+  const definition = policy[group].find((rule) => rule.id === id);
+  if (!definition) throw new Error(`${policy.id} does not declare ${id}.`);
+  return { definition, evaluate };
+}
+
+function stableTieBreaker(policy) {
+  return [
+    bindRule(policy, "tieBreakers", "stable.hex-order", (item) => item.hex),
+  ];
+}
+
+function stateSearch({ mode, base, role, target }) {
+  const policy = decisionPolicy("state");
+  const direction = V2_POLICY.state.direction[mode];
   const candidates = [];
-  for (let index = 1; index <= 80; index += 1) {
+  for (
+    let index = 1;
+    index <= V2_POLICY.search.stateCandidateLimit;
+    index += 1
+  ) {
     const lightness =
-      base.oklch.l + direction * V2_POLICY.candidateStep * index;
+      base.oklch.l + direction * V2_POLICY.search.candidateStep * index;
     if (lightness <= 0 || lightness >= 1) break;
-    candidates.push(brandCandidate(input, lightness));
+    candidates.push(stateCandidate(base, lightness));
   }
   return selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
     role,
     intent: `Create the smallest ${mode === "light" ? "darker" : "lighter"} state change that remains visibly ordered.`,
     candidates,
-    evaluate: (item) => {
-      const deltaE = distance(base, item);
-      return {
-        passed: deltaE >= target,
-        reasons:
-          deltaE >= target
-            ? [`Oklab ΔE ${deltaE.toFixed(3)} reaches ${target.toFixed(3)}.`]
-            : [`Oklab ΔE ${deltaE.toFixed(3)} is below ${target.toFixed(3)}.`],
-        metrics: { deltaE, target },
-      };
-    },
-    objective: (item) => distance(base, item),
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "state.minimum-separation", (item) => {
+        const deltaE = distance(base, item);
+        const chromaShift = item.oklch.c - base.oklch.c;
+        const hueShift = hueDistance(item.oklch.h, base.oklch.h);
+        return {
+          passed: deltaE >= target,
+          reasons: [
+            deltaE >= target
+              ? `Oklab ΔE ${deltaE.toFixed(3)} reaches ${target.toFixed(3)}.`
+              : `Oklab ΔE ${deltaE.toFixed(3)} is below ${target.toFixed(3)}.`,
+          ],
+          metrics: { deltaE, target, chromaShift, hueShift },
+        };
+      }),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "state.minimum-change", (item) =>
+        distance(base, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
     evidence: evidence("carbonStates", "spectrumStates", "stateSeparation"),
-    preservedAxes: ["hue", "chroma"],
+    searchConstants: ["requested hue", "requested chroma"],
   });
 }
 
 function brandFamilySearch({ input, mode, background, surface }) {
-  const [start, end] = V2_POLICY.primaryRange[mode];
+  const policy = decisionPolicy("primary");
+  const [start, end] = V2_POLICY.primary.lightnessRange[mode];
   const source = candidate(input.hex, { lightness: input.l });
   const candidates = [];
   const addFamily = (primary) => {
     const hover = stateSearch({
-      input,
       mode,
       base: primary,
       role: "primary hover",
-      target: V2_POLICY.stateSeparation.hoverFromDefault,
+      target: V2_POLICY.state.separation.hoverFromDefault,
     });
     const active = stateSearch({
-      input,
       mode,
       base: primary,
       role: "primary active",
-      target: V2_POLICY.stateSeparation.activeFromDefault,
+      target: V2_POLICY.state.separation.activeFromDefault,
     });
     return { ...primary, family: { hover, active } };
   };
@@ -208,8 +241,8 @@ function brandFamilySearch({ input, mode, background, surface }) {
   candidates.push(sourceCanGenerateStates ? addFamily(source) : source);
   for (
     let lightness = start;
-    lightness <= end + V2_POLICY.candidateStep / 2;
-    lightness += V2_POLICY.candidateStep
+    lightness <= end + V2_POLICY.search.candidateStep / 2;
+    lightness += V2_POLICY.search.candidateStep
   ) {
     const primary = brandCandidate(input, lightness);
     if (primary.hex !== source.hex) candidates.push(addFamily(primary));
@@ -220,59 +253,94 @@ function brandFamilySearch({ input, mode, background, surface }) {
     intent:
       "Stay as close to the source as possible while the complete mode state family remains usable.",
     candidates,
-    evaluate: (item) => {
-      if (!item.family) {
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "primary.generated-family", (item) => ({
+        passed: Boolean(item.family),
+        reasons: [
+          item.family
+            ? "Default, hover, and active candidates are all available."
+            : "Exact source is retained as a counterfactual; it cannot produce the complete mode family.",
+        ],
+        metrics: { completeFamily: Boolean(item.family) },
+      })),
+      bindRule(policy, "constraints", "primary.mode-range", (item) => {
+        const passed =
+          item.oklch.l >= start - 0.001 && item.oklch.l <= end + 0.001;
         return {
-          passed: false,
+          passed,
           reasons: [
-            "Exact source is retained as a counterfactual; it is not a generated mode-family candidate.",
+            passed
+              ? `L ${item.oklch.l.toFixed(3)} is inside the ${mode} role range.`
+              : `L ${item.oklch.l.toFixed(3)} is outside ${start.toFixed(3)}–${end.toFixed(3)}.`,
           ],
-          metrics: { source: true },
+          metrics: { value: item.oklch.l, minimum: start, maximum: end },
         };
-      }
-      const colors = [
-        item.hex,
-        item.family.hover.value.hex,
-        item.family.active.value.hex,
-      ];
-      const text = chooseSharedText(colors);
-      const minimumLc = Math.min(
-        ...colors.map((color) => Math.abs(apcaContrast(text, color))),
-      );
-      const focusContrast = Math.min(
-        contrastRatio(item.hex, background),
-        contrastRatio(item.hex, surface),
-      );
-      const reasons = [];
-      if (item.oklch.l < start - 0.001 || item.oklch.l > end + 0.001) {
-        reasons.push(
-          `L ${item.oklch.l.toFixed(3)} is outside the ${mode} role range ${start.toFixed(3)}–${end.toFixed(3)}.`,
+      }),
+      bindRule(policy, "constraints", "primary.calm-chroma", (item) => {
+        const maximum = input.brandChroma + V2_POLICY.primary.chromaTolerance;
+        const passed = item.oklch.c <= maximum;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `C ${item.oklch.c.toFixed(3)} preserves the restrained source chroma.`
+              : `C ${item.oklch.c.toFixed(3)} exceeds the calm bound ${maximum.toFixed(3)}.`,
+          ],
+          metrics: { value: item.oklch.c, maximum },
+        };
+      }),
+      bindRule(policy, "constraints", "primary.shared-label", (item) => {
+        const colors = item.family
+          ? [
+              item.hex,
+              item.family.hover.value.hex,
+              item.family.active.value.hex,
+            ]
+          : [item.hex];
+        const text = chooseSharedText(colors);
+        const minimumLc = Math.min(
+          ...colors.map((color) => Math.abs(apcaContrast(text, color))),
         );
-      }
-      if (item.oklch.c > input.brandChroma + 0.002) {
-        reasons.push(
-          `C ${item.oklch.c.toFixed(3)} exceeds the calm source-relative bound ${input.brandChroma.toFixed(3)}.`,
+        return {
+          passed:
+            Boolean(item.family) && minimumLc >= V2_POLICY.primary.labelLc,
+          reasons: [
+            item.family && minimumLc >= V2_POLICY.primary.labelLc
+              ? `Shared label reaches ${minimumLc.toFixed(1)} Lc.`
+              : `Complete-family label reaches only ${minimumLc.toFixed(1)} Lc.`,
+          ],
+          metrics: { minimumLc, target: V2_POLICY.primary.labelLc, text },
+        };
+      }),
+      bindRule(policy, "constraints", "primary.focus-contrast", (item) => {
+        const focusContrast = Math.min(
+          contrastRatio(item.hex, background),
+          contrastRatio(item.hex, surface),
         );
-      }
-      if (minimumLc < 60)
-        reasons.push(`Shared label reaches only ${minimumLc.toFixed(1)} Lc.`);
-      if (focusContrast < V2_POLICY.nonTextContrast)
-        reasons.push(
-          `Focus contrast ${focusContrast.toFixed(2)}:1 is below ${V2_POLICY.nonTextContrast}:1.`,
-        );
-      if (!reasons.length)
-        reasons.push("State labels and focus contrast pass together.");
-      return {
-        passed:
-          reasons.length === 1 &&
-          reasons[0] === "State labels and focus contrast pass together.",
-        reasons,
-        metrics: { minimumLc, focusContrast },
-      };
-    },
-    objective: (item) => distance(source, item),
+        const passed = focusContrast >= V2_POLICY.primary.focusContrast;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Focus contrast reaches ${focusContrast.toFixed(2)}:1.`
+              : `Focus contrast ${focusContrast.toFixed(2)}:1 is below ${V2_POLICY.primary.focusContrast}:1.`,
+          ],
+          metrics: {
+            value: focusContrast,
+            target: V2_POLICY.primary.focusContrast,
+          },
+        };
+      }),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "primary.source-fidelity", (item) =>
+        distance(source, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "wcagNonText", "calmMinimal"),
-    preservedAxes: ["hue", "relative chroma"],
+    searchConstants: ["input hue", "bounded source chroma"],
   });
   return {
     primary: selection.value,
@@ -287,9 +355,14 @@ function brandFamilySearch({ input, mode, background, surface }) {
 }
 
 function destructiveSearch({ mode, primary, preferredLightness }) {
-  const [start, end] = mode === "light" ? [0.3, 0.56] : [0.56, 0.72];
+  const policy = decisionPolicy("destructive");
+  const [start, end] = V2_POLICY.destructive.lightnessRange[mode];
   const candidates = [];
-  for (let lightness = start; lightness <= end + 0.0025; lightness += 0.005) {
+  for (
+    let lightness = start;
+    lightness <= end + V2_POLICY.destructive.candidateStep / 2;
+    lightness += V2_POLICY.destructive.candidateStep
+  ) {
     candidates.push(candidate(destructiveTone(lightness), { lightness }));
   }
   return selectCandidate({
@@ -298,29 +371,51 @@ function destructiveSearch({ mode, primary, preferredLightness }) {
     intent:
       "Stay near the semantic red anchor while remaining readable and distinct from the generated brand.",
     candidates,
-    evaluate: (item) => {
-      const text = chooseSharedText([item.hex]);
-      const lc = Math.abs(apcaContrast(text, item.hex));
-      const deltaE = distance(primary, item);
-      const reasons = [];
-      if (lc < 60) reasons.push(`Best label reaches only ${lc.toFixed(1)} Lc.`);
-      if (deltaE < V2_POLICY.destructiveSeparation) {
-        reasons.push(
-          `Brand separation ΔE ${deltaE.toFixed(3)} is below ${V2_POLICY.destructiveSeparation.toFixed(3)}.`,
-        );
-      }
-      if (!reasons.length) {
-        reasons.push("Label contrast and brand separation pass together.");
-      }
-      return {
-        passed: lc >= 60 && deltaE >= V2_POLICY.destructiveSeparation,
-        reasons,
-        metrics: { lc, deltaE },
-      };
-    },
-    objective: (item) => Math.abs(item.oklch.l - preferredLightness),
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "destructive.label-contrast", (item) => {
+        const text = chooseSharedText([item.hex]);
+        const lc = Math.abs(apcaContrast(text, item.hex));
+        return {
+          passed: lc >= V2_POLICY.destructive.labelLc,
+          reasons: [
+            lc >= V2_POLICY.destructive.labelLc
+              ? `Best label reaches ${lc.toFixed(1)} Lc.`
+              : `Best label reaches only ${lc.toFixed(1)} Lc.`,
+          ],
+          metrics: { value: lc, target: V2_POLICY.destructive.labelLc, text },
+        };
+      }),
+      bindRule(
+        policy,
+        "constraints",
+        "destructive.brand-separation",
+        (item) => {
+          const deltaE = distance(primary, item);
+          const passed = deltaE >= V2_POLICY.destructive.separation;
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Brand separation reaches ΔE ${deltaE.toFixed(3)}.`
+                : `Brand separation ΔE ${deltaE.toFixed(3)} is below ${V2_POLICY.destructive.separation.toFixed(3)}.`,
+            ],
+            metrics: {
+              value: deltaE,
+              target: V2_POLICY.destructive.separation,
+            },
+          };
+        },
+      ),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "destructive.semantic-anchor", (item) =>
+        Math.abs(item.oklch.l - preferredLightness),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
-    preservedAxes: ["semantic red hue", "chroma"],
+    searchConstants: ["semantic red hue", "requested chroma"],
   });
 }
 
@@ -346,6 +441,10 @@ function modePalette(input, mode) {
   const primaryHover = brandFamily.hover.hex;
   const primaryActive = brandFamily.active.hex;
   const primaryText = chooseSharedText([primary, primaryHover, primaryActive]);
+  const primarySourceDistance = distance(
+    candidate(input.hex),
+    brandFamily.primary,
+  );
   const redConflict =
     input.classification !== "achromatic" && hueDistance(input.h, 27) < 38;
   const destructiveDecision = destructiveSearch({
@@ -516,10 +615,13 @@ function modePalette(input, mode) {
     recipe,
     adaptations: {
       inputLightnessInfluence: brandFamily.primary.oklch.l - input.l,
+      primarySourceDistance,
+      largeBrandShift:
+        primarySourceDistance > V2_POLICY.primary.maximumSourceDistance,
       neutralTintChroma:
         input.classification === "achromatic"
           ? 0
-          : Math.min(0.012, input.brandChroma * 0.52),
+          : Math.min(V2_POLICY.neutral.tintCap, input.brandChroma * 0.52),
       redConflict,
     },
     passed: checks.every((check) => check.pass),
@@ -538,7 +640,9 @@ export function generatePaletteV2({ primary }) {
     hex: normalizedPrimary,
     classification,
     brandChroma:
-      classification === "achromatic" ? 0 : Math.min(0.15, rawInput.c * 0.82),
+      classification === "achromatic"
+        ? 0
+        : Math.min(V2_POLICY.primary.chromaCap, rawInput.c),
   };
   const modes = {
     light: modePalette(inputColor, "light"),

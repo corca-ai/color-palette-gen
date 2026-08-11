@@ -17,11 +17,17 @@ are heuristics and still need designer evaluation.
 
 ## Primary default
 
-The exact input is retained as a counterfactual. The engine generates
-mode-appropriate OKLCH lightness candidates, preserves input hue and relative
-chroma, and rejects candidates whose full state family cannot support shared
+The exact input is evaluated as a real candidate. Chroma is retained until it
+exceeds the calm/minimal cap; it is no longer reduced by an unconditional
+percentage. The engine generates
+mode-appropriate OKLCH lightness candidates, holds input hue and bounded source
+chroma constant during the search, and rejects candidates whose full state family cannot support shared
 label contrast or focus contrast. It selects the passing candidate with the
 smallest Oklab distance from the source.
+
+Source distance is also reported independently from pass/fail. A result beyond
+the provisional review threshold is marked as a large brand shift so a passing
+palette is not mistaken for a faithful one.
 
 Light and dark use non-overlapping role ranges so dark primary remains lighter
 than light primary. The ranges are product policy backed by public design-system
@@ -36,7 +42,9 @@ The state order is default, hover, active.
 - Hover selects the nearest candidate reaching the provisional lower separation.
 - Active selects the nearest candidate reaching a stronger separation from
   default.
-- Hue and chroma are preserved while lightness is searched.
+- Requested hue and chroma are held constant while lightness is searched.
+  The exported sRGB result can still show small axis drift after gamut mapping;
+  the trace reports that actual movement rather than claiming exact preservation.
 - One foreground must remain readable across all three states.
 
 Carbon and Spectrum support the direction and ordered progression. They do not

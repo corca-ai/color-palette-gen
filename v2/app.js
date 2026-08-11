@@ -48,16 +48,45 @@ function colorCoordinates(hex) {
   return `L ${Math.round(l * 100)} · C ${c.toFixed(3)} · H ${h.toFixed(1)}°`;
 }
 
-function candidateView(label, value) {
+function constraintView(value, selected) {
+  const results = selected
+    ? (value.constraintResults ?? [])
+    : (value.constraintResults ?? []).filter(({ passed }) => !passed);
+  if (!results.length) {
+    return `<small class="candidate-summary pass">✓ All must-pass rules satisfied</small>`;
+  }
+  return `<ul class="candidate-rules">${results
+    .map(
+      (rule) =>
+        `<li class="${rule.passed ? "pass" : "fail"}"><b>${rule.passed ? "✓" : "×"}</b><span>${rule.label}</span><em>${rule.reasons?.[0] ?? ""}</em></li>`,
+    )
+    .join("")}</ul>`;
+}
+
+function candidateView(label, value, selected = false) {
   if (!value) return "";
-  return `<div class="decision-candidate"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong><small>${value.reasons.join(" ")}</small></div>`;
+  const score = value.objectiveResults?.[0];
+  return `<div class="decision-candidate"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${constraintView(value, selected)}</div>`;
+}
+
+function policyView(policy) {
+  if (!policy) return "";
+  const group = (label, rules) =>
+    `<div><span>${label}</span>${rules
+      .map(
+        (rule, index) =>
+          `<b><i>${index + 1}</i><span>${rule.label}<small>${rule.authority}</small></span></b>`,
+      )
+      .join("")}</div>`;
+  return `<div class="decision-policy"><header><span>Selection order</span><small>Reject first, optimize second, resolve exact ties last.</small></header>${group("Must pass", policy.constraints)}${group("Then optimize", policy.objectives)}${group("Exact ties", policy.tieBreakers)}</div>`;
 }
 
 function decisionView(decision) {
   return `<div class="decision-detail">
     <div class="decision-intent"><span>${decision.strategy} · ${decision.candidateCount} candidate${decision.candidateCount === 1 ? "" : "s"}</span><p>${decision.intent}</p></div>
+    ${policyView(decision.policy)}
     <div class="decision-candidates">
-      ${candidateView("Selected", decision.selected)}
+      ${candidateView("Selected", decision.selected, true)}
       ${candidateView("Closest rejected", decision.alternatives.nearestRejected)}
       ${candidateView("Next passing", decision.alternatives.nextPassing)}
     </div>
@@ -72,8 +101,11 @@ function swatch(color, role, decision) {
 function palette(modeResult) {
   const values = colorValues(modeResult.tokens);
   const uniqueColors = new Set(modeResult.tokens.map(([color]) => color)).size;
+  const shift = modeResult.adaptations.largeBrandShift
+    ? `<mark>Large source shift · ΔE ${modeResult.adaptations.primarySourceDistance.toFixed(3)}</mark>`
+    : "";
   return `<article class="palette ${modeResult.mode}">
-    <header class="palette-header"><div><span>${modeResult.mode} palette</span><strong>${modeResult.tokens.length} roles · ${uniqueColors} unique colors</strong></div><i style="background:${values.primary}" aria-label="Primary ${values.primary}"></i></header>
+    <header class="palette-header"><div><span>${modeResult.mode} palette</span><strong>${modeResult.tokens.length} roles · ${uniqueColors} unique colors</strong>${shift}</div><i style="background:${values.primary}" aria-label="Primary ${values.primary}"></i></header>
     <div class="palette-strip" aria-hidden="true">${modeResult.tokens
       .filter(([, role]) => !role.includes("text") && role !== "focus ring")
       .map(([color]) => `<i style="background:${color}"></i>`)

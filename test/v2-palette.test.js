@@ -97,7 +97,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-justification-1");
+  assert.equal(result.policyVersion, "v2-policy-model-2");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -132,6 +132,14 @@ test("searched roles retain counterfactual candidates", () => {
       const decision = result.modes[mode].decisions[role];
       assert.equal(decision.strategy, "minimum-change candidate search");
       assert.ok(decision.candidateCount > 1);
+      assert.ok(decision.policy.constraints.length > 0);
+      assert.ok(decision.policy.objectives.length > 0);
+      assert.ok(decision.policy.tieBreakers.length > 0);
+      assert.equal(
+        decision.selected.constraintResults.every(({ passed }) => passed),
+        true,
+      );
+      assert.equal(decision.selected.objectiveResults.length > 0, true);
       assert.ok(
         decision.alternatives.nearestRejected ||
           decision.alternatives.nextPassing,
@@ -160,5 +168,30 @@ test("v2 invalid input fails explicitly", () => {
   assert.throws(
     () => generatePaletteV2({ primary: "blue" }),
     /primary must be a six-digit hex color/,
+  );
+});
+
+test("a usable source color is retained instead of receiving an unconditional chroma cut", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  assert.equal(result.modes.light.values.primary, "#507096");
+  assert.equal(result.modes.light.adaptations.primarySourceDistance, 0);
+});
+
+test("large source shifts remain explicit for designer review", () => {
+  const result = generatePaletteV2({ primary: "#F2C230" });
+  assert.equal(result.modes.light.adaptations.largeBrandShift, true);
+  assert.ok(result.modes.light.adaptations.primarySourceDistance > 0.18);
+});
+
+test("state traces report actual gamut-axis movement", () => {
+  const result = generatePaletteV2({ primary: "#FF0000" });
+  const decision = result.modes.light.decisions["primary hover"];
+  assert.deepEqual(decision.searchConstants, [
+    "requested hue",
+    "requested chroma",
+  ]);
+  assert.equal(
+    Number.isFinite(decision.selected.constraintResults[0].metrics.chromaShift),
+    true,
   );
 });
