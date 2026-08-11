@@ -5,6 +5,7 @@ import {
   rgbToOklch,
 } from "../lib/color-math.js";
 import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
+import { serializeCrakenTokens } from "./lib/craken.js";
 
 const GROUPS = [
   {
@@ -23,7 +24,31 @@ const GROUPS = [
       "focus ring",
     ],
   },
-  { name: "Feedback", roles: ["destructive", "destructive text"] },
+  {
+    name: "Feedback",
+    roles: [
+      "destructive",
+      "destructive hover",
+      "destructive active",
+      "destructive text",
+      "warning",
+      "warning hover",
+      "warning active",
+      "warning text",
+    ],
+  },
+  {
+    name: "Utility",
+    roles: [
+      "selection",
+      "selection text",
+      "disabled background",
+      "disabled text",
+      "disabled border",
+      "popover",
+      "popover text",
+    ],
+  },
 ];
 
 const form = document.querySelector("#v2-form");
@@ -44,7 +69,26 @@ const focusSpecimens = document.querySelector("#focus-specimens");
 const paletteTitle = document.querySelector("#palette-title");
 const validationSummary = document.querySelector("#validation-summary");
 const toast = document.querySelector("#toast");
+const calculationStatus = document.querySelector("#calculation-status");
+const semanticMap = document.querySelector("#semantic-map");
 let currentResult;
+let workerSequence = 0;
+const pendingCalculations = new Map();
+const resultCache = new Map();
+const paletteWorker =
+  typeof Worker === "undefined"
+    ? null
+    : new Worker(new URL("./palette-worker.js", import.meta.url), {
+        type: "module",
+      });
+
+paletteWorker?.addEventListener("message", ({ data }) => {
+  const pending = pendingCalculations.get(data.id);
+  if (!pending) return;
+  pendingCalculations.delete(data.id);
+  if (data.error) pending.reject(new Error(data.error));
+  else pending.resolve(data);
+});
 
 const EVALUATION_INPUTS = [
   "#FF0000",
@@ -124,10 +168,19 @@ function constraintView(value, selected) {
     .join("")}</ul>`;
 }
 
-function candidateView(label, value, selected = false, kind = "") {
+function candidateView(
+  label,
+  value,
+  selected = false,
+  kind = "",
+  showRules = true,
+) {
   if (!value) return "";
   const score = value.objectiveResults?.[0];
-  return `<div class="decision-candidate" data-candidate-kind="${kind}"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${constraintView(value, selected)}</div>`;
+  const passedRules = (value.constraintResults ?? []).filter(
+    ({ passed }) => passed,
+  ).length;
+  return `<div class="decision-candidate" data-candidate-kind="${kind}"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${showRules ? constraintView(value, selected) : `<small class="candidate-summary pass">✓ ${passedRules} must-pass rule${passedRules === 1 ? "" : "s"}</small>`}</div>`;
 }
 
 function policyView(policy) {
@@ -143,15 +196,15 @@ function policyView(policy) {
 }
 
 function decisionView(decision) {
+  const alias = decision.strategy === "semantic alias";
   return `<div class="decision-detail">
     <div class="decision-intent"><span>${decision.strategy} · ${decision.candidateCount} candidate${decision.candidateCount === 1 ? "" : "s"}</span><p>${decision.intent}</p></div>
-    ${policyView(decision.policy)}
-    <div class="decision-candidates">
-      ${candidateView("Selected", decision.selected, true, "selected")}
-      ${candidateView("Closest rejected", decision.alternatives.nearestRejected, false, "rejected")}
-      ${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}
-    </div>
-    <div class="decision-evidence"><span>Rule provenance</span>${decision.evidence.map((item) => `<a href="${item.url}" target="_blank" rel="noreferrer"><b>${item.class}</b>${item.label}</a>`).join("")}</div>
+    ${alias ? `<div class="alias-callout"><strong>No new color calculated</strong><span>Reuses ${decision.aliases.join(", ")} because the current application contract does not require independent differentiation.</span></div>` : candidateView("Selected", decision.selected, true, "selected", false)}
+    <details class="decision-more"><summary>${alias ? "View provenance" : "Compare alternatives and rules"}</summary>
+      ${policyView(decision.policy)}
+      ${alias ? "" : `<div class="decision-candidates">${candidateView("Selected · full rules", decision.selected, true)}${candidateView("Closest rejected", decision.alternatives.nearestRejected, false, "rejected")}${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}</div>`}
+      <div class="decision-evidence"><span>Rule provenance</span>${decision.evidence.map((item) => `<a href="${item.url}" target="_blank" rel="noreferrer"><b>${item.class}</b>${item.label}</a>`).join("")}</div>
+    </details>
   </div>`;
 }
 
@@ -200,6 +253,13 @@ function appliedExample(modeResult) {
           <div><span>Active</span><button class="active">✓ Save</button></div>
           <div><span>Focus</span><button class="focused">✓ Save</button></div>
         </div>
+        <div class="craken-semantic-grid">
+          <button class="warning">Review warning</button>
+          <button class="destructive">Delete workspace</button>
+          <button class="destructive hover">Delete · hover</button>
+          <button class="destructive active">Delete · active</button>
+          <button class="disabled" disabled>Unavailable</button>
+        </div>
       </section>
       <section class="craken-shell">
         <aside class="craken-sidebar">
@@ -213,13 +273,16 @@ function appliedExample(modeResult) {
         </aside>
         <div class="craken-main">
           <header class="craken-channel"><div><strong># design-review</strong><small>Palette integration check</small></div><button>•••</button></header>
+          <aside class="craken-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
           <div class="craken-messages">
             <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the Craken hierarchy in both modes?</span></div></article>
             <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, interaction states, focus, and feedback are rendered from the same semantic output.</span><em>Palette ready</em></div></article>
+            <article class="selected-message"><i>DS</i><div><p><strong>Design system</strong><small>10:28</small></p><span>Selected content uses a restrained brand tint with readable text.</span></div></article>
           </div>
           <form class="craken-composer"><label><span>Message #design-review</span><textarea rows="2" readonly>Review the generated colors…</textarea></label><div><button type="button" class="craken-secondary">Attach</button><button type="button" class="craken-primary">Send</button></div></form>
         </div>
       </section>
+      <aside class="craken-popover"><strong>Palette actions</strong><button>Copy CSS</button><button>Export tokens</button></aside>
       <footer class="craken-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button>Move to Trash</button></footer>
     </div>
   </article>`;
@@ -358,13 +421,42 @@ function galleryCard(result) {
   return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-pair"><i style="background:${light.background}"><b style="background:${light.primary}"></b><em style="background:${light["primary hover"]}"></em><small style="background:${light["primary active"]}"></small></i><i style="background:${dark.background}"><b style="background:${dark.primary}"></b><em style="background:${dark["primary hover"]}"></em><small style="background:${dark["primary active"]}"></small></i></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} quality objectives · Inspect</span></button><div class="gallery-rating" aria-label="Designer rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
 }
 
-function renderGallery() {
-  gallery.innerHTML = EVALUATION_INPUTS.map((primary) => {
-    if (!galleryResults.has(primary)) {
-      galleryResults.set(primary, generatePaletteV2({ primary }));
+async function renderGallery() {
+  if (!galleryResults.size) {
+    const response = await fetch(
+      new URL("./evaluation-palettes.json", import.meta.url),
+    );
+    if (!response.ok) throw new Error("Evaluation palettes unavailable.");
+    const payload = await response.json();
+    for (const result of payload.results) {
+      galleryResults.set(result.input.primary, result);
     }
-    return galleryCard(galleryResults.get(primary));
-  }).join("");
+  }
+  gallery.innerHTML = EVALUATION_INPUTS.map((primary) =>
+    galleryCard(galleryResults.get(primary)),
+  ).join("");
+}
+
+function semanticMarker(decision, kind) {
+  const value =
+    kind === "selected"
+      ? decision.selected
+      : decision.alternatives[
+          kind === "rejected" ? "nearestRejected" : "nextPassing"
+        ];
+  if (!value) return "";
+  return `<i class="${kind}" style="left:${value.oklch.l * 100}%;bottom:${Math.min(100, value.oklch.c / 0.2) * 100}%;--marker-color:${value.hex}" title="${kind}: ${value.hex}"></i>`;
+}
+
+function renderSemanticMaps() {
+  semanticMap.innerHTML = ["light", "dark"]
+    .flatMap((mode) =>
+      ["warning", "selection"].map((role) => {
+        const decision = currentResult.modes[mode].decisions[role];
+        return `<article><header><span>${mode}</span><strong>${role}</strong><small>L → · chroma ↑</small></header><div class="semantic-plot">${semanticMarker(decision, "selected")}${semanticMarker(decision, "rejected")}${semanticMarker(decision, "passing")}</div><footer><span><i class="selected"></i>selected</span><span><i class="rejected"></i>rejected</span><span><i class="passing"></i>next passing</span></footer></article>`;
+      }),
+    )
+    .join("");
 }
 
 function checkValue(check) {
@@ -412,9 +504,33 @@ function render(result) {
   renderExamples();
   renderRelationships();
   renderFoundationMap();
+  renderSemanticMaps();
   renderFocusSpecimens();
   renderQuality();
   renderChecks();
+}
+
+function calculatePalette(primary) {
+  if (resultCache.has(primary)) {
+    return Promise.resolve({
+      result: resultCache.get(primary),
+      duration: 0,
+      cached: true,
+    });
+  }
+  if (!paletteWorker) {
+    const startedAt = performance.now();
+    return Promise.resolve({
+      result: generatePaletteV2({ primary }),
+      duration: performance.now() - startedAt,
+      cached: false,
+    });
+  }
+  const id = ++workerSequence;
+  return new Promise((resolve, reject) => {
+    pendingCalculations.set(id, { resolve, reject });
+    paletteWorker.postMessage({ id, primary });
+  });
 }
 
 picker.addEventListener("input", () => {
@@ -427,7 +543,7 @@ primaryInput.addEventListener("input", () => {
     primaryInput.removeAttribute("aria-invalid");
   }
 });
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!isHex(primaryInput.value)) {
     error.textContent = "Use a six-digit hex color, such as #507096.";
@@ -436,7 +552,24 @@ form.addEventListener("submit", (event) => {
   }
   error.textContent = "";
   primaryInput.removeAttribute("aria-invalid");
-  render(generatePaletteV2({ primary: normalizeHex(primaryInput.value) }));
+  const primary = normalizeHex(primaryInput.value);
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  form.setAttribute("aria-busy", "true");
+  calculationStatus.textContent = "Calculating in a background worker…";
+  try {
+    const calculated = await calculatePalette(primary);
+    resultCache.set(primary, calculated.result);
+    render(calculated.result);
+    calculationStatus.textContent = calculated.cached
+      ? "Ready · reused cached result"
+      : `Ready · calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
+  } catch (calculationError) {
+    error.textContent = calculationError.message;
+  } finally {
+    submit.disabled = false;
+    form.removeAttribute("aria-busy");
+  }
 });
 
 document.querySelector("#copy-css").addEventListener("click", async () => {
@@ -453,13 +586,33 @@ document.querySelector("#copy-css").addEventListener("click", async () => {
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
 });
 
-gallery.addEventListener("click", (event) => {
+document.querySelector("#copy-craken").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(
+      JSON.stringify(serializeCrakenTokens(currentResult), null, 2),
+    );
+    toast.textContent = "Craken token JSON copied";
+  } catch {
+    toast.textContent = "Clipboard unavailable";
+  }
+  toast.classList.add("visible");
+  window.setTimeout(() => toast.classList.remove("visible"), 1600);
+});
+
+gallery.addEventListener("click", async (event) => {
   const card = event.target.closest("[data-primary]");
   if (!card) return;
   if (event.target.closest('[data-action="load"]')) {
     primaryInput.value = card.dataset.primary;
     picker.value = card.dataset.primary;
-    render(galleryResults.get(card.dataset.primary));
+    calculationStatus.textContent =
+      "Loading the full inspector in a background worker…";
+    const calculated = await calculatePalette(card.dataset.primary);
+    resultCache.set(card.dataset.primary, calculated.result);
+    render(calculated.result);
+    calculationStatus.textContent = calculated.cached
+      ? "Ready · reused cached result"
+      : `Ready · calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
     return;
   }
   const rating = event.target.closest("[data-rating]");
@@ -549,7 +702,11 @@ ratingsFile.addEventListener("change", async () => {
 galleryPanel.addEventListener("toggle", () => {
   if (galleryPanel.open && !gallery.childElementCount) {
     gallery.innerHTML = `<p class="gallery-loading">Calculating 12 paired palettes…</p>`;
-    window.requestAnimationFrame(renderGallery);
+    window.requestAnimationFrame(() => {
+      renderGallery().catch(() => {
+        gallery.innerHTML = `<p class="gallery-loading">Precomputed evaluation set unavailable.</p>`;
+      });
+    });
   }
 });
 
@@ -571,6 +728,7 @@ foundationMap.addEventListener("click", (event) => {
   const candidate = swatch.querySelector(
     `[data-candidate-kind="${node.dataset.kind}"]`,
   );
+  candidate?.closest(".decision-more")?.setAttribute("open", "");
   candidate?.classList.add("graph-target");
   swatch.scrollIntoView({ behavior: "smooth", block: "center" });
 });
@@ -588,4 +746,6 @@ palettes.addEventListener("click", (event) => {
   node?.classList.add("active");
 });
 
-render(generatePaletteV2({ primary: primaryInput.value }));
+const initialResult = generatePaletteV2({ primary: primaryInput.value });
+resultCache.set(initialResult.input.primary, initialResult);
+render(initialResult);

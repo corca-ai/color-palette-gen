@@ -2,24 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { generatePaletteV2, serializeModeCss } from "../v2/lib/palette.js";
+import { ROLE_CLASSIFICATION, TOKEN_ORDER } from "../v2/lib/roles.js";
 
-const REQUIRED = [
-  "background",
-  "foreground",
-  "surface",
-  "raised surface",
-  "muted surface",
-  "muted text",
-  "border",
-  "input border",
-  "primary",
-  "primary hover",
-  "primary active",
-  "primary text",
-  "focus ring",
-  "destructive",
-  "destructive text",
-];
+const REQUIRED = TOKEN_ORDER;
 
 test("v2 accepts only a primary contract and resolves both modes", () => {
   const result = generatePaletteV2({ primary: "#507096" });
@@ -97,7 +82,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-6");
+  assert.equal(result.policyVersion, "v2-policy-model-7");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -321,4 +306,40 @@ test("identical normalized inputs reuse the complete generated palette", () => {
   const first = generatePaletteV2({ primary: "#507096" });
   const second = generatePaletteV2({ primary: "#507096" });
   assert.equal(first, second);
+});
+
+test("application utility roles are explicit searches or documented aliases", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    const { decisions, values } = result.modes[mode];
+    for (const role of ROLE_CLASSIFICATION.searched) {
+      assert.ok(decisions[role], `${mode}/${role} decision`);
+      assert.ok(decisions[role].candidateCount >= 2, `${mode}/${role} search`);
+    }
+    for (const [role, source] of Object.entries(ROLE_CLASSIFICATION.aliases)) {
+      assert.equal(values[role], values[source], `${mode}/${role} value`);
+      assert.equal(decisions[role].strategy, "semantic alias");
+      assert.deepEqual(decisions[role].aliases, [source]);
+    }
+  }
+});
+
+test("feedback states keep one readable label and remain ordered", () => {
+  for (const primary of ["#FF0000", "#507096", "#F2C230", "#111111"]) {
+    const result = generatePaletteV2({ primary });
+    for (const mode of ["light", "dark"]) {
+      const { decisions, values } = result.modes[mode];
+      for (const family of ["destructive", "warning"]) {
+        const label = values[`${family} text`];
+        for (const role of [family, `${family} hover`, `${family} active`]) {
+          const decision =
+            role === family ? decisions[family] : decisions[role];
+          assert.ok(decision.selected.passed, `${primary}/${mode}/${role}`);
+          assert.ok(label === "#000000" || label === "#FFFFFF");
+        }
+        assert.notEqual(values[family], values[`${family} hover`]);
+        assert.notEqual(values[family], values[`${family} active`]);
+      }
+    }
+  }
 });

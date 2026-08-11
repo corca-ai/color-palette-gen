@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-6`.
+Current policy version: `v2-policy-model-7`.
 
 ## Candidate search implemented
 
@@ -12,6 +12,9 @@ Current policy version: `v2-policy-model-6`.
 - foreground, muted text, border, and input border;
 - primary text and destructive text as explicit black/white searches;
 - focus ring as an independent brand-related search.
+- destructive hover and active states;
+- warning default, hover, active, and text;
+- selection background and text.
 
 These roles retain selected, closest rejected, and next passing candidates when
 available.
@@ -35,7 +38,12 @@ and the per-candidate result of each rule.
 - selected, next-ranked, source-faithful, and quality-boundary pairs can be
   compared directly;
 - gallery ratings and notes persist locally and support versioned JSON exchange.
+- gallery summaries are precomputed at build time; complete inspector results
+  are calculated in a worker only when requested;
+- Craken JSON export maps every supported semantic role to a stable consumer
+  token.
 
+Disabled and popover roles are explicit semantic aliases to foundation roles.
 No semantic output role remains a policy anchor.
 
 ## Verification
@@ -44,11 +52,16 @@ No semantic output role remains a policy anchor.
 - searched roles must retain a counterfactual candidate;
 - text and non-text contracts run across a 216-color RGB grid;
 - v1 and v2 remain separate applications.
+- Playwright verifies input handling, semantic specimens, graph-to-card
+  synchronization, lazy gallery rendering, and persisted designer ratings in a
+  real browser.
+- fixed screenshots guard the paired palettes and Craken specimen against broad
+  visual regression.
 
 ## Next migration
 
 1. Validate foundation and focus search targets through designer ratings.
-2. Resolve Craken token gaps: distinct popover, accent, secondary, warning,
-   disabled, and destructive interaction states.
+2. Decide from Craken use cases whether popover and disabled aliases need
+   independent searches; accent and secondary remain intentionally unsupported.
 3. Aggregate exported designer evaluations and analyze inter-rater agreement.
 4. Promote thresholds from `heuristic` to `empirical` only with recorded data.

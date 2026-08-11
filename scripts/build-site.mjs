@@ -1,6 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { generatePaletteV2 } from "../v2/lib/palette.js";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = dirname(scriptDirectory);
@@ -39,6 +40,41 @@ for (const filename of libraryFiles) {
 }
 
 await cp(join(projectRoot, "v2"), outputV2Directory, { recursive: true });
+
+const evaluationInputs = [
+  "#FF0000",
+  "#F97316",
+  "#F2C230",
+  "#00A878",
+  "#00A7C4",
+  "#507096",
+  "#2563EB",
+  "#6633FF",
+  "#D946EF",
+  "#777777",
+  "#000000",
+  "#FFFFFF",
+];
+const evaluationResults = evaluationInputs.map((primary) => {
+  const result = generatePaletteV2({ primary });
+  return {
+    input: result.input,
+    policyVersion: result.policyVersion,
+    quality: result.quality,
+    modes: {
+      light: { values: result.modes.light.values },
+      dark: { values: result.modes.dark.values },
+    },
+  };
+});
+await writeFile(
+  join(outputV2Directory, "evaluation-palettes.json"),
+  JSON.stringify({
+    schema: "color-lab-evaluation-palettes-1",
+    policyVersion: evaluationResults[0].policyVersion,
+    results: evaluationResults,
+  }),
+);
 
 const v2Index = await readFile(join(projectRoot, "v2", "index.html"), "utf8");
 const rootIndex = v2Index

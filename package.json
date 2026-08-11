@@ -6,11 +6,13 @@
   "scripts": {
     "build": "node scripts/build-site.mjs",
     "check": "node --check v1/app.js && node --check v2/app.js && npm run format:check && node --test",
+    "check:e2e": "playwright test",
     "format": "prettier --write \"**/*.{js,mjs,json,yml}\"",
     "format:check": "prettier --check \"**/*.{js,mjs,json,yml}\"",
     "test": "node --test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "prettier": "3.9.6"
   }
 }

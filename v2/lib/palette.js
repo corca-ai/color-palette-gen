@@ -1,165 +1,27 @@
-import {
-  clamp,
-  contrastRatio as rawContrastRatio,
-  hexToRgb,
-  isHex,
-  normalizeHex,
-  oklchDifference,
-  oklchToHex,
-  rgbToOklch,
-} from "../../lib/color-math.js";
-import { apcaCheck, apcaContrast as rawApcaContrast } from "./apca.js";
-import { selectCandidate } from "./decision.js";
+import { isHex, normalizeHex } from "../../lib/color-math.js";
+import { apcaCheck } from "./apca.js";
+import { aliasDecision, selectCandidate } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
-
-const MODE_RECIPE = {
-  light: {
-    background: 0.995,
-    foreground: 0.145,
-    surface: 0.98,
-    raised: 1,
-    muted: 0.94,
-    mutedText: 0.44,
-    border: 0.82,
-    input: 0.62,
-    destructive: 0.54,
-    conflictingDestructive: 0.43,
-  },
-  dark: {
-    background: 0.145,
-    foreground: 0.96,
-    surface: 0.185,
-    raised: 0.215,
-    muted: 0.245,
-    mutedText: 0.78,
-    border: 0.34,
-    input: 0.52,
-    destructive: 0.637,
-    conflictingDestructive: 0.68,
-  },
-};
-
-const TOKEN_ORDER = [
-  "background",
-  "foreground",
-  "surface",
-  "raised surface",
-  "muted surface",
-  "muted text",
-  "border",
-  "input border",
-  "primary",
-  "primary hover",
-  "primary active",
-  "primary text",
-  "focus ring",
-  "destructive",
-  "destructive text",
-];
-
-const coordinateCache = new Map();
-const contrastCache = new Map();
-const apcaCache = new Map();
-const foundationCache = new Map();
-const paletteCache = new Map();
-
-function boundedSet(cache, key, value, limit = 5000) {
-  if (cache.size >= limit) cache.clear();
-  cache.set(key, value);
-  return value;
-}
-
-function contrastRatio(first, second) {
-  const key = [first, second].sort().join("/");
-  return (
-    contrastCache.get(key) ??
-    boundedSet(contrastCache, key, rawContrastRatio(first, second))
-  );
-}
-
-function apcaContrast(foreground, background) {
-  const key = `${foreground}/${background}`;
-  return (
-    apcaCache.get(key) ??
-    boundedSet(apcaCache, key, rawApcaContrast(foreground, background))
-  );
-}
-
-function classifyInput(input) {
-  if (input.c < 0.015) return "achromatic";
-  if (input.c < 0.06) return "subdued";
-  return "chromatic";
-}
-
-function hueDistance(first, second) {
-  const distance = Math.abs(first - second) % 360;
-  return Math.min(distance, 360 - distance);
-}
-
-function tone({ l, c, h }) {
-  return oklchToHex({ l: clamp(l), c: Math.max(0, c), h }).hex;
-}
-
-function candidate(hex, parameters = {}) {
-  const coordinates =
-    coordinateCache.get(hex) ??
-    boundedSet(coordinateCache, hex, rgbToOklch(hexToRgb(hex)));
-  return {
-    hex,
-    oklch: coordinates,
-    parameters,
-  };
-}
-
-function neutralTone(input, lightness, tintScale = 0) {
-  const tint =
-    input.classification === "achromatic"
-      ? 0
-      : Math.min(0.012, input.brandChroma * tintScale);
-  return tone({ l: lightness, c: tint, h: input.h });
-}
-
-function neutralCandidate(input, lightness, tintScale) {
-  return candidate(neutralTone(input, lightness, tintScale), {
-    lightness,
-    tintScale,
-  });
-}
-
-function brandTone(input, lightness, chromaScale = 1) {
-  return tone({
-    l: lightness,
-    c: input.brandChroma * chromaScale,
-    h: input.h,
-  });
-}
-
-function brandCandidate(input, lightness) {
-  return candidate(brandTone(input, lightness), { lightness });
-}
-
-function stateCandidate(base, lightness) {
-  return candidate(tone({ l: lightness, c: base.oklch.c, h: base.oklch.h }), {
-    lightness,
-  });
-}
-
-function destructiveTone(lightness) {
-  return tone({ l: lightness, c: 0.19, h: 27 });
-}
-
-function chooseSharedText(backgrounds) {
-  return ["#000000", "#FFFFFF"]
-    .map((color) => ({
-      color,
-      minimum: Math.min(
-        ...backgrounds.map((background) =>
-          Math.abs(apcaContrast(color, background)),
-        ),
-      ),
-    }))
-    .sort((a, b) => b.minimum - a.minimum)[0].color;
-}
+import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
+import {
+  apcaContrast,
+  bindRule,
+  boundedSet,
+  brandCandidate,
+  candidate,
+  chooseSharedText,
+  classifyInput,
+  contrastRatio,
+  destructiveTone,
+  distance,
+  foundationCache,
+  hueDistance,
+  neutralCandidate,
+  paletteCache,
+  stableTieBreaker,
+  stateCandidate,
+  tone,
+} from "./runtime.js";
 
 function sharedTextSearch({ mode, role, backgrounds, target }) {
   const policy = decisionPolicy("binaryText");
@@ -220,9 +82,7 @@ function ratioCheck({ role, foreground, background, target = 3 }) {
 }
 
 function differenceCheck({ role, first, second, target = 0.035 }) {
-  const firstOklch = rgbToOklch(hexToRgb(first));
-  const secondOklch = rgbToOklch(hexToRgb(second));
-  const value = oklchDifference(firstOklch, secondOklch).deltaE;
+  const value = distance(candidate(first), candidate(second));
   return {
     kind: "perceptual",
     metric: "Oklab ΔE",
@@ -233,22 +93,6 @@ function differenceCheck({ role, first, second, target = 0.035 }) {
     target,
     pass: value >= target,
   };
-}
-
-function distance(first, second) {
-  return oklchDifference(first.oklch, second.oklch).deltaE;
-}
-
-function bindRule(policy, group, id, evaluate) {
-  const definition = policy[group].find((rule) => rule.id === id);
-  if (!definition) throw new Error(`${policy.id} does not declare ${id}.`);
-  return { definition, evaluate };
-}
-
-function stableTieBreaker(policy) {
-  return [
-    bindRule(policy, "tieBreakers", "stable.hex-order", (item) => item.hex),
-  ];
 }
 
 function foundationCandidates(input, anchor, tintScale, radius) {
@@ -495,9 +339,13 @@ function foundationPalette(input, mode, recipe) {
   );
 }
 
-function stateSearch({ mode, base, role, target }) {
+function stateSearch({ mode, base, role, target, labelText, labelLc }) {
   const policy = decisionPolicy("state");
-  const direction = V2_POLICY.state.direction[mode];
+  const direction = labelText
+    ? labelText === "#FFFFFF"
+      ? -1
+      : 1
+    : V2_POLICY.state.direction[mode];
   const candidates = [];
   for (
     let index = 1;
@@ -512,7 +360,7 @@ function stateSearch({ mode, base, role, target }) {
   return selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
     role,
-    intent: `Create the smallest ${mode === "light" ? "darker" : "lighter"} state change that remains visibly ordered.`,
+    intent: `Create the smallest ${direction < 0 ? "darker" : "lighter"} state change that remains visibly ordered${labelText ? " inside the shared label contrast envelope" : ""}.`,
     candidates,
     policy,
     constraints: [
@@ -530,6 +378,31 @@ function stateSearch({ mode, base, role, target }) {
           metrics: { deltaE, target, chromaShift, hueShift },
         };
       }),
+      ...(labelText && labelLc
+        ? [
+            {
+              definition: {
+                id: "state.shared-label",
+                kind: "constraint",
+                direction: "minimum",
+                summary:
+                  "Keep the state inside the shared label contrast envelope.",
+              },
+              evaluate(item) {
+                const value = Math.abs(apcaContrast(labelText, item.hex));
+                return {
+                  passed: value >= labelLc,
+                  reasons: [
+                    value >= labelLc
+                      ? `Shared label reaches ${value.toFixed(1)} Lc.`
+                      : `Shared label reaches only ${value.toFixed(1)} Lc.`,
+                  ],
+                  metrics: { value, target: labelLc, labelText },
+                };
+              },
+            },
+          ]
+        : []),
     ],
     objectives: [
       bindRule(policy, "objectives", "state.minimum-change", (item) =>
@@ -745,6 +618,164 @@ function destructiveSearch({ mode, primary, preferredLightness }) {
   });
 }
 
+function warningSearch({ mode, primary, destructive }) {
+  const policy = decisionPolicy("warning");
+  const preferredLightness = V2_POLICY.feedback.warningLightness[mode];
+  const anchor = candidate(
+    tone({
+      l: preferredLightness,
+      c: V2_POLICY.feedback.warningChroma,
+      h: V2_POLICY.feedback.warningHue,
+    }),
+  );
+  const [start, end] = V2_POLICY.feedback.warningRange[mode];
+  const candidates = [];
+  for (let lightness = start; lightness <= end + 0.0025; lightness += 0.005) {
+    for (const hue of V2_POLICY.feedback.warningHueCandidates) {
+      candidates.push(
+        candidate(
+          tone({
+            l: lightness,
+            c: V2_POLICY.feedback.warningChroma,
+            h: hue,
+          }),
+          { lightness, hue },
+        ),
+      );
+    }
+  }
+  return selectCandidate({
+    id: `${mode}.warning`,
+    role: "warning",
+    intent:
+      "Resolve an amber warning fill that remains readable and distinct from brand and destructive feedback.",
+    candidates,
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "feedback.label-contrast", (item) => {
+        const text = chooseSharedText([item.hex]);
+        const lc = Math.abs(apcaContrast(text, item.hex));
+        const passed = lc >= V2_POLICY.primary.labelLc;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Best warning label reaches ${lc.toFixed(1)} Lc.`
+              : `Best warning label reaches only ${lc.toFixed(1)} Lc.`,
+          ],
+          metrics: { lc, target: V2_POLICY.primary.labelLc, text },
+        };
+      }),
+      bindRule(
+        policy,
+        "constraints",
+        "feedback.semantic-separation",
+        (item) => {
+          const brandDistance = distance(primary, item);
+          const destructiveDistance = distance(destructive, item);
+          const minimumDistance = Math.min(brandDistance, destructiveDistance);
+          const passed =
+            minimumDistance >= V2_POLICY.feedback.semanticSeparation;
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Nearest semantic color remains ΔE ${minimumDistance.toFixed(3)} away.`
+                : `Nearest semantic color is only ΔE ${minimumDistance.toFixed(3)} away.`,
+            ],
+            metrics: {
+              brandDistance,
+              destructiveDistance,
+              target: V2_POLICY.feedback.semanticSeparation,
+            },
+          };
+        },
+      ),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "feedback.semantic-anchor", (item) =>
+        distance(anchor, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
+    searchConstants: ["bounded amber hue candidates", "warning chroma"],
+  });
+}
+
+function selectionSearch({ input, mode, surface }) {
+  const policy = decisionPolicy("selection");
+  const [start, end] = V2_POLICY.selection.lightnessRange[mode];
+  const candidates = [];
+  for (let lightness = start; lightness <= end + 0.0025; lightness += 0.005) {
+    for (const chromaScale of V2_POLICY.selection.chromaScales) {
+      candidates.push(
+        candidate(
+          tone({
+            l: lightness,
+            c: input.brandChroma * chromaScale,
+            h: input.h,
+          }),
+          { lightness, chromaScale },
+        ),
+      );
+    }
+  }
+  return selectCandidate({
+    id: `${mode}.selection`,
+    role: "selection",
+    intent:
+      "Use the least emphasized brand tint that remains readable and visibly selected from the surface.",
+    candidates,
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "selection.text-contrast", (item) => {
+        const text = chooseSharedText([item.hex]);
+        const lc = Math.abs(apcaContrast(text, item.hex));
+        const passed = lc >= V2_POLICY.selection.textLc;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Selected content reaches ${lc.toFixed(1)} Lc.`
+              : `Selected content reaches only ${lc.toFixed(1)} Lc.`,
+          ],
+          metrics: { lc, target: V2_POLICY.selection.textLc, text },
+        };
+      }),
+      bindRule(
+        policy,
+        "constraints",
+        "selection.surface-separation",
+        (item) => {
+          const deltaE = distance(surface, item);
+          const passed = deltaE >= V2_POLICY.selection.surfaceSeparation;
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Surface separation reaches ΔE ${deltaE.toFixed(3)}.`
+                : `Surface separation ΔE ${deltaE.toFixed(3)} is too weak.`,
+            ],
+            metrics: {
+              deltaE,
+              target: V2_POLICY.selection.surfaceSeparation,
+            },
+          };
+        },
+      ),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "selection.minimum-emphasis", (item) =>
+        distance(surface, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence("apcaText", "stateSeparation", "calmMinimal"),
+    searchConstants: ["input hue", "bounded brand tint"],
+  });
+}
+
 function focusSearch({
   input,
   mode,
@@ -881,13 +912,77 @@ function modePalette(input, mode, options = {}) {
       : recipe.destructive,
   });
   const destructiveColor = destructiveDecision.value.hex;
+  const destructiveLabel = chooseSharedText([destructiveColor]);
+  const destructiveHoverDecision = stateSearch({
+    mode,
+    base: destructiveDecision.value,
+    role: "destructive hover",
+    target: V2_POLICY.state.separation.hoverFromDefault,
+    labelText: destructiveLabel,
+    labelLc: V2_POLICY.destructive.labelLc,
+  });
+  const destructiveActiveDecision = stateSearch({
+    mode,
+    base: destructiveDecision.value,
+    role: "destructive active",
+    target: V2_POLICY.state.separation.activeFromDefault,
+    labelText: destructiveLabel,
+    labelLc: V2_POLICY.destructive.labelLc,
+  });
+  const destructiveHover = destructiveHoverDecision.value.hex;
+  const destructiveActive = destructiveActiveDecision.value.hex;
   const destructiveTextDecision = sharedTextSearch({
     mode,
     role: "destructive text",
-    backgrounds: [destructiveColor],
+    backgrounds: [destructiveColor, destructiveHover, destructiveActive],
     target: V2_POLICY.destructive.labelLc,
   });
   const destructiveText = destructiveTextDecision.value.hex;
+  const warningDecision = warningSearch({
+    mode,
+    primary: brandFamily.primary,
+    destructive: destructiveDecision.value,
+  });
+  const warningLabel = chooseSharedText([warningDecision.value.hex]);
+  const warningHoverDecision = stateSearch({
+    mode,
+    base: warningDecision.value,
+    role: "warning hover",
+    target: V2_POLICY.state.separation.hoverFromDefault,
+    labelText: warningLabel,
+    labelLc: V2_POLICY.primary.labelLc,
+  });
+  const warningActiveDecision = stateSearch({
+    mode,
+    base: warningDecision.value,
+    role: "warning active",
+    target: V2_POLICY.state.separation.activeFromDefault,
+    labelText: warningLabel,
+    labelLc: V2_POLICY.primary.labelLc,
+  });
+  const warning = warningDecision.value.hex;
+  const warningHover = warningHoverDecision.value.hex;
+  const warningActive = warningActiveDecision.value.hex;
+  const warningTextDecision = sharedTextSearch({
+    mode,
+    role: "warning text",
+    backgrounds: [warning, warningHover, warningActive],
+    target: V2_POLICY.primary.labelLc,
+  });
+  const warningText = warningTextDecision.value.hex;
+  const selectionDecision = selectionSearch({
+    input,
+    mode,
+    surface: candidate(foundations.surface),
+  });
+  const selection = selectionDecision.value.hex;
+  const selectionTextDecision = sharedTextSearch({
+    mode,
+    role: "selection text",
+    backgrounds: [selection],
+    target: V2_POLICY.selection.textLc,
+  });
+  const selectionText = selectionTextDecision.value.hex;
   const focusDecision = focusSearch({
     input,
     mode,
@@ -905,7 +1000,20 @@ function modePalette(input, mode, options = {}) {
     "primary text": primaryText,
     "focus ring": focusRing,
     destructive: destructiveColor,
+    "destructive hover": destructiveHover,
+    "destructive active": destructiveActive,
     "destructive text": destructiveText,
+    warning,
+    "warning hover": warningHover,
+    "warning active": warningActive,
+    "warning text": warningText,
+    selection,
+    "selection text": selectionText,
+    "disabled background": foundations["muted surface"],
+    "disabled text": foundations["muted text"],
+    "disabled border": foundations.border,
+    popover: foundations["raised surface"],
+    "popover text": foundations.foreground,
   };
   const textChecks = [
     apcaCheck({
@@ -938,12 +1046,30 @@ function modePalette(input, mode, options = {}) {
         typography: "14px / 600",
       }),
     ),
+    ...["destructive", "destructive hover", "destructive active"].map((role) =>
+      apcaCheck({
+        role: `Label on ${role}`,
+        foreground: destructiveText,
+        background: values[role],
+        target: 60,
+        typography: "14px / 600",
+      }),
+    ),
+    ...["warning", "warning hover", "warning active"].map((role) =>
+      apcaCheck({
+        role: `Label on ${role}`,
+        foreground: warningText,
+        background: values[role],
+        target: 60,
+        typography: "14px / 600",
+      }),
+    ),
     apcaCheck({
-      role: "Destructive label",
-      foreground: destructiveText,
-      background: destructiveColor,
-      target: 60,
-      typography: "14px / 600",
+      role: "Selected content",
+      foreground: selectionText,
+      background: selection,
+      target: V2_POLICY.selection.textLc,
+      typography: "14px / 500",
     }),
   ].map((check) => ({
     ...check,
@@ -984,6 +1110,24 @@ function modePalette(input, mode, options = {}) {
       second: destructiveColor,
       target: 0.08,
     }),
+    differenceCheck({
+      role: "Brand → warning",
+      first: primary,
+      second: warning,
+      target: V2_POLICY.feedback.semanticSeparation,
+    }),
+    differenceCheck({
+      role: "Destructive → warning",
+      first: destructiveColor,
+      second: warning,
+      target: V2_POLICY.feedback.semanticSeparation,
+    }),
+    differenceCheck({
+      role: "Surface → selection",
+      first: foundations.surface,
+      second: selection,
+      target: V2_POLICY.selection.surfaceSeparation,
+    }),
   ];
   const checks = [...textChecks, ...nonTextChecks];
 
@@ -991,7 +1135,27 @@ function modePalette(input, mode, options = {}) {
   decisions["primary text"] = primaryTextDecision.trace;
   decisions["focus ring"] = focusDecision.trace;
   decisions.destructive = destructiveDecision.trace;
+  decisions["destructive hover"] = destructiveHoverDecision.trace;
+  decisions["destructive active"] = destructiveActiveDecision.trace;
   decisions["destructive text"] = destructiveTextDecision.trace;
+  decisions.warning = warningDecision.trace;
+  decisions["warning hover"] = warningHoverDecision.trace;
+  decisions["warning active"] = warningActiveDecision.trace;
+  decisions["warning text"] = warningTextDecision.trace;
+  decisions.selection = selectionDecision.trace;
+  decisions["selection text"] = selectionTextDecision.trace;
+  for (const [role, sourceRole] of Object.entries(
+    ROLE_CLASSIFICATION.aliases,
+  )) {
+    decisions[role] = aliasDecision({
+      id: `${mode}.${role.replaceAll(" ", ".")}`,
+      role,
+      sourceRole,
+      candidate: candidate(values[role]),
+      intent: `Reuse ${sourceRole} because ${role} does not require a new palette color.`,
+      evidence: evidence("calmMinimal"),
+    });
+  }
 
   return {
     mode,
@@ -1333,7 +1497,7 @@ export function generatePaletteV2({ primary }) {
   const cacheKey = `${V2_POLICY.version}/${normalizedPrimary}`;
   const cached = paletteCache.get(cacheKey);
   if (cached) return cached;
-  const rawInput = rgbToOklch(hexToRgb(normalizedPrimary));
+  const rawInput = candidate(normalizedPrimary).oklch;
   const classification = classifyInput(rawInput);
   const inputColor = {
     ...rawInput,

@@ -29,3 +29,9 @@ jobs:
 
       - name: Build static site
         run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser interaction checks
+        run: npm run check:e2e

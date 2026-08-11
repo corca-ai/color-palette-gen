@@ -141,13 +141,22 @@ h1 {
   margin: -8px 0 16px;
 }
 .fixed-policy,
-.error {
+.error,
+.calculation-status {
   font-size: 11px;
   line-height: 1.5;
   margin: 12px 0 0;
 }
 .fixed-policy {
   color: var(--muted);
+}
+.calculation-status {
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-bottom: 0;
+}
+.input-card[aria-busy="true"] .calculation-status {
+  color: var(--ink);
 }
 .error {
   color: #b32822;
@@ -170,6 +179,24 @@ h1 {
 .section-heading > button {
   min-height: 38px;
   white-space: nowrap;
+}
+.output-actions {
+  display: flex;
+  gap: 8px;
+}
+.output-actions button {
+  background: transparent;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 700;
+  min-height: 38px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.output-actions button:last-child {
+  background: var(--ink);
+  color: white;
 }
 .section-heading.compact > p {
   color: var(--muted);
@@ -338,6 +365,49 @@ h1 {
   font-size: 11px;
   line-height: 1.5;
   margin: 6px 0 14px;
+}
+.decision-detail > .decision-candidate {
+  max-width: 220px;
+}
+.decision-more {
+  border-top: 1px solid #8884;
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.decision-more > summary {
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 8px;
+  list-style: none;
+  text-transform: uppercase;
+}
+.decision-more > summary::after {
+  content: " +";
+}
+.decision-more[open] > summary::after {
+  content: " −";
+}
+.decision-more > .decision-policy,
+.decision-more > .decision-candidates {
+  margin-top: 10px;
+}
+.decision-more .decision-candidates {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.alias-callout {
+  background: #8881;
+  border-left: 3px solid currentColor;
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+}
+.alias-callout strong {
+  font-size: 9px;
+}
+.alias-callout span {
+  font-size: 9px;
+  line-height: 1.45;
+  opacity: 0.7;
 }
 .decision-candidates {
   display: grid;
@@ -740,6 +810,41 @@ h1 {
   outline: 3px solid var(--sample-focus-ring);
   outline-offset: 2px;
 }
+.craken-semantic-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 8px;
+}
+.craken-semantic-grid button {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 650;
+  min-height: 30px;
+  padding: 0 7px;
+}
+.craken-semantic-grid .warning {
+  background: var(--sample-warning);
+  color: var(--sample-warning-text);
+}
+.craken-semantic-grid .destructive {
+  background: var(--sample-destructive);
+  color: var(--sample-destructive-text);
+}
+.craken-semantic-grid .destructive.hover {
+  background: var(--sample-destructive-hover);
+}
+.craken-semantic-grid .destructive.active {
+  background: var(--sample-destructive-active);
+}
+.craken-semantic-grid .disabled {
+  background: var(--sample-disabled-background);
+  border-color: var(--sample-disabled-border);
+  color: var(--sample-disabled-text);
+  cursor: not-allowed;
+  opacity: 0.72;
+}
 .craken-shell {
   background: var(--sample-background);
   border: 1px solid var(--sample-border);
@@ -865,6 +970,28 @@ h1 {
   gap: 14px;
   padding: 16px 12px;
 }
+.craken-warning {
+  background: var(--sample-warning);
+  color: var(--sample-warning-text);
+  display: grid;
+  font-size: 9px;
+  gap: 2px;
+  margin: 10px 12px 0;
+  padding: 8px 10px;
+}
+.craken-warning strong {
+  font-size: 10px;
+}
+.craken-messages .selected-message {
+  background: var(--sample-selection);
+  border-radius: 5px;
+  color: var(--sample-selection-text);
+  padding: 8px;
+}
+.craken-messages .selected-message span,
+.craken-messages .selected-message small {
+  color: var(--sample-selection-text);
+}
 .craken-messages article {
   align-items: start;
   display: grid;
@@ -954,6 +1081,30 @@ h1 {
   justify-content: space-between;
   margin-top: 10px;
   padding: 9px 10px;
+}
+.craken-popover {
+  background: var(--sample-popover);
+  border: 1px solid var(--sample-border);
+  border-radius: 6px;
+  color: var(--sample-popover-text);
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 0 auto;
+  padding: 8px;
+  width: max-content;
+}
+.craken-popover strong {
+  align-self: center;
+  font-size: 9px;
+  margin-right: 6px;
+}
+.craken-popover button {
+  background: var(--sample-muted-surface);
+  border: 1px solid var(--sample-border);
+  border-radius: 4px;
+  color: var(--sample-popover-text);
+  font-size: 9px;
+  min-height: 26px;
 }
 .craken-feedback span,
 .craken-feedback strong,
@@ -1076,6 +1227,88 @@ h1 {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.semantic-maps {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+}
+.semantic-maps article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 11px;
+}
+.semantic-maps header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+.semantic-maps header span,
+.semantic-maps header small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.semantic-maps header strong {
+  font-size: 10px;
+  text-align: right;
+  text-transform: capitalize;
+}
+.semantic-maps header small {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+}
+.semantic-plot {
+  background:
+    linear-gradient(#8882 1px, transparent 1px),
+    linear-gradient(90deg, #8882 1px, transparent 1px);
+  background-size: 25% 25%;
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  height: 100px;
+  margin: 10px 5px;
+  position: relative;
+}
+.semantic-plot > i {
+  background: var(--marker-color);
+  border: 2px solid var(--card);
+  box-shadow: 0 0 0 1px var(--ink);
+  height: 10px;
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 10px;
+}
+.semantic-plot > i.rejected {
+  border-style: dashed;
+  opacity: 0.65;
+}
+.semantic-plot > i.passing {
+  border-radius: 50%;
+}
+.semantic-maps footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.semantic-maps footer span {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 7px;
+  gap: 3px;
+}
+.semantic-maps footer i {
+  border: 1px solid currentColor;
+  height: 6px;
+  width: 6px;
+}
+.semantic-maps footer i.passing {
+  border-radius: 50%;
+}
+.semantic-maps footer i.rejected {
+  border-style: dashed;
 }
 .foundation-map-card {
   background: var(--card);
@@ -1904,6 +2137,9 @@ h1 {
   .foundation-maps {
     grid-template-columns: 1fr;
   }
+  .semantic-maps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .focus-specimens {
     grid-template-columns: 1fr;
   }
@@ -1950,6 +2186,14 @@ h1 {
   }
   .topbar {
     padding-inline: 16px;
+  }
+  .semantic-maps {
+    grid-template-columns: 1fr;
+  }
+  .output-actions {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
   }
   .intro {
     padding: 52px 0 44px;

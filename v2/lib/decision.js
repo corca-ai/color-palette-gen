@@ -184,3 +184,34 @@ export function anchoredDecision({
     alternatives: { nearestRejected: null, nextPassing: null },
   };
 }
+
+export function aliasDecision({
+  id,
+  role,
+  sourceRole,
+  candidate,
+  intent,
+  evidence,
+}) {
+  return {
+    id,
+    role,
+    intent,
+    strategy: "semantic alias",
+    candidateCount: 1,
+    searchConstants: [],
+    evidence,
+    aliases: [sourceRole],
+    selected: {
+      hex: candidate.hex,
+      oklch: candidate.oklch,
+      objectiveCost: 0,
+      passed: true,
+      reasons: [
+        `Reuses ${sourceRole}; this role does not introduce an independent color decision.`,
+      ],
+      metrics: { sourceRole },
+    },
+    alternatives: { nearestRejected: null, nextPassing: null },
+  };
+}

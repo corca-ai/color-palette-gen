@@ -42,8 +42,12 @@ precedent, but their exact endpoints remain heuristic.
 
 The state order is default, hover, active.
 
-- Light mode searches darker candidates.
-- Dark mode searches lighter candidates.
+- Primary controls search darker candidates in light mode and lighter candidates
+  in dark mode.
+- Feedback controls choose the lightness direction that preserves one shared
+  black-or-white label across default, hover, and active. This makes label
+  readability a boundary of the state search instead of a check performed only
+  after the colors are selected.
 - Hover selects the nearest candidate reaching the provisional lower separation.
 - Active selects the nearest candidate reaching a stronger separation from
   default.
@@ -113,9 +117,28 @@ The separation threshold is a `heuristic`, not a published accessibility rule.
 If designer evaluation shows that red-brand cases remain ambiguous, the search
 space must expand to limited hue alternatives or use an additional non-color cue.
 
+## Warning and selection
+
+Warning uses a bounded amber search rather than deriving another brand hue. A
+candidate must support its shared label and remain perceptually separated from
+both primary and destructive. Semantic closeness to the configured amber anchor
+ranks the passing set. Warning still requires an icon or label; color is not its
+only signal.
+
+Selection searches low-chroma, source-hue tints. It selects the least emphasized
+candidate that remains distinguishable from its surface and supports selected
+content text. Position, shape, or selected-state semantics remains required as a
+non-color cue.
+
+Disabled background, text, and border deliberately alias muted foundation roles.
+Popover and popover text deliberately alias raised surface and foreground. These
+are documented semantic aliases, not hidden independent color decisions. A
+future Craken requirement for stronger elevation or disabled differentiation is
+the trigger for turning them into independent searches.
+
 ## Text colors
 
-Primary and destructive text compare black and white and select the foreground
+Primary, destructive, warning, and selection text compare black and white and select the foreground
 maximizing the weakest APCA score across the relevant fills. Both candidates,
 their limiting score, and the rejected or next-passing alternative are retained
 as a complete search trace.

@@ -37,3 +37,5 @@ must fail the decision-record test.
   [Craken integration](craken-integration.md).
 - To understand designer ratings and their limits, read
   [Evaluation protocol](evaluation.md).
+- To understand worker generation, caching, and the precomputed gallery, read
+  [Runtime and performance](runtime.md).

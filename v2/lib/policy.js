@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-6",
+  version: "v2-policy-model-7",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -97,6 +97,20 @@ export const V2_POLICY = {
     candidateStep: 0.01,
     lightnessRange: [0.2, 0.86],
     chromaScales: [0.35, 0.65, 1],
+  },
+  feedback: {
+    warningHue: 85,
+    warningHueCandidates: [70, 85, 100],
+    warningChroma: 0.14,
+    warningLightness: { light: 0.65, dark: 0.72 },
+    warningRange: { light: [0.52, 0.72], dark: [0.62, 0.8] },
+    semanticSeparation: 0.08,
+  },
+  selection: {
+    lightnessRange: { light: [0.82, 0.94], dark: [0.24, 0.38] },
+    chromaScales: [0.15, 0.3, 0.45],
+    surfaceSeparation: 0.03,
+    textLc: 60,
   },
   destructive: {
     separation: 0.08,
@@ -164,6 +178,16 @@ export const V2_POLICY = {
         "focus.brand-relation",
       ],
       objectives: ["focus.minimum-brand-distance"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    warning: {
+      constraints: ["feedback.label-contrast", "feedback.semantic-separation"],
+      objectives: ["feedback.semantic-anchor"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    selection: {
+      constraints: ["selection.text-contrast", "selection.surface-separation"],
+      objectives: ["selection.minimum-emphasis"],
       tieBreakers: ["stable.hex-order"],
     },
   },
@@ -309,6 +333,42 @@ export const RULE_CATALOG = {
   },
   "focus.minimum-brand-distance": {
     label: "Minimize movement from primary",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "minimize",
+  },
+  "feedback.label-contrast": {
+    label: "Readable feedback label",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["apcaText"],
+  },
+  "feedback.semantic-separation": {
+    label: "Distinct feedback meanings",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["destructiveSeparation"],
+  },
+  "feedback.semantic-anchor": {
+    label: "Stay near semantic amber",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "minimize",
+  },
+  "selection.text-contrast": {
+    label: "Readable selected content",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["apcaText"],
+  },
+  "selection.surface-separation": {
+    label: "Visible selected surface",
+    kind: "constraint",
+    authority: "product-policy",
+    evidence: ["stateSeparation"],
+  },
+  "selection.minimum-emphasis": {
+    label: "Use the least necessary emphasis",
     kind: "product-objective",
     authority: "product-policy",
     direction: "minimize",

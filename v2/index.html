@@ -48,6 +48,13 @@
             <button type="submit">Generate palette</button>
           </div>
           <p id="v2-error" class="error" aria-live="polite"></p>
+          <p
+            id="calculation-status"
+            class="calculation-status"
+            aria-live="polite"
+          >
+            Ready · repeated inputs reuse the in-memory result
+          </p>
           <p class="fixed-policy">
             Fixed direction: calm and minimal. No vibe or supporting-color
             inputs.
@@ -61,7 +68,10 @@
             <p class="eyebrow">Generated palette</p>
             <h2 id="palette-title">#507096 · Light and dark</h2>
           </div>
-          <button id="copy-css" type="button">Copy palette CSS</button>
+          <div class="output-actions">
+            <button id="copy-craken" type="button">Copy Craken JSON</button>
+            <button id="copy-css" type="button">Copy palette CSS</button>
+          </div>
         </div>
         <p class="palette-help">
           Open <strong>Why?</strong> on any role to inspect its strategy and
@@ -84,6 +94,7 @@
           </p>
         </div>
         <div id="foundation-map" class="foundation-maps"></div>
+        <div id="semantic-map" class="semantic-maps"></div>
       </section>
 
       <section class="focus-section" aria-labelledby="focus-title">

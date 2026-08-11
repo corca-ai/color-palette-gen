@@ -24,8 +24,10 @@ The v2 specimen adopts the parts that directly exercise this palette:
 - navigation: selected row, unread badge, secondary action;
 - messages: primary and secondary text, avatars, status badge;
 - composer: input boundary, focus ring, primary action;
-- component states: primary normal, hover, active, focus;
-- feedback: destructive action separated from brand action.
+- component states: primary and destructive normal, hover, active, focus, and
+  disabled;
+- feedback: warning and destructive action separated from brand action;
+- utility: selected content and popover elevation.
 
 It is an independently written compatibility specimen, not copied Craken source
 or a runtime dependency on the Craken application.
@@ -34,23 +36,21 @@ or a runtime dependency on the Craken application.
 
 Current v2 names map to the Craken semantic model as follows:
 
-| v2 role                    | Craken use                                                 |
-| -------------------------- | ---------------------------------------------------------- |
-| `background`               | application background                                     |
-| `surface`                  | card                                                       |
-| `raised surface`           | popover / raised layer                                     |
-| `muted surface`            | muted, accent, and secondary surfaces in the current scope |
-| `foreground`               | primary and on-neutral foreground                          |
-| `muted text`               | muted foreground                                           |
-| `border`                   | decorative border                                          |
-| `input border`             | required input boundary                                    |
-| `primary` / hover / active | brand solid state family                                   |
-| `primary text`             | brand solid foreground                                     |
-| `focus ring`               | ring                                                       |
-| `destructive` / text       | destructive fill and foreground                            |
+| v2 role                         | Exported Craken token                    |
+| ------------------------------- | ---------------------------------------- |
+| `background` / `foreground`     | `color.canvas` / `color.text`            |
+| `surface` / `raised surface`    | `color.surface` / `color.surface.raised` |
+| `muted surface` / `muted text`  | `color.surface.muted` / `color.text.muted` |
+| `border` / `input border`       | `color.border.subtle` / `.input`         |
+| `primary` / hover / active      | `color.action.primary[.state]`           |
+| `primary text` / `focus ring`   | `color.action.primary.text` / `color.focus.ring` |
+| `destructive` / hover / active  | `color.action.destructive[.state]`       |
+| `warning` / hover / active      | `color.feedback.warning[.state]`         |
+| `selection` / text              | `color.selection[.text]`                 |
+| disabled background/text/border | `color.control.disabled.*`               |
+| `popover` / text                | `color.overlay.popover[.text]`           |
 
-This mapping also exposes current palette debt. Craken has distinct popover,
-accent, secondary, warning, disabled, destructive-hover, and destructive-active
-roles. The first specimen aliases only roles that can be represented honestly;
-future palette work should add distinct tokens when composed Craken screens show
-that the alias loses hierarchy or state clarity.
+The page exports this mapping as versioned `craken-color-tokens-1` JSON. Disabled
+and popover names are distinct consumer tokens but currently document aliases to
+foundation colors. Accent and secondary remain intentionally unsupported until
+a concrete Craken component requires an independent visual role.
