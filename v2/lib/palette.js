@@ -1,6 +1,6 @@
 import { isHex, normalizeHex } from "../../lib/color-math.js";
 import { apcaCheck } from "./apca.js";
-import { aliasDecision, selectCandidate } from "./decision.js";
+import { aliasDecision, inputDecision, selectCandidate } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
 import {
@@ -340,7 +340,7 @@ function foundationPalette(input, mode, recipe) {
 }
 
 function stateSearch({ mode, base, role, target, labelText, labelLc }) {
-  const policy = decisionPolicy("state");
+  const policy = decisionPolicy(labelText ? "labeledState" : "state");
   const direction = labelText
     ? labelText === "#FFFFFF"
       ? -1
@@ -381,13 +381,9 @@ function stateSearch({ mode, base, role, target, labelText, labelLc }) {
       ...(labelText && labelLc
         ? [
             {
-              definition: {
-                id: "state.shared-label",
-                kind: "constraint",
-                direction: "minimum",
-                summary:
-                  "Keep the state inside the shared label contrast envelope.",
-              },
+              definition: policy.constraints.find(
+                ({ id }) => id === "state.shared-label",
+              ),
               evaluate(item) {
                 const value = Math.abs(apcaContrast(labelText, item.hex));
                 return {
@@ -512,25 +508,6 @@ function brandFamilySearch({ input, mode, background, surface, primaryRange }) {
           metrics: { minimumLc, target: V2_POLICY.primary.labelLc, text },
         };
       }),
-      bindRule(policy, "constraints", "primary.focus-contrast", (item) => {
-        const focusContrast = Math.min(
-          contrastRatio(item.hex, background),
-          contrastRatio(item.hex, surface),
-        );
-        const passed = focusContrast >= V2_POLICY.primary.focusContrast;
-        return {
-          passed,
-          reasons: [
-            passed
-              ? `Focus contrast reaches ${focusContrast.toFixed(2)}:1.`
-              : `Focus contrast ${focusContrast.toFixed(2)}:1 is below ${V2_POLICY.primary.focusContrast}:1.`,
-          ],
-          metrics: {
-            value: focusContrast,
-            target: V2_POLICY.primary.focusContrast,
-          },
-        };
-      }),
     ],
     objectives: [
       bindRule(policy, "objectives", "primary.source-fidelity", (item) =>
@@ -538,7 +515,7 @@ function brandFamilySearch({ input, mode, background, surface, primaryRange }) {
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText", "wcagNonText", "calmMinimal"),
+    evidence: evidence("apcaText", "calmMinimal"),
     searchConstants: ["input hue", "bounded source chroma"],
   });
   return {
@@ -700,6 +677,7 @@ function warningSearch({ mode, primary, destructive }) {
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
     searchConstants: ["bounded amber hue candidates", "warning chroma"],
+    retainPlot: true,
   });
 }
 
@@ -773,6 +751,7 @@ function selectionSearch({ input, mode, surface }) {
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "stateSeparation", "calmMinimal"),
     searchConstants: ["input hue", "bounded brand tint"],
+    retainPlot: true,
   });
 }
 
@@ -877,6 +856,73 @@ function focusSearch({
   });
 }
 
+function primaryBorderSearch({ input, mode, primary, background, surface }) {
+  const policy = decisionPolicy("primaryBorder");
+  const candidates = [];
+  for (let lightness = 0.12; lightness <= 0.88; lightness += 0.01) {
+    for (const chromaScale of [0.35, 0.65, 1]) {
+      candidates.push(
+        candidate(
+          tone({
+            l: lightness,
+            c: primary.oklch.c * chromaScale,
+            h: input.h,
+          }),
+          { lightness, chromaScale },
+        ),
+      );
+    }
+  }
+  const uniqueCandidates = candidates.filter(
+    (item, index) =>
+      candidates.findIndex((other) => other.hex === item.hex) === index,
+  );
+  return selectCandidate({
+    id: `${mode}.primary.border`,
+    role: "primary border",
+    intent:
+      "Provide the required action boundary independently so the brand-derived fill does not carry every contrast responsibility.",
+    candidates: uniqueCandidates,
+    policy,
+    constraints: [
+      bindRule(
+        policy,
+        "constraints",
+        "primary-border.adjacent-contrast",
+        (item) => {
+          const minimumContrast = Math.min(
+            contrastRatio(item.hex, background),
+            contrastRatio(item.hex, surface),
+          );
+          return {
+            passed: minimumContrast >= V2_POLICY.primary.boundaryContrast,
+            reasons: [
+              minimumContrast >= V2_POLICY.primary.boundaryContrast
+                ? `Weakest foundation contrast reaches ${minimumContrast.toFixed(2)}:1.`
+                : `Weakest foundation contrast reaches only ${minimumContrast.toFixed(2)}:1.`,
+            ],
+            metrics: {
+              minimumContrast,
+              target: V2_POLICY.primary.boundaryContrast,
+            },
+          };
+        },
+      ),
+    ],
+    objectives: [
+      bindRule(
+        policy,
+        "objectives",
+        "primary-border.minimum-brand-distance",
+        (item) => distance(primary, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence("wcagNonText", "calmMinimal"),
+    searchConstants: ["input hue", "bounded primary chroma scales"],
+  });
+}
+
 function modePalette(input, mode, options = {}) {
   const recipe = MODE_RECIPE[mode];
   const foundation = foundationPalette(input, mode, recipe);
@@ -898,6 +944,14 @@ function modePalette(input, mode, options = {}) {
     target: V2_POLICY.primary.labelLc,
   });
   const primaryText = primaryTextDecision.value.hex;
+  const primaryBorderDecision = primaryBorderSearch({
+    input,
+    mode,
+    primary: brandFamily.primary,
+    background: foundations.background,
+    surface: foundations.surface,
+  });
+  const primaryBorder = primaryBorderDecision.value.hex;
   const primarySourceDistance = distance(
     candidate(input.hex),
     brandFamily.primary,
@@ -994,10 +1048,12 @@ function modePalette(input, mode, options = {}) {
   const focusRing = focusDecision.value.hex;
   const values = {
     ...foundations,
+    "brand source": input.hex,
     primary,
     "primary hover": primaryHover,
     "primary active": primaryActive,
     "primary text": primaryText,
+    "primary border": primaryBorder,
     "focus ring": focusRing,
     destructive: destructiveColor,
     "destructive hover": destructiveHover,
@@ -1080,6 +1136,16 @@ function modePalette(input, mode, options = {}) {
 
   const nonTextChecks = [
     ratioCheck({
+      role: "Primary boundary on background",
+      foreground: values["primary border"],
+      background: values.background,
+    }),
+    ratioCheck({
+      role: "Primary boundary on surface",
+      foreground: values["primary border"],
+      background: values.surface,
+    }),
+    ratioCheck({
       role: "Input boundary",
       foreground: values["input border"],
       background: values.surface,
@@ -1133,6 +1199,13 @@ function modePalette(input, mode, options = {}) {
 
   const decisions = { ...foundation.decisions, ...brandFamily.traces };
   decisions["primary text"] = primaryTextDecision.trace;
+  decisions["brand source"] = inputDecision({
+    id: `${mode}.brand.source`,
+    role: "brand source",
+    candidate: candidate(input.hex),
+    evidence: evidence("calmMinimal"),
+  });
+  decisions["primary border"] = primaryBorderDecision.trace;
   decisions["focus ring"] = focusDecision.trace;
   decisions.destructive = destructiveDecision.trace;
   decisions["destructive hover"] = destructiveHoverDecision.trace;
@@ -1259,9 +1332,9 @@ function selectModePair(input, baselineModes) {
           lightDistance,
           darkDistance,
           rank: [
-            quality.checks.filter(({ pass }) => !pass).length,
             Math.max(lightDistance, darkDistance),
             lightDistance + darkDistance,
+            quality.checks.filter(({ pass }) => !pass).length,
             qualityPenalty(quality),
           ],
         };
@@ -1274,9 +1347,9 @@ function selectModePair(input, baselineModes) {
       ? {
           light: pair.modes.light.values.primary,
           dark: pair.modes.dark.values.primary,
-          qualityMisses: pair.rank[0],
-          maximumSourceDistance: pair.rank[1],
-          totalSourceDistance: pair.rank[2],
+          qualityMisses: pair.quality.checks.filter(({ pass }) => !pass).length,
+          maximumSourceDistance: pair.rank[0],
+          totalSourceDistance: pair.rank[1],
           hueDrift: pair.quality.crossMode.hueDrift,
           chromaDifference: pair.quality.crossMode.chromaDifference,
           lightnessGap: pair.quality.crossMode.lightnessGap,
@@ -1289,17 +1362,23 @@ function selectModePair(input, baselineModes) {
         (second.lightDistance + second.darkDistance) ||
       first.id.localeCompare(second.id),
   )[0];
-  const qualityRejected = pairs.find((pair) => pair.rank[0] > selected.rank[0]);
+  const selectedMisses = selected.quality.checks.filter(
+    ({ pass }) => !pass,
+  ).length;
+  const qualityRejected = pairs.find(
+    (pair) =>
+      pair.quality.checks.filter(({ pass }) => !pass).length > selectedMisses,
+  );
   return {
     modes: selected.modes,
     quality: selected.quality,
     decision: {
-      strategy: "bounded joint light/dark search",
+      strategy: "sampled cross-mode pair search",
       candidateCount: pairs.length,
       ranking: [
-        "fewest paired-quality misses",
         "smallest worst-mode source distance",
         "smallest total source distance",
+        "fewest structural review misses",
         "smallest quality miss",
       ],
       selected: compactPair(selected),
@@ -1309,6 +1388,65 @@ function selectModePair(input, baselineModes) {
         qualityRejected: compactPair(qualityRejected),
       },
     },
+  };
+}
+
+function independentPaletteReview(input, modes, structuralQuality) {
+  const source = candidate(input.hex);
+  const sourceChecks = ["light", "dark"].map((mode) =>
+    maximumQualityCheck({
+      id: `review.${mode}.source-fidelity`,
+      label: `${mode} action source distance`,
+      value: distance(source, candidate(modes[mode].values.primary)),
+      maximum: V2_POLICY.primary.maximumSourceDistance,
+      unit: "ΔE",
+    }),
+  );
+  const semanticChecks = ["light", "dark"].flatMap((mode) => {
+    const values = modes[mode].values;
+    const primary = candidate(values.primary);
+    const destructive = candidate(values.destructive);
+    const warning = candidate(values.warning);
+    const hueCheck = (id, label, first, second) => {
+      const chromatic =
+        first.oklch.c >= V2_POLICY.semanticReview.chromaFloor &&
+        second.oklch.c >= V2_POLICY.semanticReview.chromaFloor;
+      return minimumQualityCheck({
+        id,
+        label,
+        value: chromatic ? hueDistance(first.oklch.h, second.oklch.h) : 180,
+        minimum: V2_POLICY.semanticReview.minimumHueSeparation,
+        unit: chromatic ? "°" : "° · achromatic exemption",
+      });
+    };
+    return [
+      hueCheck(
+        `review.${mode}.primary-destructive-hue`,
+        `${mode} primary ↔ destructive hue`,
+        primary,
+        destructive,
+      ),
+      hueCheck(
+        `review.${mode}.primary-warning-hue`,
+        `${mode} primary ↔ warning hue`,
+        primary,
+        warning,
+      ),
+    ];
+  });
+  const checks = [
+    ...structuralQuality.checks,
+    ...sourceChecks,
+    ...semanticChecks,
+  ];
+  return {
+    ...structuralQuality,
+    intent:
+      "Independently review source fidelity, cross-mode identity, and state pacing after pair selection.",
+    sourceChecks,
+    semanticChecks,
+    checks,
+    passed: checks.every(({ pass }) => pass),
   };
 }
 
@@ -1337,30 +1475,46 @@ function maximumQualityCheck({ id, label, value, maximum, unit = "" }) {
   };
 }
 
-function stateProgression(modeResult) {
+function minimumQualityCheck({ id, label, value, minimum, unit = "" }) {
+  return {
+    id,
+    label,
+    value,
+    target: minimum,
+    unit,
+    direction: "minimum",
+    pass: value >= minimum,
+    authority: "provisional",
+  };
+}
+
+function stateProgression(modeResult, family = "primary") {
   const values = modeResult.values;
-  const primary = candidate(values.primary);
-  const hover = candidate(values["primary hover"]);
-  const active = candidate(values["primary active"]);
+  const primary = candidate(values[family]);
+  const hover = candidate(values[`${family} hover`]);
+  const active = candidate(values[`${family} active`]);
   const defaultToHover = distance(primary, hover);
   const hoverToActive = distance(hover, active);
   const ratio = hoverToActive / defaultToHover;
-  const direction = V2_POLICY.state.direction[modeResult.mode];
+  const direction =
+    family === "primary"
+      ? V2_POLICY.state.direction[modeResult.mode]
+      : Math.sign(hover.oklch.l - primary.oklch.l);
   const monotonic =
     direction < 0
       ? primary.oklch.l > hover.oklch.l && hover.oklch.l > active.oklch.l
       : primary.oklch.l < hover.oklch.l && hover.oklch.l < active.oklch.l;
   const checks = [
     rangeQualityCheck({
-      id: `${modeResult.mode}.state.interval-ratio`,
-      label: "Hover → active interval balance",
+      id: `${modeResult.mode}.${family}.state.interval-ratio`,
+      label: `${family} hover → active interval balance`,
       value: ratio,
       range: V2_POLICY.state.progressionRatio,
       unit: "× hover interval",
     }),
     {
-      id: `${modeResult.mode}.state.monotonic-lightness`,
-      label: "Monotonic state direction",
+      id: `${modeResult.mode}.${family}.state.monotonic-lightness`,
+      label: `${family} monotonic state direction`,
       value: monotonic ? 1 : 0,
       target: 1,
       unit: "ordered",
@@ -1370,6 +1524,7 @@ function stateProgression(modeResult) {
   ];
   return {
     mode: modeResult.mode,
+    family,
     defaultToHover,
     hoverToActive,
     ratio,
@@ -1411,10 +1566,23 @@ function pairedQuality(modes) {
     light: stateProgression(modes.light),
     dark: stateProgression(modes.dark),
   };
+  const feedbackStates = Object.fromEntries(
+    ["destructive", "warning"].map((family) => [
+      family,
+      {
+        light: stateProgression(modes.light, family),
+        dark: stateProgression(modes.dark, family),
+      },
+    ]),
+  );
   const checks = [
     ...crossModeChecks,
     ...states.light.checks,
     ...states.dark.checks,
+    ...Object.values(feedbackStates).flatMap((family) => [
+      ...family.light.checks,
+      ...family.dark.checks,
+    ]),
   ];
   return {
     intent:
@@ -1427,6 +1595,7 @@ function pairedQuality(modes) {
       checks: crossModeChecks,
     },
     states,
+    feedbackStates,
     checks,
     passed: checks.every(({ pass }) => pass),
   };
@@ -1461,15 +1630,16 @@ function sourceUsageAlternatives(input, modes) {
             color: input.hex,
             text: input.hex,
             contrast: outlineContrast,
-            safe: outlineContrast >= V2_POLICY.primary.focusContrast,
+            safe: outlineContrast >= V2_POLICY.primary.boundaryContrast,
             note:
-              outlineContrast >= V2_POLICY.primary.focusContrast
+              outlineContrast >= V2_POLICY.primary.boundaryContrast
                 ? "Source color can identify an outline control on both foundations."
                 : "Source color is too weak for a required outline on one foundation.",
           },
           brandFaithful: {
             color: input.hex,
             text: sourceText,
+            border: result.values["primary border"],
             lc: sourceLabelLc,
             safe: sourceLabelLc >= V2_POLICY.primary.labelLc,
             note:
@@ -1486,6 +1656,18 @@ function sourceUsageAlternatives(input, modes) {
       "Expose usage trade-offs when the generated primary moves far from the supplied brand color.",
     source: input.hex,
     modes: byMode,
+    recommendation: {
+      statefulAction: "Generated fill",
+      sourceFaithfulAction: Object.values(byMode).every(
+        ({ outline }) => outline.safe,
+      )
+        ? "Source outline"
+        : Object.values(byMode).every(({ brandFaithful }) => brandFaithful.safe)
+          ? "Source fill with generated boundary"
+          : "No source-faithful action is safe in both modes",
+      rationale:
+        "Generated fill is the only option with a complete state family; source-faithful options are base-state alternatives.",
+    },
   };
 }
 
@@ -1513,7 +1695,12 @@ export function generatePaletteV2({ primary }) {
     dark: modePalette(inputColor, "dark"),
   };
   const pairSelection = selectModePair(inputColor, baselineModes);
-  const { modes, quality } = pairSelection;
+  const { modes } = pairSelection;
+  const quality = independentPaletteReview(
+    inputColor,
+    modes,
+    pairSelection.quality,
+  );
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
   const result = {
     version: 2,

@@ -12,7 +12,7 @@ a compatibility fallback when workers are unavailable.
 
 ## Evaluation gallery
 
-The fixed 12-input evaluation set is generated during `npm run build`. Its
+The fixed 14-input evaluation set is generated during `npm run build`. Its
 static JSON contains only the values and paired-quality summary required to draw
 the gallery, not the much larger candidate traces. Opening the gallery therefore
 performs no palette search. Loading one card requests its complete inspectable

@@ -1,7 +1,7 @@
 # Designer evaluation protocol
 
 The representative gallery is an evaluation instrument, not evidence by
-itself. It fixes 12 primary inputs across hue, chroma, achromatic, and large
+itself. It fixes 14 primary inputs across hue, chroma, achromatic, and large
 source-shift cases so policy changes can be compared against the same set.
 
 ## Rating meanings

@@ -8,7 +8,7 @@ source color
 → reject candidates that violate named constraints
 → compare passing candidates by ordered product objectives
 → use a deterministic tie-breaker only when objective scores are equal
-→ retain the closest rejected and next passing candidates
+→ retain the best-ranked rejected and next passing candidates
 ```
 
 The selected candidate explains why the color works. The two alternatives
@@ -20,7 +20,9 @@ The hover objective is to minimize Oklab distance from primary while moving in
 the mode's required direction. A candidate must preserve hue and chroma, remain
 in gamut, and reach the provisional state-separation threshold.
 
-- **Closest rejected:** changed less, but did not reach the threshold.
+- **Best-ranked rejected:** would rank best by the declared objective, but did
+  not satisfy every constraint. It is not necessarily the color geometrically
+  closest to the selected candidate.
 - **Selected:** first candidate that reaches the threshold.
 - **Next passing:** also passes, but changes more and therefore loses the
   minimum-change objective.
@@ -40,7 +42,7 @@ in gamut, and reach the provisional state-separation threshold.
   candidateCount: 80,
   selected: { hex: "#...", objectiveCost: 0.036, reasons: [] },
   alternatives: {
-    nearestRejected: { hex: "#...", reasons: ["Delta E below target"] },
+    nearestRejected: { hex: "#...", reasons: ["Delta E below target"] }, // legacy field name
     nextPassing: { hex: "#...", reasons: ["Passes but changes more"] }
   },
   evidence: []

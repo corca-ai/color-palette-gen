@@ -786,7 +786,7 @@ h1 {
 .craken-state-grid button,
 .craken-primary {
   background: var(--sample-primary);
-  border: 0;
+  border: 1px solid var(--sample-primary-border);
   border-radius: 4px;
   color: var(--sample-primary-text);
   font-size: 10px;
@@ -1279,6 +1279,20 @@ h1 {
   transform: translate(-50%, 50%);
   width: 10px;
 }
+.semantic-plot > b {
+  background: var(--candidate-color);
+  border: 1px solid var(--card);
+  border-radius: 50%;
+  height: 4px;
+  opacity: 0.48;
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 4px;
+}
+.semantic-plot > b.infeasible {
+  filter: grayscale(1);
+  opacity: 0.18;
+}
 .semantic-plot > i.rejected {
   border-style: dashed;
   opacity: 0.65;
@@ -1309,6 +1323,15 @@ h1 {
 }
 .semantic-maps footer i.rejected {
   border-style: dashed;
+}
+.semantic-maps footer i.feasible {
+  background: var(--ink);
+  border-radius: 50%;
+  opacity: 0.45;
+}
+.semantic-maps footer i.infeasible {
+  border-radius: 50%;
+  opacity: 0.3;
 }
 .foundation-map-card {
   background: var(--card);
@@ -1802,6 +1825,14 @@ h1 {
   grid-column: 1 / -1;
   margin: 8px 0;
 }
+.gallery-convergence {
+  background: #8881;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  line-height: 1.4;
+  padding: 5px 6px;
+}
 .gallery-card {
   background: transparent;
   border: 1px solid var(--line);
@@ -1936,6 +1967,21 @@ h1 {
   color: var(--muted);
   font-size: 9px;
   margin: 0;
+}
+.source-alternatives > header aside {
+  border-left: 1px solid var(--line);
+  font-size: 9px;
+  line-height: 1.55;
+  padding-left: 14px;
+}
+.source-alternatives > header aside strong {
+  display: inline-block;
+  min-width: 104px;
+}
+.source-alternatives > header aside small {
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
 }
 .source-alternatives > div {
   display: grid;

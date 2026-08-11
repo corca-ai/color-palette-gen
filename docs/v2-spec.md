@@ -123,9 +123,11 @@ Each mode produces a list of `(color, function)` tuples for:
 - surface, raised surface, muted surface;
 - muted text;
 - border, input border;
-- primary, primary hover, primary active, primary text;
+- exact brand source passthrough;
+- primary, primary hover, primary active, primary text, primary border;
 - focus ring;
-- destructive, destructive text.
+- destructive and warning state families;
+- selection, disabled, and popover roles.
 
 Every contract records the colors, metric, target, and pass/fail result. Every
 mode also exposes source classification, adaptation decisions, text checks, and
@@ -133,7 +135,8 @@ non-text checks. Light/dark results are siblings, not one mode calculated by
 inverting the other.
 
 The UI reports semantic role count and unique color count separately. Multiple
-roles may intentionally alias one color, such as `primary` and `focus ring`, but
+roles may intentionally alias one color when documented, but `primary` and
+`focus ring` are independently searched because their component duties differ;
 an alias is never presented as a new color.
 
 ## Deployment and navigation

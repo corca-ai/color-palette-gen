@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-7`.
+Current policy version: `v2-policy-model-9`.
 
 ## Candidate search implemented
 
@@ -15,8 +15,10 @@ Current policy version: `v2-policy-model-7`.
 - destructive hover and active states;
 - warning default, hover, active, and text;
 - selection background and text.
+- primary action border, independently searched from the action fill;
+- exact brand source as an input passthrough rather than a generated color.
 
-These roles retain selected, closest rejected, and next passing candidates when
+These roles retain selected, best-ranked rejected, and next passing candidates when
 available.
 
 Their policies explicitly separate named constraints, ordered product
@@ -26,12 +28,22 @@ and the per-candidate result of each rule.
 
 ## Paired quality review
 
-- a bounded joint search compares complete light/dark primary pairs;
-- pair ranking minimizes quality misses before worst-mode and total source shift;
+- a sampled cross-mode comparison evaluates baseline and three fixed lightness
+  points per mode;
+- pair ranking minimizes worst-mode and total source shift before structural
+  review misses;
 - cross-mode primary hue, chroma, and lightness relationships are evaluated;
 - default, hover, and active interval pacing is evaluated for both modes;
+- destructive and warning state pacing is reviewed alongside primary pacing;
 - provisional quality objectives remain distinct from accessibility pass/fail;
-- a fixed 12-input gallery exposes chromatic, achromatic, and large-shift cases;
+- source fidelity and structural signals are evaluated after pair selection, so
+  review status is not guaranteed by construction;
+- primary/destructive and primary/warning hue ambiguity is reviewed separately
+  from total perceptual distance;
+- a fixed 14-input gallery exposes chromatic, achromatic convergence, and
+  large-shift cases;
+- gallery cards disclose when different sources converge to the same generated
+  light/dark action pair;
 - any gallery card can be loaded into the complete interactive inspector;
 - large source shifts expose generated-fill, source-outline, and source-fill
   trade-offs with per-mode availability;

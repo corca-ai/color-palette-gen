@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generatePaletteV2 } from "../v2/lib/palette.js";
+import { EVALUATION_INPUTS } from "../v2/lib/evaluation-inputs.js";
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const projectRoot = dirname(scriptDirectory);
@@ -41,21 +42,7 @@ for (const filename of libraryFiles) {
 
 await cp(join(projectRoot, "v2"), outputV2Directory, { recursive: true });
 
-const evaluationInputs = [
-  "#FF0000",
-  "#F97316",
-  "#F2C230",
-  "#00A878",
-  "#00A7C4",
-  "#507096",
-  "#2563EB",
-  "#6633FF",
-  "#D946EF",
-  "#777777",
-  "#000000",
-  "#FFFFFF",
-];
-const evaluationResults = evaluationInputs.map((primary) => {
+const evaluationResults = EVALUATION_INPUTS.map((primary) => {
   const result = generatePaletteV2({ primary });
   return {
     input: result.input,

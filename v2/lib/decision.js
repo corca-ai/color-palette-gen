@@ -62,6 +62,7 @@ export function selectCandidate({
   evidence,
   searchConstants = [],
   strategy = "minimum-change candidate search",
+  retainPlot = false,
 }) {
   const evaluated = candidates
     .map((candidate) => {
@@ -130,6 +131,13 @@ export function selectCandidate({
       candidateCount: evaluated.length,
       searchConstants,
       evidence,
+      searchPlot: retainPlot
+        ? evaluated.map(({ candidate, evaluation }) => ({
+            hex: candidate.hex,
+            oklch: candidate.oklch,
+            passed: evaluation.passed,
+          }))
+        : [],
       selected: compactCandidate(
         selected.candidate,
         selected.evaluation,
@@ -211,6 +219,29 @@ export function aliasDecision({
         `Reuses ${sourceRole}; this role does not introduce an independent color decision.`,
       ],
       metrics: { sourceRole },
+    },
+    alternatives: { nearestRejected: null, nextPassing: null },
+  };
+}
+
+export function inputDecision({ id, role, candidate, evidence }) {
+  return {
+    id,
+    role,
+    intent:
+      "Preserve the user-provided brand source without adapting it to a component role.",
+    strategy: "input passthrough",
+    candidateCount: 1,
+    searchConstants: [],
+    evidence,
+    aliases: [],
+    selected: {
+      hex: candidate.hex,
+      oklch: candidate.oklch,
+      objectiveCost: 0,
+      passed: true,
+      reasons: ["Exact normalized input retained as brand source."],
+      metrics: { source: true },
     },
     alternatives: { nearestRejected: null, nextPassing: null },
   };

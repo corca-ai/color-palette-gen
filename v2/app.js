@@ -6,6 +6,7 @@ import {
 } from "../lib/color-math.js";
 import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
 import { serializeCrakenTokens } from "./lib/craken.js";
+import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 
 const GROUPS = [
   {
@@ -17,10 +18,12 @@ const GROUPS = [
   {
     name: "Brand",
     roles: [
+      "brand source",
       "primary",
       "primary hover",
       "primary active",
       "primary text",
+      "primary border",
       "focus ring",
     ],
   },
@@ -90,20 +93,6 @@ paletteWorker?.addEventListener("message", ({ data }) => {
   else pending.resolve(data);
 });
 
-const EVALUATION_INPUTS = [
-  "#FF0000",
-  "#F97316",
-  "#F2C230",
-  "#00A878",
-  "#00A7C4",
-  "#507096",
-  "#2563EB",
-  "#6633FF",
-  "#D946EF",
-  "#777777",
-  "#000000",
-  "#FFFFFF",
-];
 const EVALUATION_STORAGE_KEY = "color-lab-v2-evaluations";
 const FOUNDATION_ROLES = [
   "background",
@@ -202,7 +191,7 @@ function decisionView(decision) {
     ${alias ? `<div class="alias-callout"><strong>No new color calculated</strong><span>Reuses ${decision.aliases.join(", ")} because the current application contract does not require independent differentiation.</span></div>` : candidateView("Selected", decision.selected, true, "selected", false)}
     <details class="decision-more"><summary>${alias ? "View provenance" : "Compare alternatives and rules"}</summary>
       ${policyView(decision.policy)}
-      ${alias ? "" : `<div class="decision-candidates">${candidateView("Selected · full rules", decision.selected, true)}${candidateView("Closest rejected", decision.alternatives.nearestRejected, false, "rejected")}${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}</div>`}
+      ${alias ? "" : `<div class="decision-candidates">${candidateView("Selected · full rules", decision.selected, true)}${candidateView("Best-ranked rejected", decision.alternatives.nearestRejected, false, "rejected")}${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}</div>`}
       <div class="decision-evidence"><span>Rule provenance</span>${decision.evidence.map((item) => `<a href="${item.url}" target="_blank" rel="noreferrer"><b>${item.class}</b>${item.label}</a>`).join("")}</div>
     </details>
   </div>`;
@@ -331,7 +320,7 @@ function foundationMode(mode) {
     const decision = result.decisions[role];
     return `<div><span>${role}</span><i style="background:${decision.selected.hex}"></i><strong>${decision.selected.hex}</strong><small>${decision.selected.objectiveResults?.[0]?.value.toFixed(1) ?? "–"} Lc weakest</small></div>`;
   };
-  return `<article class="foundation-map-card"><header><span>${mode}</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} candidates evaluated</strong></header><div class="foundation-plot"><span class="axis-y">Tint chroma</span><span class="axis-x">OKLCH lightness →</span><div class="tint-limit">Calm tint limit</div>${markers}</div><div class="foundation-legend"><span><i class="selected"></i>Selected</span><span><i class="rejected"></i>Closest rejected</span><span><i class="passing"></i>Next passing</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
+  return `<article class="foundation-map-card"><header><span>${mode}</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} candidates evaluated</strong></header><div class="foundation-plot"><span class="axis-y">Tint chroma</span><span class="axis-x">OKLCH lightness →</span><div class="tint-limit">Calm tint limit</div>${markers}</div><div class="foundation-legend"><span><i class="selected"></i>Selected</span><span><i class="rejected"></i>Best-ranked rejected</span><span><i class="passing"></i>Next passing</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
 }
 
 function renderFoundationMap() {
@@ -357,8 +346,8 @@ function qualityValue(check) {
       ? "required"
       : Array.isArray(check.target)
         ? `${check.target[0].toFixed(2)}–${check.target[1].toFixed(2)}`
-        : `≤ ${check.target}`;
-  return { value: `${value}${check.unit === "°" ? "°" : ""}`, target };
+        : `${check.direction === "minimum" ? "≥" : "≤"} ${check.target}`;
+  return { value: `${value}${check.unit.startsWith("°") ? "°" : ""}`, target };
 }
 
 function qualityCheck(check) {
@@ -376,7 +365,7 @@ function pairOption(label, pair, selectedPair) {
 function renderQuality() {
   const result = currentResult.quality;
   const pair = currentResult.pairDecision;
-  quality.innerHTML = `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Quality boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} objectives</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>${[
+  quality.innerHTML = `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Independent source fidelity</span><strong>${result.sourceChecks.filter(({ pass }) => pass).length}/${result.sourceChecks.length} signals</strong></header><ul>${result.sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${result.semanticChecks.filter(({ pass }) => pass).length}/${result.semanticChecks.length} signals</strong></header><ul>${result.semanticChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>${[
     "light",
     "dark",
   ]
@@ -384,6 +373,13 @@ function renderQuality() {
       const state = result.states[mode];
       return `<article><header><span>${mode} state pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;
     })
+    .join("")}${["destructive", "warning"]
+    .flatMap((family) =>
+      ["light", "dark"].map((mode) => {
+        const state = result.feedbackStates[family][mode];
+        return `<article><header><span>${mode} ${family} pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;
+      }),
+    )
     .join("")}`;
   renderSourceAlternatives();
 }
@@ -393,7 +389,7 @@ function alternativeMode(mode, alternatives) {
     const swatchStyle =
       name === "Source outline"
         ? `background:transparent;border-color:${value.color};color:${value.text}`
-        : `background:${value.color};color:${value.text}`;
+        : `background:${value.color};color:${value.text}${value.border ? `;border-color:${value.border}` : ""}`;
     const component = value.hover
       ? `<div class="usage-buttons"><button style="background:${value.color};color:${value.text}">Default</button><button style="background:${value.hover};color:${value.text}">Hover</button><button style="background:${value.active};color:${value.text}">Active</button></div>`
       : `<button class="usage-base" style="${swatchStyle}">${name}</button>`;
@@ -408,7 +404,7 @@ function renderSourceAlternatives() {
     sourceAlternatives.innerHTML = "";
     return;
   }
-  sourceAlternatives.innerHTML = `<header><span>Large source shift</span><p>${alternatives.intent}</p></header><div>${["light", "dark"].map((mode) => alternativeMode(mode, alternatives.modes[mode])).join("")}</div>`;
+  sourceAlternatives.innerHTML = `<header><span>Large source shift</span><p>${alternatives.intent}</p><aside><strong>Stateful action</strong> ${alternatives.recommendation.statefulAction}<br><strong>Source-faithful option</strong> ${alternatives.recommendation.sourceFaithfulAction}<small>${alternatives.recommendation.rationale}</small></aside></header><div>${["light", "dark"].map((mode) => alternativeMode(mode, alternatives.modes[mode])).join("")}</div>`;
 }
 
 function galleryCard(result) {
@@ -416,9 +412,18 @@ function galleryCard(result) {
   const dark = result.modes.dark.values;
   const passed = result.quality.checks.filter(({ pass }) => pass).length;
   const record = evaluationRecords[result.input.primary] ?? {};
+  const pairKey = `${light.primary}/${dark.primary}`;
+  const convergesWith = [...galleryResults.values()]
+    .filter(
+      (other) =>
+        other.input.primary !== result.input.primary &&
+        `${other.modes.light.values.primary}/${other.modes.dark.values.primary}` ===
+          pairKey,
+    )
+    .map((other) => other.input.primary);
   const ratingButton = (rating) =>
     `<button type="button" data-rating="${rating}" aria-pressed="${record.rating === rating}">${rating}</button>`;
-  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-pair"><i style="background:${light.background}"><b style="background:${light.primary}"></b><em style="background:${light["primary hover"]}"></em><small style="background:${light["primary active"]}"></small></i><i style="background:${dark.background}"><b style="background:${dark.primary}"></b><em style="background:${dark["primary hover"]}"></em><small style="background:${dark["primary active"]}"></small></i></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} quality objectives · Inspect</span></button><div class="gallery-rating" aria-label="Designer rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
+  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-pair"><i style="background:${light.background}"><b style="background:${light.primary}"></b><em style="background:${light["primary hover"]}"></em><small style="background:${light["primary active"]}"></small></i><i style="background:${dark.background}"><b style="background:${dark.primary}"></b><em style="background:${dark["primary hover"]}"></em><small style="background:${dark["primary active"]}"></small></i></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} independent review signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-rating" aria-label="Designer rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
 }
 
 async function renderGallery() {
@@ -437,7 +442,7 @@ async function renderGallery() {
   ).join("");
 }
 
-function semanticMarker(decision, kind) {
+function semanticMarker(decision, role, kind) {
   const value =
     kind === "selected"
       ? decision.selected
@@ -445,7 +450,24 @@ function semanticMarker(decision, kind) {
           kind === "rejected" ? "nearestRejected" : "nextPassing"
         ];
   if (!value) return "";
-  return `<i class="${kind}" style="left:${value.oklch.l * 100}%;bottom:${Math.min(100, value.oklch.c / 0.2) * 100}%;--marker-color:${value.hex}" title="${kind}: ${value.hex}"></i>`;
+  const x =
+    role === "warning"
+      ? Math.max(0, Math.min(100, ((value.oklch.h - 60) / 60) * 100))
+      : Math.min(100, (value.oklch.c / 0.08) * 100);
+  const y = value.oklch.l * 100;
+  return `<i class="${kind}" style="left:${x}%;bottom:${y}%;--marker-color:${value.hex}" title="${kind}: ${value.hex} · L ${value.oklch.l.toFixed(3)} C ${value.oklch.c.toFixed(3)} H ${value.oklch.h.toFixed(1)}°"></i>`;
+}
+
+function semanticCloud(decision, role) {
+  return (decision.searchPlot ?? [])
+    .map((value) => {
+      const x =
+        role === "warning"
+          ? Math.max(0, Math.min(100, ((value.oklch.h - 60) / 60) * 100))
+          : Math.min(100, (value.oklch.c / 0.08) * 100);
+      return `<b class="${value.passed ? "feasible" : "infeasible"}" style="left:${x}%;bottom:${value.oklch.l * 100}%;--candidate-color:${value.hex}"></b>`;
+    })
+    .join("");
 }
 
 function renderSemanticMaps() {
@@ -453,7 +475,11 @@ function renderSemanticMaps() {
     .flatMap((mode) =>
       ["warning", "selection"].map((role) => {
         const decision = currentResult.modes[mode].decisions[role];
-        return `<article><header><span>${mode}</span><strong>${role}</strong><small>L → · chroma ↑</small></header><div class="semantic-plot">${semanticMarker(decision, "selected")}${semanticMarker(decision, "rejected")}${semanticMarker(decision, "passing")}</div><footer><span><i class="selected"></i>selected</span><span><i class="rejected"></i>rejected</span><span><i class="passing"></i>next passing</span></footer></article>`;
+        const axes =
+          role === "warning"
+            ? "amber hue 60° → 120° · lightness ↑"
+            : "chroma 0 → 0.08 · lightness ↑";
+        return `<article><header><span>${mode}</span><strong>${role}</strong><small>${axes}</small></header><div class="semantic-plot ${role}">${semanticCloud(decision, role)}${semanticMarker(decision, role, "selected")}${semanticMarker(decision, role, "rejected")}${semanticMarker(decision, role, "passing")}</div><footer><span><i class="feasible"></i>passing space</span><span><i class="infeasible"></i>rejected space</span><span><i class="selected"></i>selected</span><span><i class="rejected"></i>best-ranked rejected</span><span><i class="passing"></i>next passing</span></footer></article>`;
       }),
     )
     .join("");
@@ -701,7 +727,7 @@ ratingsFile.addEventListener("change", async () => {
 
 galleryPanel.addEventListener("toggle", () => {
   if (galleryPanel.open && !gallery.childElementCount) {
-    gallery.innerHTML = `<p class="gallery-loading">Calculating 12 paired palettes…</p>`;
+    gallery.innerHTML = `<p class="gallery-loading">Loading precomputed evaluation palettes…</p>`;
     window.requestAnimationFrame(() => {
       renderGallery().catch(() => {
         gallery.innerHTML = `<p class="gallery-loading">Precomputed evaluation set unavailable.</p>`;

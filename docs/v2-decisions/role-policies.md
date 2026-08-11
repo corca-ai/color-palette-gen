@@ -17,7 +17,8 @@ are heuristics and still need designer evaluation.
 
 ## Primary default
 
-The exact input is evaluated as a real candidate. Chroma is retained until it
+The exact input is always retained as the non-generated `brand source`. It is
+also evaluated as a candidate for the filled-action `primary`. Chroma is retained until it
 exceeds the calm/minimal cap; it is no longer reduced by an unconditional
 percentage. The engine generates
 mode-appropriate OKLCH lightness candidates, holds input hue and bounded source
@@ -33,6 +34,10 @@ Large shifts expose three usage-specific outputs instead of silently presenting
 one answer: the generated filled control, a source-colored outline when it has
 sufficient boundary contrast, and a source-faithful fill when it supports the
 text target. Unsafe alternatives remain visible but are marked not recommended.
+
+The strategy panel recommends generated fill for a stateful action because it
+is the only complete default/hover/active family. It separately identifies a
+safe source-faithful outline or bordered base-state option when available.
 
 Light and dark use non-overlapping role ranges so dark primary remains lighter
 than light primary. The ranges are product policy backed by public design-system
@@ -64,6 +69,11 @@ hover-to-active interval. Its provisional ratio band detects a weak first step
 or an abrupt second step. This quality signal does not replace the individual
 minimum-separation constraints.
 
+Primary, destructive, and warning families are all included in this pacing
+review. Primary retains the mode-directed convention. Feedback families derive
+their direction from the shared readable label envelope, then require hover and
+active to remain monotonic in that chosen direction.
+
 ## Cross-mode identity
 
 Light and dark primary ranges are coordinated to provide a provisional minimum
@@ -73,11 +83,25 @@ difference, and the lightness gap between primary roles. These are provisional
 product objectives, not accessibility requirements, so a palette can pass every
 contract while still being marked for cross-mode review.
 
-The engine performs a bounded joint search over complete light/dark candidates.
-It first minimizes the number of paired-quality misses, then limits the worst
-single-mode source distance, total source distance, and remaining quality miss.
+The engine performs a sampled cross-mode comparison over each mode's baseline
+plus the start, midpoint, and end of its primary lightness range. It is not an
+exhaustive joint search. Pair selection minimizes worst-mode and total source
+distance before using structural review misses as a later discriminator.
 The target bands and ordering remain provisional until designer evaluation
 provides stronger evidence.
+
+## Independent review
+
+Accessibility contracts determine whether a generated role is usable. They do
+not establish that it is aesthetically strong or faithful to the input.
+Source-distance, cross-mode identity, and state-pacing signals therefore run
+after pair selection and may report review even when every accessibility
+contract passes. The review label must never be described as aesthetic proof.
+
+Chromatic primary is also compared with destructive and warning by hue. A
+provisional separation below 30 degrees raises semantic-ambiguity review even
+when total Delta E passes. This catches red brand/destructive and amber
+brand/warning false positives; required icons and labels remain necessary.
 
 ## Neutral foundations
 
@@ -88,7 +112,7 @@ must preserve mode zones, ordered hierarchy, relevant text or boundary
 contrast, and the neutral tint cap before recipe fidelity ranks them.
 
 Chromatic inputs consider zero, partial, and intended source-hue tint;
-achromatic inputs remain neutral. The foundation map plots selected, closest
+achromatic inputs remain neutral. The foundation map plots selected, best-ranked
 rejected, and next-passing candidates by lightness and tint chroma.
 
 ## Boundary and focus
@@ -96,6 +120,12 @@ rejected, and next-passing candidates by lightness and tint chroma.
 Decorative border may remain subtle when it carries no required information.
 Input border is required to identify a control and must reach `3:1` adjacent
 contrast under WCAG 2.2 Non-text Contrast.
+
+The exact input is preserved separately as `brand source`. The generated
+`primary` is specifically a filled-action adaptation. Its boundary obligation
+is carried by an independently searched `primary border`, allowing the engine to
+report brand fidelity without pretending that the component fill and the brand
+source are the same role.
 
 Focus ring uses an independent bounded search over lightness and primary-relative
 chroma. It must reach `3:1` against background and surface, remain perceptually

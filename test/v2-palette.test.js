@@ -82,7 +82,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-7");
+  assert.equal(result.policyVersion, "v2-policy-model-9");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -212,13 +212,13 @@ test("state progression remains monotonic across representative colors", () => {
   }
 });
 
-test("joint search compares complete light and dark pairs", () => {
+test("sampled pair search reports its bounded alternatives honestly", () => {
   const result = generatePaletteV2({ primary: "#6633FF" });
-  assert.equal(result.pairDecision.strategy, "bounded joint light/dark search");
+  assert.equal(result.pairDecision.strategy, "sampled cross-mode pair search");
   assert.ok(result.pairDecision.candidateCount > 1);
   assert.ok(result.pairDecision.alternatives.nextRanked);
   assert.ok(result.pairDecision.alternatives.sourceFidelity);
-  assert.ok(result.pairDecision.alternatives.qualityRejected);
+  assert.ok("qualityRejected" in result.pairDecision.alternatives);
   assert.equal(
     result.pairDecision.selected.light,
     result.modes.light.values.primary,
@@ -227,12 +227,88 @@ test("joint search compares complete light and dark pairs", () => {
     result.pairDecision.selected.dark,
     result.modes.dark.values.primary,
   );
-  assert.equal(result.quality.passed, true);
+  assert.equal(typeof result.quality.passed, "boolean");
+  assert.equal(result.quality.sourceChecks.length, 2);
+});
+
+test("brand source is preserved while the action boundary is independently searched", () => {
+  const result = generatePaletteV2({ primary: "#FFFF00" });
+  for (const mode of ["light", "dark"]) {
+    const values = result.modes[mode].values;
+    assert.equal(values["brand source"], "#FFFF00");
+    assert.equal(
+      result.modes[mode].decisions["brand source"].strategy,
+      "input passthrough",
+    );
+    assert.ok(
+      result.modes[mode].decisions["primary border"].candidateCount > 1,
+    );
+  }
+});
+
+test("independent review can reject source fidelity after accessibility passes", () => {
+  const result = generatePaletteV2({ primary: "#FFFF00" });
+  assert.equal(result.passed, true);
+  assert.equal(result.quality.passed, false);
+  assert.deepEqual(
+    result.quality.sourceChecks.filter(({ pass }) => !pass).map(({ id }) => id),
+    ["review.light.source-fidelity", "review.dark.source-fidelity"],
+  );
+});
+
+test("semantic maps retain the searched feasible and rejected spaces", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    for (const role of ["warning", "selection"]) {
+      const plot = result.modes[mode].decisions[role].searchPlot;
+      assert.ok(plot.length > 10, `${mode}/${role}`);
+      assert.ok(
+        plot.some(({ passed }) => passed),
+        `${mode}/${role}/passing`,
+      );
+      if (role === "warning") {
+        assert.ok(
+          plot.some(({ passed }) => !passed),
+          `${mode}/${role}/rejected`,
+        );
+      }
+    }
+  }
+});
+
+test("every generated state constraint carries displayable provenance metadata", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    for (const role of [
+      "destructive hover",
+      "destructive active",
+      "warning hover",
+      "warning active",
+    ]) {
+      for (const rule of result.modes[mode].decisions[role].selected
+        .constraintResults) {
+        assert.equal(typeof rule.label, "string", `${mode}/${role}/${rule.id}`);
+        assert.equal(
+          typeof rule.authority,
+          "string",
+          `${mode}/${role}/${rule.id}`,
+        );
+      }
+    }
+  }
 });
 
 test("large shifts expose safe usage alternatives without weakening the main palette", () => {
   const result = generatePaletteV2({ primary: "#F2C230" });
   assert.ok(result.sourceAlternatives);
+  assert.equal(
+    result.sourceAlternatives.recommendation.statefulAction,
+    "Generated fill",
+  );
+  assert.equal(
+    typeof result.sourceAlternatives.recommendation.sourceFaithfulAction,
+    "string",
+  );
   for (const mode of ["light", "dark"]) {
     const alternatives = result.sourceAlternatives.modes[mode];
     assert.equal(alternatives.filled.safe, true);

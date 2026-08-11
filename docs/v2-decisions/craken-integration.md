@@ -42,8 +42,10 @@ Current v2 names map to the Craken semantic model as follows:
 | `surface` / `raised surface`    | `color.surface` / `color.surface.raised` |
 | `muted surface` / `muted text`  | `color.surface.muted` / `color.text.muted` |
 | `border` / `input border`       | `color.border.subtle` / `.input`         |
+| `brand source`                  | `color.brand.source`                     |
 | `primary` / hover / active      | `color.action.primary[.state]`           |
-| `primary text` / `focus ring`   | `color.action.primary.text` / `color.focus.ring` |
+| primary text / border           | `color.action.primary.text` / `.border`  |
+| `focus ring`                    | `color.focus.ring`                       |
 | `destructive` / hover / active  | `color.action.destructive[.state]`       |
 | `warning` / hover / active      | `color.feedback.warning[.state]`         |
 | `selection` / text              | `color.selection[.text]`                 |

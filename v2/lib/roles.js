@@ -34,10 +34,12 @@ export const TOKEN_ORDER = [
   "muted text",
   "border",
   "input border",
+  "brand source",
   "primary",
   "primary hover",
   "primary active",
   "primary text",
+  "primary border",
   "focus ring",
   "destructive",
   "destructive hover",
@@ -57,7 +59,9 @@ export const TOKEN_ORDER = [
 ];
 
 export const ROLE_CLASSIFICATION = {
+  passthrough: ["brand source"],
   searched: [
+    "primary border",
     "warning",
     "warning hover",
     "warning active",

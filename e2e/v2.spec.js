@@ -12,8 +12,28 @@ test("generates both modes from one primary and exposes new semantic roles", asy
   await expect(page.locator("#palette-title")).toContainText("#7A4ED8");
   await expect(page.locator('.swatch[data-role="warning"]')).toHaveCount(2);
   await expect(page.locator('.swatch[data-role="selection"]')).toHaveCount(2);
+  await expect(page.locator('.swatch[data-role="brand source"]')).toHaveCount(
+    2,
+  );
+  await expect(page.locator('.swatch[data-role="primary border"]')).toHaveCount(
+    2,
+  );
   await expect(page.locator(".example.light .craken-warning")).toBeVisible();
   await expect(page.locator(".example.dark .craken-popover")).toBeVisible();
+});
+
+test("accessibility pass and independent review remain separate", async ({
+  page,
+}) => {
+  await page.locator("#v2-primary").fill("#FFFF00");
+  await page.getByRole("button", { name: "Generate palette" }).click();
+  await expect(page.locator("#validation-summary")).toContainText(
+    "palette contracts met",
+  );
+  await expect(page.locator("#quality")).toContainText(
+    "Independent source fidelity",
+  );
+  await expect(page.locator("#quality .review")).not.toHaveCount(0);
 });
 
 test("foundation graph and palette evidence stay synchronized", async ({
@@ -37,9 +57,10 @@ test("foundation graph and palette evidence stay synchronized", async ({
 test("gallery is lazy and designer ratings persist", async ({ page }) => {
   await expect(page.locator(".gallery-card")).toHaveCount(0);
   await page.locator("#gallery-panel summary").click();
-  await expect(page.locator(".gallery-card")).toHaveCount(12, {
+  await expect(page.locator(".gallery-card")).toHaveCount(14, {
     timeout: 30_000,
   });
+  await expect(page.locator(".gallery-convergence").first()).toBeVisible();
   const first = page.locator(".gallery-card").first();
   await first.getByRole("button", { name: "Prefer" }).click();
   await expect(first.getByRole("button", { name: "Prefer" })).toHaveAttribute(
@@ -93,6 +114,20 @@ test("core palette and Craken specimen retain their visual structure", async ({
   );
   await expect(page.locator(".examples")).toHaveScreenshot(
     "craken-specimens.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
+  await expect(page.locator("#semantic-map")).toHaveScreenshot(
+    "semantic-search-maps.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
+  await expect(page.locator("#quality")).toHaveScreenshot(
+    "independent-review.png",
     {
       animations: "disabled",
       maxDiffPixelRatio: 0.12,

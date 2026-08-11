@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-7",
+  version: "v2-policy-model-9",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -66,7 +66,7 @@ export const V2_POLICY = {
     chromaCap: 0.15,
     chromaTolerance: 0.002,
     labelLc: 60,
-    focusContrast: 3,
+    boundaryContrast: 3,
     maximumSourceDistance: 0.18,
   },
   state: {
@@ -81,6 +81,10 @@ export const V2_POLICY = {
     maximumHueDrift: 4,
     maximumChromaDifference: 0.035,
     lightnessGap: [0.04, 0.16],
+  },
+  semanticReview: {
+    minimumHueSeparation: 30,
+    chromaFloor: 0.025,
   },
   neutral: { tintCap: 0.012 },
   foundation: {
@@ -127,13 +131,17 @@ export const V2_POLICY = {
       objectives: ["state.minimum-change"],
       tieBreakers: ["stable.hex-order"],
     },
+    labeledState: {
+      constraints: ["state.minimum-separation", "state.shared-label"],
+      objectives: ["state.minimum-change"],
+      tieBreakers: ["stable.hex-order"],
+    },
     primary: {
       constraints: [
         "primary.generated-family",
         "primary.mode-range",
         "primary.calm-chroma",
         "primary.shared-label",
-        "primary.focus-contrast",
       ],
       objectives: ["primary.source-fidelity"],
       tieBreakers: ["stable.hex-order"],
@@ -180,6 +188,11 @@ export const V2_POLICY = {
       objectives: ["focus.minimum-brand-distance"],
       tieBreakers: ["stable.hex-order"],
     },
+    primaryBorder: {
+      constraints: ["primary-border.adjacent-contrast"],
+      objectives: ["primary-border.minimum-brand-distance"],
+      tieBreakers: ["stable.hex-order"],
+    },
     warning: {
       constraints: ["feedback.label-contrast", "feedback.semantic-separation"],
       objectives: ["feedback.semantic-anchor"],
@@ -199,6 +212,12 @@ export const RULE_CATALOG = {
     kind: "constraint",
     authority: "provisional",
     evidence: ["stateSeparation"],
+  },
+  "state.shared-label": {
+    label: "Readable shared state label",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["apcaText"],
   },
   "primary.generated-family": {
     label: "Complete interaction family",
@@ -223,11 +242,17 @@ export const RULE_CATALOG = {
     authority: "provisional",
     evidence: ["apcaText"],
   },
-  "primary.focus-contrast": {
-    label: "Visible focus boundary",
+  "primary-border.adjacent-contrast": {
+    label: "Visible action boundary on both foundations",
     kind: "constraint",
     authority: "normative",
     evidence: ["wcagNonText"],
+  },
+  "primary-border.minimum-brand-distance": {
+    label: "Keep the boundary brand-related",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "minimize",
   },
   "destructive.label-contrast": {
     label: "Readable destructive label",

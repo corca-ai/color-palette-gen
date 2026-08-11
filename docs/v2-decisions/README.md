@@ -16,7 +16,7 @@ Each role records:
 - intent and strategy;
 - number of candidates considered;
 - selected candidate and passing metrics;
-- closest rejected candidate, when one exists;
+- best-ranked rejected candidate, when one exists;
 - next passing candidate, when one exists;
 - rules that participated in the decision;
 - provenance class and source for every rule.
@@ -39,3 +39,5 @@ must fail the decision-record test.
   [Evaluation protocol](evaluation.md).
 - To understand worker generation, caching, and the precomputed gallery, read
   [Runtime and performance](runtime.md).
+- To understand what the engine still cannot justify, read the
+  [Adversarial audit](adversarial-audit.md).
