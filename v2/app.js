@@ -39,6 +39,8 @@ const gallery = document.querySelector("#gallery");
 const galleryPanel = document.querySelector("#gallery-panel");
 const sourceAlternatives = document.querySelector("#source-alternatives");
 const ratingsFile = document.querySelector("#ratings-file");
+const foundationMap = document.querySelector("#foundation-map");
+const focusSpecimens = document.querySelector("#focus-specimens");
 const paletteTitle = document.querySelector("#palette-title");
 const validationSummary = document.querySelector("#validation-summary");
 const toast = document.querySelector("#toast");
@@ -59,6 +61,14 @@ const EVALUATION_INPUTS = [
   "#FFFFFF",
 ];
 const EVALUATION_STORAGE_KEY = "color-lab-v2-evaluations";
+const FOUNDATION_ROLES = [
+  "background",
+  "surface",
+  "raised surface",
+  "muted surface",
+  "border",
+  "input border",
+];
 const galleryResults = new Map();
 let evaluationRecords = loadEvaluationRecords();
 
@@ -114,10 +124,10 @@ function constraintView(value, selected) {
     .join("")}</ul>`;
 }
 
-function candidateView(label, value, selected = false) {
+function candidateView(label, value, selected = false, kind = "") {
   if (!value) return "";
   const score = value.objectiveResults?.[0];
-  return `<div class="decision-candidate"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${constraintView(value, selected)}</div>`;
+  return `<div class="decision-candidate" data-candidate-kind="${kind}"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${constraintView(value, selected)}</div>`;
 }
 
 function policyView(policy) {
@@ -137,16 +147,16 @@ function decisionView(decision) {
     <div class="decision-intent"><span>${decision.strategy} · ${decision.candidateCount} candidate${decision.candidateCount === 1 ? "" : "s"}</span><p>${decision.intent}</p></div>
     ${policyView(decision.policy)}
     <div class="decision-candidates">
-      ${candidateView("Selected", decision.selected, true)}
-      ${candidateView("Closest rejected", decision.alternatives.nearestRejected)}
-      ${candidateView("Next passing", decision.alternatives.nextPassing)}
+      ${candidateView("Selected", decision.selected, true, "selected")}
+      ${candidateView("Closest rejected", decision.alternatives.nearestRejected, false, "rejected")}
+      ${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}
     </div>
     <div class="decision-evidence"><span>Rule provenance</span>${decision.evidence.map((item) => `<a href="${item.url}" target="_blank" rel="noreferrer"><b>${item.class}</b>${item.label}</a>`).join("")}</div>
   </div>`;
 }
 
-function swatch(color, role, decision) {
-  return `<details class="swatch"${role === "primary" ? " open" : ""}><summary><div class="swatch-color" style="background:${color}"></div><div class="swatch-copy"><strong>${role}</strong><code>${color}</code><small>${colorCoordinates(color)}</small></div><span class="why-label">Why?</span></summary>${decisionView(decision)}</details>`;
+function swatch(color, role, decision, mode) {
+  return `<details class="swatch" data-mode="${mode}" data-role="${role}"${role === "primary" ? " open" : ""}><summary><div class="swatch-color" style="background:${color}"></div><div class="swatch-copy"><strong>${role}</strong><code>${color}</code><small>${colorCoordinates(color)}</small></div><span class="why-label">Why?</span></summary>${decisionView(decision)}</details>`;
 }
 
 function palette(modeResult) {
@@ -161,7 +171,7 @@ function palette(modeResult) {
       .filter(([, role]) => !role.includes("text") && role !== "focus ring")
       .map(([color]) => `<i style="background:${color}"></i>`)
       .join("")}</div>
-    <div class="palette-groups">${GROUPS.map((group) => `<section class="color-group"><h3>${group.name}</h3><div class="swatch-grid">${group.roles.map((role) => swatch(values[role], role, modeResult.decisions[role])).join("")}</div></section>`).join("")}</div>
+    <div class="palette-groups">${GROUPS.map((group) => `<section class="color-group"><h3>${group.name}</h3><div class="swatch-grid">${group.roles.map((role) => swatch(values[role], role, modeResult.decisions[role], modeResult.mode)).join("")}</div></section>`).join("")}</div>
   </article>`;
 }
 
@@ -238,6 +248,43 @@ function renderRelationships() {
       ${relationshipRow("Boundary", "Subtle → interactive", ["border", "input border"])}
       ${relationshipRow("Feedback", "Brand action → destructive action", ["primary", "destructive"])}
     </div>`;
+}
+
+function foundationMarker(mode, role, value, kind, labelOffset = 0) {
+  if (!value) return "";
+  const x = Math.max(1, Math.min(99, value.oklch.l * 100));
+  const y = Math.max(3, Math.min(96, (value.oklch.c / 0.012) * 100));
+  const title = `${role} · ${kind} · ${value.hex} · L ${value.oklch.l.toFixed(3)} C ${value.oklch.c.toFixed(4)}`;
+  return `<button class="foundation-node ${kind}" type="button" data-mode="${mode}" data-role="${role}" data-kind="${kind}" style="left:${x}%;bottom:${y}%;--node-color:${value.hex};--label-offset:${labelOffset}px" title="${title}">${kind === "selected" ? `<span>${role}</span>` : ""}</button>`;
+}
+
+function foundationMode(mode) {
+  const result = currentResult.modes[mode];
+  const markers = FOUNDATION_ROLES.map((role, index) => {
+    const decision = result.decisions[role];
+    return `${foundationMarker(mode, role, decision.selected, "selected", (index % 3) * 10)}${foundationMarker(mode, role, decision.alternatives.nearestRejected, "rejected")}${foundationMarker(mode, role, decision.alternatives.nextPassing, "passing")}`;
+  }).join("");
+  const textDecision = (role) => {
+    const decision = result.decisions[role];
+    return `<div><span>${role}</span><i style="background:${decision.selected.hex}"></i><strong>${decision.selected.hex}</strong><small>${decision.selected.objectiveResults?.[0]?.value.toFixed(1) ?? "–"} Lc weakest</small></div>`;
+  };
+  return `<article class="foundation-map-card"><header><span>${mode}</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} candidates evaluated</strong></header><div class="foundation-plot"><span class="axis-y">Tint chroma</span><span class="axis-x">OKLCH lightness →</span><div class="tint-limit">Calm tint limit</div>${markers}</div><div class="foundation-legend"><span><i class="selected"></i>Selected</span><span><i class="rejected"></i>Closest rejected</span><span><i class="passing"></i>Next passing</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
+}
+
+function renderFoundationMap() {
+  foundationMap.innerHTML = ["light", "dark"].map(foundationMode).join("");
+}
+
+function focusSpecimen(mode) {
+  const values = currentResult.modes[mode].values;
+  const decision = currentResult.modes[mode].decisions["focus ring"];
+  const item = (label, background, foreground, text) =>
+    `<div class="focus-target" style="background:${background};color:${foreground};--focus:${values["focus ring"]};--focus-gap:${values.background}"><span>${label}</span><button style="background:${background};color:${foreground}">${text}</button><button class="focused" style="background:${background};color:${foreground}">${text}</button></div>`;
+  return `<article class="focus-card" style="background:${values.background};color:${values.foreground}"><header><span>${mode}</span><strong>${values["focus ring"]}</strong><small>${decision.candidateCount} candidates</small></header><div class="focus-targets">${item("Background", values.background, values.foreground, "Neutral")}${item("Surface", values.surface, values.foreground, "Surface")}${item("Primary", values.primary, values["primary text"], "Continue")}${item("Destructive", values.destructive, values["destructive text"], "Delete")}</div></article>`;
+}
+
+function renderFocusSpecimens() {
+  focusSpecimens.innerHTML = ["light", "dark"].map(focusSpecimen).join("");
 }
 
 function qualityValue(check) {
@@ -364,6 +411,8 @@ function render(result) {
   renderPalettes();
   renderExamples();
   renderRelationships();
+  renderFoundationMap();
+  renderFocusSpecimens();
   renderQuality();
   renderChecks();
 }
@@ -502,6 +551,41 @@ galleryPanel.addEventListener("toggle", () => {
     gallery.innerHTML = `<p class="gallery-loading">Calculating 12 paired palettes…</p>`;
     window.requestAnimationFrame(renderGallery);
   }
+});
+
+foundationMap.addEventListener("click", (event) => {
+  const node = event.target.closest(".foundation-node");
+  if (!node) return;
+  foundationMap
+    .querySelectorAll(".foundation-node.active")
+    .forEach((item) => item.classList.remove("active"));
+  node.classList.add("active");
+  const swatch = document.querySelector(
+    `.swatch[data-mode="${node.dataset.mode}"][data-role="${node.dataset.role}"]`,
+  );
+  if (!swatch) return;
+  document
+    .querySelectorAll(".decision-candidate.graph-target")
+    .forEach((candidate) => candidate.classList.remove("graph-target"));
+  swatch.open = true;
+  const candidate = swatch.querySelector(
+    `[data-candidate-kind="${node.dataset.kind}"]`,
+  );
+  candidate?.classList.add("graph-target");
+  swatch.scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+palettes.addEventListener("click", (event) => {
+  const summary = event.target.closest(".swatch > summary");
+  if (!summary) return;
+  const swatch = summary.parentElement;
+  foundationMap
+    .querySelectorAll(".foundation-node.active")
+    .forEach((node) => node.classList.remove("active"));
+  const node = foundationMap.querySelector(
+    `.foundation-node.selected[data-mode="${swatch.dataset.mode}"][data-role="${swatch.dataset.role}"]`,
+  );
+  node?.classList.add("active");
 });
 
 render(generatePaletteV2({ primary: primaryInput.value }));

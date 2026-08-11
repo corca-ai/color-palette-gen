@@ -1,13 +1,17 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-4`.
+Current policy version: `v2-policy-model-6`.
 
 ## Candidate search implemented
 
 - primary default;
 - primary hover;
 - primary active;
-- destructive.
+- destructive;
+- background, surface, raised surface, and muted surface;
+- foreground, muted text, border, and input border;
+- primary text and destructive text as explicit black/white searches;
+- focus ring as an independent brand-related search.
 
 These roles retain selected, closest rejected, and next passing candidates when
 available.
@@ -25,23 +29,14 @@ and the per-candidate result of each rule.
 - default, hover, and active interval pacing is evaluated for both modes;
 - provisional quality objectives remain distinct from accessibility pass/fail;
 - a fixed 12-input gallery exposes chromatic, achromatic, and large-shift cases;
-- any gallery card can be loaded into the complete interactive inspector.
+- any gallery card can be loaded into the complete interactive inspector;
 - large source shifts expose generated-fill, source-outline, and source-fill
-  trade-offs with per-mode availability.
+  trade-offs with per-mode availability;
 - selected, next-ranked, source-faithful, and quality-boundary pairs can be
   compared directly;
 - gallery ratings and notes persist locally and support versioned JSON exchange.
 
-## Policy anchors
-
-- neutral foundations;
-- foreground and muted text;
-- decorative and input boundaries;
-- primary and destructive text;
-- focus-ring alias.
-
-Anchors expose intent and provenance but do not claim that alternatives were
-searched.
+No semantic output role remains a policy anchor.
 
 ## Verification
 
@@ -52,10 +47,8 @@ searched.
 
 ## Next migration
 
-1. Move neutral hierarchy and tint into bounded candidate search.
-2. Represent black/white text comparison as a complete search trace.
-3. Search input boundary and focus independently instead of relying on anchors.
-4. Resolve Craken token gaps: distinct popover, accent, secondary, warning,
+1. Validate foundation and focus search targets through designer ratings.
+2. Resolve Craken token gaps: distinct popover, accent, secondary, warning,
    disabled, and destructive interaction states.
-5. Aggregate exported designer evaluations and analyze inter-rater agreement.
-6. Promote thresholds from `heuristic` to `empirical` only with recorded data.
+3. Aggregate exported designer evaluations and analyze inter-rater agreement.
+4. Promote thresholds from `heuristic` to `empirical` only with recorded data.

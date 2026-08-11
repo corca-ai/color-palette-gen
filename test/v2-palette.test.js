@@ -97,7 +97,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-4");
+  assert.equal(result.policyVersion, "v2-policy-model-6");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -263,4 +263,62 @@ test("large shifts expose safe usage alternatives without weakening the main pal
 test("ordinary source fidelity does not create unnecessary usage alternatives", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   assert.equal(result.sourceAlternatives, null);
+});
+
+test("foundation roles use inspectable candidate search instead of anchors", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    for (const role of [
+      "background",
+      "surface",
+      "raised surface",
+      "muted surface",
+      "foreground",
+      "muted text",
+      "border",
+      "input border",
+    ]) {
+      const decision = result.modes[mode].decisions[role];
+      assert.equal(decision.strategy, "minimum-change candidate search");
+      assert.ok(decision.candidateCount > 1, `${mode}/${role}`);
+      assert.ok(decision.policy.constraints.length > 0);
+    }
+  }
+});
+
+test("binary foreground decisions retain both black and white evidence", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    for (const role of ["primary text", "destructive text"]) {
+      const decision = result.modes[mode].decisions[role];
+      assert.equal(decision.strategy, "binary foreground search");
+      assert.equal(decision.candidateCount, 2);
+      assert.ok(
+        decision.alternatives.nearestRejected ||
+          decision.alternatives.nextPassing,
+      );
+    }
+  }
+});
+
+test("focus ring is independently searched rather than aliased to primary", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  for (const mode of ["light", "dark"]) {
+    const decision = result.modes[mode].decisions["focus ring"];
+    assert.ok(decision.candidateCount > 2);
+    assert.notEqual(
+      result.modes[mode].values["focus ring"],
+      result.modes[mode].values.primary,
+    );
+    assert.equal(
+      decision.selected.constraintResults.every(({ passed }) => passed),
+      true,
+    );
+  }
+});
+
+test("identical normalized inputs reuse the complete generated palette", () => {
+  const first = generatePaletteV2({ primary: "#507096" });
+  const second = generatePaletteV2({ primary: "#507096" });
+  assert.equal(first, second);
 });

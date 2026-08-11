@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-4",
+  version: "v2-policy-model-6",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -83,6 +83,21 @@ export const V2_POLICY = {
     lightnessGap: [0.04, 0.16],
   },
   neutral: { tintCap: 0.012 },
+  foundation: {
+    candidateStep: 0.005,
+    candidateRadius: 0.04,
+    hierarchySeparation: 0.01,
+    bodyTextLc: 75,
+    mutedTextLc: 60,
+    inputContrast: 3,
+  },
+  focus: {
+    contrast: 3,
+    semanticSeparation: 0.05,
+    candidateStep: 0.01,
+    lightnessRange: [0.2, 0.86],
+    chromaScales: [0.35, 0.65, 1],
+  },
   destructive: {
     separation: 0.08,
     labelLc: 60,
@@ -115,6 +130,40 @@ export const V2_POLICY = {
         "destructive.brand-separation",
       ],
       objectives: ["destructive.semantic-anchor"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    foundationAnchor: {
+      constraints: ["foundation.mode-zone", "foundation.calm-tint"],
+      objectives: ["foundation.recipe-fidelity"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    foundationLayer: {
+      constraints: ["foundation.hierarchy", "foundation.calm-tint"],
+      objectives: ["foundation.recipe-fidelity"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    foundationText: {
+      constraints: ["foundation.text-contrast", "foundation.calm-tint"],
+      objectives: ["foundation.recipe-fidelity"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    foundationInput: {
+      constraints: ["foundation.boundary-contrast", "foundation.calm-tint"],
+      objectives: ["foundation.recipe-fidelity"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    binaryText: {
+      constraints: ["text.required-contrast"],
+      objectives: ["text.maximize-weakest-contrast"],
+      tieBreakers: ["stable.hex-order"],
+    },
+    focus: {
+      constraints: [
+        "focus.adjacent-contrast",
+        "focus.semantic-separation",
+        "focus.brand-relation",
+      ],
+      objectives: ["focus.minimum-brand-distance"],
       tieBreakers: ["stable.hex-order"],
     },
   },
@@ -191,6 +240,78 @@ export const RULE_CATALOG = {
     kind: "tie-breaker",
     authority: "technical",
     direction: "ascending",
+  },
+  "foundation.mode-zone": {
+    label: "Mode-appropriate foundation zone",
+    kind: "constraint",
+    authority: "product-policy",
+    evidence: ["calmMinimal"],
+  },
+  "foundation.hierarchy": {
+    label: "Ordered surface hierarchy",
+    kind: "constraint",
+    authority: "product-policy",
+    evidence: ["calmMinimal"],
+  },
+  "foundation.calm-tint": {
+    label: "Bounded neutral tint",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["calmMinimal"],
+  },
+  "foundation.text-contrast": {
+    label: "Foundation text contrast",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["apcaText"],
+  },
+  "foundation.boundary-contrast": {
+    label: "Required input boundary contrast",
+    kind: "constraint",
+    authority: "normative",
+    evidence: ["wcagNonText"],
+  },
+  "foundation.recipe-fidelity": {
+    label: "Stay near the foundation recipe",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "minimize",
+  },
+  "text.required-contrast": {
+    label: "Required weakest text contrast",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["apcaText"],
+  },
+  "text.maximize-weakest-contrast": {
+    label: "Maximize weakest APCA contrast",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "maximize",
+  },
+  "focus.adjacent-contrast": {
+    label: "Visible on both foundations",
+    kind: "constraint",
+    authority: "normative",
+    evidence: ["wcagNonText"],
+  },
+  "focus.semantic-separation": {
+    label: "Distinct from authored controls",
+    kind: "constraint",
+    authority: "provisional",
+    evidence: ["stateSeparation"],
+  },
+  "focus.brand-relation": {
+    label: "Remain in the brand hue family",
+    kind: "constraint",
+    authority: "product-policy",
+    evidence: ["calmMinimal"],
+  },
+  "focus.minimum-brand-distance": {
+    label: "Minimize movement from primary",
+    kind: "product-objective",
+    authority: "product-policy",
+    direction: "minimize",
   },
 };
 

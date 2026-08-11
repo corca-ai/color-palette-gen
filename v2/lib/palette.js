@@ -1,6 +1,6 @@
 import {
   clamp,
-  contrastRatio,
+  contrastRatio as rawContrastRatio,
   hexToRgb,
   isHex,
   normalizeHex,
@@ -8,8 +8,8 @@ import {
   oklchToHex,
   rgbToOklch,
 } from "../../lib/color-math.js";
-import { apcaCheck, apcaContrast } from "./apca.js";
-import { anchoredDecision, selectCandidate } from "./decision.js";
+import { apcaCheck, apcaContrast as rawApcaContrast } from "./apca.js";
+import { selectCandidate } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 
 const MODE_RECIPE = {
@@ -57,6 +57,34 @@ const TOKEN_ORDER = [
   "destructive text",
 ];
 
+const coordinateCache = new Map();
+const contrastCache = new Map();
+const apcaCache = new Map();
+const foundationCache = new Map();
+const paletteCache = new Map();
+
+function boundedSet(cache, key, value, limit = 5000) {
+  if (cache.size >= limit) cache.clear();
+  cache.set(key, value);
+  return value;
+}
+
+function contrastRatio(first, second) {
+  const key = [first, second].sort().join("/");
+  return (
+    contrastCache.get(key) ??
+    boundedSet(contrastCache, key, rawContrastRatio(first, second))
+  );
+}
+
+function apcaContrast(foreground, background) {
+  const key = `${foreground}/${background}`;
+  return (
+    apcaCache.get(key) ??
+    boundedSet(apcaCache, key, rawApcaContrast(foreground, background))
+  );
+}
+
 function classifyInput(input) {
   if (input.c < 0.015) return "achromatic";
   if (input.c < 0.06) return "subdued";
@@ -73,9 +101,12 @@ function tone({ l, c, h }) {
 }
 
 function candidate(hex, parameters = {}) {
+  const coordinates =
+    coordinateCache.get(hex) ??
+    boundedSet(coordinateCache, hex, rgbToOklch(hexToRgb(hex)));
   return {
     hex,
-    oklch: rgbToOklch(hexToRgb(hex)),
+    oklch: coordinates,
     parameters,
   };
 }
@@ -86,6 +117,13 @@ function neutralTone(input, lightness, tintScale = 0) {
       ? 0
       : Math.min(0.012, input.brandChroma * tintScale);
   return tone({ l: lightness, c: tint, h: input.h });
+}
+
+function neutralCandidate(input, lightness, tintScale) {
+  return candidate(neutralTone(input, lightness, tintScale), {
+    lightness,
+    tintScale,
+  });
 }
 
 function brandTone(input, lightness, chromaScale = 1) {
@@ -121,6 +159,50 @@ function chooseSharedText(backgrounds) {
       ),
     }))
     .sort((a, b) => b.minimum - a.minimum)[0].color;
+}
+
+function sharedTextSearch({ mode, role, backgrounds, target }) {
+  const policy = decisionPolicy("binaryText");
+  const candidates = [candidate("#000000"), candidate("#FFFFFF")];
+  const weakestContrast = (item) =>
+    Math.min(
+      ...backgrounds.map((background) =>
+        Math.abs(apcaContrast(item.hex, background)),
+      ),
+    );
+  return selectCandidate({
+    id: `${mode}.${role.replaceAll(" ", ".")}`,
+    role,
+    intent: `Choose one black-or-white ${role} that maximizes the weakest contrast across every intended fill.`,
+    candidates,
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "text.required-contrast", (item) => {
+        const minimumLc = weakestContrast(item);
+        const passed = minimumLc >= target;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Weakest intended fill reaches ${minimumLc.toFixed(1)} Lc.`
+              : `Weakest intended fill reaches only ${minimumLc.toFixed(1)} Lc.`,
+          ],
+          metrics: { minimumLc, target, backgrounds },
+        };
+      }),
+    ],
+    objectives: [
+      bindRule(
+        policy,
+        "objectives",
+        "text.maximize-weakest-contrast",
+        weakestContrast,
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence("apcaText"),
+    strategy: "binary foreground search",
+  });
 }
 
 function ratioCheck({ role, foreground, background, target = 3 }) {
@@ -167,6 +249,250 @@ function stableTieBreaker(policy) {
   return [
     bindRule(policy, "tieBreakers", "stable.hex-order", (item) => item.hex),
   ];
+}
+
+function foundationCandidates(input, anchor, tintScale, radius) {
+  const candidates = [];
+  const tintScales = [...new Set([0, tintScale / 2, tintScale])];
+  for (
+    let lightness = Math.max(0, anchor - radius);
+    lightness <= Math.min(1, anchor + radius) + 0.0001;
+    lightness += V2_POLICY.foundation.candidateStep
+  ) {
+    for (const scale of tintScales) {
+      candidates.push(neutralCandidate(input, lightness, scale));
+    }
+  }
+  candidates.push(neutralCandidate(input, anchor, tintScale));
+  return candidates.filter(
+    (item, index) =>
+      candidates.findIndex((other) => other.hex === item.hex) === index,
+  );
+}
+
+function foundationSearch({
+  input,
+  mode,
+  role,
+  anchor,
+  tintScale,
+  policyId,
+  evaluateRole,
+  radius = V2_POLICY.foundation.candidateRadius,
+}) {
+  const policy = decisionPolicy(policyId);
+  const target = neutralCandidate(input, anchor, tintScale);
+  const candidates = foundationCandidates(input, anchor, tintScale, radius);
+  const constraints = policy.constraints.map((definition) =>
+    bindRule(policy, "constraints", definition.id, (item) => {
+      if (definition.id === "foundation.calm-tint") {
+        const passed = item.oklch.c <= V2_POLICY.neutral.tintCap + 0.0005;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Tint C ${item.oklch.c.toFixed(4)} stays within the calm cap.`
+              : `Tint C ${item.oklch.c.toFixed(4)} exceeds the calm cap.`,
+          ],
+          metrics: {
+            value: item.oklch.c,
+            maximum: V2_POLICY.neutral.tintCap,
+          },
+        };
+      }
+      return evaluateRole(definition.id, item);
+    }),
+  );
+  return selectCandidate({
+    id: `${mode}.${role.replaceAll(" ", ".")}`,
+    role,
+    intent: `Resolve ${role} near its ${mode} recipe while preserving the complete foundation contract.`,
+    candidates,
+    policy,
+    constraints,
+    objectives: [
+      bindRule(policy, "objectives", "foundation.recipe-fidelity", (item) =>
+        distance(target, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence(
+      "calmMinimal",
+      ...(policyId === "foundationText" ? ["apcaText"] : []),
+      ...(policyId === "foundationInput" ? ["wcagNonText"] : []),
+    ),
+    searchConstants: ["input hue", "bounded tint candidates"],
+  });
+}
+
+function foundationPalette(input, mode, recipe) {
+  const cacheKey = `${V2_POLICY.version}/${input.hex}/${mode}`;
+  const cached = foundationCache.get(cacheKey);
+  if (cached) return cached;
+  const separation = V2_POLICY.foundation.hierarchySeparation;
+  const modeZone = (item) => {
+    const passed =
+      mode === "light" ? item.oklch.l >= 0.96 : item.oklch.l <= 0.22;
+    return {
+      passed,
+      reasons: [
+        passed
+          ? `L ${item.oklch.l.toFixed(3)} remains in the ${mode} foundation zone.`
+          : `L ${item.oklch.l.toFixed(3)} leaves the ${mode} foundation zone.`,
+      ],
+      metrics: { value: item.oklch.l, mode },
+    };
+  };
+  const background = foundationSearch({
+    input,
+    mode,
+    role: "background",
+    anchor: recipe.background,
+    tintScale: 0.16,
+    policyId: "foundationAnchor",
+    evaluateRole: (_id, item) => modeZone(item),
+  });
+  const hierarchy = (reference, direction, label) => (item) => {
+    const movement = direction * (item.oklch.l - reference.oklch.l);
+    const passed = movement >= separation - 0.001;
+    return {
+      passed,
+      reasons: [
+        passed
+          ? `${label} separation reaches ΔL ${movement.toFixed(3)}.`
+          : `${label} separation ΔL ${movement.toFixed(3)} is below ${separation.toFixed(3)}.`,
+      ],
+      metrics: { movement, target: separation },
+    };
+  };
+  const layer = (role, anchor, tintScale, reference, direction) =>
+    foundationSearch({
+      input,
+      mode,
+      role,
+      anchor,
+      tintScale,
+      policyId: "foundationLayer",
+      evaluateRole: (_id, item) =>
+        hierarchy(reference.value, direction, role)(item),
+    });
+  const surface = layer(
+    "surface",
+    recipe.surface,
+    0.28,
+    background,
+    mode === "light" ? -1 : 1,
+  );
+  const raised = layer("raised surface", recipe.raised, 0.12, surface, 1);
+  const muted = layer(
+    "muted surface",
+    recipe.muted,
+    0.52,
+    surface,
+    mode === "light" ? -1 : 1,
+  );
+  const textRole = (role, anchor, tintScale, backgrounds, targetLc) =>
+    foundationSearch({
+      input,
+      mode,
+      role,
+      anchor,
+      tintScale,
+      policyId: "foundationText",
+      radius: 0.08,
+      evaluateRole: (_id, item) => {
+        const minimumLc = Math.min(
+          ...backgrounds.map((backgroundColor) =>
+            Math.abs(apcaContrast(item.hex, backgroundColor.value.hex)),
+          ),
+        );
+        const passed = minimumLc >= targetLc;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Weakest text pair reaches ${minimumLc.toFixed(1)} Lc.`
+              : `Weakest text pair reaches only ${minimumLc.toFixed(1)} Lc.`,
+          ],
+          metrics: { minimumLc, target: targetLc },
+        };
+      },
+    });
+  const foreground = textRole(
+    "foreground",
+    recipe.foreground,
+    0.08,
+    [background, surface],
+    V2_POLICY.foundation.bodyTextLc,
+  );
+  const mutedText = textRole(
+    "muted text",
+    recipe.mutedText,
+    0.16,
+    [background, muted],
+    V2_POLICY.foundation.mutedTextLc,
+  );
+  const border = layer(
+    "border",
+    recipe.border,
+    0.3,
+    surface,
+    mode === "light" ? -1 : 1,
+  );
+  const inputBorder = foundationSearch({
+    input,
+    mode,
+    role: "input border",
+    anchor: recipe.input,
+    tintScale: 0.22,
+    policyId: "foundationInput",
+    radius: 0.1,
+    evaluateRole: (_id, item) => {
+      const contrast = contrastRatio(item.hex, surface.value.hex);
+      const passed = contrast >= V2_POLICY.foundation.inputContrast;
+      return {
+        passed,
+        reasons: [
+          passed
+            ? `Input boundary reaches ${contrast.toFixed(2)}:1.`
+            : `Input boundary reaches only ${contrast.toFixed(2)}:1.`,
+        ],
+        metrics: {
+          value: contrast,
+          target: V2_POLICY.foundation.inputContrast,
+        },
+      };
+    },
+  });
+  const selections = {
+    background,
+    surface,
+    "raised surface": raised,
+    "muted surface": muted,
+    foreground,
+    "muted text": mutedText,
+    border,
+    "input border": inputBorder,
+  };
+  return boundedSet(
+    foundationCache,
+    cacheKey,
+    {
+      values: Object.fromEntries(
+        Object.entries(selections).map(([role, selection]) => [
+          role,
+          selection.value.hex,
+        ]),
+      ),
+      decisions: Object.fromEntries(
+        Object.entries(selections).map(([role, selection]) => [
+          role,
+          selection.trace,
+        ]),
+      ),
+    },
+    256,
+  );
 }
 
 function stateSearch({ mode, base, role, target }) {
@@ -419,18 +745,111 @@ function destructiveSearch({ mode, primary, preferredLightness }) {
   });
 }
 
+function focusSearch({
+  input,
+  mode,
+  primary,
+  destructive,
+  background,
+  surface,
+}) {
+  const policy = decisionPolicy("focus");
+  const candidates = [candidate(primary.hex)];
+  const [start, end] = V2_POLICY.focus.lightnessRange;
+  for (
+    let lightness = start;
+    lightness <= end + V2_POLICY.focus.candidateStep / 2;
+    lightness += V2_POLICY.focus.candidateStep
+  ) {
+    for (const chromaScale of V2_POLICY.focus.chromaScales) {
+      candidates.push(
+        candidate(
+          tone({
+            l: lightness,
+            c: primary.oklch.c * chromaScale,
+            h: input.h,
+          }),
+          { lightness, chromaScale },
+        ),
+      );
+    }
+  }
+  const uniqueCandidates = candidates.filter(
+    (item, index) =>
+      candidates.findIndex((other) => other.hex === item.hex) === index,
+  );
+  return selectCandidate({
+    id: `${mode}.focus.ring`,
+    role: "focus ring",
+    intent:
+      "Resolve an independent focus color that remains brand-related while separating from controls on both foundations.",
+    candidates: uniqueCandidates,
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "focus.adjacent-contrast", (item) => {
+        const minimumContrast = Math.min(
+          contrastRatio(item.hex, background),
+          contrastRatio(item.hex, surface),
+        );
+        const passed = minimumContrast >= V2_POLICY.focus.contrast;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Weakest foundation contrast reaches ${minimumContrast.toFixed(2)}:1.`
+              : `Weakest foundation contrast reaches only ${minimumContrast.toFixed(2)}:1.`,
+          ],
+          metrics: { minimumContrast, target: V2_POLICY.focus.contrast },
+        };
+      }),
+      bindRule(policy, "constraints", "focus.semantic-separation", (item) => {
+        const primaryDistance = distance(primary, item);
+        const destructiveDistance = distance(destructive, item);
+        const minimumDistance = Math.min(primaryDistance, destructiveDistance);
+        const passed = minimumDistance >= V2_POLICY.focus.semanticSeparation;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Nearest authored control remains ΔE ${minimumDistance.toFixed(3)} away.`
+              : `Nearest authored control is only ΔE ${minimumDistance.toFixed(3)} away.`,
+          ],
+          metrics: {
+            primaryDistance,
+            destructiveDistance,
+            target: V2_POLICY.focus.semanticSeparation,
+          },
+        };
+      }),
+      bindRule(policy, "constraints", "focus.brand-relation", (item) => {
+        const drift = hueDistance(item.oklch.h, input.h);
+        const passed = primary.oklch.c < 0.015 || drift <= 4;
+        return {
+          passed,
+          reasons: [
+            passed
+              ? `Hue drift ${drift.toFixed(2)}° remains brand-related.`
+              : `Hue drift ${drift.toFixed(2)}° leaves the brand family.`,
+          ],
+          metrics: { drift, maximum: 4 },
+        };
+      }),
+    ],
+    objectives: [
+      bindRule(policy, "objectives", "focus.minimum-brand-distance", (item) =>
+        distance(primary, item),
+      ),
+    ],
+    tieBreakers: stableTieBreaker(policy),
+    evidence: evidence("wcagNonText", "calmMinimal", "stateSeparation"),
+    searchConstants: ["input hue", "bounded primary chroma scales"],
+  });
+}
+
 function modePalette(input, mode, options = {}) {
   const recipe = MODE_RECIPE[mode];
-  const foundations = {
-    background: neutralTone(input, recipe.background, 0.16),
-    foreground: neutralTone(input, recipe.foreground, 0.08),
-    surface: neutralTone(input, recipe.surface, 0.28),
-    "raised surface": neutralTone(input, recipe.raised, 0.12),
-    "muted surface": neutralTone(input, recipe.muted, 0.52),
-    "muted text": neutralTone(input, recipe.mutedText, 0.16),
-    border: neutralTone(input, recipe.border, 0.3),
-    "input border": neutralTone(input, recipe.input, 0.22),
-  };
+  const foundation = foundationPalette(input, mode, recipe);
+  const foundations = foundation.values;
   const brandFamily = brandFamilySearch({
     input,
     mode,
@@ -441,7 +860,13 @@ function modePalette(input, mode, options = {}) {
   const primary = brandFamily.primary.hex;
   const primaryHover = brandFamily.hover.hex;
   const primaryActive = brandFamily.active.hex;
-  const primaryText = chooseSharedText([primary, primaryHover, primaryActive]);
+  const primaryTextDecision = sharedTextSearch({
+    mode,
+    role: "primary text",
+    backgrounds: [primary, primaryHover, primaryActive],
+    target: V2_POLICY.primary.labelLc,
+  });
+  const primaryText = primaryTextDecision.value.hex;
   const primarySourceDistance = distance(
     candidate(input.hex),
     brandFamily.primary,
@@ -456,14 +881,29 @@ function modePalette(input, mode, options = {}) {
       : recipe.destructive,
   });
   const destructiveColor = destructiveDecision.value.hex;
-  const destructiveText = chooseSharedText([destructiveColor]);
+  const destructiveTextDecision = sharedTextSearch({
+    mode,
+    role: "destructive text",
+    backgrounds: [destructiveColor],
+    target: V2_POLICY.destructive.labelLc,
+  });
+  const destructiveText = destructiveTextDecision.value.hex;
+  const focusDecision = focusSearch({
+    input,
+    mode,
+    primary: brandFamily.primary,
+    destructive: destructiveDecision.value,
+    background: foundations.background,
+    surface: foundations.surface,
+  });
+  const focusRing = focusDecision.value.hex;
   const values = {
     ...foundations,
     primary,
     "primary hover": primaryHover,
     "primary active": primaryActive,
     "primary text": primaryText,
-    "focus ring": primary,
+    "focus ring": focusRing,
     destructive: destructiveColor,
     "destructive text": destructiveText,
   };
@@ -547,63 +987,11 @@ function modePalette(input, mode, options = {}) {
   ];
   const checks = [...textChecks, ...nonTextChecks];
 
-  const decisions = { ...brandFamily.traces };
-  for (const role of [
-    "background",
-    "foreground",
-    "surface",
-    "raised surface",
-    "muted surface",
-    "muted text",
-    "border",
-    "input border",
-  ]) {
-    decisions[role] = anchoredDecision({
-      id: `${mode}.${role.replaceAll(" ", ".")}`,
-      role,
-      intent: `Provide the ${role} role within the calm, neutral-dominant ${mode} foundation.`,
-      candidate: candidate(values[role]),
-      evidence: evidence(
-        ...(role === "input border"
-          ? ["calmMinimal", "wcagNonText"]
-          : ["calmMinimal"]),
-      ),
-      summary:
-        role === "input border"
-          ? "Policy anchor retained because it passes the required control-boundary contrast."
-          : "Current foundation anchor; candidate search is the next policy migration stage.",
-    });
-  }
-  decisions["primary text"] = anchoredDecision({
-    id: `${mode}.primary.text`,
-    role: "primary text",
-    intent:
-      "Use one foreground that remains readable across the complete brand state family.",
-    candidate: candidate(primaryText),
-    evidence: evidence("apcaText"),
-    summary:
-      "Black and white were compared; this foreground maximizes the weakest APCA score across all states.",
-  });
-  decisions["focus ring"] = anchoredDecision({
-    id: `${mode}.focus.ring`,
-    role: "focus ring",
-    intent: "Reuse the brand primary as a visible authored focus indicator.",
-    candidate: candidate(primary),
-    evidence: evidence("wcagNonText", "calmMinimal"),
-    summary:
-      "Aliased to primary only after adjacent background and surface contrast pass 3:1.",
-    aliases: ["primary"],
-  });
+  const decisions = { ...foundation.decisions, ...brandFamily.traces };
+  decisions["primary text"] = primaryTextDecision.trace;
+  decisions["focus ring"] = focusDecision.trace;
   decisions.destructive = destructiveDecision.trace;
-  decisions["destructive text"] = anchoredDecision({
-    id: `${mode}.destructive.text`,
-    role: "destructive text",
-    intent:
-      "Choose the more readable black-or-white label for destructive fill.",
-    candidate: candidate(destructiveText),
-    evidence: evidence("apcaText"),
-    summary: "Selected from black and white by the larger APCA magnitude.",
-  });
+  decisions["destructive text"] = destructiveTextDecision.trace;
 
   return {
     mode,
@@ -942,6 +1330,9 @@ export function generatePaletteV2({ primary }) {
     throw new TypeError("primary must be a six-digit hex color.");
   }
   const normalizedPrimary = normalizeHex(primary);
+  const cacheKey = `${V2_POLICY.version}/${normalizedPrimary}`;
+  const cached = paletteCache.get(cacheKey);
+  if (cached) return cached;
   const rawInput = rgbToOklch(hexToRgb(normalizedPrimary));
   const classification = classifyInput(rawInput);
   const inputColor = {
@@ -960,7 +1351,7 @@ export function generatePaletteV2({ primary }) {
   const pairSelection = selectModePair(inputColor, baselineModes);
   const { modes, quality } = pairSelection;
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
-  return {
+  const result = {
     version: 2,
     policyVersion: V2_POLICY.version,
     input: { primary: normalizedPrimary },
@@ -981,6 +1372,7 @@ export function generatePaletteV2({ primary }) {
     sourceAlternatives,
     passed: Object.values(modes).every((mode) => mode.passed),
   };
+  return boundedSet(paletteCache, cacheKey, result, 128);
 }
 
 export function serializeModeCss(modeResult) {

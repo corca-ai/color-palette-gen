@@ -61,6 +61,7 @@ export function selectCandidate({
   tieBreakers = [],
   evidence,
   searchConstants = [],
+  strategy = "minimum-change candidate search",
 }) {
   const evaluated = candidates
     .map((candidate) => {
@@ -124,7 +125,7 @@ export function selectCandidate({
       id,
       role,
       intent,
-      strategy: "minimum-change candidate search",
+      strategy,
       policy,
       candidateCount: evaluated.length,
       searchConstants,

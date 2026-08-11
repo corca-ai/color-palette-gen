@@ -77,12 +77,15 @@ provides stronger evidence.
 
 ## Neutral foundations
 
-Background, surface, raised surface, muted surface, foreground, muted text, and
-decorative border currently use versioned `policy anchor` values. Chromatic
-inputs add a bounded source-hue tint; achromatic inputs remain neutral.
+Background, surface, raised surface, muted surface, foreground, muted text,
+decorative border, and input border use bounded OKLCH candidate search. The
+versioned recipe is a target rather than an unquestioned output. Candidates
+must preserve mode zones, ordered hierarchy, relevant text or boundary
+contrast, and the neutral tint cap before recipe fidelity ranks them.
 
-These roles expose intent and provenance but have not yet migrated to
-multi-candidate optimization. Their UI must not show invented alternatives.
+Chromatic inputs consider zero, partial, and intended source-hue tint;
+achromatic inputs remain neutral. The foundation map plots selected, closest
+rejected, and next-passing candidates by lightness and tint chroma.
 
 ## Boundary and focus
 
@@ -90,10 +93,14 @@ Decorative border may remain subtle when it carries no required information.
 Input border is required to identify a control and must reach `3:1` adjacent
 contrast under WCAG 2.2 Non-text Contrast.
 
-Focus ring currently aliases primary only after it reaches `3:1` against both
-background and surface. Focus change-of-contrast and indicator area are separate
-questions; adopting WCAG AAA Focus Appearance would require an explicit policy
-decision.
+Focus ring uses an independent bounded search over lightness and primary-relative
+chroma. It must reach `3:1` against background and surface, remain perceptually
+distinct from primary and destructive controls, and stay within the input hue
+family. The closest passing candidate to primary is selected.
+
+The specimen uses a visible gap around focused controls. Focus
+change-of-contrast and indicator area are separate questions; adopting WCAG AAA
+Focus Appearance would require an explicit policy decision.
 
 ## Destructive
 
@@ -108,7 +115,7 @@ space must expand to limited hue alternatives or use an additional non-color cue
 
 ## Text colors
 
-Primary and destructive text currently compare black and white and select the
-foreground maximizing the weakest APCA score across the relevant fills. This is
-reported as a policy anchor until the two candidates and their scores are
-represented as a full search trace.
+Primary and destructive text compare black and white and select the foreground
+maximizing the weakest APCA score across the relevant fills. Both candidates,
+their limiting score, and the rejected or next-passing alternative are retained
+as a complete search trace.
