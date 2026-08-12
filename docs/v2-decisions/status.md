@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-9`.
+Current policy version: `v2-policy-model-10`.
 
 ## Candidate search implemented
 
@@ -60,6 +60,8 @@ No semantic output role remains a policy anchor.
 
 ## Verification
 
+- the local APCA runtime is cross-checked against pinned `apca-w3` 0.1.9 over
+  every foreground/background pairing in the 216-color RGB grid;
 - every semantic role must have a selected decision and provenance;
 - searched roles must retain a counterfactual candidate;
 - text and non-text contracts run across a 216-color RGB grid;
@@ -77,3 +79,5 @@ No semantic output role remains a policy anchor.
    independent searches; accent and secondary remain intentionally unsupported.
 3. Aggregate exported designer evaluations and analyze inter-rater agreement.
 4. Promote thresholds from `heuristic` to `empirical` only with recorded data.
+5. Review upstream `apca-w3` releases before changing the pinned verification
+   version; update the parity evidence and policy version together.

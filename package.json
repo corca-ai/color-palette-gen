@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "apca-w3": "0.1.9",
     "prettier": "3.9.6"
   }
 }

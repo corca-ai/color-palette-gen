@@ -10,8 +10,15 @@ decision inspectable without relying on private implementations.
   OKLCH, color conversion behavior, and the web color spaces used by the
   engine.
 - [WCAG 2.2: Contrast (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
-  is the basis for declared text contrast checks. A passing calculated pair is
-  evidence about that pair, not a complete accessibility certification.
+  remains the normative basis for WCAG conformance claims. A passing calculated
+  pair is evidence about that pair, not a complete accessibility certification.
+- [APCA-W3 0.1.9](https://github.com/Myndex/apca-w3) is the canonical development
+  implementation used to verify v2's experimental text-contrast calculation.
+  The package is a pinned development dependency and is not shipped in the
+  static runtime bundle.
+- [SAPC-APCA](https://github.com/Myndex/SAPC-APCA) supplies APCA theory,
+  documentation, and discussion context; its own documentation directs
+  development use to `apca-w3`.
 - [Design Tokens Format Module 2025.10](https://www.w3.org/community/reports/design-tokens/CG-FINAL-format-20251028/)
   informs the separation between a human-readable token name, its value, type,
   description, and tool-specific extension metadata.
@@ -64,5 +71,8 @@ documented user testing.
   comments.
 - Choose project-specific parameters through explicit constraints and tests.
 - Record third-party code in a notice file before incorporating it.
+- Keep official verification packages development-only unless their license and
+  runtime cost have been reviewed for redistribution. Current package details
+  are recorded in [Third-party notices](../THIRD_PARTY_NOTICES.md).
 - Keep automated checks narrowly worded: they report what was calculated, not
   blanket WCAG or production compliance.

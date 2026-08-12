@@ -1,6 +1,6 @@
 # Adversarial audit
 
-Last reviewed against `v2-policy-model-9`.
+Last reviewed against `v2-policy-model-10`.
 
 ## What the engine can establish
 
@@ -27,6 +27,8 @@ be described as empirical until exported designer evaluations support them.
 
 On the fixed 216-color RGB grid:
 
+- local APCA results match official `apca-w3` 0.1.9 for all 46,656 ordered
+  foreground/background pairs;
 - every accessibility contract remains computable and passing;
 - 115 inputs trigger at least one large filled-action source shift;
 - 151 inputs trigger independent review;

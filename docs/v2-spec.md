@@ -100,9 +100,14 @@ APCA is selected here because v2 assumes concrete application typography and
 needs polarity- and use-sensitive contrast scoring. The page must state this
 limitation.
 
-The implementation follows the public APCA-W3 0.1.9 constants and formula in
-an independently written small module. Reference:
-[Myndex SAPC-APCA](https://github.com/Myndex/SAPC-APCA).
+The runtime follows the public APCA-W3 0.1.9 constants and formula in an
+independently written small module. The official
+[Myndex apca-w3](https://github.com/Myndex/apca-w3) package is pinned as a
+development dependency and the complete 216-color grid is cross-compared over
+46,656 foreground/background pairs. The separate
+[SAPC-APCA](https://github.com/Myndex/SAPC-APCA) repository remains the theory,
+documentation, and discussion reference. It is not treated as the canonical
+development implementation.
 
 APCA does not establish the rest of the palette. v2 separately validates:
 

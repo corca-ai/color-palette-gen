@@ -9,9 +9,9 @@ export const EVIDENCE = {
   apcaText: {
     class: "heuristic",
     label: "APCA-W3 0.1.9 prototype policy",
-    url: "https://github.com/Myndex/SAPC-APCA",
+    url: "https://github.com/Myndex/apca-w3",
     scope:
-      "Experimental typography-aware text targets; not a WCAG conformance claim.",
+      "Official calculation implementation; typography targets remain an experimental product policy, not a WCAG conformance claim.",
   },
   carbonStates: {
     class: "reference",
@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-9",
+  version: "v2-policy-model-10",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
