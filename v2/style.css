@@ -5,6 +5,13 @@
   --muted: #656760;
   --line: #d5d6d0;
   --card: #fafaf7;
+  --field: #ffffff;
+  --on-strong: #ffffff;
+  --plot: #ffffff;
+  --marker-ring: #171817;
+  --danger: #b32822;
+  --review: #8d5810;
+  --success: #23734b;
   --mono: "SFMono-Regular", Consolas, monospace;
   font-family:
     Inter,
@@ -14,6 +21,22 @@
     sans-serif;
 }
 
+body[data-result-mode="dark"] {
+  color-scheme: dark;
+  --paper: #111311;
+  --ink: #f1f2ed;
+  --muted: #aaada5;
+  --line: #3b3e39;
+  --card: #191b19;
+  --field: #222522;
+  --on-strong: #111311;
+  --plot: #151715;
+  --marker-ring: #f1f2ed;
+  --danger: #ff8f84;
+  --review: #e7b45d;
+  --success: #75c99a;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,6 +44,9 @@ body {
   background: var(--paper);
   color: var(--ink);
   margin: 0;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 button,
 input,
@@ -148,8 +174,9 @@ h1 {
   grid-template-columns: 46px minmax(0, 1fr) auto;
 }
 .input-row input {
-  background: white;
-  border: 1px solid #a9aaa5;
+  background: var(--field);
+  border: 1px solid var(--muted);
+  color: var(--ink);
   min-width: 0;
 }
 .input-row input[type="color"] {
@@ -165,7 +192,7 @@ h1 {
 .section-heading > button {
   background: var(--ink);
   border: 0;
-  color: white;
+  color: var(--on-strong);
   font-size: 12px;
   font-weight: 700;
   padding: 0 16px;
@@ -195,7 +222,7 @@ h1 {
   color: var(--ink);
 }
 .error {
-  color: #b32822;
+  color: var(--danger);
 }
 
 .section-heading {
@@ -232,7 +259,7 @@ h1 {
 }
 .output-actions button:last-child {
   background: var(--ink);
-  color: white;
+  color: var(--on-strong);
 }
 .section-heading.compact > p {
   color: var(--muted);
@@ -579,10 +606,10 @@ body:not([data-result-mode="compare"]) .relationship-row strong {
 }
 .candidate-rules .pass > b,
 .candidate-summary.pass {
-  color: #23734b;
+  color: var(--success);
 }
 .candidate-rules .fail > b {
-  color: #b32822;
+  color: var(--danger);
 }
 .decision-evidence {
   border-top: 1px solid #8884;
@@ -1525,7 +1552,7 @@ body:not([data-result-mode="compare"]) .semantic-maps {
   font-size: 8px;
 }
 .foundation-role-result em {
-  color: #9b3e2d;
+  color: var(--danger);
   font-family: var(--mono);
   font-size: 6px;
   font-style: normal;
@@ -1535,14 +1562,14 @@ body:not([data-result-mode="compare"]) .semantic-maps {
 .foundation-role-plot {
   background:
     linear-gradient(#8882 1px, transparent 1px),
-    linear-gradient(90deg, #8882 1px, transparent 1px), #fff;
+    linear-gradient(90deg, #8882 1px, transparent 1px), var(--plot);
   background-size: 25% 25%;
   border-left: 1px solid var(--line);
   min-height: 68px;
   position: relative;
 }
 .foundation-role-plot::after {
-  border-top: 1px dashed #8d5810;
+  border-top: 1px dashed var(--review);
   content: "";
   left: 0;
   position: absolute;
@@ -1551,9 +1578,9 @@ body:not([data-result-mode="compare"]) .semantic-maps {
 }
 .foundation-node {
   background: var(--node-color);
-  border: 2px solid #fff;
+  border: 2px solid var(--plot);
   border-radius: 50%;
-  box-shadow: 0 0 0 1px #111;
+  box-shadow: 0 0 0 1px var(--marker-ring);
   height: 12px;
   position: absolute;
   transform: translate(-50%, 50%);
@@ -1567,7 +1594,7 @@ body:not([data-result-mode="compare"]) .semantic-maps {
 }
 .foundation-node.active {
   box-shadow:
-    0 0 0 2px #fff,
+    0 0 0 2px var(--plot),
     0 0 0 4px var(--ink);
   z-index: 4;
 }
@@ -1893,7 +1920,7 @@ body:not([data-result-mode="compare"]) .quality-grid {
 }
 .quality-grid li.review > i {
   border-color: #b87a20;
-  color: #8d5810;
+  color: var(--review);
 }
 .quality-grid li span strong,
 .quality-grid li span small {
@@ -2075,7 +2102,7 @@ body:not([data-result-mode="compare"]) .quality-grid {
   text-transform: uppercase;
 }
 .gallery-result.review {
-  color: #8d5810;
+  color: var(--review);
 }
 .gallery-rating {
   display: grid;
@@ -2111,8 +2138,9 @@ body:not([data-result-mode="compare"]) .quality-grid {
   display: none;
 }
 .gallery-note textarea {
-  background: white;
+  background: var(--field);
   border: 1px solid var(--line);
+  color: var(--ink);
   font-size: 8px;
   margin-top: 7px;
   padding: 6px;
@@ -2134,7 +2162,7 @@ body:not([data-result-mode="compare"]) .quality-grid {
   padding: 13px 16px;
 }
 .source-alternatives > header span {
-  color: #8d5810;
+  color: var(--review);
   font-family: var(--mono);
   font-size: 9px;
   text-transform: uppercase;
@@ -2202,14 +2230,14 @@ body:not([data-result-mode="compare"]) .quality-grid {
   font-size: 8px;
 }
 .usage-option span b {
-  color: #23734b;
+  color: var(--success);
   font-family: var(--mono);
   font-size: 7px;
   margin-top: 2px;
   text-transform: uppercase;
 }
 .usage-option.unsafe span b {
-  color: #b32822;
+  color: var(--danger);
 }
 .usage-base,
 .usage-buttons button {
@@ -2315,7 +2343,7 @@ body:not([data-result-mode="compare"]) .quality-grid {
   font-size: 8px;
 }
 .check-row.fail b {
-  color: #b32822;
+  color: var(--danger);
 }
 .policy-note {
   border-top: 1px solid var(--line);
@@ -2328,7 +2356,7 @@ body:not([data-result-mode="compare"]) .quality-grid {
 .toast {
   background: var(--ink);
   bottom: 24px;
-  color: white;
+  color: var(--on-strong);
   font-size: 11px;
   left: 50%;
   opacity: 0;

@@ -28,12 +28,24 @@ test("result mode switches the complete inspector and persists", async ({
   const dark = page.getByRole("button", { name: "Dark", exact: true });
   await dark.click();
   await expect(dark).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(17, 19, 17)",
+  );
+  await expect(page.locator(".input-card")).toHaveCSS(
+    "background-color",
+    "rgb(25, 27, 25)",
+  );
   await expect(page.locator(".palette.dark")).toBeVisible();
   await expect(page.locator(".palette.light")).toHaveCount(0);
   await expect(page.locator(".foundation-map-card")).toHaveCount(1);
   await expect(page.locator(".example.dark")).toBeVisible();
   await page.reload();
   await expect(dark).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("body")).toHaveCSS(
+    "background-color",
+    "rgb(17, 19, 17)",
+  );
   await expect(page.locator(".palette.dark")).toBeVisible();
 
   await page.getByRole("button", { name: "Compare", exact: true }).click();
@@ -146,6 +158,12 @@ test("core palette and Craken specimen retain their visual structure", async ({
       maxDiffPixelRatio: 0.12,
     },
   );
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect(page).toHaveScreenshot("dark-mode-shell.png", {
+    animations: "disabled",
+    maxDiffPixelRatio: 0.12,
+  });
   await page.getByRole("button", { name: "Compare", exact: true }).click();
   await expect(page.locator(".palettes")).toHaveScreenshot(
     "paired-palettes.png",

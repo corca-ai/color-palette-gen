@@ -237,6 +237,11 @@ text. `Compare` is an explicit analysis state for pair ranking and cross-mode
 identity; it may be denser, but it must not be the default reading experience.
 Switching mode preserves the generated input and is remembered locally.
 
+The selected result mode also themes the inspector chrome. `Light` uses light
+chrome, `Dark` uses dark chrome, and `Compare` uses neutral light chrome so both
+palettes retain equal visual weight. A result-mode label must never imply a
+theme change that only filters content.
+
 ## Change review checklist
 
 페이지 구조나 sticky/floating UI를 수정할 때는 최소한 다음을 확인한다.
