@@ -74,7 +74,18 @@ const validationSummary = document.querySelector("#validation-summary");
 const toast = document.querySelector("#toast");
 const calculationStatus = document.querySelector("#calculation-status");
 const semanticMap = document.querySelector("#semantic-map");
+const modeButtons = [...document.querySelectorAll("[data-result-mode]")];
 let currentResult;
+const RESULT_MODE_STORAGE_KEY = "color-lab-v2-result-mode";
+let storedResultMode;
+try {
+  storedResultMode = localStorage.getItem(RESULT_MODE_STORAGE_KEY);
+} catch {
+  storedResultMode = null;
+}
+let resultMode = ["light", "dark", "compare"].includes(storedResultMode)
+  ? storedResultMode
+  : "light";
 let workerSequence = 0;
 const pendingCalculations = new Map();
 const resultCache = new Map();
@@ -104,6 +115,18 @@ const FOUNDATION_ROLES = [
 ];
 const galleryResults = new Map();
 let evaluationRecords = loadEvaluationRecords();
+
+function visibleModes() {
+  return resultMode === "compare" ? ["light", "dark"] : [resultMode];
+}
+
+function syncResultMode() {
+  document.body.dataset.resultMode = resultMode;
+  for (const button of modeButtons) {
+    const selected = button.dataset.resultMode === resultMode;
+    button.setAttribute("aria-pressed", String(selected));
+  }
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -218,7 +241,7 @@ function palette(modeResult) {
 }
 
 function renderPalettes() {
-  palettes.innerHTML = ["light", "dark"]
+  palettes.innerHTML = visibleModes()
     .map((mode) => palette(currentResult.modes[mode]))
     .join("");
 }
@@ -278,27 +301,27 @@ function appliedExample(modeResult) {
 }
 
 function renderExamples() {
-  examples.innerHTML = ["light", "dark"]
+  examples.innerHTML = visibleModes()
     .map((mode) => appliedExample(currentResult.modes[mode]))
     .join("");
 }
 
-function relationshipRow(label, description, roles) {
-  const light = currentResult.modes.light.values;
-  const dark = currentResult.modes.dark.values;
-  const sequence = (mode, values) =>
-    `<div class="mode-sequence"><span>${mode}</span>${roles.map((role) => `<i style="background:${values[role]}" title="${role} · ${values[role]}"></i>`).join("")}</div>`;
-  return `<article class="relationship-row"><div><strong>${label}</strong><small>${description}</small></div>${sequence("Light", light)}${sequence("Dark", dark)}</article>`;
-}
-
 function renderRelationships() {
+  const modes = visibleModes();
+  const relationshipForModes = (label, description, roles) => {
+    const sequence = (mode) => {
+      const values = currentResult.modes[mode].values;
+      return `<div class="mode-sequence"><span>${mode}</span>${roles.map((role) => `<i style="background:${values[role]}" title="${role} · ${values[role]}"></i>`).join("")}</div>`;
+    };
+    return `<article class="relationship-row"><div><strong>${label}</strong><small>${description}</small></div>${modes.map(sequence).join("")}</article>`;
+  };
   relationships.innerHTML = `<article class="input-source"><span>Input primary · ${currentResult.source.classification}</span><i style="background:${currentResult.input.primary}"></i><strong>${currentResult.input.primary}</strong><small>${colorCoordinates(currentResult.input.primary)}</small><p>${currentResult.source.policy}</p></article>
     <div class="relationship-list">
-      ${relationshipRow("Foundation", "Background → surface → muted surface", ["background", "surface", "muted surface"])}
-      ${relationshipRow("Content", "Primary and supporting text", ["foreground", "muted text"])}
-      ${relationshipRow("Brand", "Default → hover → active", ["primary", "primary hover", "primary active"])}
-      ${relationshipRow("Boundary", "Subtle → interactive", ["border", "input border"])}
-      ${relationshipRow("Feedback", "Brand action → destructive action", ["primary", "destructive"])}
+      ${relationshipForModes("Foundation", "Background → surface → muted surface", ["background", "surface", "muted surface"])}
+      ${relationshipForModes("Content", "Primary and supporting text", ["foreground", "muted text"])}
+      ${relationshipForModes("Brand", "Default → hover → active", ["primary", "primary hover", "primary active"])}
+      ${relationshipForModes("Boundary", "Subtle → interactive", ["border", "input border"])}
+      ${relationshipForModes("Feedback", "Brand action → destructive action", ["primary", "destructive"])}
     </div>`;
 }
 
@@ -342,7 +365,7 @@ function foundationMode(mode) {
 }
 
 function renderFoundationMap() {
-  foundationMap.innerHTML = ["light", "dark"].map(foundationMode).join("");
+  foundationMap.innerHTML = visibleModes().map(foundationMode).join("");
 }
 
 function focusSpecimen(mode) {
@@ -354,7 +377,7 @@ function focusSpecimen(mode) {
 }
 
 function renderFocusSpecimens() {
-  focusSpecimens.innerHTML = ["light", "dark"].map(focusSpecimen).join("");
+  focusSpecimens.innerHTML = visibleModes().map(focusSpecimen).join("");
 }
 
 function qualityValue(check) {
@@ -383,17 +406,23 @@ function pairOption(label, pair, selectedPair) {
 function renderQuality() {
   const result = currentResult.quality;
   const pair = currentResult.pairDecision;
-  quality.innerHTML = `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Independent source fidelity</span><strong>${result.sourceChecks.filter(({ pass }) => pass).length}/${result.sourceChecks.length} signals</strong></header><ul>${result.sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${result.semanticChecks.filter(({ pass }) => pass).length}/${result.semanticChecks.length} signals</strong></header><ul>${result.semanticChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>${[
-    "light",
-    "dark",
-  ]
+  const modes = visibleModes();
+  const checksForModes = (items) =>
+    items.filter(({ id }) => modes.some((mode) => id.includes(`.${mode}.`)));
+  const sourceChecks = checksForModes(result.sourceChecks);
+  const semanticChecks = checksForModes(result.semanticChecks);
+  const pairedReview =
+    resultMode === "compare"
+      ? `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>`
+      : `<aside class="mode-review-note"><strong>${resultMode} review</strong><span>Cross-mode identity and pair ranking are available in Compare.</span></aside>`;
+  quality.innerHTML = `${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
     .map((mode) => {
       const state = result.states[mode];
       return `<article><header><span>${mode} state pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;
     })
     .join("")}${["destructive", "warning"]
     .flatMap((family) =>
-      ["light", "dark"].map((mode) => {
+      modes.map((mode) => {
         const state = result.feedbackStates[family][mode];
         return `<article><header><span>${mode} ${family} pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;
       }),
@@ -422,7 +451,9 @@ function renderSourceAlternatives() {
     sourceAlternatives.innerHTML = "";
     return;
   }
-  sourceAlternatives.innerHTML = `<header><span>Large source shift</span><p>${alternatives.intent}</p><aside><strong>Stateful action</strong> ${alternatives.recommendation.statefulAction}<br><strong>Source-faithful option</strong> ${alternatives.recommendation.sourceFaithfulAction}<small>${alternatives.recommendation.rationale}</small></aside></header><div>${["light", "dark"].map((mode) => alternativeMode(mode, alternatives.modes[mode])).join("")}</div>`;
+  sourceAlternatives.innerHTML = `<header><span>Large source shift</span><p>${alternatives.intent}</p><aside><strong>Stateful action</strong> ${alternatives.recommendation.statefulAction}<br><strong>Source-faithful option</strong> ${alternatives.recommendation.sourceFaithfulAction}<small>${alternatives.recommendation.rationale}</small></aside></header><div>${visibleModes()
+    .map((mode) => alternativeMode(mode, alternatives.modes[mode]))
+    .join("")}</div>`;
 }
 
 function galleryCard(result) {
@@ -489,7 +520,7 @@ function semanticCloud(decision, role) {
 }
 
 function renderSemanticMaps() {
-  semanticMap.innerHTML = ["light", "dark"]
+  semanticMap.innerHTML = visibleModes()
     .flatMap((mode) =>
       ["warning", "selection"].map((role) => {
         const decision = currentResult.modes[mode].decisions[role];
@@ -523,12 +554,11 @@ function checkValue(check) {
 }
 
 function renderChecks() {
-  const allChecks = ["light", "dark"].flatMap(
-    (mode) => currentResult.modes[mode].checks,
-  );
+  const modes = visibleModes();
+  const allChecks = modes.flatMap((mode) => currentResult.modes[mode].checks);
   const passed = allChecks.filter((check) => check.pass).length;
   validationSummary.textContent = `${passed} of ${allChecks.length} palette contracts met`;
-  checks.innerHTML = ["light", "dark"]
+  checks.innerHTML = modes
     .map(
       (mode) =>
         `<section><h3>${mode}</h3>${currentResult.modes[mode].checks
@@ -543,7 +573,7 @@ function renderChecks() {
 
 function render(result) {
   currentResult = result;
-  paletteTitle.textContent = `${result.input.primary} · Light and dark`;
+  paletteTitle.textContent = `${result.input.primary} · ${resultMode === "compare" ? "Light and dark" : `${resultMode[0].toUpperCase()}${resultMode.slice(1)}`}`;
   renderPalettes();
   renderExamples();
   renderRelationships();
@@ -790,6 +820,22 @@ palettes.addEventListener("click", (event) => {
   node?.classList.add("active");
 });
 
+for (const button of modeButtons) {
+  button.addEventListener("click", () => {
+    const nextMode = button.dataset.resultMode;
+    if (nextMode === resultMode) return;
+    resultMode = nextMode;
+    try {
+      localStorage.setItem(RESULT_MODE_STORAGE_KEY, resultMode);
+    } catch {
+      // Mode switching still works when browser storage is unavailable.
+    }
+    syncResultMode();
+    if (currentResult) render(currentResult);
+  });
+}
+
+syncResultMode();
 const initialResult = generatePaletteV2({ primary: primaryInput.value });
 resultCache.set(initialResult.input.primary, initialResult);
 render(initialResult);

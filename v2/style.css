@@ -37,12 +37,48 @@ button {
   height: 58px;
   justify-content: space-between;
   padding: 0 clamp(20px, 4vw, 64px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  backdrop-filter: blur(12px);
 }
 .brand {
   color: var(--ink);
   font-size: 14px;
   font-weight: 750;
   text-decoration: none;
+}
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+}
+.result-mode {
+  align-items: center;
+  border: 1px solid var(--line);
+  display: flex;
+  padding: 3px;
+}
+.result-mode > span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 0 9px 0 6px;
+  text-transform: uppercase;
+}
+.result-mode button {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  min-height: 30px;
+  padding: 0 13px;
+}
+.result-mode button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
 }
 .topbar nav {
   display: flex;
@@ -210,6 +246,70 @@ h1 {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+body:not([data-result-mode="compare"]) .palettes,
+body:not([data-result-mode="compare"]) .examples,
+body:not([data-result-mode="compare"]) .foundation-maps,
+body:not([data-result-mode="compare"]) .focus-specimens {
+  grid-template-columns: minmax(0, 1fr);
+}
+body:not([data-result-mode="compare"]) .palette-header span,
+body:not([data-result-mode="compare"]) .focus-card > header span {
+  font-size: 12px;
+}
+body:not([data-result-mode="compare"]) .palette-header strong,
+body:not([data-result-mode="compare"]) .focus-card > header strong {
+  font-size: 13px;
+}
+body:not([data-result-mode="compare"]) .swatch-copy strong,
+body:not([data-result-mode="compare"]) .foundation-role-result strong {
+  font-size: 11px;
+}
+body:not([data-result-mode="compare"]) .swatch-copy code,
+body:not([data-result-mode="compare"]) .foundation-role-label strong {
+  font-size: 12px;
+}
+body:not([data-result-mode="compare"]) .swatch-copy small,
+body:not([data-result-mode="compare"]) .foundation-role-label small,
+body:not([data-result-mode="compare"]) .foundation-role-result small,
+body:not([data-result-mode="compare"]) .foundation-role-result em,
+body:not([data-result-mode="compare"]) .foundation-legend span,
+body:not([data-result-mode="compare"]) .binary-heading span,
+body:not([data-result-mode="compare"]) .binary-text strong,
+body:not([data-result-mode="compare"]) .binary-text small {
+  font-size: 9px;
+}
+body:not([data-result-mode="compare"])
+  :is(
+    .palette,
+    .foundation-map-card,
+    .semantic-maps,
+    .focus-card,
+    .quality-grid,
+    .source-alternatives,
+    .example,
+    .relationship-list,
+    .checks
+  )
+  small {
+  font-size: 10px;
+  line-height: 1.45;
+}
+body:not([data-result-mode="compare"]) .why-label,
+body:not([data-result-mode="compare"]) .decision-policy span,
+body:not([data-result-mode="compare"]) .decision-policy b,
+body:not([data-result-mode="compare"]) .semantic-maps footer span,
+body:not([data-result-mode="compare"]) .focus-target > span,
+body:not([data-result-mode="compare"]) .quality-grid header span,
+body:not([data-result-mode="compare"]) .quality-grid li span strong,
+body:not([data-result-mode="compare"]) .quality-grid li > b,
+body:not([data-result-mode="compare"]) .check-row strong {
+  font-size: 10px;
+}
+body:not([data-result-mode="compare"]) .focus-target button,
+body:not([data-result-mode="compare"]) .quality-grid article > p,
+body:not([data-result-mode="compare"]) .relationship-row strong {
+  font-size: 11px;
 }
 .palette {
   border: 1px solid var(--line);
@@ -1234,6 +1334,9 @@ h1 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 12px;
 }
+body:not([data-result-mode="compare"]) .semantic-maps {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .semantic-maps article {
   background: var(--card);
   border: 1px solid var(--line);
@@ -1622,6 +1725,28 @@ h1 {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+body:not([data-result-mode="compare"]) .quality-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mode-review-note {
+  align-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  display: flex;
+  gap: 14px;
+  grid-column: 1 / -1;
+  justify-content: space-between;
+  padding: 13px 16px;
+}
+.mode-review-note strong {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+.mode-review-note span {
+  font-size: 11px;
+  opacity: 0.72;
 }
 .quality-grid article {
   background: var(--card);
@@ -2282,7 +2407,28 @@ h1 {
     padding-inline: 16px;
   }
   .topbar {
-    padding-inline: 16px;
+    align-items: stretch;
+    height: auto;
+    padding: 8px 16px;
+  }
+  .brand {
+    align-items: center;
+    display: flex;
+  }
+  .topbar-actions {
+    gap: 7px;
+  }
+  .result-mode button {
+    font-size: 9px;
+    min-height: 28px;
+    padding-inline: 8px;
+  }
+  .result-mode > span {
+    display: none;
+  }
+  .topbar nav a {
+    font-size: 9px;
+    padding: 7px;
   }
   .semantic-maps {
     grid-template-columns: 1fr;

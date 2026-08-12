@@ -13,9 +13,17 @@
   <body>
     <header class="topbar">
       <a class="brand" href="../">Color Lab</a>
-      <nav aria-label="Version">
-        <a href="../v1/">v1</a><a href="./" aria-current="page">v2</a>
-      </nav>
+      <div class="topbar-actions">
+        <div class="result-mode" role="group" aria-label="Palette result mode">
+          <span>Result</span>
+          <button type="button" data-result-mode="light">Light</button>
+          <button type="button" data-result-mode="dark">Dark</button>
+          <button type="button" data-result-mode="compare">Compare</button>
+        </div>
+        <nav aria-label="Version">
+          <a href="../v1/">v1</a><a href="./" aria-current="page">v2</a>
+        </nav>
+      </div>
     </header>
     <main>
       <section class="intro">
@@ -116,7 +124,7 @@
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">Paired quality review</p>
-            <h2 id="quality-title">One identity across both modes.</h2>
+            <h2 id="quality-title">Review the mode you are viewing.</h2>
           </div>
           <p>
             Independent review signals inspect source fidelity, cross-mode
@@ -183,7 +191,7 @@
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">Color relationships</p>
-            <h2 id="relationship-title">How the two palettes correspond.</h2>
+            <h2 id="relationship-title">How each palette role relates.</h2>
           </div>
           <p>
             Neutral foundations are fixed by mode. The input hue drives the

@@ -10,16 +10,50 @@ test("generates both modes from one primary and exposes new semantic roles", asy
   await page.locator("#v2-primary").fill("#7A4ED8");
   await page.getByRole("button", { name: "Generate palette" }).click();
   await expect(page.locator("#palette-title")).toContainText("#7A4ED8");
-  await expect(page.locator('.swatch[data-role="warning"]')).toHaveCount(2);
-  await expect(page.locator('.swatch[data-role="selection"]')).toHaveCount(2);
+  await expect(page.locator('.swatch[data-role="warning"]')).toHaveCount(1);
+  await expect(page.locator('.swatch[data-role="selection"]')).toHaveCount(1);
   await expect(page.locator('.swatch[data-role="brand source"]')).toHaveCount(
-    2,
+    1,
   );
   await expect(page.locator('.swatch[data-role="primary border"]')).toHaveCount(
-    2,
+    1,
   );
   await expect(page.locator(".example.light .craken-warning")).toBeVisible();
-  await expect(page.locator(".example.dark .craken-popover")).toBeVisible();
+  await expect(page.locator(".example.dark")).toHaveCount(0);
+});
+
+test("result mode switches the complete inspector and persists", async ({
+  page,
+}) => {
+  const dark = page.getByRole("button", { name: "Dark", exact: true });
+  await dark.click();
+  await expect(dark).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".palette.dark")).toBeVisible();
+  await expect(page.locator(".palette.light")).toHaveCount(0);
+  await expect(page.locator(".foundation-map-card")).toHaveCount(1);
+  await expect(page.locator(".example.dark")).toBeVisible();
+  await page.reload();
+  await expect(dark).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".palette.dark")).toBeVisible();
+
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await expect(page.locator(".palette")).toHaveCount(2);
+  await expect(page.locator(".foundation-map-card")).toHaveCount(2);
+  await expect(page.locator(".pair-decision")).toBeVisible();
+});
+
+test("result mode control remains usable without mobile overflow", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const dark = page.getByRole("button", { name: "Dark", exact: true });
+  await expect(dark).toBeVisible();
+  await dark.click();
+  await expect(page.locator(".palette.dark")).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test("accessibility pass and independent review remain separate", async ({
@@ -105,6 +139,14 @@ test("worker calculation remains responsive and reports its duration", async ({
 test("core palette and Craken specimen retain their visual structure", async ({
   page,
 }) => {
+  await expect(page.locator(".palettes")).toHaveScreenshot(
+    "single-mode-palette.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
   await expect(page.locator(".palettes")).toHaveScreenshot(
     "paired-palettes.png",
     {

@@ -225,6 +225,18 @@ rule that rejected the nearby option. Clicking any marker opens the matching
 candidate evidence in the palette. The map answers “why did this candidate
 win?”; it must not imply that plotting coordinates alone justify the choice.
 
+### Result mode and information density
+
+v2 defaults to one result mode at a time. The sticky `Light / Dark / Compare`
+control applies to the complete inspector—not only the palette cards—so
+foundation maps, semantic searches, focus specimens, Craken samples, quality
+signals, relationships, and validation never disagree about the visible mode.
+
+Single-mode views use the available width to increase labels and explanatory
+text. `Compare` is an explicit analysis state for pair ranking and cross-mode
+identity; it may be denser, but it must not be the default reading experience.
+Switching mode preserves the generated input and is remembered locally.
+
 ## Change review checklist
 
 페이지 구조나 sticky/floating UI를 수정할 때는 최소한 다음을 확인한다.
