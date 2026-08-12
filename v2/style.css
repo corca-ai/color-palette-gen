@@ -1354,49 +1354,97 @@ h1 {
   color: var(--muted);
   font-size: 8px;
 }
-.foundation-plot {
+.foundation-axis {
+  align-items: center;
+  color: var(--muted);
+  display: grid;
+  font-family: var(--mono);
+  font-size: 7px;
+  grid-template-columns: 1fr auto 1fr;
+  margin: 0 150px 5px 128px;
+}
+.foundation-axis strong {
+  color: var(--ink);
+  font-size: 7px;
+  font-weight: 500;
+}
+.foundation-axis span:last-child {
+  text-align: right;
+}
+.foundation-rows {
+  border: 1px solid var(--line);
+}
+.foundation-role-row {
+  align-items: stretch;
+  display: grid;
+  grid-template-columns: 128px minmax(130px, 1fr) 150px;
+  min-height: 68px;
+}
+.foundation-role-row + .foundation-role-row {
+  border-top: 1px solid var(--line);
+}
+.foundation-role-label,
+.foundation-role-result {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 10px;
+}
+.foundation-role-label span {
+  font-family: var(--mono);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+.foundation-role-label strong {
+  align-items: center;
+  display: flex;
+  font-family: var(--mono);
+  font-size: 9px;
+  gap: 5px;
+  margin-top: 4px;
+}
+.foundation-role-label strong i {
+  border: 1px solid #7778;
+  height: 13px;
+  width: 13px;
+}
+.foundation-role-label small,
+.foundation-role-result small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 6px;
+  margin-top: 3px;
+}
+.foundation-role-result {
+  border-left: 1px solid var(--line);
+}
+.foundation-role-result strong {
+  font-size: 8px;
+}
+.foundation-role-result em {
+  color: #9b3e2d;
+  font-family: var(--mono);
+  font-size: 6px;
+  font-style: normal;
+  line-height: 1.25;
+  margin-top: 4px;
+}
+.foundation-role-plot {
   background:
     linear-gradient(#8882 1px, transparent 1px),
     linear-gradient(90deg, #8882 1px, transparent 1px), #fff;
   background-size: 25% 25%;
-  border: 1px solid var(--line);
-  height: 230px;
-  margin: 0 0 10px 32px;
+  border-left: 1px solid var(--line);
+  min-height: 68px;
   position: relative;
 }
-.foundation-plot::after {
+.foundation-role-plot::after {
   border-top: 1px dashed #8d5810;
   content: "";
   left: 0;
   position: absolute;
   right: 0;
-  top: 4px;
-}
-.foundation-plot .tint-limit {
-  color: #8d5810;
-  font-family: var(--mono);
-  font-size: 6px;
-  position: absolute;
-  right: 4px;
   top: 7px;
-  text-transform: uppercase;
-}
-.axis-y,
-.axis-x {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 7px;
-  position: absolute;
-}
-.axis-y {
-  left: -31px;
-  top: 50%;
-  transform: rotate(-90deg) translateX(-50%);
-  transform-origin: left top;
-}
-.axis-x {
-  bottom: 3px;
-  right: 5px;
 }
 .foundation-node {
   background: var(--node-color);
@@ -1432,21 +1480,11 @@ h1 {
 .foundation-node.rejected {
   border-style: dashed;
 }
-.foundation-node > span {
-  background: #111d;
-  color: white;
-  font-family: var(--mono);
-  font-size: 6px;
-  left: 8px;
-  padding: 2px 3px;
-  position: absolute;
-  top: calc(-3px + var(--label-offset));
-  white-space: nowrap;
-}
 .foundation-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: 10px;
 }
 .foundation-legend span {
   align-items: center;
@@ -1467,13 +1505,26 @@ h1 {
 .foundation-legend i.rejected {
   border-style: dashed;
 }
-.binary-text {
+.binary-heading {
+  align-items: baseline;
   border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+  padding-top: 10px;
+}
+.binary-heading strong {
+  font-size: 8px;
+}
+.binary-heading span {
+  color: var(--muted);
+  font-size: 7px;
+}
+.binary-text {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(2, 1fr);
-  margin-top: 11px;
-  padding-top: 10px;
+  margin-top: 8px;
 }
 .binary-text > div {
   align-items: center;
@@ -2235,6 +2286,19 @@ h1 {
   }
   .semantic-maps {
     grid-template-columns: 1fr;
+  }
+  .foundation-axis {
+    margin-left: 100px;
+    margin-right: 0;
+  }
+  .foundation-role-row {
+    grid-template-columns: 100px minmax(130px, 1fr);
+  }
+  .foundation-role-result {
+    border-left: 0;
+    border-top: 1px dashed var(--line);
+    grid-column: 1 / -1;
+    padding-block: 6px;
   }
   .output-actions {
     align-items: stretch;

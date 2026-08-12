@@ -126,6 +126,13 @@ test("core palette and Craken specimen retain their visual structure", async ({
       maxDiffPixelRatio: 0.12,
     },
   );
+  await expect(page.locator("#foundation-map")).toHaveScreenshot(
+    "foundation-search-rows.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
   await expect(page.locator("#quality")).toHaveScreenshot(
     "independent-review.png",
     {

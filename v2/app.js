@@ -302,25 +302,43 @@ function renderRelationships() {
     </div>`;
 }
 
-function foundationMarker(mode, role, value, kind, labelOffset = 0) {
+function foundationMarker(mode, role, value, kind) {
   if (!value) return "";
   const x = Math.max(1, Math.min(99, value.oklch.l * 100));
-  const y = Math.max(3, Math.min(96, (value.oklch.c / 0.012) * 100));
+  const y = Math.max(12, Math.min(88, (value.oklch.c / 0.012) * 100));
   const title = `${role} · ${kind} · ${value.hex} · L ${value.oklch.l.toFixed(3)} C ${value.oklch.c.toFixed(4)}`;
-  return `<button class="foundation-node ${kind}" type="button" data-mode="${mode}" data-role="${role}" data-kind="${kind}" style="left:${x}%;bottom:${y}%;--node-color:${value.hex};--label-offset:${labelOffset}px" title="${title}">${kind === "selected" ? `<span>${role}</span>` : ""}</button>`;
+  return `<button class="foundation-node ${kind}" type="button" data-mode="${mode}" data-role="${role}" data-kind="${kind}" style="left:${x}%;bottom:${y}%;--node-color:${value.hex}" title="${title}" aria-label="Open ${kind} ${role} candidate, ${value.hex}"></button>`;
+}
+
+function foundationRoleRow(mode, role) {
+  const decision = currentResult.modes[mode].decisions[role];
+  const selected = decision.selected;
+  const rejected = decision.alternatives.nearestRejected;
+  const passing = decision.alternatives.nextPassing;
+  const alternatives = [rejected, passing].filter(Boolean).length;
+  const failedRule = rejected?.constraintResults?.find(({ passed }) => !passed);
+  const ruleCount = selected.constraintResults?.length ?? 0;
+  return `<div class="foundation-role-row">
+    <div class="foundation-role-label"><span>${role}</span><strong><i style="background:${selected.hex}"></i>${selected.hex}</strong><small>L ${selected.oklch.l.toFixed(3)} · C ${selected.oklch.c.toFixed(4)}</small></div>
+    <div class="foundation-role-plot">
+      ${foundationMarker(mode, role, rejected, "rejected")}
+      ${foundationMarker(mode, role, passing, "passing")}
+      ${foundationMarker(mode, role, selected, "selected")}
+    </div>
+    <div class="foundation-role-result"><strong>Passed all ${ruleCount} rules</strong><small>Then closest to the intended recipe</small>${failedRule ? `<em>Nearby failure: ${failedRule.label}</em>` : ""}<small>${decision.candidateCount} checked · ${alternatives} nearby shown</small></div>
+  </div>`;
 }
 
 function foundationMode(mode) {
   const result = currentResult.modes[mode];
-  const markers = FOUNDATION_ROLES.map((role, index) => {
-    const decision = result.decisions[role];
-    return `${foundationMarker(mode, role, decision.selected, "selected", (index % 3) * 10)}${foundationMarker(mode, role, decision.alternatives.nearestRejected, "rejected")}${foundationMarker(mode, role, decision.alternatives.nextPassing, "passing")}`;
-  }).join("");
+  const rows = FOUNDATION_ROLES.map((role) =>
+    foundationRoleRow(mode, role),
+  ).join("");
   const textDecision = (role) => {
     const decision = result.decisions[role];
     return `<div><span>${role}</span><i style="background:${decision.selected.hex}"></i><strong>${decision.selected.hex}</strong><small>${decision.selected.objectiveResults?.[0]?.value.toFixed(1) ?? "–"} Lc weakest</small></div>`;
   };
-  return `<article class="foundation-map-card"><header><span>${mode}</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} candidates evaluated</strong></header><div class="foundation-plot"><span class="axis-y">Tint chroma</span><span class="axis-x">OKLCH lightness →</span><div class="tint-limit">Calm tint limit</div>${markers}</div><div class="foundation-legend"><span><i class="selected"></i>Selected</span><span><i class="rejected"></i>Best-ranked rejected</span><span><i class="passing"></i>Next passing</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
+  return `<article class="foundation-map-card"><header><span>${mode} mode</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} total candidates checked</strong></header><div class="foundation-axis"><span>dark · L 0</span><strong>lightness → · vertical = tint</strong><span>L 1 · light</span></div><div class="foundation-rows">${rows}</div><div class="foundation-legend"><span><i class="selected"></i>Chosen</span><span><i class="rejected"></i>Closest option that failed a rule</span><span><i class="passing"></i>Another option that passed</span></div><div class="binary-heading"><strong>Text choice is separate</strong><span>Black and white are compared by their weakest APCA contrast.</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
 }
 
 function renderFoundationMap() {

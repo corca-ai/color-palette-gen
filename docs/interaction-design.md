@@ -212,6 +212,19 @@ Soft accent surface용 `accent text`를 채도가 높은 accent fill 위에 재�
 기준으로 black/white 중 더 강한 foreground를 선택한다. 새로운 component fixture가 색을
 조합할 때는 공개 전에 그 조합을 usage contract에 추가해야 한다.
 
+### Foundation search map
+
+Foundation roles must not share one undifferentiated scatter plot. Background,
+surface, border, and input border have different constraints, so spatial
+proximity across roles has no decision meaning. The v2 map uses one search row
+per role and repeats the same axes only for comparison within that role.
+
+Each row must expose the selected HEX and OKLCH coordinates, the closest
+rejected candidate, another passing candidate, the number searched, and the
+rule that rejected the nearby option. Clicking any marker opens the matching
+candidate evidence in the palette. The map answers “why did this candidate
+win?”; it must not imply that plotting coordinates alone justify the choice.
+
 ## Change review checklist
 
 페이지 구조나 sticky/floating UI를 수정할 때는 최소한 다음을 확인한다.
