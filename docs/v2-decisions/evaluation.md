@@ -30,3 +30,11 @@ Before changing evidence class, collect multiple independent reviews, retain
 the raw exports, define an aggregation method, and report disagreement. The
 current UI intentionally records observations without automatically tuning the
 engine from them.
+
+## Local hover evidence management
+
+The applied specimen exposes a browser-local inventory of saved hover evidence.
+It reports stored records and per-mode judgments, shows the versioned record, and
+supports a two-step clear action. Clearing this boundary does not clear overall
+gallery ratings. Hover evidence remains local-only and is not included in the
+gallery rating export.

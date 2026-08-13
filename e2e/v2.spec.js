@@ -138,6 +138,52 @@ test("Light and Dark hover judgments resolve the declared intent", async ({
   await expect(
     page.locator(".semantic-intent-review header strong"),
   ).toHaveText("4 satisfied · 0 needs review");
+  const evidenceManager = page.locator("#hover-evidence-manager");
+  await expect(evidenceManager.locator("summary")).toContainText(
+    "1 record · 2 mode judgments",
+  );
+  await evidenceManager.locator("summary").click();
+  await expect(evidenceManager).toContainText("#507096");
+  await expect(evidenceManager).toContainText("The dark hover is noticeable.");
+  const clearEvidence = evidenceManager.locator("#clear-hover-evidence");
+  await clearEvidence.click();
+  await expect(clearEvidence).toHaveText("Confirm clear all");
+  await clearEvidence.click();
+  await expect(evidenceManager.locator("summary")).toContainText(
+    "No saved observations",
+  );
+  await expect(evidenceManager).toContainText(
+    "Overall gallery ratings were kept",
+  );
+  await page.reload();
+  await expect(page.locator("#hover-evidence-manager summary")).toContainText(
+    "No saved observations",
+  );
+  await expect(
+    page.locator(".semantic-intent-review header strong"),
+  ).toHaveText("3 satisfied · 1 needs review");
+});
+
+test("malformed hover evidence remains visible and clearable", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    localStorage.setItem("color-lab-v2-hover-evaluations", "{");
+  });
+  await page.reload();
+  const manager = page.locator("#hover-evidence-manager");
+  await expect(manager.locator("summary")).toContainText("1 unreadable record");
+  await manager.locator("summary").click();
+  await expect(manager).toContainText("does not match the current");
+  const clear = manager.locator("#clear-hover-evidence");
+  await expect(clear).toBeEnabled();
+  await clear.click();
+  await expect(manager).toContainText("cannot be undone");
+  await clear.click();
+  await page.reload();
+  await expect(page.locator("#hover-evidence-manager summary")).toContainText(
+    "No saved observations",
+  );
 });
 
 test("@smoke result mode switches the complete inspector and persists", async ({

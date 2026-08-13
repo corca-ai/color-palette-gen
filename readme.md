@@ -219,6 +219,8 @@ evidence는 현재 export되지 않습니다. 카드의 전체 팔레트 평가�
 정책 버전, 선택적 rating·메모와 함께 별도로 저장되며, 사용자가 `Export JSON`을
 실행하면 이 전체 평가 기록만 파일에 포함됩니다. 결과 보기 모드도 local
 storage에 저장됩니다.
+Applied palette 아래의 `Stored hover evidence` 패널에서 hover 기록을 확인하고
+전체 삭제할 수 있습니다. 삭제는 전체 팔레트 평가 기록에는 영향을 주지 않습니다.
 
 ## GitHub Pages 배포
 

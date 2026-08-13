@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  clearHoverEvaluationRecords,
+  inspectHoverEvaluationStorage,
   loadEvaluationRecords,
   loadHoverEvaluationRecords,
   saveEvaluationRecords,
@@ -12,6 +14,7 @@ test("evaluation records round-trip through the supplied storage boundary", () =
   const storage = {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key),
   };
   const records = { "#507096": { rating: "Prefer", note: "balanced" } };
 
@@ -42,15 +45,50 @@ test("hover evidence uses a separate local storage boundary", () => {
   const storage = {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key),
   };
   const records = { key: { schema: "color-lab-hover-evaluation-1" } };
+  const overall = { "#507096": { rating: "Prefer" } };
+  assert.equal(saveEvaluationRecords(overall, storage), true);
   assert.equal(saveHoverEvaluationRecords(records, storage), true);
   assert.deepEqual(loadHoverEvaluationRecords(storage), records);
-  assert.deepEqual(loadEvaluationRecords(storage), {});
+  assert.deepEqual(loadEvaluationRecords(storage), overall);
+  assert.equal(clearHoverEvaluationRecords(storage), true);
+  assert.deepEqual(loadHoverEvaluationRecords(storage), {});
+  assert.deepEqual(loadEvaluationRecords(storage), overall);
+});
+
+test("hover evidence clear failures remain observable", () => {
+  assert.equal(
+    clearHoverEvaluationRecords({
+      removeItem() {
+        throw new Error("blocked");
+      },
+    }),
+    false,
+  );
 });
 
 test("hover evidence rejects valid JSON with a non-record root", () => {
   for (const value of ['"text"', "42", "[]", "null"]) {
     assert.deepEqual(loadHoverEvaluationRecords({ getItem: () => value }), {});
+    assert.deepEqual(inspectHoverEvaluationStorage({ getItem: () => value }), {
+      present: true,
+      unreadable: true,
+      records: {},
+    });
   }
+});
+
+test("malformed hover evidence retains a clearable presence signal", () => {
+  assert.deepEqual(inspectHoverEvaluationStorage({ getItem: () => "{" }), {
+    present: true,
+    unreadable: true,
+    records: {},
+  });
+  assert.deepEqual(inspectHoverEvaluationStorage({ getItem: () => null }), {
+    present: false,
+    unreadable: false,
+    records: {},
+  });
 });

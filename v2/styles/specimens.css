@@ -1,4 +1,3 @@
-
 .reference-coverage {
   display: grid;
   gap: 6px;
@@ -541,4 +540,88 @@
   flex: 1;
   height: 36px;
   min-width: 18px;
+}
+.hover-evidence-manager {
+  border: 1px solid var(--line);
+  margin: 14px auto 0;
+  max-width: 760px;
+  padding: 0 14px;
+}
+.hover-evidence-manager > summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  min-height: 44px;
+}
+.hover-evidence-manager > summary span,
+.hover-evidence-manager > summary strong {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.hover-evidence-manager > summary strong,
+.hover-evidence-manager > p,
+.hover-evidence-empty,
+.hover-evidence-actions output {
+  color: var(--muted);
+}
+.hover-evidence-manager > p,
+.hover-evidence-empty {
+  font-size: 9px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+#hover-evidence-records {
+  display: grid;
+  gap: 8px;
+}
+#hover-evidence-records article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 10px;
+}
+#hover-evidence-records article header,
+#hover-evidence-records article div {
+  align-items: baseline;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 48px minmax(100px, auto) 1fr;
+}
+#hover-evidence-records article header {
+  grid-template-columns: auto 1fr;
+  margin-bottom: 7px;
+}
+#hover-evidence-records article header small,
+#hover-evidence-records article div {
+  color: var(--muted);
+  font-size: 8px;
+}
+#hover-evidence-records article q {
+  overflow-wrap: anywhere;
+}
+.hover-evidence-actions {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  min-height: 52px;
+}
+.hover-evidence-actions button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: inherit;
+  cursor: pointer;
+  font-size: 8px;
+  min-height: 30px;
+  padding: 0 10px;
+  text-transform: uppercase;
+}
+.hover-evidence-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.hover-evidence-actions output {
+  font-size: 8px;
 }

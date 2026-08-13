@@ -19,19 +19,36 @@ export function saveEvaluationRecords(records, storage = localStorage) {
 }
 
 export function loadHoverEvaluationRecords(storage = localStorage) {
+  return inspectHoverEvaluationStorage(storage).records;
+}
+
+export function inspectHoverEvaluationStorage(storage = localStorage) {
   try {
-    const records = JSON.parse(storage.getItem(HOVER_STORAGE_KEY));
-    return records && typeof records === "object" && !Array.isArray(records)
-      ? records
-      : {};
+    const serialized = storage.getItem(HOVER_STORAGE_KEY);
+    if (serialized === null)
+      return { present: false, unreadable: false, records: {} };
+    const records = JSON.parse(serialized);
+    if (!records || typeof records !== "object" || Array.isArray(records)) {
+      return { present: true, unreadable: true, records: {} };
+    }
+    return { present: true, unreadable: false, records };
   } catch {
-    return {};
+    return { present: true, unreadable: true, records: {} };
   }
 }
 
 export function saveHoverEvaluationRecords(records, storage = localStorage) {
   try {
     storage.setItem(HOVER_STORAGE_KEY, JSON.stringify(records));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearHoverEvaluationRecords(storage = localStorage) {
+  try {
+    storage.removeItem(HOVER_STORAGE_KEY);
     return true;
   } catch {
     return false;

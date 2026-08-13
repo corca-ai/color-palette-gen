@@ -3,6 +3,8 @@ import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
 import { serializeReferenceTokens } from "./lib/reference-export.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 import {
+  clearHoverEvaluationRecords,
+  inspectHoverEvaluationStorage,
   loadEvaluationRecords,
   loadHoverEvaluationRecords,
   saveEvaluationRecords,
@@ -34,6 +36,10 @@ const primaryInput = document.querySelector("#v2-primary");
 const error = document.querySelector("#v2-error");
 const palettes = document.querySelector("#palettes");
 const examples = document.querySelector("#examples");
+const hoverEvidenceSummary = document.querySelector("#hover-evidence-summary");
+const hoverEvidenceRecords = document.querySelector("#hover-evidence-records");
+const clearHoverEvidence = document.querySelector("#clear-hover-evidence");
+const hoverEvidenceStatus = document.querySelector("#hover-evidence-status");
 const relationships = document.querySelector("#relationships");
 const checks = document.querySelector("#checks");
 const quality = document.querySelector("#quality");
@@ -73,6 +79,9 @@ const FOUNDATION_ROLES = [
 const galleryResults = new Map();
 let evaluationRecords = loadEvaluationRecords();
 let hoverEvaluationRecords = loadHoverEvaluationRecords();
+let hoverStorageState = inspectHoverEvaluationStorage();
+let clearHoverEvidenceArmed = false;
+let clearHoverEvidenceTimer;
 
 function currentHoverEvaluation() {
   if (!currentResult) return null;
@@ -84,6 +93,49 @@ function currentHoverEvaluation() {
       )
     ],
   );
+}
+
+function validHoverEvaluations() {
+  return Object.values(hoverEvaluationRecords)
+    .map(normalizeHoverEvaluation)
+    .filter(Boolean);
+}
+
+function renderHoverEvidenceManager() {
+  const records = validHoverEvaluations();
+  const storedCount = Object.keys(hoverEvaluationRecords).length;
+  const ignoredCount =
+    storedCount - records.length + (hoverStorageState.unreadable ? 1 : 0);
+  const judgments = records.reduce(
+    (total, record) =>
+      total +
+      ["light", "dark"].filter((mode) => record.modes[mode].judgment).length,
+    0,
+  );
+  hoverEvidenceSummary.textContent = records.length
+    ? `${records.length} record${records.length === 1 ? "" : "s"} · ${judgments} mode judgment${judgments === 1 ? "" : "s"}${ignoredCount ? ` · ${ignoredCount} unreadable` : ""}`
+    : ignoredCount
+      ? `${ignoredCount} unreadable record${ignoredCount === 1 ? "" : "s"}`
+      : "No saved observations";
+  clearHoverEvidence.disabled = !hoverStorageState.present;
+  if (!records.length) {
+    hoverEvidenceRecords.innerHTML = `<p class="hover-evidence-empty">${ignoredCount ? "Stored data does not match the current hover evidence schema. You can clear it below." : "Nothing is stored in the hover evidence boundary."}</p>`;
+    return;
+  }
+  hoverEvidenceRecords.innerHTML = records
+    .map(
+      (record) =>
+        `<article><header><strong>${record.input}</strong><small>${escapeHtml(record.policyVersion)} · ${escapeHtml(record.specimen)}</small></header>${[
+          "light",
+          "dark",
+        ]
+          .map((mode) => {
+            const observation = record.modes[mode];
+            return `<div><b>${mode}</b><span>${escapeHtml(observation.judgment ?? "not rated")}</span>${observation.note ? `<q>${escapeHtml(observation.note)}</q>` : ""}</div>`;
+          })
+          .join("")}</article>`,
+    )
+    .join("");
 }
 
 function visibleModes() {
@@ -522,6 +574,7 @@ function render(result) {
   paletteTitle.textContent = `${result.input.primary} · ${resultMode === "compare" ? "Light and dark" : `${resultMode[0].toUpperCase()}${resultMode.slice(1)}`}`;
   renderPalettes();
   renderExamples();
+  renderHoverEvidenceManager();
   renderRelationships();
   renderFoundationMap();
   renderSemanticMaps();
@@ -599,6 +652,10 @@ document
   });
 
 function updateHoverEvaluation(mode, change) {
+  window.clearTimeout(clearHoverEvidenceTimer);
+  clearHoverEvidenceArmed = false;
+  clearHoverEvidence.textContent = "Clear hover evidence";
+  hoverEvidenceStatus.textContent = "";
   const key = hoverEvaluationKey(
     currentResult.input.primary,
     currentResult.policyVersion,
@@ -615,8 +672,50 @@ function updateHoverEvaluation(mode, change) {
       [mode]: { ...(existing?.modes[mode] ?? {}), ...change },
     },
   };
-  saveHoverEvaluationRecords(hoverEvaluationRecords);
+  if (!saveHoverEvaluationRecords(hoverEvaluationRecords)) {
+    hoverEvidenceStatus.textContent =
+      "Could not save browser storage; this observation is temporary.";
+  } else {
+    hoverStorageState = {
+      present: true,
+      unreadable: false,
+      records: hoverEvaluationRecords,
+    };
+  }
+  renderHoverEvidenceManager();
 }
+
+clearHoverEvidence.addEventListener("click", () => {
+  if (!clearHoverEvidenceArmed) {
+    clearHoverEvidenceArmed = true;
+    clearHoverEvidence.textContent = "Confirm clear all";
+    hoverEvidenceStatus.textContent =
+      "Click again to delete every hover observation. This cannot be undone.";
+    window.clearTimeout(clearHoverEvidenceTimer);
+    clearHoverEvidenceTimer = window.setTimeout(() => {
+      clearHoverEvidenceArmed = false;
+      clearHoverEvidence.textContent = "Clear hover evidence";
+      hoverEvidenceStatus.textContent = "Clear cancelled.";
+    }, 5000);
+    return;
+  }
+  window.clearTimeout(clearHoverEvidenceTimer);
+  if (!clearHoverEvaluationRecords()) {
+    clearHoverEvidenceArmed = false;
+    clearHoverEvidence.textContent = "Clear hover evidence";
+    hoverEvidenceStatus.textContent = "Could not clear browser storage.";
+    return;
+  }
+  hoverEvaluationRecords = {};
+  hoverStorageState = { present: false, unreadable: false, records: {} };
+  clearHoverEvidenceArmed = false;
+  clearHoverEvidence.textContent = "Clear hover evidence";
+  hoverEvidenceStatus.textContent =
+    "Hover evidence cleared. Overall gallery ratings were kept.";
+  renderExamples();
+  renderQuality();
+  renderHoverEvidenceManager();
+});
 
 examples.addEventListener("click", (event) => {
   const judgment = event.target.closest("[data-hover-judgment]");
