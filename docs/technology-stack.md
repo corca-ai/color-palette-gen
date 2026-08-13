@@ -2,4 +2,12 @@
 
 ## Confirmed stack
 
-- JavaScript ES modules in the browser with Node.js tooling, Node's test runner, Prettier, Playwright, and GitHub Actions. The site is assembled as static files without an application bundler.
+- Runtime: browser-native JavaScript ES modules, HTML, CSS, and a module Web
+  Worker; no backend or application bundler.
+- Tooling: Node.js from `.node-version`, Node's test runner, ESLint, Prettier,
+  and Playwright.
+- Delivery: repository-owned static build scripts and GitHub Actions deployment
+  to GitHub Pages.
+- Dependencies and exact versions are owned by `package.json` and
+  `package-lock.json`; component boundaries are owned by
+  [Architecture](architecture.md).

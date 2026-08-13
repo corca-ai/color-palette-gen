@@ -29,8 +29,8 @@ v2의 공개 계약은 단순합니다.
 하나의 primary로 완성된 light/dark semantic palette를 만들고, 다음 순서로
 결과와 근거를 전달합니다.
 
-1. **Generated palette**: 어떤 색이 어떤 역할로 생성되었는가?
-2. **Applied example**: 이 역할들이 실제 interface hierarchy를 만드는가?
+1. **Applied example**: 생성된 역할들이 실제 interface hierarchy를 만드는가?
+2. **Generated palette**: 어떤 색이 어떤 역할로 생성되었는가?
 3. **Decision evidence**: 목표와 탈락 후보 중 왜 이 색이 선택되었는가?
 4. **Quality review**: hard contract 통과 후에도 남은 디자인 품질 신호는 무엇인가?
 5. **Relationships**: 결과 역할들은 어떤 구조로 연결되는가?
@@ -91,28 +91,40 @@ list[(color, function)]
 
 입력된 색상 간의 조화와 지정된 vibe를 함께 고려하여, 일관된 UI 디자인에 활용할 수 있는 색상과 기능의 조합을 생성합니다.
 
-## 공개 문서
+## 현재 v2 문서
 
 - [프로젝트 방향](docs/product-direction.md)
+- [구조와 실행 경계](docs/architecture.md)
+- [기술 스택](docs/technology-stack.md)
 - [개발 및 검증](docs/development.md)
 - [협업 및 공개 저장소 원칙](docs/collaboration.md)
 - [단기 로드맵](docs/roadmap.md)
 - [운영자 인수 기준](docs/operator-acceptance.md)
+- [공개 표준 기반 설계 근거](docs/public-design-basis.md)
+- [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
+- [v2 색상 결정 정당화 모델](docs/v2-decisions/README.md)
+
+## 보존된 실험 문서
+
+아래 문서는 현재 v2 계약이 아니라 v1 실험과 초기 탐색의 기록입니다.
+
 - [프로토타입 도메인 명세](docs/prototype-domain-spec.md)
 - [초기 설계 기록](docs/prototype-plan.md)
 - [엔진 검증 및 한계](docs/engine-testing-plan.md)
 - [참고 자료와 적용 근거](docs/reference-insights.md)
-- [공개 표준 기반 설계 근거](docs/public-design-basis.md)
-- [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
-- [공개 로드맵 아이디어](docs/output-artifact-proposal.md)
-- [v2 색상 결정 정당화 모델](docs/v2-decisions/README.md)
+- [초기 출력 확장 제안](docs/output-artifact-proposal.md)
 
 ## 프로토타입 실행
 
-프로젝트 루트에서 정적 파일 서버를 실행한 뒤 브라우저로 접속합니다.
+`.node-version`에 선언된 Node.js 버전에서 의존성을 설치하고 공개 artifact를
+만든 뒤 저장소의 정적 서버로 실행합니다.
+평가 갤러리 JSON은 빌드 과정에서 생성되므로 소스 디렉터리를 직접 서빙하는
+것은 완전한 v2 확인 경로가 아닙니다.
 
 ```sh
-python3 -m http.server 4173
+npm ci
+npm run build
+node scripts/serve-site.mjs 4173
 ```
 
 ```text
@@ -120,9 +132,7 @@ http://localhost:4173/       # v2 default
 http://localhost:4173/v1/   # v1 experiment
 ```
 
-기본 v2는 primary 하나로 light/dark color palette를 생성합니다. 기존
-v1에서는 초기 입력 `#FF0000`과 `balanced` vibe를 사용하며 Palette, Content,
-Form, States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
+기본 v2는 primary 하나로 light/dark color palette를 생성합니다.
 
 팔레트 작성 도구는 중립적인 기준면을 유지하고, 적용 샘플은 공개된 디자인
 아틀라스의 Foundation, Navigation, Messages, Composer, component state 구성을
@@ -135,6 +145,10 @@ APCA, interactive boundary와 focus는 WCAG 비텍스트 대비, 상태와 destr
 분리는 Oklab Delta E 계약으로 검증합니다. 자세한 정책은
 [`docs/v2-spec.md`](docs/v2-spec.md)에 기록되어 있습니다.
 
+## 보존된 v1 구현 참고
+
+기존 v1에서는 초기 입력 `#FF0000`과 `balanced` vibe를 사용하며 Palette,
+Content, Form, States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
 Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 맞게 표시됩니다.
 
 - 공통: candidate와 sRGB output의 OKLCH 변화축
@@ -147,22 +161,13 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 
 ## 구조
 
-색을 계산하는 코드와 결과를 보여주는 코드를 분리했습니다.
+색을 계산하는 코드와 결과를 보여주는 코드를 분리했습니다. 아래는 진입점만
+요약하며 자세한 소유 경계는 [Architecture](docs/architecture.md)에 있습니다.
 
-- `lib/color-math.js`: sRGB/OKLCH 변환, 대비, gamut mapping
-- `lib/harmony.js`: 색상환 관계와 supporting color 도출
-- `lib/palette-engine.js`: 입력과 vibe/harmony 해석
-- `lib/palette-generator.js`: semantic token과 디버깅 trace 생성
-- `lib/constraints.js`: 대비, 색역, 상태 변화, hue 관계 검증
-- `v1/`: 유지보수 전용인 기존 입력 처리, 시각화, 사용자 인터랙션
+- `v1/`와 `lib/`: 유지보수 전용 실험 UI와 기존 팔레트 엔진
 - `v2/lib/palette.js`: 팔레트 생성 오케스트레이션
-- `v2/lib/pair-selection.js`: light/dark 후보 쌍의 순위 결정
-- `v2/lib/quality.js`: 독립 품질 평가와 상태 진행 검증
-- `v2/lib/palette-runtime.js`: worker 실행과 결과 캐시
-- `v2/lib/evaluation-store.js`: 로컬 디자이너 평가 저장 경계
-- `v2/lib/view.js`: 순수 HTML 마크업 생성
-- `v2/styles/`: base, specimen, decision graph, review, responsive 스타일 경계
-- `v2/app.js`: DOM 상태와 사용자 이벤트를 연결하는 controller
+- `v2/app.js`와 `v2/styles/`: 현재 UI, 상호작용, 표시 경계
+- `scripts/build-site.mjs`: 배포 artifact와 고정 평가 세트 조립
 - `docs/v2-spec.md`: v2 범위, 공개 디자인 참고 규칙, APCA 선택 근거
 
 브라우저 없이 계산 규칙과 진입 스크립트 문법을 함께 확인하려면 다음을
@@ -175,10 +180,10 @@ npm run check
 이 빠른 게이트에는 v2/shared 코드 20, 유지보수 전용 v1 코드 25를 상한으로
 하는 순환 복잡도 검사도 포함됩니다.
 
-테스트는 대표 primary 색상과 모든 vibe, harmony 후보, 입력 모드를
-조합하여 필수 function, trace, 대비 및 관계 조건을 검사합니다.
+v2 fast 테스트는 대표 primary 입력과 Light/Dark 계약을 검사합니다. 모든
+vibe/harmony 후보 및 다중 색상 입력 조합은 보존된 v1 엔진의 회귀 검증입니다.
 
-## 접근성 대비 모델
+## 보존된 v1 접근성 대비 모델
 
 팔레트는 OKLCH의 지각 명도 축으로 후보를 만든 뒤, gamut mapping과 8-bit HEX
 반올림까지 끝난 실제 sRGB 결과로 WCAG 대비를 다시 계산합니다. 원래 후보가
@@ -206,8 +211,14 @@ soft surface 위 텍스트에는 대응하는 `accent text`, accent fill 위 텍
 배포할 수 있습니다. 팔레트 저장, 사용자 계정, 공유 데이터베이스는 아직
 포함하지 않습니다.
 
-사용자가 입력한 색상은 브라우저 안에서만 계산하며 외부 API, analytics,
-cookie 또는 browser storage로 전송하거나 저장하지 않습니다.
+사용자가 입력한 색상은 브라우저 안에서만 계산하며 외부 API, analytics 또는
+cookie로 전송하지 않습니다. 생성만으로는 primary를 영속화하지 않습니다.
+다만 사용자가 hover 평가를 명시적으로 기록하면 primary, 정책·specimen 버전,
+Light/Dark 판단과 메모가 현재 브라우저의 local storage에 저장됩니다. 이 hover
+evidence는 현재 export되지 않습니다. 카드의 전체 팔레트 평가는 primary를 key로
+정책 버전, 선택적 rating·메모와 함께 별도로 저장되며, 사용자가 `Export JSON`을
+실행하면 이 전체 평가 기록만 파일에 포함됩니다. 결과 보기 모드도 local
+storage에 저장됩니다.
 
 ## GitHub Pages 배포
 

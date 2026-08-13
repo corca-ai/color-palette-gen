@@ -13,10 +13,11 @@ a compatibility fallback when workers are unavailable.
 ## Evaluation gallery
 
 The fixed 14-input evaluation set is generated during `npm run build`. Its
-static JSON contains only the values and paired-quality summary required to draw
-the gallery, not the much larger candidate traces. Opening the gallery therefore
-performs no palette search. Loading one card requests its complete inspectable
-result from the worker and then caches it.
+static JSON contains the values, paired-quality summary, and non-normative hover
+diagnostics required to draw and prioritize the gallery, not the much larger
+candidate traces. Opening the gallery therefore performs no palette search.
+Loading one card requests its complete inspectable result from the worker and
+then caches it.
 
 The generated file includes its policy version. It must be rebuilt whenever the
 engine policy changes; the normal site build already enforces that coupling.

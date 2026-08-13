@@ -244,7 +244,7 @@ status.success.{background,foreground,text}
 중요한 우선순위:
 
 ```text
-internal accessibility policy
+declared accessibility constraints
 > semantic meaning
 > explicit user colors
 > vibe preferences

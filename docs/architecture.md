@@ -2,7 +2,8 @@
 
 ## Technology stack
 
-- Static browser application written in JavaScript, with Node.js tooling; Node's test runner, Prettier, Playwright, and GitHub Actions.
+The stack inventory is maintained in [Technology stack](technology-stack.md);
+this document owns component and runtime boundaries.
 
 ## Runtime boundaries
 
@@ -23,9 +24,12 @@
   the static build where applicable.
 - `scripts/build-site.mjs` assembles v2 at the artifact root, v1 under
   `dist/v1/`, and shared browser modules under `dist/lib/`.
-- There is no backend, account system, database, analytics, cookie, or browser
-  persistence for palette inputs. Designer evaluation persistence is local to
-  the browser and can be exported explicitly.
+- There is no backend, account system, database, analytics, or cookie. Palette
+  generation alone does not persist the primary. Hover evidence stores primary,
+  policy/specimen identity, and per-mode judgment/note in browser-local storage
+  and currently has no export path. Overall gallery evaluation stores a
+  primary-keyed policy version and optional rating/note separately; only those
+  overall records can be explicitly exported.
 
 ## Change boundaries
 
