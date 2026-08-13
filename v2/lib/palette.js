@@ -9,6 +9,7 @@ import {
   pairedQuality,
   sourceUsageAlternatives,
 } from "./quality.js";
+import { evaluatePrimaryActionSemantics } from "./semantic-model.js";
 import {
   apcaContrast,
   bindRule,
@@ -1304,6 +1305,7 @@ export function generatePaletteV2({ primary }) {
     pairSelection.quality,
   );
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
+  const semanticEvaluation = evaluatePrimaryActionSemantics(modes, quality);
   const result = {
     version: 2,
     policyVersion: V2_POLICY.version,
@@ -1321,6 +1323,7 @@ export function generatePaletteV2({ primary }) {
     contrastModel: "APCA-W3 0.1.9 text + WCAG non-text",
     modes,
     quality,
+    semanticEvaluation,
     pairDecision: pairSelection.decision,
     sourceAlternatives,
     passed: Object.values(modes).every((mode) => mode.passed),

@@ -7,6 +7,7 @@ import {
   saveEvaluationRecords,
 } from "./lib/evaluation-store.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
+import { formatSemanticCounts } from "./lib/semantic-model.js";
 import {
   appliedExampleView,
   colorCoordinates,
@@ -295,7 +296,9 @@ function renderQuality() {
     resultMode === "compare"
       ? `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>`
       : `<aside class="mode-review-note"><strong>${resultMode} review</strong><span>Cross-mode identity and pair ranking are available in Compare.</span></aside>`;
-  quality.innerHTML = `${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
+  const semanticModel = currentResult.semanticEvaluation;
+  const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared design intent</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
+  quality.innerHTML = `${semanticIntent}${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
     .map((mode) => {
       const state = result.states[mode];
       return `<article><header><span>${mode} state pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;

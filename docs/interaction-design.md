@@ -104,9 +104,14 @@ Question:
 
 > What design-quality concerns remain after hard palette contracts pass?
 
-This section contains provisional or empirical review signals such as source
-fidelity, cross-mode identity, semantic ambiguity, and state pacing. It must not
-present these signals as accessibility pass/fail.
+This section begins with the small semantic model that declares constraints,
+invariants, relations, and experiential intent independently from the formulas
+used to generate colors. Automated evidence may satisfy measurable declarations,
+but experiential intent such as hover discoverability remains `needs-review`
+until an interactive specimen rating is recorded. The remaining cards contain
+provisional or empirical signals such as source fidelity, cross-mode identity,
+semantic ambiguity, and state pacing. They must not present these signals as
+accessibility pass/fail.
 
 ### Representative evaluation set
 

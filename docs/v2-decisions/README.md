@@ -35,6 +35,8 @@ must fail the decision-record test.
   [Implementation status](status.md).
 - To understand why only the sample adopts a public reference structure, read
   [Public reference specimen](craken-integration.md).
+- To understand how design intent stays separate from formulas, read the
+  [Declarative design semantic model](semantic-model.md).
 - To understand designer ratings and their limits, read
   [Evaluation protocol](evaluation.md).
 - To understand worker generation, caching, and the precomputed gallery, read
