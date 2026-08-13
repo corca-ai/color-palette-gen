@@ -31,6 +31,8 @@ must fail the decision-record test.
   [Candidate search](candidate-search.md).
 - To understand a particular palette role, go directly to
   [Role policies](role-policies.md).
+- To understand why disabled and popover roles currently reuse foundation
+  colors, read [Utility role aliases](utility-role-aliases.md).
 - To distinguish implemented search from future work, read
   [Implementation status](status.md).
 - To understand why only the sample adopts a public reference structure, read

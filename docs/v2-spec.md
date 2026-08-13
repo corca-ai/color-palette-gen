@@ -181,7 +181,9 @@ calibrated perceptual model.
 The UI reports semantic role count and unique color count separately. Multiple
 roles may intentionally alias one color when documented, but `primary` and
 `focus ring` are independently searched because their component duties differ;
-an alias is never presented as a new color.
+an alias is never presented as a new color. Disabled and popover aliases remain
+intentional until a reproducible public component case demonstrates a distinct
+duty under the [utility-role promotion contract](v2-decisions/utility-role-aliases.md).
 
 ## Deployment and navigation
 

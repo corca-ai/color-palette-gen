@@ -80,8 +80,8 @@ export const ROLE_CLASSIFICATION = {
   },
   nonColorRequirements: {
     disabled: [
-      "disabled attribute",
-      "no pointer activation",
+      "disabled semantics exposed to assistive technology",
+      "activation blocked",
       "reduced emphasis",
     ],
     selection: ["selected state semantics", "shape or position cue"],

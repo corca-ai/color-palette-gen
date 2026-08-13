@@ -56,7 +56,9 @@ and the per-candidate result of each rule.
   a stable example token namespace.
 
 Disabled and popover roles are explicit semantic aliases to foundation roles.
-No semantic output role remains a policy anchor.
+Their independent searches are intentionally deferred until a reproducible
+public component case demonstrates a distinct duty under the documented
+promotion contract. No semantic output role remains a policy anchor.
 
 ## Verification
 
@@ -77,10 +79,7 @@ No semantic output role remains a policy anchor.
 ## Next migration
 
 1. Validate foundation and focus search targets through designer ratings.
-2. Decide from demonstrated consumer use cases whether popover and disabled
-   aliases need independent searches; accent and secondary remain intentionally
-   unsupported.
-3. Aggregate exported designer evaluations and analyze inter-rater agreement.
-4. Promote thresholds from `heuristic` to `empirical` only with recorded data.
-5. Review upstream `apca-w3` releases before changing the pinned verification
+2. Aggregate exported designer evaluations and analyze inter-rater agreement.
+3. Promote thresholds from `heuristic` to `empirical` only with recorded data.
+4. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

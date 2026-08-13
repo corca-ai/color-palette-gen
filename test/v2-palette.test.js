@@ -354,6 +354,13 @@ test("identical normalized inputs reuse the complete generated palette", () => {
 });
 
 test("application utility roles are explicit searches or documented aliases", () => {
+  assert.deepEqual(ROLE_CLASSIFICATION.aliases, {
+    "disabled background": "muted surface",
+    "disabled text": "muted text",
+    "disabled border": "border",
+    popover: "raised surface",
+    "popover text": "foreground",
+  });
   const result = generatePaletteV2({ primary: "#507096" });
   for (const mode of ["light", "dark"]) {
     const { decisions, values } = result.modes[mode];
@@ -367,6 +374,14 @@ test("application utility roles are explicit searches or documented aliases", ()
       assert.deepEqual(decisions[role].aliases, [source]);
     }
   }
+});
+
+test("disabled aliases retain non-color state requirements", () => {
+  assert.deepEqual(ROLE_CLASSIFICATION.nonColorRequirements.disabled, [
+    "disabled semantics exposed to assistive technology",
+    "activation blocked",
+    "reduced emphasis",
+  ]);
 });
 
 test("feedback states keep one readable label and remain ordered", () => {

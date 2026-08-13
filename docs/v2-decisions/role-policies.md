@@ -162,9 +162,9 @@ non-color cue.
 
 Disabled background, text, and border deliberately alias muted foundation roles.
 Popover and popover text deliberately alias raised surface and foreground. These
-are documented semantic aliases, not hidden independent color decisions. A
-demonstrated consumer need for stronger elevation or disabled differentiation
-is the trigger for turning them into independent searches.
+are documented semantic aliases, not hidden independent color decisions. The
+promotion contract and explicit deferral are recorded in
+[Utility role aliases](utility-role-aliases.md).
 
 ## Text colors
 
