@@ -117,6 +117,11 @@ The applied example owns hover evidence capture because it contains the actual
 interactive Primary button. Light and Dark each require a judgment and note;
 the Quality section only renders the resulting semantic status.
 
+The Quality section also exposes hover risk diagnostics below the semantic
+model. It presents Oklab and CIEDE2000 differences plus context-contrast
+trajectories as measurements, never as an accessibility pass or a substitute
+for the interactive judgment.
+
 ### Representative evaluation set
 
 Question:

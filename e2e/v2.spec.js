@@ -209,6 +209,15 @@ test("accessibility pass and independent review remain separate", async ({
   await expect(
     page.locator(".semantic-intent-review header strong"),
   ).toHaveText("3 satisfied · 1 needs review");
+  await expect(page.locator(".hover-diagnostic-review")).toContainText(
+    "Signals review priority",
+  );
+  await expect(page.locator(".hover-diagnostic-review")).toContainText(
+    "CIEDE2000",
+  );
+  await expect(page.locator(".hover-diagnostic-review")).toContainText(
+    "unclassified priority",
+  );
   await expect(page.locator("#quality .review")).not.toHaveCount(0);
 });
 

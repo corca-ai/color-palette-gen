@@ -334,7 +334,18 @@ function renderQuality() {
     ),
   );
   const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared design intent</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
-  quality.innerHTML = `${semanticIntent}${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
+  const hoverDiagnostics = currentResult.hoverDiagnostics;
+  const diagnosticPair = (mode, context, name, label) => {
+    const pair = hoverDiagnostics.modes[mode].pairs[name];
+    const signal = pair.contexts[context];
+    const direction = signal.change > 0 ? "↗" : signal.change < 0 ? "↘" : "→";
+    return `<li><i>${direction}</i><span><strong>${mode} · ${context} · ${label}</strong><small>Oklab ΔE ${pair.oklabDeltaE.toFixed(3)} · CIEDE2000 ${pair.ciede2000.toFixed(2)}</small><em>Context contrast ${signal.contrast[0].toFixed(2)} → ${signal.contrast[1].toFixed(2)} · signed change ${signal.change.toFixed(2)}</em></span><b>diagnostic</b></li>`;
+  };
+  const diagnosticFlags = hoverDiagnostics.structuralFlags.length
+    ? ` Structural flags: ${hoverDiagnostics.structuralFlags.join(", ")}.`
+    : " No structural flags; perceptual risk remains unclassified.";
+  const diagnosticCard = `<article class="hover-diagnostic-review"><header><span>Hover risk diagnostics</span><strong>${hoverDiagnostics.reviewPriority} priority</strong></header><p>${hoverDiagnostics.interpretation}${diagnosticFlags}</p><ul>${modes.flatMap((mode) => [diagnosticPair(mode, "surface", "defaultToHover", "default → hover"), diagnosticPair(mode, "surface", "hoverToActive", "hover → active"), diagnosticPair(mode, "background", "defaultToHover", "default → hover")]).join("")}</ul></article>`;
+  quality.innerHTML = `${semanticIntent}${diagnosticCard}${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
     .map((mode) => {
       const state = result.states[mode];
       return `<article><header><span>${mode} state pacing</span><strong>${state.passed ? "Balanced" : "Review"}</strong></header><div class="state-interval"><i style="flex:${state.defaultToHover}"></i><i style="flex:${state.hoverToActive}"></i></div><p>Default → hover <b>${state.defaultToHover.toFixed(3)}</b><br>Hover → active <b>${state.hoverToActive.toFixed(3)}</b></p><ul>${state.checks.map(qualityCheck).join("")}</ul></article>`;

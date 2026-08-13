@@ -33,7 +33,8 @@ body:not([data-result-mode="compare"]) .quality-grid {
   border: 1px solid var(--line);
   padding: 16px;
 }
-.quality-grid .semantic-intent-review {
+.quality-grid .semantic-intent-review,
+.quality-grid .hover-diagnostic-review {
   grid-column: 1 / -1;
 }
 .pair-decision {
@@ -634,4 +635,3 @@ body:not([data-result-mode="compare"]) .quality-grid {
   opacity: 1;
   transform: translate(-50%, 0);
 }
-

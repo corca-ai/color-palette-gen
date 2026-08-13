@@ -37,6 +37,8 @@ must fail the decision-record test.
   [Public reference specimen](craken-integration.md).
 - To understand how design intent stays separate from formulas, read the
   [Declarative design semantic model](semantic-model.md).
+- To understand non-normative signals that prioritize hover review, read
+  [Hover risk diagnostics](hover-diagnostics.md).
 - To understand designer ratings and their limits, read
   [Evaluation protocol](evaluation.md).
 - To understand worker generation, caching, and the precomputed gallery, read

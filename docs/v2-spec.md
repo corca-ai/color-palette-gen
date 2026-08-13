@@ -166,6 +166,13 @@ policy version, specimen version, and separate Light/Dark judgments with notes.
 It may resolve the UI's semantic evaluation, but it does not mutate
 `result.passed`, generated colors, or exported token JSON.
 
+`result.hoverDiagnostics` supplies non-normative review signals calculated from
+final sRGB output: Oklab Delta E, CIEDE2000, contrast trajectories against the
+declared surface and background, duplicate detection, and surface-trajectory
+reversal. These diagnostics may prioritize review but cannot satisfy the
+`hover-discoverable` intent or change the deterministic palette verdict. See
+[`v2-decisions/hover-diagnostics.md`](v2-decisions/hover-diagnostics.md).
+
 The UI reports semantic role count and unique color count separately. Multiple
 roles may intentionally alias one color when documented, but `primary` and
 `focus ring` are independently searched because their component duties differ;

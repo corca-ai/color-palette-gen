@@ -10,6 +10,7 @@ import {
   sourceUsageAlternatives,
 } from "./quality.js";
 import { evaluatePrimaryActionSemantics } from "./semantic-model.js";
+import { diagnosePrimaryHover } from "./hover-diagnostics.js";
 import {
   apcaContrast,
   bindRule,
@@ -1306,6 +1307,7 @@ export function generatePaletteV2({ primary }) {
   );
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
   const semanticEvaluation = evaluatePrimaryActionSemantics(modes, quality);
+  const hoverDiagnostics = diagnosePrimaryHover(modes);
   const result = {
     version: 2,
     policyVersion: V2_POLICY.version,
@@ -1324,6 +1326,7 @@ export function generatePaletteV2({ primary }) {
     modes,
     quality,
     semanticEvaluation,
+    hoverDiagnostics,
     pairDecision: pairSelection.decision,
     sourceAlternatives,
     passed: Object.values(modes).every((mode) => mode.passed),
