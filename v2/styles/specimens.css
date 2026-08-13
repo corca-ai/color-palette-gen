@@ -36,83 +36,56 @@
   color: var(--sample-muted-text);
   font-size: 9px;
 }
-.reference-state-grid {
-  display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(4, 1fr);
-}
-.reference-state-grid > div {
+.reference-primary-playground {
+  align-items: center;
   border: 1px solid var(--sample-border);
   border-radius: 5px;
-  padding: 7px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(150px, 210px) 1fr;
+  padding: 14px;
 }
-.reference-state-grid span {
+.reference-primary-playground p {
+  margin: 0;
+}
+.reference-primary-playground span,
+.reference-primary-playground output {
   color: var(--sample-muted-text);
   display: block;
   font-size: 9px;
-  margin-bottom: 5px;
 }
-.reference-state-grid button,
+.reference-primary-playground output {
+  color: var(--sample-foreground);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 650;
+  margin-top: 4px;
+}
+.reference-primary-demo,
 .reference-primary {
   background: var(--sample-primary);
   border: 1px solid var(--sample-primary-border);
   border-radius: 4px;
   color: var(--sample-primary-text);
-  font-size: 10px;
+  cursor: pointer;
+  font-size: 11px;
   font-weight: 650;
-  min-height: 30px;
+  min-height: 38px;
   width: 100%;
 }
-.reference-state-grid button:hover,
-.reference-state-grid button.hover {
+.reference-primary-demo:hover {
   background: var(--sample-primary-hover);
 }
-.reference-state-grid button:active,
-.reference-state-grid button.active {
+.reference-primary-demo:active {
   background: var(--sample-primary-active);
+  transform: translateY(1px);
 }
-.reference-state-grid button.focused,
-.reference-state-grid button:focus-visible,
+.reference-primary-demo:focus-visible,
 .reference-primary:focus-visible,
 .reference-secondary:focus-visible,
 .reference-channel button:focus-visible {
   outline: 3px solid var(--sample-focus-ring);
   outline-offset: 2px;
-}
-.reference-semantic-grid {
-  display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  margin-top: 8px;
-}
-.reference-semantic-grid button {
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 9px;
-  font-weight: 650;
-  min-height: 30px;
-  padding: 0 7px;
-}
-.reference-semantic-grid .warning {
-  background: var(--sample-warning);
-  color: var(--sample-warning-text);
-}
-.reference-semantic-grid .destructive {
-  background: var(--sample-destructive);
-  color: var(--sample-destructive-text);
-}
-.reference-semantic-grid .destructive.hover {
-  background: var(--sample-destructive-hover);
-}
-.reference-semantic-grid .destructive.active {
-  background: var(--sample-destructive-active);
-}
-.reference-semantic-grid .disabled {
-  background: var(--sample-disabled-background);
-  border-color: var(--sample-disabled-border);
-  color: var(--sample-disabled-text);
-  cursor: not-allowed;
-  opacity: 0.72;
 }
 .reference-shell {
   background: var(--sample-background);
@@ -397,6 +370,29 @@
   min-height: 28px;
   padding: 0 10px;
 }
+.reference-feedback button:hover {
+  background: var(--sample-destructive-hover);
+}
+.reference-feedback button:active {
+  background: var(--sample-destructive-active);
+  transform: translateY(1px);
+}
+.reference-feedback button:focus-visible {
+  outline: 3px solid var(--sample-focus-ring);
+  outline-offset: 2px;
+}
+.reference-feedback[data-moved="true"] {
+  background: var(--sample-selection);
+  color: var(--sample-selection-text);
+}
+.reference-feedback[data-moved="true"] small {
+  color: var(--sample-selection-text);
+}
+.reference-feedback[data-moved="true"] button {
+  background: var(--sample-muted-surface);
+  border: 1px solid var(--sample-border);
+  color: var(--sample-foreground);
+}
 .relationship-section {
   margin-top: 64px;
 }
@@ -487,4 +483,3 @@
   height: 36px;
   min-width: 18px;
 }
-

@@ -46,6 +46,14 @@ const GROUPS = [
   },
 ];
 
+const ROLE_LABELS = {
+  "brand source": "Original input",
+};
+
+function roleLabel(role) {
+  return ROLE_LABELS[role] ?? role;
+}
+
 export function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -119,7 +127,7 @@ function decisionView(decision) {
 }
 
 function swatch(color, role, decision, mode) {
-  return `<details class="swatch" data-mode="${mode}" data-role="${role}"${role === "primary" ? " open" : ""}><summary><div class="swatch-color" style="background:${color}"></div><div class="swatch-copy"><strong>${role}</strong><code>${color}</code><small>${colorCoordinates(color)}</small></div><span class="why-label">Why?</span></summary>${decisionView(decision)}</details>`;
+  return `<details class="swatch" data-mode="${mode}" data-role="${role}"><summary><div class="swatch-color" style="background:${color}"></div><div class="swatch-copy"><strong>${roleLabel(role)}</strong><code>${color}</code><small>${colorCoordinates(color)}</small></div><span class="why-label">Why?</span></summary>${decisionView(decision)}</details>`;
 }
 
 export function paletteView(modeResult) {
@@ -134,7 +142,7 @@ export function paletteView(modeResult) {
       .filter(([, role]) => !role.includes("text") && role !== "focus ring")
       .map(([color]) => `<i style="background:${color}"></i>`)
       .join("")}</div>
-    <div class="palette-groups">${GROUPS.map((group) => `<section class="color-group"><h3>${group.name}</h3><div class="swatch-grid">${group.roles.map((role) => swatch(values[role], role, modeResult.decisions[role], modeResult.mode)).join("")}</div></section>`).join("")}</div>
+    <div class="palette-groups">${GROUPS.map((group) => `<details class="color-group"><summary><span>${group.name}</span><i>${group.roles.map((role) => `<b style="background:${values[role]}" title="${roleLabel(role)}"></b>`).join("")}</i><small>${group.roles.length} roles</small></summary><div class="swatch-grid">${group.roles.map((role) => swatch(values[role], role, modeResult.decisions[role], modeResult.mode)).join("")}</div></details>`).join("")}</div>
   </article>`;
 }
 
@@ -150,19 +158,10 @@ export function appliedExampleView(modeResult) {
     <div class="example-canvas">
       <div class="reference-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
       <section class="reference-state-specimen">
-        <header><strong>Primary button</strong><small>Normal, forced pseudo-state, and focus in one scan</small></header>
-        <div class="reference-state-grid">
-          <div><span>Normal</span><button tabindex="-1" aria-disabled="true">✓ Save</button></div>
-          <div><span>Hover</span><button class="hover" tabindex="-1" aria-disabled="true">✓ Save</button></div>
-          <div><span>Active</span><button class="active" tabindex="-1" aria-disabled="true">✓ Save</button></div>
-          <div><span>Focus</span><button class="focused" tabindex="-1" aria-disabled="true">✓ Save</button></div>
-        </div>
-        <div class="reference-semantic-grid">
-          <button class="warning" tabindex="-1" aria-disabled="true">Review warning</button>
-          <button class="destructive" tabindex="-1" aria-disabled="true">Delete workspace</button>
-          <button class="destructive hover" tabindex="-1" aria-disabled="true">Delete · hover</button>
-          <button class="destructive active" tabindex="-1" aria-disabled="true">Delete · active</button>
-          <button class="disabled" disabled tabindex="-1">Unavailable</button>
+        <header><strong>Try the primary action</strong><small>Hover, press, or focus the button</small></header>
+        <div class="reference-primary-playground">
+          <button type="button" class="reference-primary-demo">✓ Save changes</button>
+          <p><span>Current state</span><output>Default</output></p>
         </div>
       </section>
       <section class="reference-shell">
@@ -187,7 +186,7 @@ export function appliedExampleView(modeResult) {
         </div>
       </section>
       <aside class="reference-popover"><strong>Palette actions</strong><button tabindex="-1" aria-disabled="true">Copy CSS</button><button tabindex="-1" aria-disabled="true">Export tokens</button></aside>
-      <footer class="reference-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button tabindex="-1" aria-disabled="true">Move to Trash</button></footer>
+      <footer class="reference-feedback"><span><strong>Destructive action</strong><small>Semantic red remains separate from brand action.</small></span><button type="button" class="reference-destructive-demo">Move to Trash</button></footer>
     </div>
   </article>`;
 }

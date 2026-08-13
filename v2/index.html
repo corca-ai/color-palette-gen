@@ -74,28 +74,6 @@
         </form>
       </section>
 
-      <section class="palette-section" aria-labelledby="palette-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Generated palette</p>
-            <h2 id="palette-title">#507096 · Light and dark</h2>
-          </div>
-          <div class="output-actions">
-            <button id="copy-reference" type="button">
-              Copy reference JSON
-            </button>
-            <button id="copy-css" type="button">Copy palette CSS</button>
-          </div>
-        </div>
-        <p class="palette-help">
-          Brand source preserves the input exactly. Primary is its filled-action
-          adaptation, with an independent boundary token. Open
-          <strong>Why?</strong> to compare the selected color with the
-          best-ranked rejected and next-passing candidates.
-        </p>
-        <div id="palettes" class="palettes"></div>
-      </section>
-
       <section class="example-section" aria-labelledby="example-title">
         <div class="section-heading compact">
           <div>
@@ -103,13 +81,33 @@
             <h2 id="example-title">See the palette work in an interface.</h2>
           </div>
           <p>
-            Foundation, navigation, messages, composer, and forced component
-            states show the generated roles together. Coverage is informed by a
+            Foundation, navigation, messages, composer, and component states
+            show the generated roles together. Coverage is informed by a
             publicly documented design reference; the specimen is independent
             and does not imply affiliation.
           </p>
         </div>
         <div id="examples" class="examples"></div>
+      </section>
+
+      <section class="palette-section" aria-labelledby="palette-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Generated palette</p>
+            <h2 id="palette-title">#507096 · Light and dark</h2>
+          </div>
+          <div class="output-actions">
+            <button id="copy-reference" type="button">Copy reference JSON</button>
+            <button id="copy-css" type="button">Copy palette CSS</button>
+          </div>
+        </div>
+        <p class="palette-help">
+          Scan each role group, then expand only what you need. Open
+          <strong>Why?</strong> for selected and alternative color evidence.
+          Original input preserves the submitted color; Primary is its
+          UI-ready adaptation.
+        </p>
+        <div id="palettes" class="palettes"></div>
       </section>
 
 

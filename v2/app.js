@@ -80,6 +80,91 @@ function renderExamples() {
   examples.innerHTML = visibleModes()
     .map((mode) => appliedExampleView(currentResult.modes[mode]))
     .join("");
+
+  for (const button of examples.querySelectorAll(".reference-primary-demo")) {
+    const output = button.parentElement.querySelector("output");
+    const state = {
+      focused: false,
+      pointerInside: false,
+      pressed: false,
+      saved: false,
+    };
+    const renderState = () => {
+      output.value = state.pressed
+        ? "Pressed"
+        : state.saved
+          ? "Saved"
+          : state.pointerInside
+            ? "Hover"
+            : state.focused
+              ? "Focus"
+              : "Default";
+    };
+    button.addEventListener("pointerenter", () => {
+      state.pointerInside = true;
+      state.saved = false;
+      renderState();
+    });
+    button.addEventListener("pointerleave", () => {
+      state.pointerInside = false;
+      state.pressed = false;
+      renderState();
+    });
+    button.addEventListener("pointerdown", () => {
+      state.pressed = true;
+      state.saved = false;
+      renderState();
+    });
+    button.addEventListener("pointerup", () => {
+      state.pressed = false;
+      renderState();
+    });
+    button.addEventListener("focus", () => {
+      state.focused = true;
+      renderState();
+    });
+    button.addEventListener("blur", () => {
+      state.focused = false;
+      state.pressed = false;
+      state.saved = false;
+      renderState();
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        state.pressed = true;
+        state.saved = false;
+        renderState();
+      }
+    });
+    button.addEventListener("keyup", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        state.pressed = false;
+        renderState();
+      }
+    });
+    button.addEventListener("click", () => {
+      state.pressed = false;
+      state.saved = true;
+      renderState();
+    });
+  }
+
+  for (const button of examples.querySelectorAll(
+    ".reference-destructive-demo",
+  )) {
+    const feedback = button.closest(".reference-feedback");
+    const title = feedback.querySelector("strong");
+    const description = feedback.querySelector("small");
+    button.addEventListener("click", () => {
+      const moved = feedback.dataset.moved !== "true";
+      feedback.dataset.moved = String(moved);
+      title.textContent = moved ? "Moved to Trash" : "Destructive action";
+      description.textContent = moved
+        ? "The local specimen changed state. Nothing was persisted."
+        : "Semantic red remains separate from brand action.";
+      button.textContent = moved ? "Undo move" : "Move to Trash";
+    });
+  }
 }
 
 function renderRelationships() {
@@ -572,6 +657,7 @@ foundationMap.addEventListener("click", (event) => {
   document
     .querySelectorAll(".decision-candidate.graph-target")
     .forEach((candidate) => candidate.classList.remove("graph-target"));
+  swatch.closest(".color-group")?.setAttribute("open", "");
   swatch.open = true;
   const candidate = swatch.querySelector(
     `[data-candidate-kind="${node.dataset.kind}"]`,

@@ -128,9 +128,12 @@
   .decision-policy {
     grid-template-columns: 1fr;
   }
-  .reference-coverage,
-  .reference-state-grid {
+  .reference-coverage {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .reference-primary-playground {
+    align-items: stretch;
+    grid-template-columns: 1fr;
   }
   .reference-state-specimen > header {
     align-items: start;
@@ -165,4 +168,3 @@
     transition: none !important;
   }
 }
-

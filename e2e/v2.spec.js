@@ -15,13 +15,21 @@ test("@smoke generates both modes from one primary and exposes new semantic role
   await expect(page.locator('.swatch[data-role="brand source"]')).toHaveCount(
     1,
   );
+  await expect(page.locator(".color-group[open]")).toHaveCount(0);
+  await page
+    .locator(".color-group > summary")
+    .filter({ hasText: "Brand" })
+    .click();
+  await expect(
+    page.locator('.swatch[data-role="brand source"] .swatch-copy strong'),
+  ).toHaveText("Original input");
   await expect(page.locator('.swatch[data-role="primary border"]')).toHaveCount(
     1,
   );
   await expect(page.locator(".example.light .reference-warning")).toBeVisible();
   await expect(page.locator(".example.dark")).toHaveCount(0);
   await expect(
-    page.locator(".palette-section + .example-section"),
+    page.locator(".example-section + .palette-section"),
   ).toBeVisible();
 });
 
@@ -45,14 +53,43 @@ test("reference export stays generic and preserves the public token contract", a
   expect(JSON.stringify(exported).toLowerCase()).not.toContain("craken");
 });
 
-test("the applied example does not add inert controls to keyboard navigation", async ({
+test("the applied example exposes real primary and destructive interactions", async ({
   page,
 }) => {
+  const primary = page.getByRole("button", { name: "Save changes" });
+  const state = page.locator(".reference-primary-playground output");
+  await primary.hover();
+  await expect(state).toHaveText("Hover");
+  await primary.dispatchEvent("pointerdown");
+  await primary.focus();
+  await expect(state).toHaveText("Pressed");
+  await primary.dispatchEvent("pointerup");
+  await primary.click();
+  await expect(state).toHaveText("Saved");
+  await primary.press("Tab");
+  await page.mouse.move(0, 0);
+  await primary.focus();
+  await expect(state).toHaveText("Focus");
+  const width = await page
+    .locator(".examples")
+    .evaluate((element) => Number.parseFloat(getComputedStyle(element).width));
+  expect(width).toBeLessThanOrEqual(760);
   await expect(
     page.locator(
-      '.example :is(button, textarea):not([tabindex="-1"]), .example a[href]',
+      '.example :is(button, textarea):not(.reference-primary-demo):not(.reference-destructive-demo):not([tabindex="-1"]), .example a[href]',
     ),
   ).toHaveCount(0);
+
+  const destructive = page.locator(".reference-destructive-demo");
+  await expect(destructive).toHaveText("Move to Trash");
+  await destructive.click();
+  await expect(page.locator(".reference-feedback")).toHaveAttribute(
+    "data-moved",
+    "true",
+  );
+  await expect(destructive).toHaveText("Undo move");
+  await destructive.click();
+  await expect(destructive).toHaveText("Move to Trash");
 });
 
 test("@smoke result mode switches the complete inspector and persists", async ({
@@ -121,16 +158,35 @@ test("foundation graph and palette evidence stay synchronized", async ({
   const node = page.locator(
     '.decision-marker.selected[data-mode="light"][data-role="background"][data-axis="lightness"]',
   );
-  await node.click();
   const swatch = page.locator(
     '.swatch[data-mode="light"][data-role="background"]',
   );
+  const group = swatch.locator("xpath=ancestor::details[1]");
+  await expect(group).not.toHaveAttribute("open", "");
+  await node.click();
+  await expect(group).toHaveAttribute("open", "");
+  await expect(swatch).toBeVisible();
   await expect(swatch).toHaveAttribute("open", "");
   await expect(swatch.locator('[data-candidate-kind="selected"]')).toHaveClass(
     /graph-target/,
   );
   await swatch.locator(":scope > summary").click();
   await expect(node).toHaveClass(/active/);
+});
+
+test("compact palette remains expandable in mobile compare mode", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await expect(page.locator(".palette")).toHaveCount(2);
+  const firstGroup = page.locator(".color-group").first();
+  await firstGroup.locator(":scope > summary").click();
+  await expect(firstGroup).toHaveAttribute("open", "");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test("gallery is lazy and designer ratings persist", async ({ page }) => {

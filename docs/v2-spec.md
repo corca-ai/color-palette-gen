@@ -28,8 +28,8 @@ The palette is the product. Component previews, export formats, and contrast
 reports are permitted only as supporting inspection tools; they must not define
 the page hierarchy or expand the palette input contract.
 
-The public page therefore leads with input, generated palette, and applied
-example. Role-level decision evidence, broader evaluation, relationship
+The public page therefore leads with input, the applied example, and a compact
+generated palette. Role-level decision evidence, broader evaluation, relationship
 explanation, and contract validation follow through progressive disclosure.
 Each section owns one reader question defined in `interaction-design.md`.
 

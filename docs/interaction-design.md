@@ -25,7 +25,7 @@ the implementation documentation:
 
 The primary reading order is:
 
-> Input → Generated palette → Applied example → Decision evidence → Broader
+> Input → Applied example → Generated palette → Decision evidence → Broader
 > evaluation → Relationship explanation → Contract validation
 
 The visitor first judges the output, then chooses how deeply to inspect it.
@@ -41,30 +41,36 @@ Generating a palette preserves the current result-mode choice and replaces every
 projection from one result object. Repeated normalized inputs may reuse the
 in-memory result.
 
-### Generated palette
-
-This is the primary output and therefore the first result section. It answers:
-
-> What colors were generated, and which semantic role does each color serve?
-
-Light and Dark are readable independently. Compare is an explicit analytical
-mode, not the default. Opening a swatch reveals intent, the selected candidate,
-nearby counterfactuals, rule order, and public provenance.
-
 ### Applied example
 
-The applied example immediately follows the palette. It answers:
+The applied example is the first result section. It answers:
 
 > Do these roles form a legible hierarchy when used together in an interface?
 
 It exercises foundation, navigation, messages, composer, interaction states,
-focus, feedback, selection, popover, and disabled roles. The structure is an
+focus, feedback, selection, and popover roles. The primary action is
+one real focusable button whose hover, pressed, and focus states appear through
+interaction rather than a row of forced-state duplicates. Activating it gives a
+truthful local `Saved` confirmation; it does not imply persistence. The structure is an
 independently written example informed by a public design reference. It must
 remain visually and textually generic: no affiliation, actual-consumer claim, or
 runtime dependency is implied.
 
 The authoring UI stays neutral so generated colors do not change the measurement
 frame around the specimen.
+
+### Generated palette
+
+The compact palette follows the applied result. It answers:
+
+> What colors were generated, and which semantic role does each color serve?
+
+Light and Dark are readable independently. Compare is an explicit analytical
+mode, not the default. Collapsed role groups provide a compact color scan and
+role count; every group expands on demand. Opening a swatch reveals intent, the
+selected candidate, nearby counterfactuals, rule order, and public provenance.
+The UI labels the internal `brand source` role as `Original input` so it reads as
+provenance rather than a component token. Exported token names remain stable.
 
 ## Evidence section contracts
 

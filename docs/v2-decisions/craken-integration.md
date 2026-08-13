@@ -15,8 +15,9 @@ specimen keeps those responsibilities separate.
 
 The public [Craken Design Atlas](https://craken.borca.ai/design) exposes
 surfaces and states side by side. Its coverage includes Foundation, Navigation,
-Messages, Composer, Files & Wiki, Jobs, and inspectors. Its component specimens
-show normal, forced hover, active, focus, disabled, and busy states in one scan.
+Messages, Composer, Files & Wiki, Jobs, and inspectors. Color Lab uses that
+coverage as research input while presenting the primary action as a real
+interactive control rather than a forced-state comparison row.
 
 The v2 specimen adopts the parts that directly exercise this palette:
 
@@ -24,8 +25,8 @@ The v2 specimen adopts the parts that directly exercise this palette:
 - navigation: selected row, unread badge, secondary action;
 - messages: primary and secondary text, avatars, status badge;
 - composer: input boundary, focus ring, primary action;
-- component states: primary and destructive normal, hover, active, focus, and
-  disabled;
+- component states: interactive primary and destructive actions with hover,
+  active, focus, and local completion feedback;
 - feedback: warning and destructive action separated from brand action;
 - utility: selected content and popover elevation.
 

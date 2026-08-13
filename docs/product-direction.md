@@ -18,7 +18,7 @@ on public evidence and must not expose or imply private consumer relationships.
 
 ## Public-site story
 
-The site leads with the generated palette and an applied generic example. It
+The site leads with an applied generic example and then a compact generated palette. It
 then offers progressively deeper decision evidence, multi-input evaluation,
 relationship explanation, and explicit contract validation. Analysis supports
 the palette; it does not replace the palette as the primary outcome.
