@@ -67,6 +67,34 @@ none supplies a universal default-to-hover threshold.
 - calibration of review bands from accumulated Light/Dark judgments;
 - component size, duration, motion, display, and ambient-adaptation modeling.
 
+## Representative review shortlist
+
+When the representative gallery opens, the UI compares all 14 precomputed
+inputs and recommends at most five for direct review. The shortlist is the union
+of named extremes: the smallest Oklab Delta E, smallest CIEDE2000, and smallest
+absolute surface-contrast change in each mode, plus the largest Light/Dark
+CIEDE2000 disagreement. Duplicate selections accumulate reasons. When more than
+five inputs are selected, inputs covering more reasons come first and the UI
+names any extreme omitted by the cap. If the union contains fewer than three
+inputs, the next-smallest cross-mode CIEDE2000 cases fill the shortlist.
+
+This prioritizes inputs that carry more named extremes before applying the cap;
+it does not optimize total coverage and is not a weighted risk score. Every row
+remains visible, each recommendation states its reason, and no threshold or
+human verdict is inferred from the ranking.
+
+Each evaluation card renders its Light and Dark generated values as real
+buttons beside that card's rating and note controls. Pointer hover, press, and
+keyboard focus therefore exercise the same state tokens being reviewed before
+the observation is recorded. The comparison table remains supporting evidence
+rather than a substitute for interaction.
+
+A saved rating is one evaluator's local observation. It does not change palette
+generation, satisfy the declared intent by itself, or claim to represent other
+viewers. Exported records support later comparison of repeated observations;
+only such a separately designed evaluation could justify an empirical policy
+change.
+
 ## Acceptance checks
 
 - `unit`: published CIEDE2000 reference pairs match the implementation.
@@ -74,3 +102,8 @@ none supplies a universal default-to-hover threshold.
 - `unit`: duplicate exports and surface reversals produce structural flags.
 - `e2e`: the UI identifies the card as diagnostic and preserves the separate
   human `needs-review` verdict.
+- `unit`: representative recommendations are deterministic, bounded, and carry
+  named reasons without a synthetic score.
+- `e2e`: a representative button changes its computed fill for hover and press,
+  and exposes its focus state under keyboard navigation.
+- `e2e`: the lazy gallery renders the comparison and five-input shortlist.

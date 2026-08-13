@@ -15,6 +15,7 @@ import {
   hoverEvaluationKey,
   normalizeHoverEvaluation,
 } from "./lib/hover-evaluation.js";
+import { prioritizeHoverReview } from "./lib/hover-review-priority.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
 import {
   evaluatePrimaryActionSemantics,
@@ -37,6 +38,7 @@ const relationships = document.querySelector("#relationships");
 const checks = document.querySelector("#checks");
 const quality = document.querySelector("#quality");
 const gallery = document.querySelector("#gallery");
+const hoverComparison = document.querySelector("#hover-comparison");
 const galleryPanel = document.querySelector("#gallery-panel");
 const sourceAlternatives = document.querySelector("#source-alternatives");
 const ratingsFile = document.querySelector("#ratings-file");
@@ -386,7 +388,11 @@ function renderSourceAlternatives() {
     .join("")}</div>`;
 }
 
-function galleryCard(result) {
+function hoverTrial(values, mode, primary, metric) {
+  return `<span class="hover-trial" style="--trial-surface:${values.surface};--trial-default:${values.primary};--trial-hover:${values["primary hover"]};--trial-active:${values["primary active"]};--trial-text:${values["primary text"]};--trial-focus:${values["focus ring"]}"><button type="button" aria-label="Try ${mode} primary for ${primary}"><span>${mode} primary</span></button><span class="hover-trial-state" aria-hidden="true"><b class="default">Default</b><b class="hover">Hover</b><b class="active">Pressed</b><b class="focus">Focus</b></span>${metric ? `<small>ΔE ${metric.oklabDeltaE.toFixed(3)} · DE00 ${metric.ciede2000.toFixed(2)} · surface ${metric.surfaceContrastChange >= 0 ? "+" : ""}${metric.surfaceContrastChange.toFixed(2)}</small>` : ""}</span>`;
+}
+
+function galleryCard(result, priorityRow) {
   const light = result.modes.light.values;
   const dark = result.modes.dark.values;
   const passed = result.quality.checks.filter(({ pass }) => pass).length;
@@ -402,7 +408,7 @@ function galleryCard(result) {
     .map((other) => other.input.primary);
   const ratingButton = (rating) =>
     `<button type="button" data-rating="${rating}" aria-pressed="${record.rating === rating}">${rating}</button>`;
-  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-pair"><i style="background:${light.background}"><b style="background:${light.primary}"></b><em style="background:${light["primary hover"]}"></em><small style="background:${light["primary active"]}"></small></i><i style="background:${dark.background}"><b style="background:${dark.primary}"></b><em style="background:${dark["primary hover"]}"></em><small style="background:${dark["primary active"]}"></small></i></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} independent review signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-rating" aria-label="Designer rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
+  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} independent review signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-trials" role="group" aria-label="Interactive state trials">${hoverTrial(light, "Light", result.input.primary, priorityRow.metrics.light)}${hoverTrial(dark, "Dark", result.input.primary, priorityRow.metrics.dark)}</div><div class="gallery-rating" role="group" aria-label="Overall palette rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
 }
 
 async function renderGallery() {
@@ -416,8 +422,18 @@ async function renderGallery() {
       galleryResults.set(result.input.primary, result);
     }
   }
+  const priority = prioritizeHoverReview([...galleryResults.values()]);
+  const recommendations = new Map(
+    priority.recommendations.map(({ primary, reasons }) => [primary, reasons]),
+  );
+  const metricCell = (row, mode) => {
+    const metric = row.metrics[mode];
+    return `<span role="cell"><b>ΔE ${metric.oklabDeltaE.toFixed(3)}</b><b>DE00 ${metric.ciede2000.toFixed(2)}</b><small>surface ${metric.surfaceContrastChange >= 0 ? "+" : ""}${metric.surfaceContrastChange.toFixed(2)}</small></span>`;
+  };
+  hoverComparison.innerHTML = `<header><div><small>Automated review shortlist</small><strong>${priority.recommendations.length} inputs cover ${priority.coveredReasonCount}/${priority.totalReasonCount} named extremes</strong></div><p>The table explains which cases deserve attention. Interact with the Light and Dark buttons inside each card, then rate that same card. ${priority.method}${priority.uncoveredReasons.length ? ` Uncovered by the five-input cap: ${priority.uncoveredReasons.join("; ")}.` : ""}</p></header><div class="hover-comparison-table" role="table" aria-label="Representative hover diagnostics"><div class="hover-comparison-row heading" role="row"><span role="columnheader">Input</span><span role="columnheader">Light metrics</span><span role="columnheader">Dark metrics</span><span role="columnheader">Why review</span></div>${priority.rows.map((row) => `<div class="hover-comparison-row ${recommendations.has(row.primary) ? "recommended" : ""}" role="row"><span class="hover-comparison-source" role="cell"><i style="background:${row.primary}"></i><b>${row.primary}</b></span>${metricCell(row, "light")}${metricCell(row, "dark")}<span role="cell">${recommendations.get(row.primary)?.join(" · ") ?? "No named extreme"}</span></div>`).join("")}</div>`;
+  const priorityRows = new Map(priority.rows.map((row) => [row.primary, row]));
   gallery.innerHTML = EVALUATION_INPUTS.map((primary) =>
-    galleryCard(galleryResults.get(primary)),
+    galleryCard(galleryResults.get(primary), priorityRows.get(primary)),
   ).join("");
 }
 

@@ -274,6 +274,148 @@ body:not([data-result-mode="compare"]) .quality-grid {
   min-height: 28px;
   padding: 0 9px;
 }
+.hover-comparison {
+  border: 1px solid var(--line);
+  margin: 0 20px 18px;
+}
+.hover-comparison > header {
+  align-items: start;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, auto) 1fr;
+  margin: 0;
+  padding: 14px 16px;
+}
+.hover-comparison > header small,
+.hover-comparison > header strong {
+  display: block;
+}
+.hover-comparison > header small {
+  font-family: var(--mono);
+  font-size: 8px;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+.hover-comparison > header strong {
+  font-size: 11px;
+  margin-top: 3px;
+}
+.hover-comparison > header p {
+  font-size: 9px;
+  margin: 0;
+  opacity: 0.68;
+}
+.hover-comparison-table {
+  display: grid;
+}
+.hover-comparison-row {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: grid;
+  font-size: 8px;
+  gap: 10px;
+  grid-template-columns: 100px repeat(2, minmax(130px, 0.7fr)) minmax(190px, 1.6fr);
+  padding: 9px 12px;
+}
+.hover-comparison-row.heading {
+  color: var(--muted);
+  font-family: var(--mono);
+  text-transform: uppercase;
+}
+.hover-comparison-row.recommended {
+  background: color-mix(in srgb, var(--review) 8%, var(--card));
+}
+.hover-comparison-row > span,
+.hover-comparison-row > span b,
+.hover-comparison-row > span small {
+  display: block;
+}
+.hover-comparison-row > span b {
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 500;
+}
+.hover-comparison-row > span small {
+  color: var(--muted);
+  margin-top: 2px;
+}
+.hover-comparison-source {
+  align-items: center;
+  display: flex !important;
+  gap: 7px;
+}
+.hover-comparison-source i {
+  border: 1px solid #7777;
+  height: 18px;
+  width: 18px;
+}
+.hover-trial {
+  align-items: center;
+  background: var(--trial-surface);
+  border: 1px solid #7774;
+  display: grid !important;
+  gap: 5px 8px;
+  grid-template-columns: minmax(92px, 1fr) auto;
+  padding: 9px;
+}
+.hover-trial button {
+  background: var(--trial-default);
+  border: 1px solid #7775;
+  border-radius: 6px;
+  color: var(--trial-text);
+  cursor: pointer;
+  font: 600 9px/1 var(--sans);
+  min-height: 34px;
+  padding: 0 12px;
+}
+.hover-trial button:hover {
+  background: var(--trial-hover);
+}
+.hover-trial button:active {
+  background: var(--trial-active);
+}
+.hover-trial button:focus-visible {
+  outline: 3px solid var(--trial-focus);
+  outline-offset: 2px;
+}
+.hover-trial-state {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  min-width: 38px;
+  text-transform: uppercase;
+}
+.hover-trial-state b:not(.default) {
+  display: none;
+}
+.hover-trial:has(button:hover) .hover-trial-state .default,
+.hover-trial:has(button:focus-visible) .hover-trial-state .default {
+  display: none;
+}
+.hover-trial:has(button:hover) .hover-trial-state .hover,
+.hover-trial:has(button:focus-visible) .hover-trial-state .focus {
+  display: block;
+}
+.hover-trial:has(button:focus-visible) .hover-trial-state .hover {
+  display: none;
+}
+.hover-trial:has(button:active) .hover-trial-state .hover,
+.hover-trial:has(button:active) .hover-trial-state .focus {
+  display: none;
+}
+.hover-trial:has(button:active) .hover-trial-state .active {
+  display: block;
+}
+.hover-trial > small {
+  color: color-mix(in srgb, var(--trial-text) 68%, var(--trial-surface));
+  font-family: var(--mono);
+  font-size: 8px;
+  grid-column: 1 / -1;
+  line-height: 1.4;
+  margin: 0;
+}
 .gallery-help {
   border-top: 1px solid var(--line);
   line-height: 1.5;
@@ -312,6 +454,13 @@ body:not([data-result-mode="compare"]) .quality-grid {
 }
 .gallery-card:has(.gallery-load:hover) {
   border-color: var(--ink);
+}
+.gallery-trials {
+  display: grid;
+  gap: 8px;
+}
+.gallery-trials .hover-trial {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 .gallery-load {
   background: transparent;

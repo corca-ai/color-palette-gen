@@ -173,6 +173,11 @@ reversal. These diagnostics may prioritize review but cannot satisfy the
 `hover-discoverable` intent or change the deterministic palette verdict. See
 [`v2-decisions/hover-diagnostics.md`](v2-decisions/hover-diagnostics.md).
 
+The representative gallery derives a bounded review shortlist from named metric
+extremes rather than a composite score. It keeps all inputs visible and exposes
+the reason for each recommendation so ranking mechanics cannot masquerade as a
+calibrated perceptual model.
+
 The UI reports semantic role count and unique color count separately. Multiple
 roles may intentionally alias one color when documented, but `primary` and
 `focus ring` are independently searched because their component duties differ;

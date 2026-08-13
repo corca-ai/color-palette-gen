@@ -48,6 +48,7 @@ const evaluationResults = EVALUATION_INPUTS.map((primary) => {
     input: result.input,
     policyVersion: result.policyVersion,
     quality: result.quality,
+    hoverDiagnostics: result.hoverDiagnostics,
     modes: {
       light: { values: result.modes.light.values },
       dark: { values: result.modes.dark.values },

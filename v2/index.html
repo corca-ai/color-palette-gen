@@ -168,10 +168,11 @@
         <p class="gallery-help">
           This fixed set exposes hue, chroma, achromatic convergence, and
           source-shift edge cases. Load any card into the complete inspector
-          above.
+          above. Your rating is one local observation, not a universal visual
+          truth or an automatic pass condition.
         </p>
         <div class="gallery-tools">
-          <span>Ratings are stored only in this browser.</span>
+          <span>Ratings stay in this browser and do not change generation.</span>
           <button id="export-ratings" type="button">Export JSON</button>
           <button id="import-ratings" type="button">Import JSON</button>
           <input
@@ -181,6 +182,7 @@
             hidden
           />
         </div>
+        <div id="hover-comparison" class="hover-comparison"></div>
         <div id="gallery" class="evaluation-gallery"></div>
       </details>
 

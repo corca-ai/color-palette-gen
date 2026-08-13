@@ -160,6 +160,16 @@
   .evaluation-gallery {
     grid-template-columns: 1fr;
   }
+  .hover-comparison {
+    margin-inline: 12px;
+    overflow-x: auto;
+  }
+  .hover-comparison > header {
+    grid-template-columns: 1fr;
+  }
+  .hover-comparison-table {
+    min-width: 680px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

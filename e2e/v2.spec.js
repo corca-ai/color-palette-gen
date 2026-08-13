@@ -264,6 +264,60 @@ test("gallery is lazy and designer ratings persist", async ({ page }) => {
   await expect(page.locator(".gallery-card")).toHaveCount(14, {
     timeout: 30_000,
   });
+  await expect(page.locator("#hover-comparison")).toContainText(
+    "Automated review shortlist",
+  );
+  await expect(page.locator(".hover-comparison-row.recommended")).toHaveCount(
+    5,
+  );
+  await expect(page.locator("#hover-comparison")).toContainText(
+    "No weighted score",
+  );
+  await expect(page.locator("#hover-comparison")).toContainText("DE00");
+  const lightTrial = page
+    .locator(".gallery-card")
+    .first()
+    .getByRole("button", { name: /Try Light primary/ });
+  const defaultColor = await lightTrial.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  await lightTrial.hover();
+  await expect(
+    lightTrial.locator("xpath=.././/b[contains(@class, 'hover')]"),
+  ).toBeVisible();
+  const hoverColor = await lightTrial.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  expect(hoverColor).not.toBe(defaultColor);
+  await page.mouse.down();
+  const activeColor = await lightTrial.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  expect(activeColor).not.toBe(hoverColor);
+  await page.mouse.up();
+  await page.mouse.move(0, 0);
+  await page.locator(".gallery-card .gallery-load").first().focus();
+  await page.keyboard.press("Tab");
+  await expect(lightTrial).toBeFocused();
+  await expect(
+    lightTrial.locator("xpath=.././/b[contains(@class, 'focus')]"),
+  ).toBeVisible();
+  await expect(lightTrial).toHaveCSS("outline-style", "solid");
+  await page.locator("body").focus();
+  await expect(page.locator(".gallery-card").first()).toHaveScreenshot(
+    "interactive-rating-card.png",
+    { animations: "disabled", maxDiffPixelRatio: 0.12 },
+  );
+  await page.locator(".topbar").evaluate((element) => {
+    element.style.display = "none";
+  });
+  await expect(page.locator("#hover-comparison")).toHaveScreenshot(
+    "hover-review-shortlist.png",
+    { animations: "disabled", maxDiffPixelRatio: 0.12 },
+  );
+  await page.locator(".topbar").evaluate((element) => {
+    element.style.display = "";
+  });
   await expect(page.locator(".gallery-convergence").first()).toBeVisible();
   const first = page.locator(".gallery-card").first();
   await first.getByRole("button", { name: "Prefer" }).click();

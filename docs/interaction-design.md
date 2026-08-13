@@ -130,6 +130,10 @@ Question:
 
 The gallery is optional and collapsed by default. It supports comparison,
 designer ratings, notes, import/export, and loading one case into the inspector.
+The expanded section first compares hover diagnostics across the complete set.
+It places up to five named metric extremes first and explains why each deserves
+direct review. This order is not presented as a calibrated risk score; all 14
+inputs remain available below it.
 Ratings are local evidence, not universal preference claims.
 
 ### Color relationships
