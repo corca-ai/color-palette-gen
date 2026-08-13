@@ -1,6 +1,6 @@
 import { isHex, normalizeHex } from "../lib/color-math.js";
 import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
-import { serializeCrakenTokens } from "./lib/craken.js";
+import { serializeReferenceTokens } from "./lib/reference-export.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 import {
   loadEvaluationRecords,
@@ -432,18 +432,20 @@ document.querySelector("#copy-css").addEventListener("click", async () => {
   window.setTimeout(() => toast.classList.remove("visible"), 1600);
 });
 
-document.querySelector("#copy-craken").addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(
-      JSON.stringify(serializeCrakenTokens(currentResult), null, 2),
-    );
-    toast.textContent = "Craken token JSON copied";
-  } catch {
-    toast.textContent = "Clipboard unavailable";
-  }
-  toast.classList.add("visible");
-  window.setTimeout(() => toast.classList.remove("visible"), 1600);
-});
+document
+  .querySelector("#copy-reference")
+  .addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(serializeReferenceTokens(currentResult), null, 2),
+      );
+      toast.textContent = "Reference token JSON copied";
+    } catch {
+      toast.textContent = "Clipboard unavailable";
+    }
+    toast.classList.add("visible");
+    window.setTimeout(() => toast.classList.remove("visible"), 1600);
+  });
 
 gallery.addEventListener("click", async (event) => {
   const card = event.target.closest("[data-primary]");

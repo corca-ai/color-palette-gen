@@ -1,4 +1,4 @@
-# Public reference compatibility boundary
+# Public reference specimen boundary
 
 ## Decision
 
@@ -29,16 +29,16 @@ The v2 specimen adopts the parts that directly exercise this palette:
 - feedback: warning and destructive action separated from brand action;
 - utility: selected content and popover elevation.
 
-It is an independently written compatibility specimen, not copied source, an
+It is an independently written applied specimen, not copied source, an
 assertion of an internal consumer relationship, or a runtime dependency on the
 referenced application.
 
-## Token correspondence
+## Generic example token correspondence
 
-For the public compatibility example, current v2 names map to the referenced
+For the public applied example, current v2 names map to the referenced
 semantic model as follows:
 
-| v2 role                         | Exported Craken token                    |
+| v2 role                         | Exported example token                   |
 | ------------------------------- | ---------------------------------------- |
 | `background` / `foreground`     | `color.canvas` / `color.text`            |
 | `surface` / `raised surface`    | `color.surface` / `color.surface.raised` |
@@ -54,9 +54,18 @@ semantic model as follows:
 | disabled background/text/border | `color.control.disabled.*`               |
 | `popover` / text                | `color.overlay.popover[.text]`           |
 
-The page exports this example mapping as versioned `craken-color-tokens-1` JSON.
-The schema name records the public reference used to design the example; it does
-not identify a private integration. Disabled and popover names are distinct
-consumer tokens but currently document aliases to foundation colors. Accent and
-secondary remain intentionally unsupported until a demonstrated public use case
-requires an independent visual role.
+The page exports this mapping as versioned `color-lab-reference-tokens-1` JSON.
+The schema and token namespace are general-purpose; the public reference is
+attribution for specimen coverage, not the identity of an integration. Disabled
+and popover names are distinct example tokens but currently document aliases to
+foundation colors. Accent and secondary remain intentionally unsupported until
+a demonstrated public use case requires an independent visual role.
+
+## Legacy export compatibility
+
+Earlier public builds exposed `v2/lib/craken.js`, `CRAKEN_TOKEN_MAP`,
+`serializeCrakenTokens()`, and the `craken-color-tokens-1` schema. That module
+remains as a deprecated compatibility adapter so existing imports and payload
+consumers do not break while the visible UI and new integrations use the
+general-purpose reference export. It intentionally has no UI action. Removing
+it requires an explicit breaking release and migration note.

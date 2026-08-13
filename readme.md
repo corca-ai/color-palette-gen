@@ -18,7 +18,37 @@ v1은 유지보수 전용입니다. 보안·호환성·명백한 결함 수정�
 > 완전한 접근성 인증이나 production 적합성 보장을 의미하지 않습니다. 실제
 > 서비스의 글자 크기, 굵기, 상태, 컴포넌트 맥락에서 다시 검증해야 합니다.
 
-## v1 실험의 입력
+## 현재 v2
+
+v2의 공개 계약은 단순합니다.
+
+```js
+{ primary: "#507096" }
+```
+
+하나의 primary로 완성된 light/dark semantic palette를 만들고, 다음 순서로
+결과와 근거를 전달합니다.
+
+1. **Generated palette**: 어떤 색이 어떤 역할로 생성되었는가?
+2. **Applied example**: 이 역할들이 실제 interface hierarchy를 만드는가?
+3. **Decision evidence**: 목표와 탈락 후보 중 왜 이 색이 선택되었는가?
+4. **Quality review**: hard contract 통과 후에도 남은 디자인 품질 신호는 무엇인가?
+5. **Relationships**: 결과 역할들은 어떤 구조로 연결되는가?
+6. **Validation**: 명시한 text, boundary, focus, separation 계약을 통과했는가?
+
+팔레트와 적용 결과를 먼저 읽고, 상세 분석은 필요할 때 펼치는 구조입니다.
+Light, Dark, Compare 선택은 전체 inspector에 동일하게 적용됩니다. 자세한 페이지
+계약은 [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)에 있습니다.
+
+JSON export는 범용 example token namespace를 사용합니다. 적용 sample의 coverage는
+공개된 디자인 참고 자료에서 아이디어를 얻었지만 특정 제품과의 제휴, 실제 소비
+관계 또는 runtime dependency를 의미하지 않습니다.
+
+## 보존된 v1 실험
+
+아래 계약은 현재 기본 제품이 아니라 `/v1/`에 보존된 초기 실험입니다.
+
+### 입력
 
 - **Primary color**: 필수
 - **Secondary, tertiary 등의 추가 색상**: 선택
@@ -40,7 +70,7 @@ v1은 유지보수 전용입니다. 보안·호환성·명백한 결함 수정�
 현재 UI 프로토타입은 `additionalColors` 중 첫 번째 색만 decorative family에
 사용하며, 그 이상의 색이 들어오면 입력을 보존한 채 scope warning을 반환합니다.
 
-## v1 실험의 출력
+### 출력
 
 v1 프로토타입은 19개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
 
@@ -57,7 +87,7 @@ list[(color, function)]
 - secondary accent, soft, text, on-color
 - decorative accent, soft, text, on-color
 
-## v1 실험의 목표
+### 목표
 
 입력된 색상 간의 조화와 지정된 vibe를 함께 고려하여, 일관된 UI 디자인에 활용할 수 있는 색상과 기능의 조합을 생성합니다.
 

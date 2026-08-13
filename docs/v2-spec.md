@@ -5,10 +5,11 @@
 v2 is the primary color-palette prototype at the site root. v1 remains
 available as the broad, inspectable palette experiment at `/v1/`.
 
-The neutral authoring UI remains independent, while its applied specimen uses
-the public Craken Design Atlas as one external reference for coverage and
-component-state structure. This does not assert an internal consumer
-relationship or runtime dependency. See
+The neutral authoring UI remains independent, while its generic applied
+specimen uses the public Craken Design Atlas as one external reference for
+coverage and component-state structure. Public-facing labels and exported
+token names remain general-purpose. This does not assert affiliation, an
+internal consumer relationship, or a runtime dependency. See
 [`v2-decisions/craken-integration.md`](v2-decisions/craken-integration.md).
 
 v2 intentionally accepts one input only:
@@ -26,6 +27,11 @@ hue. It produces paired light and dark palettes from the same primary.
 The palette is the product. Component previews, export formats, and contrast
 reports are permitted only as supporting inspection tools; they must not define
 the page hierarchy or expand the palette input contract.
+
+The public page therefore leads with input, generated palette, and applied
+example. Role-level decision evidence, broader evaluation, relationship
+explanation, and contract validation follow through progressive disclosure.
+Each section owns one reader question defined in `interaction-design.md`.
 
 Every color decision follows the evidence and counterfactual model in
 [`v2-decisions/`](v2-decisions/README.md). A passing color
@@ -62,7 +68,7 @@ Destructive feedback remains semantic red. If the input hue is near red, its
 lightness is moved away from the brand family and the resulting perceptual
 separation is verified.
 
-## Craken design reference
+## Public design reference
 
 The public [Craken Design Atlas](https://craken.borca.ai/design) was inspected
 on 2026-08-06. v2 adopts the following observable rules without copying Craken
@@ -78,8 +84,10 @@ source code:
 - light, dark, and system appearance are first-class states.
 
 The initial v2 recipe uses observable behavior from this public resource as a
-design reference, not as evidence of an internal relationship or a private
-implementation dependency.
+design reference, not as evidence of endorsement, affiliation, an internal
+relationship, or a private implementation dependency. Its name remains in
+attribution and rationale documentation rather than defining the product UI or
+export schema.
 
 Craken's observed dark muted text and brand-state lightness values are not
 copied literally: under the v2 APCA targets they are insufficient for compact

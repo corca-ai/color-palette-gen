@@ -146,48 +146,48 @@ function exampleStyle(modeResult) {
 
 export function appliedExampleView(modeResult) {
   return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}">
-    <header class="example-header"><strong>Craken · ${modeResult.mode}</strong><span>Generated palette compatibility</span></header>
+    <header class="example-header"><strong>Example application · ${modeResult.mode}</strong><span>Semantic roles in context</span></header>
     <div class="example-canvas">
-      <div class="craken-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
-      <section class="craken-state-specimen">
+      <div class="reference-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
+      <section class="reference-state-specimen">
         <header><strong>Primary button</strong><small>Normal, forced pseudo-state, and focus in one scan</small></header>
-        <div class="craken-state-grid">
-          <div><span>Normal</span><button>✓ Save</button></div>
-          <div><span>Hover</span><button class="hover">✓ Save</button></div>
-          <div><span>Active</span><button class="active">✓ Save</button></div>
-          <div><span>Focus</span><button class="focused">✓ Save</button></div>
+        <div class="reference-state-grid">
+          <div><span>Normal</span><button tabindex="-1" aria-disabled="true">✓ Save</button></div>
+          <div><span>Hover</span><button class="hover" tabindex="-1" aria-disabled="true">✓ Save</button></div>
+          <div><span>Active</span><button class="active" tabindex="-1" aria-disabled="true">✓ Save</button></div>
+          <div><span>Focus</span><button class="focused" tabindex="-1" aria-disabled="true">✓ Save</button></div>
         </div>
-        <div class="craken-semantic-grid">
-          <button class="warning">Review warning</button>
-          <button class="destructive">Delete workspace</button>
-          <button class="destructive hover">Delete · hover</button>
-          <button class="destructive active">Delete · active</button>
-          <button class="disabled" disabled>Unavailable</button>
+        <div class="reference-semantic-grid">
+          <button class="warning" tabindex="-1" aria-disabled="true">Review warning</button>
+          <button class="destructive" tabindex="-1" aria-disabled="true">Delete workspace</button>
+          <button class="destructive hover" tabindex="-1" aria-disabled="true">Delete · hover</button>
+          <button class="destructive active" tabindex="-1" aria-disabled="true">Delete · active</button>
+          <button class="disabled" disabled tabindex="-1">Unavailable</button>
         </div>
       </section>
-      <section class="craken-shell">
-        <aside class="craken-sidebar">
-          <div class="craken-workspace"><i>C</i><span><strong>Color Lab</strong><small>Craken workspace</small></span></div>
-          <nav aria-label="Craken specimen navigation">
+      <section class="reference-shell">
+        <aside class="reference-sidebar">
+          <div class="reference-workspace"><i>C</i><span><strong>Color Lab</strong><small>Example workspace</small></span></div>
+          <nav aria-label="reference specimen navigation">
             <a class="selected"><span>◫</span>General<b>3</b></a>
             <a><span>◇</span>Design review</a>
             <a><span>⌁</span>Files</a>
           </nav>
-          <button class="craken-secondary">＋ New conversation</button>
+          <button class="reference-secondary" tabindex="-1" aria-disabled="true">＋ New conversation</button>
         </aside>
-        <div class="craken-main">
-          <header class="craken-channel"><div><strong># design-review</strong><small>Palette integration check</small></div><button>•••</button></header>
-          <aside class="craken-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
-          <div class="craken-messages">
-            <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the Craken hierarchy in both modes?</span></div></article>
+        <div class="reference-main">
+          <header class="reference-channel"><div><strong># design-review</strong><small>Palette application check</small></div><button tabindex="-1" aria-disabled="true">•••</button></header>
+          <aside class="reference-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
+          <div class="reference-messages">
+            <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the application hierarchy in both modes?</span></div></article>
             <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, interaction states, focus, and feedback are rendered from the same semantic output.</span><em>Palette ready</em></div></article>
             <article class="selected-message"><i>DS</i><div><p><strong>Design system</strong><small>10:28</small></p><span>Selected content uses a restrained brand tint with readable text.</span></div></article>
           </div>
-          <form class="craken-composer"><label><span>Message #design-review</span><textarea rows="2" readonly>Review the generated colors…</textarea></label><div><button type="button" class="craken-secondary">Attach</button><button type="button" class="craken-primary">Send</button></div></form>
+          <form class="reference-composer"><label><span>Message #design-review</span><textarea rows="2" readonly tabindex="-1">Review the generated colors…</textarea></label><div><button type="button" class="reference-secondary" tabindex="-1" aria-disabled="true">Attach</button><button type="button" class="reference-primary" tabindex="-1" aria-disabled="true">Send</button></div></form>
         </div>
       </section>
-      <aside class="craken-popover"><strong>Palette actions</strong><button>Copy CSS</button><button>Export tokens</button></aside>
-      <footer class="craken-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button>Move to Trash</button></footer>
+      <aside class="reference-popover"><strong>Palette actions</strong><button tabindex="-1" aria-disabled="true">Copy CSS</button><button tabindex="-1" aria-disabled="true">Export tokens</button></aside>
+      <footer class="reference-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button tabindex="-1" aria-disabled="true">Move to Trash</button></footer>
     </div>
   </article>`;
 }

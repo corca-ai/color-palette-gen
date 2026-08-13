@@ -56,7 +56,6 @@
     grid-column: 1 / -1;
   }
 }
-
 @media (max-width: 620px) {
   main {
     padding-inline: 16px;
@@ -129,23 +128,23 @@
   .decision-policy {
     grid-template-columns: 1fr;
   }
-  .craken-coverage,
-  .craken-state-grid {
+  .reference-coverage,
+  .reference-state-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .craken-state-specimen > header {
+  .reference-state-specimen > header {
     align-items: start;
     flex-direction: column;
     gap: 3px;
   }
-  .craken-shell {
+  .reference-shell {
     grid-template-columns: 1fr;
   }
-  .craken-sidebar {
+  .reference-sidebar {
     border-bottom: 1px solid var(--sample-border);
     border-right: 0;
   }
-  .craken-sidebar nav {
+  .reference-sidebar nav {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
   }

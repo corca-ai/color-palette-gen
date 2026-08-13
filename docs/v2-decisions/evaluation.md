@@ -6,7 +6,7 @@ source-shift cases so policy changes can be compared against the same set.
 
 ## Rating meanings
 
-- **Prefer:** suitable for the public-reference compatibility specimen without
+- **Prefer:** suitable for the public-reference applied specimen without
   a color adjustment.
 - **Acceptable:** usable, but a documented alternative would also be reasonable.
 - **Reject:** the palette or state family should not ship for this input.

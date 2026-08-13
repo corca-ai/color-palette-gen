@@ -1,11 +1,11 @@
 
-.craken-coverage {
+.reference-coverage {
   display: grid;
   gap: 6px;
   grid-template-columns: repeat(4, 1fr);
   margin-bottom: 10px;
 }
-.craken-coverage span {
+.reference-coverage span {
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
   border-radius: 6px;
@@ -15,45 +15,45 @@
   padding: 7px 8px;
   text-align: center;
 }
-.craken-state-specimen {
+.reference-state-specimen {
   background: var(--sample-surface);
   border: 1px solid var(--sample-border);
   border-radius: 6px;
   margin-bottom: 10px;
   padding: 10px;
 }
-.craken-state-specimen > header {
+.reference-state-specimen > header {
   align-items: end;
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
 }
-.craken-state-specimen > header strong {
+.reference-state-specimen > header strong {
   font-size: 11px;
   text-transform: uppercase;
 }
-.craken-state-specimen > header small {
+.reference-state-specimen > header small {
   color: var(--sample-muted-text);
   font-size: 9px;
 }
-.craken-state-grid {
+.reference-state-grid {
   display: grid;
   gap: 6px;
   grid-template-columns: repeat(4, 1fr);
 }
-.craken-state-grid > div {
+.reference-state-grid > div {
   border: 1px solid var(--sample-border);
   border-radius: 5px;
   padding: 7px;
 }
-.craken-state-grid span {
+.reference-state-grid span {
   color: var(--sample-muted-text);
   display: block;
   font-size: 9px;
   margin-bottom: 5px;
 }
-.craken-state-grid button,
-.craken-primary {
+.reference-state-grid button,
+.reference-primary {
   background: var(--sample-primary);
   border: 1px solid var(--sample-primary-border);
   border-radius: 4px;
@@ -63,29 +63,29 @@
   min-height: 30px;
   width: 100%;
 }
-.craken-state-grid button:hover,
-.craken-state-grid button.hover {
+.reference-state-grid button:hover,
+.reference-state-grid button.hover {
   background: var(--sample-primary-hover);
 }
-.craken-state-grid button:active,
-.craken-state-grid button.active {
+.reference-state-grid button:active,
+.reference-state-grid button.active {
   background: var(--sample-primary-active);
 }
-.craken-state-grid button.focused,
-.craken-state-grid button:focus-visible,
-.craken-primary:focus-visible,
-.craken-secondary:focus-visible,
-.craken-channel button:focus-visible {
+.reference-state-grid button.focused,
+.reference-state-grid button:focus-visible,
+.reference-primary:focus-visible,
+.reference-secondary:focus-visible,
+.reference-channel button:focus-visible {
   outline: 3px solid var(--sample-focus-ring);
   outline-offset: 2px;
 }
-.craken-semantic-grid {
+.reference-semantic-grid {
   display: grid;
   gap: 6px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   margin-top: 8px;
 }
-.craken-semantic-grid button {
+.reference-semantic-grid button {
   border: 1px solid transparent;
   border-radius: 4px;
   font-size: 9px;
@@ -93,28 +93,28 @@
   min-height: 30px;
   padding: 0 7px;
 }
-.craken-semantic-grid .warning {
+.reference-semantic-grid .warning {
   background: var(--sample-warning);
   color: var(--sample-warning-text);
 }
-.craken-semantic-grid .destructive {
+.reference-semantic-grid .destructive {
   background: var(--sample-destructive);
   color: var(--sample-destructive-text);
 }
-.craken-semantic-grid .destructive.hover {
+.reference-semantic-grid .destructive.hover {
   background: var(--sample-destructive-hover);
 }
-.craken-semantic-grid .destructive.active {
+.reference-semantic-grid .destructive.active {
   background: var(--sample-destructive-active);
 }
-.craken-semantic-grid .disabled {
+.reference-semantic-grid .disabled {
   background: var(--sample-disabled-background);
   border-color: var(--sample-disabled-border);
   color: var(--sample-disabled-text);
   cursor: not-allowed;
   opacity: 0.72;
 }
-.craken-shell {
+.reference-shell {
   background: var(--sample-background);
   border: 1px solid var(--sample-border);
   border-radius: 6px;
@@ -123,7 +123,7 @@
   min-height: 330px;
   overflow: hidden;
 }
-.craken-sidebar {
+.reference-sidebar {
   background: var(--sample-surface);
   border-right: 1px solid var(--sample-border);
   display: flex;
@@ -131,13 +131,13 @@
   gap: 9px;
   padding: 10px 8px;
 }
-.craken-workspace {
+.reference-workspace {
   align-items: center;
   display: flex;
   gap: 7px;
   padding: 2px;
 }
-.craken-workspace > i {
+.reference-workspace > i {
   align-items: center;
   background: var(--sample-primary);
   border-radius: 5px;
@@ -150,25 +150,25 @@
   justify-content: center;
   width: 25px;
 }
-.craken-workspace span,
-.craken-workspace strong,
-.craken-workspace small {
+.reference-workspace span,
+.reference-workspace strong,
+.reference-workspace small {
   display: block;
 }
-.craken-workspace strong {
+.reference-workspace strong {
   font-size: 10px;
 }
-.craken-workspace small {
+.reference-workspace small {
   color: var(--sample-muted-text);
   font-size: 9px;
   margin-top: 2px;
 }
-.craken-sidebar nav {
+.reference-sidebar nav {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.craken-sidebar nav a {
+.reference-sidebar nav a {
   align-items: center;
   border-radius: 4px;
   color: var(--sample-muted-text);
@@ -178,19 +178,19 @@
   grid-template-columns: 12px minmax(0, 1fr) auto;
   padding: 7px 6px;
 }
-.craken-sidebar nav a.selected {
+.reference-sidebar nav a.selected {
   background: var(--sample-muted-surface);
   color: var(--sample-foreground);
   font-weight: 600;
 }
-.craken-sidebar nav b {
+.reference-sidebar nav b {
   background: var(--sample-primary);
   border-radius: 999px;
   color: var(--sample-primary-text);
   font-size: 8px;
   padding: 1px 5px;
 }
-.craken-secondary {
+.reference-secondary {
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
   border-radius: 4px;
@@ -199,15 +199,15 @@
   min-height: 29px;
   padding: 0 8px;
 }
-.craken-sidebar > .craken-secondary {
+.reference-sidebar > .reference-secondary {
   margin-top: auto;
 }
-.craken-main {
+.reference-main {
   display: grid;
   grid-template-rows: auto 1fr auto;
   min-width: 0;
 }
-.craken-channel {
+.reference-channel {
   align-items: center;
   background: var(--sample-raised-surface);
   border-bottom: 1px solid var(--sample-border);
@@ -216,30 +216,30 @@
   min-height: 42px;
   padding: 7px 10px;
 }
-.craken-channel strong,
-.craken-channel small {
+.reference-channel strong,
+.reference-channel small {
   display: block;
 }
-.craken-channel strong {
+.reference-channel strong {
   font-size: 10px;
 }
-.craken-channel small {
+.reference-channel small {
   color: var(--sample-muted-text);
   font-size: 9px;
   margin-top: 2px;
 }
-.craken-channel button {
+.reference-channel button {
   background: transparent;
   border: 0;
   color: var(--sample-muted-text);
 }
-.craken-messages {
+.reference-messages {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 16px 12px;
 }
-.craken-warning {
+.reference-warning {
   background: var(--sample-warning);
   color: var(--sample-warning-text);
   display: grid;
@@ -248,26 +248,26 @@
   margin: 10px 12px 0;
   padding: 8px 10px;
 }
-.craken-warning strong {
+.reference-warning strong {
   font-size: 10px;
 }
-.craken-messages .selected-message {
+.reference-messages .selected-message {
   background: var(--sample-selection);
   border-radius: 5px;
   color: var(--sample-selection-text);
   padding: 8px;
 }
-.craken-messages .selected-message span,
-.craken-messages .selected-message small {
+.reference-messages .selected-message span,
+.reference-messages .selected-message small {
   color: var(--sample-selection-text);
 }
-.craken-messages article {
+.reference-messages article {
   align-items: start;
   display: grid;
   gap: 8px;
   grid-template-columns: 25px minmax(0, 1fr);
 }
-.craken-messages article > i {
+.reference-messages article > i {
   align-items: center;
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
@@ -280,22 +280,22 @@
   height: 25px;
   justify-content: center;
 }
-.craken-messages p {
+.reference-messages p {
   align-items: baseline;
   display: flex;
   gap: 6px;
   margin: 0 0 3px;
 }
-.craken-messages strong {
+.reference-messages strong {
   font-size: 10px;
 }
-.craken-messages small,
-.craken-messages span {
+.reference-messages small,
+.reference-messages span {
   color: var(--sample-muted-text);
   font-size: 10px;
   line-height: 1.5;
 }
-.craken-messages em {
+.reference-messages em {
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
   border-radius: 999px;
@@ -306,20 +306,20 @@
   margin-top: 6px;
   padding: 3px 7px;
 }
-.craken-composer {
+.reference-composer {
   background: var(--sample-surface);
   border: 1px solid var(--sample-input-border);
   border-radius: 6px;
   margin: 8px;
   padding: 8px;
 }
-.craken-composer label > span {
+.reference-composer label > span {
   color: var(--sample-muted-text);
   display: block;
   font-size: 9px;
   margin-bottom: 4px;
 }
-.craken-composer textarea {
+.reference-composer textarea {
   background: transparent;
   border: 0;
   color: var(--sample-foreground);
@@ -328,20 +328,20 @@
   resize: none;
   width: 100%;
 }
-.craken-composer > div {
+.reference-composer > div {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
 }
-.craken-composer .craken-primary,
-.craken-composer .craken-secondary {
+.reference-composer .reference-primary,
+.reference-composer .reference-secondary {
   min-height: 27px;
   width: auto;
 }
-.craken-composer .craken-primary {
+.reference-composer .reference-primary {
   padding: 0 12px;
 }
-.craken-feedback {
+.reference-feedback {
   align-items: center;
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
@@ -351,7 +351,7 @@
   margin-top: 10px;
   padding: 9px 10px;
 }
-.craken-popover {
+.reference-popover {
   background: var(--sample-popover);
   border: 1px solid var(--sample-border);
   border-radius: 6px;
@@ -362,12 +362,12 @@
   padding: 8px;
   width: max-content;
 }
-.craken-popover strong {
+.reference-popover strong {
   align-self: center;
   font-size: 9px;
   margin-right: 6px;
 }
-.craken-popover button {
+.reference-popover button {
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
   border-radius: 4px;
@@ -375,20 +375,20 @@
   font-size: 9px;
   min-height: 26px;
 }
-.craken-feedback span,
-.craken-feedback strong,
-.craken-feedback small {
+.reference-feedback span,
+.reference-feedback strong,
+.reference-feedback small {
   display: block;
 }
-.craken-feedback strong {
+.reference-feedback strong {
   font-size: 10px;
 }
-.craken-feedback small {
+.reference-feedback small {
   color: var(--sample-muted-text);
   font-size: 9px;
   margin-top: 2px;
 }
-.craken-feedback button {
+.reference-feedback button {
   background: var(--sample-destructive);
   border: 0;
   border-radius: 4px;
@@ -397,7 +397,6 @@
   min-height: 28px;
   padding: 0 10px;
 }
-
 .relationship-section {
   margin-top: 64px;
 }

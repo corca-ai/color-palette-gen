@@ -1,7 +1,4 @@
-// Deprecated compatibility surface. New consumers should use reference-export.js.
-// Keep this mapping independent so changes to the current export cannot mutate
-// the legacy schema accidentally.
-export const CRAKEN_TOKEN_MAP = {
+export const REFERENCE_TOKEN_MAP = {
   background: "color.canvas",
   foreground: "color.text",
   surface: "color.surface",
@@ -34,16 +31,16 @@ export const CRAKEN_TOKEN_MAP = {
   "popover text": "color.overlay.popover.text",
 };
 
-export function serializeCrakenTokens(result) {
+export function serializeReferenceTokens(result) {
   return {
-    schema: "craken-color-tokens-1",
+    schema: "color-lab-reference-tokens-1",
     source: result.input,
     policyVersion: result.policyVersion,
     modes: Object.fromEntries(
       ["light", "dark"].map((mode) => [
         mode,
         Object.fromEntries(
-          Object.entries(CRAKEN_TOKEN_MAP).map(([role, token]) => [
+          Object.entries(REFERENCE_TOKEN_MAP).map(([role, token]) => [
             token,
             result.modes[mode].values[role],
           ]),

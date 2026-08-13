@@ -18,8 +18,41 @@ test("@smoke generates both modes from one primary and exposes new semantic role
   await expect(page.locator('.swatch[data-role="primary border"]')).toHaveCount(
     1,
   );
-  await expect(page.locator(".example.light .craken-warning")).toBeVisible();
+  await expect(page.locator(".example.light .reference-warning")).toBeVisible();
   await expect(page.locator(".example.dark")).toHaveCount(0);
+  await expect(
+    page.locator(".palette-section + .example-section"),
+  ).toBeVisible();
+});
+
+test("reference export stays generic and preserves the public token contract", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: (value) => (window.__copiedReference = value) },
+    });
+  });
+  await page.getByRole("button", { name: "Copy reference JSON" }).click();
+  const exported = await page.evaluate(() =>
+    JSON.parse(window.__copiedReference),
+  );
+  expect(exported.schema).toBe("color-lab-reference-tokens-1");
+  expect(exported.modes.light["color.action.primary"]).toMatch(
+    /^#[0-9A-F]{6}$/,
+  );
+  expect(JSON.stringify(exported).toLowerCase()).not.toContain("craken");
+});
+
+test("the applied example does not add inert controls to keyboard navigation", async ({
+  page,
+}) => {
+  await expect(
+    page.locator(
+      '.example :is(button, textarea):not([tabindex="-1"]), .example a[href]',
+    ),
+  ).toHaveCount(0);
 });
 
 test("@smoke result mode switches the complete inspector and persists", async ({
@@ -148,7 +181,7 @@ test("worker calculation remains responsive and reports its duration", async ({
   await expect(page.locator("#palette-title")).toContainText("#00FFFF");
 });
 
-test("core palette and Craken specimen retain their visual structure", async ({
+test("core palette and reference specimen retain their visual structure", async ({
   page,
 }) => {
   await expect(page.locator(".palettes")).toHaveScreenshot(
@@ -176,7 +209,7 @@ test("core palette and Craken specimen retain their visual structure", async ({
     element.hidden = true;
   });
   await expect(page.locator(".examples")).toHaveScreenshot(
-    "craken-specimens.png",
+    "reference-specimens.png",
     {
       animations: "disabled",
       maxDiffPixelRatio: 0.12,

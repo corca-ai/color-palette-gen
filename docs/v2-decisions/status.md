@@ -52,8 +52,8 @@ and the per-candidate result of each rule.
 - gallery ratings and notes persist locally and support versioned JSON exchange.
 - gallery summaries are precomputed at build time; complete inspector results
   are calculated in a worker only when requested;
-- A public-reference JSON export maps every supported semantic role to a stable
-  example consumer token.
+- A general-purpose reference JSON export maps every supported semantic role to
+  a stable example token namespace.
 
 Disabled and popover roles are explicit semantic aliases to foundation roles.
 No semantic output role remains a policy anchor.
