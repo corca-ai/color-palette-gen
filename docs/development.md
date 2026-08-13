@@ -8,7 +8,10 @@
   assignments, private-key material, local-only addresses, non-public source
   markers.
 - Run `npm run check:e2e:smoke` locally when core browser behavior may change.
-  Pull-request CI runs this three-test smoke tier.
+  Pull-request CI runs this three-test smoke tier only when v2 browser code,
+  shared color math, browser tests, build/serve tooling, or their Node
+  dependencies change. Documentation-only and unrelated v1 changes do not
+  install Chromium.
 - Run `npm run check:full` before high-risk palette-policy or broad UI changes.
   It adds a Node-reachable engine/runtime coverage floor, the 216-color
   exhaustive grid, and the complete Playwright suite including visual

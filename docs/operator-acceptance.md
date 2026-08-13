@@ -34,6 +34,12 @@ machine-readable pattern.
 ## Deployment and operations
 
 - GitHub Actions deploys the static build to public GitHub Pages from main. Public artifacts must contain no internal sensitive information or non-public resource content.
+- Pull requests always run the fast check/build workflow. The separate browser
+  smoke workflow runs only for paths that can affect the v2 browser surface;
+  the full browser suite remains weekly or manually triggered. Keep the
+  path-filtered Browser Smoke workflow optional in branch protection because
+  GitHub does not create a successful check for pull requests outside its path
+  scope; use the always-running Check workflow as the required PR gate.
 
 Before merging to `main`, review the built `dist/` artifact and the Git diff for
 secrets, internal URLs, private identifiers, private screenshots, and claims

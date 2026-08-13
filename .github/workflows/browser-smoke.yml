@@ -1,0 +1,43 @@
+name: Browser Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "v2/**"
+      - "lib/color-math.js"
+      - "e2e/**"
+      - "scripts/build-site.mjs"
+      - "scripts/check-public-artifact.mjs"
+      - "scripts/serve-site.mjs"
+      - "playwright.config.js"
+      - "package.json"
+      - "package-lock.json"
+      - ".node-version"
+      - ".github/workflows/browser-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser smoke checks
+        run: npm run check:e2e:smoke
