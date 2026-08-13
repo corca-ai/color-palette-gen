@@ -23,7 +23,8 @@ engine policy changes; the normal site build already enforces that coupling.
 
 ## Regression coverage
 
-Node tests cover the full 216-color RGB grid and named edge inputs. Playwright
-covers worker generation, lazy static gallery loading, persistence, graph/card
-synchronization, and fixed screenshots of the paired palettes and Craken
-specimen.
+Fast Node tests cover named edge inputs on every pull request. A weekly and
+manually triggered full check adds the 216-color RGB grid. Pull requests run a
+small Playwright smoke tier; the full browser tier covers worker generation,
+lazy static gallery loading, persistence, graph/card synchronization, and fixed
+screenshots of the paired palettes and public-reference specimen.

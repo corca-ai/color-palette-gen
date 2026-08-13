@@ -6,8 +6,8 @@ source-shift cases so policy changes can be compared against the same set.
 
 ## Rating meanings
 
-- **Prefer:** suitable for the intended Craken application without a color
-  adjustment.
+- **Prefer:** suitable for the public-reference compatibility specimen without
+  a color adjustment.
 - **Acceptable:** usable, but a documented alternative would also be reasonable.
 - **Reject:** the palette or state family should not ship for this input.
 

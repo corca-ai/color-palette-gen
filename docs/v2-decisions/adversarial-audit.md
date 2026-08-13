@@ -1,6 +1,6 @@
 # Adversarial audit
 
-Last reviewed against `v2-policy-model-10`.
+Last reviewed against `v2-policy-model-11`.
 
 ## What the engine can establish
 

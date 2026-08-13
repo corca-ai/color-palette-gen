@@ -2,7 +2,13 @@ import { isHex, normalizeHex } from "../../lib/color-math.js";
 import { apcaCheck } from "./apca.js";
 import { aliasDecision, inputDecision, selectCandidate } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
+import { selectModePair } from "./pair-selection.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
+import {
+  independentPaletteReview,
+  pairedQuality,
+  sourceUsageAlternatives,
+} from "./quality.js";
 import {
   apcaContrast,
   bindRule,
@@ -147,7 +153,7 @@ function foundationSearch({
       return evaluateRole(definition.id, item);
     }),
   );
-  return selectCandidate({
+  const resolution = selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
     role,
     intent: `Resolve ${role} near its ${mode} recipe while preserving the complete foundation contract.`,
@@ -167,6 +173,19 @@ function foundationSearch({
     ),
     searchConstants: ["input hue", "bounded tint candidates"],
   });
+  resolution.trace.target = {
+    hex: target.hex,
+    oklch: target.oklch,
+  };
+  resolution.trace.searchDomain = {
+    lightness: [
+      Math.min(...candidates.map((item) => item.oklch.l)),
+      Math.max(...candidates.map((item) => item.oklch.l)),
+    ],
+    chroma: [0, V2_POLICY.neutral.tintCap],
+    lightnessStep: V2_POLICY.foundation.candidateStep,
+  };
+  return resolution;
 }
 
 function foundationPalette(input, mode, recipe) {
@@ -1254,423 +1273,6 @@ function modePalette(input, mode, options = {}) {
   };
 }
 
-function exactModeCandidate(input, mode, lightness) {
-  try {
-    return modePalette(input, mode, { primaryRange: [lightness, lightness] });
-  } catch {
-    return null;
-  }
-}
-
-function uniqueModeCandidates(input, mode, baseline) {
-  const [start, end] = V2_POLICY.primary.lightnessRange[mode];
-  const lightnesses = [start, (start + end) / 2, end];
-  const candidates = [
-    baseline,
-    ...lightnesses.map((lightness) =>
-      exactModeCandidate(input, mode, lightness),
-    ),
-  ].filter(Boolean);
-  return candidates.filter(
-    (candidateMode, index) =>
-      candidates.findIndex(
-        (other) => other.values.primary === candidateMode.values.primary,
-      ) === index,
-  );
-}
-
-function qualityPenalty(quality) {
-  return quality.checks.reduce((total, check) => {
-    if (check.pass) return total;
-    if (Array.isArray(check.target)) {
-      return (
-        total +
-        Math.min(
-          Math.abs(check.value - check.target[0]),
-          Math.abs(check.value - check.target[1]),
-        )
-      );
-    }
-    return total + Math.abs(check.value - check.target);
-  }, 0);
-}
-
-function comparePair(first, second) {
-  const firstRank = first.rank;
-  const secondRank = second.rank;
-  for (let index = 0; index < firstRank.length; index += 1) {
-    if (firstRank[index] !== secondRank[index]) {
-      return firstRank[index] - secondRank[index];
-    }
-  }
-  return first.id.localeCompare(second.id);
-}
-
-function selectModePair(input, baselineModes) {
-  const source = candidate(input.hex);
-  const lightCandidates = uniqueModeCandidates(
-    input,
-    "light",
-    baselineModes.light,
-  );
-  const darkCandidates = uniqueModeCandidates(
-    input,
-    "dark",
-    baselineModes.dark,
-  );
-  const pairs = lightCandidates
-    .flatMap((light) =>
-      darkCandidates.map((dark) => {
-        const modes = { light, dark };
-        const quality = pairedQuality(modes);
-        const lightDistance = distance(source, candidate(light.values.primary));
-        const darkDistance = distance(source, candidate(dark.values.primary));
-        return {
-          id: `${light.values.primary}/${dark.values.primary}`,
-          modes,
-          quality,
-          lightDistance,
-          darkDistance,
-          rank: [
-            Math.max(lightDistance, darkDistance),
-            lightDistance + darkDistance,
-            quality.checks.filter(({ pass }) => !pass).length,
-            qualityPenalty(quality),
-          ],
-        };
-      }),
-    )
-    .sort(comparePair);
-  const selected = pairs[0];
-  const compactPair = (pair) =>
-    pair
-      ? {
-          light: pair.modes.light.values.primary,
-          dark: pair.modes.dark.values.primary,
-          qualityMisses: pair.quality.checks.filter(({ pass }) => !pass).length,
-          maximumSourceDistance: pair.rank[0],
-          totalSourceDistance: pair.rank[1],
-          hueDrift: pair.quality.crossMode.hueDrift,
-          chromaDifference: pair.quality.crossMode.chromaDifference,
-          lightnessGap: pair.quality.crossMode.lightnessGap,
-        }
-      : null;
-  const sourceFidelity = [...pairs].sort(
-    (first, second) =>
-      first.lightDistance +
-        first.darkDistance -
-        (second.lightDistance + second.darkDistance) ||
-      first.id.localeCompare(second.id),
-  )[0];
-  const selectedMisses = selected.quality.checks.filter(
-    ({ pass }) => !pass,
-  ).length;
-  const qualityRejected = pairs.find(
-    (pair) =>
-      pair.quality.checks.filter(({ pass }) => !pass).length > selectedMisses,
-  );
-  return {
-    modes: selected.modes,
-    quality: selected.quality,
-    decision: {
-      strategy: "sampled cross-mode pair search",
-      candidateCount: pairs.length,
-      ranking: [
-        "smallest worst-mode source distance",
-        "smallest total source distance",
-        "fewest structural review misses",
-        "smallest quality miss",
-      ],
-      selected: compactPair(selected),
-      alternatives: {
-        nextRanked: compactPair(pairs[1]),
-        sourceFidelity: compactPair(sourceFidelity),
-        qualityRejected: compactPair(qualityRejected),
-      },
-    },
-  };
-}
-
-function independentPaletteReview(input, modes, structuralQuality) {
-  const source = candidate(input.hex);
-  const sourceChecks = ["light", "dark"].map((mode) =>
-    maximumQualityCheck({
-      id: `review.${mode}.source-fidelity`,
-      label: `${mode} action source distance`,
-      value: distance(source, candidate(modes[mode].values.primary)),
-      maximum: V2_POLICY.primary.maximumSourceDistance,
-      unit: "ΔE",
-    }),
-  );
-  const semanticChecks = ["light", "dark"].flatMap((mode) => {
-    const values = modes[mode].values;
-    const primary = candidate(values.primary);
-    const destructive = candidate(values.destructive);
-    const warning = candidate(values.warning);
-    const hueCheck = (id, label, first, second) => {
-      const chromatic =
-        first.oklch.c >= V2_POLICY.semanticReview.chromaFloor &&
-        second.oklch.c >= V2_POLICY.semanticReview.chromaFloor;
-      return minimumQualityCheck({
-        id,
-        label,
-        value: chromatic ? hueDistance(first.oklch.h, second.oklch.h) : 180,
-        minimum: V2_POLICY.semanticReview.minimumHueSeparation,
-        unit: chromatic ? "°" : "° · achromatic exemption",
-      });
-    };
-    return [
-      hueCheck(
-        `review.${mode}.primary-destructive-hue`,
-        `${mode} primary ↔ destructive hue`,
-        primary,
-        destructive,
-      ),
-      hueCheck(
-        `review.${mode}.primary-warning-hue`,
-        `${mode} primary ↔ warning hue`,
-        primary,
-        warning,
-      ),
-    ];
-  });
-  const checks = [
-    ...structuralQuality.checks,
-    ...sourceChecks,
-    ...semanticChecks,
-  ];
-  return {
-    ...structuralQuality,
-    intent:
-      "Independently review source fidelity, cross-mode identity, and state pacing after pair selection.",
-    sourceChecks,
-    semanticChecks,
-    checks,
-    passed: checks.every(({ pass }) => pass),
-  };
-}
-
-function rangeQualityCheck({ id, label, value, range, unit = "" }) {
-  const pass = value >= range[0] && value <= range[1];
-  return {
-    id,
-    label,
-    value,
-    target: range,
-    unit,
-    pass,
-    authority: "provisional",
-  };
-}
-
-function maximumQualityCheck({ id, label, value, maximum, unit = "" }) {
-  return {
-    id,
-    label,
-    value,
-    target: maximum,
-    unit,
-    pass: value <= maximum,
-    authority: "provisional",
-  };
-}
-
-function minimumQualityCheck({ id, label, value, minimum, unit = "" }) {
-  return {
-    id,
-    label,
-    value,
-    target: minimum,
-    unit,
-    direction: "minimum",
-    pass: value >= minimum,
-    authority: "provisional",
-  };
-}
-
-function stateProgression(modeResult, family = "primary") {
-  const values = modeResult.values;
-  const primary = candidate(values[family]);
-  const hover = candidate(values[`${family} hover`]);
-  const active = candidate(values[`${family} active`]);
-  const defaultToHover = distance(primary, hover);
-  const hoverToActive = distance(hover, active);
-  const ratio = hoverToActive / defaultToHover;
-  const direction =
-    family === "primary"
-      ? V2_POLICY.state.direction[modeResult.mode]
-      : Math.sign(hover.oklch.l - primary.oklch.l);
-  const monotonic =
-    direction < 0
-      ? primary.oklch.l > hover.oklch.l && hover.oklch.l > active.oklch.l
-      : primary.oklch.l < hover.oklch.l && hover.oklch.l < active.oklch.l;
-  const checks = [
-    rangeQualityCheck({
-      id: `${modeResult.mode}.${family}.state.interval-ratio`,
-      label: `${family} hover → active interval balance`,
-      value: ratio,
-      range: V2_POLICY.state.progressionRatio,
-      unit: "× hover interval",
-    }),
-    {
-      id: `${modeResult.mode}.${family}.state.monotonic-lightness`,
-      label: `${family} monotonic state direction`,
-      value: monotonic ? 1 : 0,
-      target: 1,
-      unit: "ordered",
-      pass: monotonic,
-      authority: "product-policy",
-    },
-  ];
-  return {
-    mode: modeResult.mode,
-    family,
-    defaultToHover,
-    hoverToActive,
-    ratio,
-    checks,
-    passed: checks.every(({ pass }) => pass),
-  };
-}
-
-function pairedQuality(modes) {
-  const light = candidate(modes.light.values.primary);
-  const dark = candidate(modes.dark.values.primary);
-  const hueDrift = hueDistance(light.oklch.h, dark.oklch.h);
-  const chromaDifference = Math.abs(light.oklch.c - dark.oklch.c);
-  const lightnessGap = dark.oklch.l - light.oklch.l;
-  const crossModeChecks = [
-    maximumQualityCheck({
-      id: "pair.primary-hue-drift",
-      label: "Primary hue drift",
-      value: hueDrift,
-      maximum: V2_POLICY.crossMode.maximumHueDrift,
-      unit: "°",
-    }),
-    maximumQualityCheck({
-      id: "pair.primary-chroma-difference",
-      label: "Primary chroma difference",
-      value: chromaDifference,
-      maximum: V2_POLICY.crossMode.maximumChromaDifference,
-      unit: "ΔC",
-    }),
-    rangeQualityCheck({
-      id: "pair.primary-lightness-gap",
-      label: "Dark/light primary lightness gap",
-      value: lightnessGap,
-      range: V2_POLICY.crossMode.lightnessGap,
-      unit: "ΔL",
-    }),
-  ];
-  const states = {
-    light: stateProgression(modes.light),
-    dark: stateProgression(modes.dark),
-  };
-  const feedbackStates = Object.fromEntries(
-    ["destructive", "warning"].map((family) => [
-      family,
-      {
-        light: stateProgression(modes.light, family),
-        dark: stateProgression(modes.dark, family),
-      },
-    ]),
-  );
-  const checks = [
-    ...crossModeChecks,
-    ...states.light.checks,
-    ...states.dark.checks,
-    ...Object.values(feedbackStates).flatMap((family) => [
-      ...family.light.checks,
-      ...family.dark.checks,
-    ]),
-  ];
-  return {
-    intent:
-      "Review whether both modes preserve one brand identity and whether interaction states advance at a balanced pace.",
-    authority: "provisional",
-    crossMode: {
-      hueDrift,
-      chromaDifference,
-      lightnessGap,
-      checks: crossModeChecks,
-    },
-    states,
-    feedbackStates,
-    checks,
-    passed: checks.every(({ pass }) => pass),
-  };
-}
-
-function sourceUsageAlternatives(input, modes) {
-  if (!Object.values(modes).some((mode) => mode.adaptations.largeBrandShift)) {
-    return null;
-  }
-  const byMode = Object.fromEntries(
-    Object.entries(modes).map(([mode, result]) => {
-      const sourceText = chooseSharedText([input.hex]);
-      const sourceLabelLc = Math.abs(apcaContrast(sourceText, input.hex));
-      const outlineContrast = Math.min(
-        contrastRatio(input.hex, result.values.background),
-        contrastRatio(input.hex, result.values.surface),
-      );
-      return [
-        mode,
-        {
-          background: result.values.background,
-          foreground: result.values.foreground,
-          filled: {
-            color: result.values.primary,
-            hover: result.values["primary hover"],
-            active: result.values["primary active"],
-            text: result.values["primary text"],
-            safe: true,
-            note: "Generated fill selected by the complete palette policy.",
-          },
-          outline: {
-            color: input.hex,
-            text: input.hex,
-            contrast: outlineContrast,
-            safe: outlineContrast >= V2_POLICY.primary.boundaryContrast,
-            note:
-              outlineContrast >= V2_POLICY.primary.boundaryContrast
-                ? "Source color can identify an outline control on both foundations."
-                : "Source color is too weak for a required outline on one foundation.",
-          },
-          brandFaithful: {
-            color: input.hex,
-            text: sourceText,
-            border: result.values["primary border"],
-            lc: sourceLabelLc,
-            safe: sourceLabelLc >= V2_POLICY.primary.labelLc,
-            note:
-              sourceLabelLc >= V2_POLICY.primary.labelLc
-                ? "Source fill supports the selected black-or-white label."
-                : "Source fill does not support the current label target.",
-          },
-        },
-      ];
-    }),
-  );
-  return {
-    intent:
-      "Expose usage trade-offs when the generated primary moves far from the supplied brand color.",
-    source: input.hex,
-    modes: byMode,
-    recommendation: {
-      statefulAction: "Generated fill",
-      sourceFaithfulAction: Object.values(byMode).every(
-        ({ outline }) => outline.safe,
-      )
-        ? "Source outline"
-        : Object.values(byMode).every(({ brandFaithful }) => brandFaithful.safe)
-          ? "Source fill with generated boundary"
-          : "No source-faithful action is safe in both modes",
-      rationale:
-        "Generated fill is the only option with a complete state family; source-faithful options are base-state alternatives.",
-    },
-  };
-}
-
 export function generatePaletteV2({ primary }) {
   if (typeof primary !== "string" || !isHex(primary)) {
     throw new TypeError("primary must be a six-digit hex color.");
@@ -1694,7 +1296,7 @@ export function generatePaletteV2({ primary }) {
     light: modePalette(inputColor, "light"),
     dark: modePalette(inputColor, "dark"),
   };
-  const pairSelection = selectModePair(inputColor, baselineModes);
+  const pairSelection = selectModePair(inputColor, baselineModes, modePalette);
   const { modes } = pairSelection;
   const quality = independentPaletteReview(
     inputColor,

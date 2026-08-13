@@ -5,9 +5,10 @@
 v2 is the primary color-palette prototype at the site root. v1 remains
 available as the broad, inspectable palette experiment at `/v1/`.
 
-The intended consumer of the generated palette is Craken. The neutral authoring
-UI remains independent, while its applied specimen follows the public Craken
-Design Atlas coverage and component-state structure. See
+The neutral authoring UI remains independent, while its applied specimen uses
+the public Craken Design Atlas as one external reference for coverage and
+component-state structure. This does not assert an internal consumer
+relationship or runtime dependency. See
 [`v2-decisions/craken-integration.md`](v2-decisions/craken-integration.md).
 
 v2 intentionally accepts one input only:
@@ -76,8 +77,9 @@ source code:
 - component states are reviewed together on composed application screens;
 - light, dark, and system appearance are first-class states.
 
-The initial v2 recipe uses Craken's public design behavior as a product
-reference, not as a private implementation dependency.
+The initial v2 recipe uses observable behavior from this public resource as a
+design reference, not as evidence of an internal relationship or a private
+implementation dependency.
 
 Craken's observed dark muted text and brand-state lightness values are not
 copied literally: under the v2 APCA targets they are insufficient for compact
@@ -117,8 +119,9 @@ APCA does not establish the rest of the palette. v2 separately validates:
 - primary and destructive colors at Oklab `Delta E >= 0.08`.
 
 Decorative borders intentionally remain subtler than interactive input borders.
-The current regression suite applies all contracts to a 216-color RGB grid in
-addition to named edge cases.
+The weekly or manually triggered exhaustive tier applies all contracts to a
+216-color RGB grid in addition to the named edge cases used by the fast
+pull-request tier.
 
 ## Semantic output
 

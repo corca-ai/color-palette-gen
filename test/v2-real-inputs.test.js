@@ -11,6 +11,7 @@ const REAL_INPUTS = [
   "#FF9500",
   "#F59E0B",
   "#FFD600",
+  "#F2C230",
   "#FFFF00",
   "#00A878",
   "#22C55E",
@@ -49,6 +50,8 @@ test("real and adversarial brand inputs remain computable without hidden contrac
     assert.equal(result.passed, true, primary);
     for (const mode of ["light", "dark"]) {
       const values = result.modes[mode].values;
+      assert.notEqual(values.warning, values.primary, `${primary}/${mode}`);
+      assert.notEqual(values.warning, values.destructive, `${primary}/${mode}`);
       for (const family of ["primary", "destructive", "warning"]) {
         assert.equal(
           new Set([

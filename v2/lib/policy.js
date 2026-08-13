@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-10",
+  version: "v2-policy-model-11",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,

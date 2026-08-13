@@ -216,14 +216,18 @@ Soft accent surface용 `accent text`를 채도가 높은 accent fill 위에 재�
 
 Foundation roles must not share one undifferentiated scatter plot. Background,
 surface, border, and input border have different constraints, so spatial
-proximity across roles has no decision meaning. The v2 map uses one search row
-per role and repeats the same axes only for comparison within that role.
+proximity across roles has no decision meaning. The v2 map uses one decision
+panel per role. Lightness is zoomed to that role's actual candidate range;
+chroma is a separate `0 → calm tint cap` track. A scale is never implied across
+roles without printing its numeric endpoints.
 
-Each row must expose the selected HEX and OKLCH coordinates, the closest
-rejected candidate, another passing candidate, the number searched, and the
-rule that rejected the nearby option. Clicking any marker opens the matching
-candidate evidence in the palette. The map answers “why did this candidate
-win?”; it must not imply that plotting coordinates alone justify the choice.
+Each panel must expose the recipe target, selected HEX and OKLCH coordinates,
+the closest rejected candidate, another passing candidate, the number searched,
+and the rule that rejected the nearby option. Target, selected, failed, and
+passing markers retain separate labels even when their values coincide.
+Clicking a candidate marker opens its matching evidence in the palette. The map
+answers “why did this candidate win?”; coordinates alone never justify the
+choice.
 
 ### Result mode and information density
 

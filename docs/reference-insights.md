@@ -126,51 +126,7 @@ Itten을 만들 때 참고한 기반 프로젝트로 공유받았다. 이 프로
 - wide-gamut 지원을 위해 기본 hex 출력 형식을 제거하지 않는다. hex는 계속
   sRGB fallback으로 제공한다.
 
-## 2. 선언적 디자인과 디자인 런타임
-
-자료:
-
-- [선언적 디자인과 디자인 런타임](https://wiki.g15e.com/pages/Declarative%20design%20and%20design%20runtime)
-- [Markdown 원문](https://wiki.g15e.com/pages/Declarative%20design%20and%20design%20runtime.txt)
-
-### 핵심 관점
-
-디지털 디자인은 다크 모드, 고대비, 기기, 사용자 선호처럼 서로 곱해지는 조건 때문에 조합적 폭발을 일으킨다. 완성된 픽셀 값을 모든 경우에 직접 지정하는 방식 대신, 디자인 의도를 선언하고 런타임이 사용자와 맥락에 맞는 결과를 계산해야 한다.
-
-원문의 표현을 이 프로젝트에 맞추면 다음과 같다.
-
-```text
-color system = f(design intent, user preference, context)
-```
-
-### 현재 프로젝트에 가져올 점
-
-고정된 사용자 입력을 디자인 의도로 해석한다.
-
-```json
-{
-  "primary": "#635BFF",
-  "secondary": "#00D4A0",
-  "vibe": "calm soft"
-}
-```
-
-- 색상 입력은 브랜드 정체성에 대한 의도다.
-- `vibe`는 원하는 지각적 성격에 대한 의도다.
-- appearance, contrast, gamut 같은 맥락과 제약은 현재 사용자 입력이 아니다. 프로토타입 내부의 고정 정책으로 둔다.
-
-### 정적 검사기 개념의 적용
-
-생성기는 결과만 반환하지 말고 의도 간 충돌도 보고해야 한다.
-
-- “soft”를 요청했지만 작은 본문 텍스트에 “high contrast”도 요구한 경우: 대비는 지키되 chroma나 주변 surface 차이를 줄이는 방식으로 해석
-- 입력 브랜드 색을 버튼 배경으로 썼을 때 흰색과 검은색 어느 쪽도 목표 대비를 만족하지 못하는 경우: 명도 조정 또는 대체 token 생성
-- 서로 다른 역할에 할당된 색이 지각적으로 너무 비슷한 경우: 구분 가능성 경고
-- 요청 색이 target gamut 밖인 경우: gamut mapping 결과와 변화량 보고
-
-단, 원문도 simultaneous contrast와 color size effect처럼 알고리즘만으로 완전히 통제하기 어려운 지각 현상을 지적한다. 따라서 결과에 preview와 사용자 override 경로를 남겨야 한다.
-
-## 3. Stripe의 accessible color system
+## 2. Stripe의 accessible color system
 
 자료:
 
@@ -204,7 +160,7 @@ Stripe가 제시한 색상 시스템의 목표는 다음 세 가지다.
 
 Stripe 글은 2019년의 WCAG 2.0 대비 모델을 다룬다. 첫 구현의 안정적인 기준으로 WCAG 2.x 대비를 사용할 수 있지만, 현재 표준 선택은 구현 시점에 W3C 원문을 다시 확인하고 버전이 명시된 정책으로 관리해야 한다.
 
-## 4. 제안하는 도메인 모델
+## 3. 제안하는 도메인 모델
 
 아래 모델은 프로젝트의 고정 입출력 계약을 구체화한 것이다. debug 정보와 시각화 데이터는 이 계약에 포함하지 않는다.
 
@@ -272,7 +228,7 @@ status.info.{background,foreground,text}
 status.success.{background,foreground,text}
 ```
 
-## 5. Vibe를 계산 가능한 제약으로 변환하기
+## 4. Vibe를 계산 가능한 제약으로 변환하기
 
 자유 형식 vibe는 그대로 색 생성 공식에 넣기보다 중간 표현으로 변환한다. 아래 값은 구현 전 사용자 연구와 실험으로 보정해야 하는 초기 가설이다.
 
@@ -297,7 +253,7 @@ internal accessibility policy
 
 상충 시 결과를 임의로 숨기지 말고 어떤 요구가 우선되었는지 diagnostics로 설명한다.
 
-## 6. 권장 생성 파이프라인
+## 5. 권장 생성 파이프라인
 
 1. 입력 색상을 파싱하고 OKLCH로 변환한다.
 2. vibe 단어를 정규화된 intent parameter로 변환한다.
@@ -309,7 +265,7 @@ internal accessibility policy
 8. semantic token 목록, 색상 표현, 검증 metadata, 경고를 반환한다.
 9. 실제 UI fixture로 시각 회귀 및 수동 검토를 수행한다.
 
-## 7. 구현 우선순위
+## 6. 구현 우선순위
 
 이 절은 장기적인 확장 순서를 나타낸다. 현재 프로토타입 범위는 [빠른 프로토타입 플랜](prototype-plan.md)을 따른다.
 

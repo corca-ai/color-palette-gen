@@ -25,25 +25,3 @@ test("Craken serialization preserves both mode values and policy provenance", ()
     }
   }
 });
-
-test("edge inputs retain distinct feedback and readable selected states", () => {
-  for (const primary of [
-    "#FF0000",
-    "#FFB000",
-    "#FFFF00",
-    "#000000",
-    "#FFFFFF",
-    "#00FFFF",
-  ]) {
-    const palette = generatePaletteV2({ primary });
-    for (const mode of ["light", "dark"]) {
-      const result = palette.modes[mode];
-      assert.notEqual(result.values.warning, result.values.primary);
-      assert.notEqual(result.values.warning, result.values.destructive);
-      assert.equal(
-        result.checks.every(({ pass }) => pass),
-        true,
-      );
-    }
-  }
-});

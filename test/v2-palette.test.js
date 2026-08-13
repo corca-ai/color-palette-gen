@@ -21,23 +21,6 @@ test("v2 accepts only a primary contract and resolves both modes", () => {
   }
 });
 
-test("v2 text contracts hold across representative primary colors", () => {
-  for (const primary of [
-    "#FF0000",
-    "#507096",
-    "#00A878",
-    "#7A4ED8",
-    "#111111",
-    "#F2C230",
-  ]) {
-    const result = generatePaletteV2({ primary });
-    for (const mode of ["light", "dark"]) {
-      const failures = result.modes[mode].checks.filter((check) => !check.pass);
-      assert.deepEqual(failures, [], `${primary}/${mode} APCA contracts`);
-    }
-  }
-});
-
 test("v2 CSS serialization remains mode-scoped", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   assert.match(serializeModeCss(result.modes.light), /^\[data-theme="light"\]/);
@@ -82,7 +65,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-10");
+  assert.equal(result.policyVersion, "v2-policy-model-11");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -130,26 +113,6 @@ test("searched roles retain counterfactual candidates", () => {
           decision.alternatives.nextPassing,
         `${mode}/${role} alternative`,
       );
-    }
-  }
-});
-
-test("v2 contracts hold across an RGB input grid", () => {
-  const channels = [0, 51, 102, 153, 204, 255];
-  for (const red of channels) {
-    for (const green of channels) {
-      for (const blue of channels) {
-        const primary = `#${[red, green, blue]
-          .map((channel) => channel.toString(16).padStart(2, "0"))
-          .join("")}`;
-        const result = generatePaletteV2({ primary });
-        assert.equal(result.passed, true, primary);
-        assert.equal(
-          result.quality.checks.every(({ value }) => Number.isFinite(value)),
-          true,
-          `${primary} paired quality metrics`,
-        );
-      }
     }
   }
 });
@@ -343,6 +306,12 @@ test("foundation roles use inspectable candidate search instead of anchors", () 
       assert.equal(decision.strategy, "minimum-change candidate search");
       assert.ok(decision.candidateCount > 1, `${mode}/${role}`);
       assert.ok(decision.policy.constraints.length > 0);
+      assert.ok(decision.target?.hex, `${mode}/${role}/target`);
+      assert.equal(decision.searchDomain.lightness.length, 2);
+      assert.deepEqual(decision.searchDomain.chroma, [0, 0.012]);
+      assert.ok(
+        decision.searchDomain.lightness[0] < decision.searchDomain.lightness[1],
+      );
     }
   }
 });

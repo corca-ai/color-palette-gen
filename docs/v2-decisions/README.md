@@ -33,8 +33,8 @@ must fail the decision-record test.
   [Role policies](role-policies.md).
 - To distinguish implemented search from future work, read
   [Implementation status](status.md).
-- To understand why only the sample adopts Craken structure, read
-  [Craken integration](craken-integration.md).
+- To understand why only the sample adopts a public reference structure, read
+  [Public reference compatibility](craken-integration.md).
 - To understand designer ratings and their limits, read
   [Evaluation protocol](evaluation.md).
 - To understand worker generation, caching, and the precomputed gallery, read

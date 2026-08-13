@@ -4,7 +4,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/");
 });
 
-test("generates both modes from one primary and exposes new semantic roles", async ({
+test("@smoke generates both modes from one primary and exposes new semantic roles", async ({
   page,
 }) => {
   await page.locator("#v2-primary").fill("#7A4ED8");
@@ -22,7 +22,7 @@ test("generates both modes from one primary and exposes new semantic roles", asy
   await expect(page.locator(".example.dark")).toHaveCount(0);
 });
 
-test("result mode switches the complete inspector and persists", async ({
+test("@smoke result mode switches the complete inspector and persists", async ({
   page,
 }) => {
   const dark = page.getByRole("button", { name: "Dark", exact: true });
@@ -86,7 +86,7 @@ test("foundation graph and palette evidence stay synchronized", async ({
   page,
 }) => {
   const node = page.locator(
-    '.foundation-node.selected[data-mode="light"][data-role="background"]',
+    '.decision-marker.selected[data-mode="light"][data-role="background"][data-axis="lightness"]',
   );
   await node.click();
   const swatch = page.locator(
@@ -123,7 +123,7 @@ test("gallery is lazy and designer ratings persist", async ({ page }) => {
   ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
 });
 
-test("invalid input is announced without replacing the current palette", async ({
+test("@smoke invalid input is announced without replacing the current palette", async ({
   page,
 }) => {
   const title = await page.locator("#palette-title").textContent();
@@ -172,6 +172,9 @@ test("core palette and Craken specimen retain their visual structure", async ({
       maxDiffPixelRatio: 0.12,
     },
   );
+  await page.locator(".topbar").evaluate((element) => {
+    element.hidden = true;
+  });
   await expect(page.locator(".examples")).toHaveScreenshot(
     "craken-specimens.png",
     {

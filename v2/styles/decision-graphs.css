@@ -1,0 +1,441 @@
+.foundation-section {
+  margin-top: 64px;
+}
+.foundation-maps {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.semantic-maps {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+}
+body:not([data-result-mode="compare"]) .semantic-maps {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.semantic-maps article {
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 11px;
+}
+.semantic-maps header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+}
+.semantic-maps header span,
+.semantic-maps header small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.semantic-maps header strong {
+  font-size: 10px;
+  text-align: right;
+  text-transform: capitalize;
+}
+.semantic-maps header small {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+}
+.semantic-plot {
+  background:
+    linear-gradient(#8882 1px, transparent 1px),
+    linear-gradient(90deg, #8882 1px, transparent 1px);
+  background-size: 25% 25%;
+  border-bottom: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+  height: 100px;
+  margin: 10px 5px;
+  position: relative;
+}
+.semantic-plot > i {
+  background: var(--marker-color);
+  border: 2px solid var(--card);
+  box-shadow: 0 0 0 1px var(--ink);
+  height: 10px;
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 10px;
+}
+.semantic-plot > b {
+  background: var(--candidate-color);
+  border: 1px solid var(--card);
+  border-radius: 50%;
+  height: 4px;
+  opacity: 0.48;
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 4px;
+}
+.semantic-plot > b.infeasible {
+  filter: grayscale(1);
+  opacity: 0.18;
+}
+.semantic-plot > i.rejected {
+  border-style: dashed;
+  opacity: 0.65;
+}
+.semantic-plot > i.passing {
+  border-radius: 50%;
+}
+.semantic-maps footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.semantic-maps footer span {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 7px;
+  gap: 3px;
+}
+.semantic-maps footer i {
+  border: 1px solid currentColor;
+  height: 6px;
+  width: 6px;
+}
+.semantic-maps footer i.passing {
+  border-radius: 50%;
+}
+.semantic-maps footer i.rejected {
+  border-style: dashed;
+}
+.semantic-maps footer i.feasible {
+  background: var(--ink);
+  border-radius: 50%;
+  opacity: 0.45;
+}
+.semantic-maps footer i.infeasible {
+  border-radius: 50%;
+  opacity: 0.3;
+}
+.foundation-map-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  min-width: 0;
+  padding: 14px;
+}
+.foundation-map-card > header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.foundation-map-card > header span {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.foundation-map-card > header strong {
+  color: var(--muted);
+  font-size: 8px;
+}
+.foundation-reading-guide {
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+}
+.foundation-reading-guide strong {
+  color: var(--ink);
+}
+.foundation-rows {
+  border: 1px solid var(--line);
+}
+.foundation-role-row {
+  padding: 14px;
+}
+.foundation-role-row + .foundation-role-row {
+  border-top: 1px solid var(--line);
+}
+.foundation-role-label {
+  align-items: center;
+  display: grid;
+  gap: 3px 8px;
+  grid-template-columns: minmax(120px, 1fr) auto;
+}
+.foundation-role-label span {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.foundation-role-label strong {
+  align-items: center;
+  display: flex;
+  font-family: var(--mono);
+  font-size: 11px;
+  grid-row: 1 / 3;
+  grid-column: 2;
+  gap: 5px;
+  margin-top: 4px;
+}
+.foundation-role-label strong i {
+  border: 1px solid #7778;
+  height: 22px;
+  width: 22px;
+}
+.foundation-role-label small {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.foundation-role-tracks {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+.decision-track header,
+.decision-track footer {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-family: var(--mono);
+  font-size: 8px;
+  justify-content: space-between;
+}
+.decision-track header strong {
+  color: var(--ink);
+  font-size: 9px;
+}
+.decision-track footer span:nth-child(2) {
+  text-align: center;
+}
+.decision-track-lanes {
+  border-block: 1px solid var(--line);
+  margin-top: 5px;
+  padding-block: 4px;
+}
+.decision-track-lane {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  min-height: 23px;
+}
+.decision-track-lane > span {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  text-align: right;
+}
+.decision-track-lane > div {
+  background: linear-gradient(90deg, var(--line), var(--ink), var(--line))
+    center / 100% 1px no-repeat;
+  height: 20px;
+  margin-inline: 7px;
+  position: relative;
+}
+.decision-marker {
+  background: var(--node-color, var(--card));
+  border: 2px solid var(--plot);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--marker-ring);
+  height: 13px;
+  padding: 0;
+  position: absolute;
+  top: 10px;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  z-index: 2;
+}
+.decision-marker.target {
+  background: transparent;
+  border: 0;
+  border-left: 2px solid var(--review);
+  border-radius: 0;
+  box-shadow: none;
+  height: 18px;
+  top: 10px;
+  width: 1px;
+}
+.decision-marker.rejected {
+  background: transparent;
+  border-color: var(--node-color);
+  border-style: dashed;
+}
+.decision-marker.passing {
+  background: transparent;
+  border-color: var(--node-color);
+}
+.decision-marker:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+.decision-marker.active {
+  box-shadow:
+    0 0 0 2px var(--plot),
+    0 0 0 4px var(--ink);
+  z-index: 4;
+}
+.foundation-role-result {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+.foundation-role-result strong {
+  font-size: 11px;
+  line-height: 1.4;
+}
+.foundation-role-result span,
+.foundation-role-result small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.foundation-role-result em {
+  color: var(--danger);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.25;
+}
+.foundation-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+.foundation-legend span {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 7px;
+  gap: 5px;
+}
+.foundation-legend i {
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+.foundation-legend i.selected {
+  background: var(--ink);
+}
+.foundation-legend i.rejected {
+  border-style: dashed;
+}
+.foundation-legend i.target {
+  border: 0;
+  border-left: 2px solid var(--review);
+  border-radius: 0;
+  width: 2px;
+}
+.binary-heading {
+  align-items: baseline;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  margin-top: 11px;
+  padding-top: 10px;
+}
+.binary-heading strong {
+  font-size: 8px;
+}
+.binary-heading span {
+  color: var(--muted);
+  font-size: 7px;
+}
+.binary-text {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 8px;
+}
+.binary-text > div {
+  align-items: center;
+  display: grid;
+  gap: 3px 7px;
+  grid-template-columns: 20px 1fr;
+}
+.binary-text span {
+  color: var(--muted);
+  font-size: 7px;
+  grid-column: 1 / -1;
+  text-transform: uppercase;
+}
+.binary-text i {
+  border: 1px solid #7777;
+  height: 20px;
+}
+.binary-text strong,
+.binary-text small {
+  font-family: var(--mono);
+  font-size: 7px;
+}
+
+.focus-section {
+  margin-top: 64px;
+}
+.focus-specimens {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.focus-card {
+  border: 1px solid var(--line);
+  padding: 14px;
+}
+.focus-card > header {
+  align-items: center;
+  display: grid;
+  gap: 4px 10px;
+  grid-template-columns: 1fr auto;
+  margin-bottom: 13px;
+}
+.focus-card > header span {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+.focus-card > header strong {
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.focus-card > header small {
+  font-size: 8px;
+  grid-column: 1 / -1;
+  opacity: 0.62;
+}
+.focus-targets {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.focus-target {
+  border: 1px solid #8885;
+  display: grid;
+  gap: 14px 8px;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 12px;
+}
+.focus-target > span {
+  font-family: var(--mono);
+  font-size: 7px;
+  grid-column: 1 / -1;
+  opacity: 0.65;
+  text-transform: uppercase;
+}
+.focus-target button {
+  border: 1px solid currentColor;
+  font-size: 8px;
+  min-height: 30px;
+}
+.focus-target button.focused {
+  box-shadow:
+    0 0 0 2px var(--focus-gap),
+    0 0 0 4px var(--focus);
+}
+.binary-text small {
+  color: var(--muted);
+  grid-column: 1 / -1;
+}
+

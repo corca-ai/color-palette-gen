@@ -5,7 +5,12 @@ Live pages:
 - [v2 — primary-only light/dark palette (default)](https://corca-ai.github.io/color-palette-gen/)
 - [v1 — inspectable palette experiment](https://corca-ai.github.io/color-palette-gen/v1/)
 
-사용자가 제공한 핵심 색상과 원하는 분위기(vibe)를 바탕으로, UI에서 바로 사용할 수 있는 색상 팔레트를 생성하는 프로젝트입니다.
+하나의 핵심 색상에서 light/dark UI 팔레트를 생성하고 그 결정 근거를 검사할
+수 있는 프로젝트입니다. 기본 페이지는 v2이며, 다중 색상과 vibe를 받는 초기
+실험은 v1 경로에 별도로 보존합니다.
+
+v1은 유지보수 전용입니다. 보안·호환성·명백한 결함 수정은 계속 받지만 새
+팔레트 기능은 기본 제품인 v2에 추가합니다.
 
 > **Experimental prototype**
 >
@@ -13,7 +18,7 @@ Live pages:
 > 완전한 접근성 인증이나 production 적합성 보장을 의미하지 않습니다. 실제
 > 서비스의 글자 크기, 굵기, 상태, 컴포넌트 맥락에서 다시 검증해야 합니다.
 
-## 입력
+## v1 실험의 입력
 
 - **Primary color**: 필수
 - **Secondary, tertiary 등의 추가 색상**: 선택
@@ -21,7 +26,7 @@ Live pages:
   - 색상 조합에서 느껴져야 하는 인상을 단어로 입력합니다.
   - 예: `calm`, `soft`, `energetic`, `high contrast`
 
-엔진의 공개 입력 계약은 다음과 같습니다.
+보존된 v1 엔진의 공개 입력 계약은 다음과 같습니다.
 
 ```js
 {
@@ -35,9 +40,9 @@ Live pages:
 현재 UI 프로토타입은 `additionalColors` 중 첫 번째 색만 decorative family에
 사용하며, 그 이상의 색이 들어오면 입력을 보존한 채 scope warning을 반환합니다.
 
-## 출력
+## v1 실험의 출력
 
-현재 프로토타입은 19개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
+v1 프로토타입은 19개의 색상과 해당 UI 용도를 연결한 목록을 제공합니다.
 
 ```text
 list[(color, function)]
@@ -52,12 +57,17 @@ list[(color, function)]
 - secondary accent, soft, text, on-color
 - decorative accent, soft, text, on-color
 
-## 목표
+## v1 실험의 목표
 
 입력된 색상 간의 조화와 지정된 vibe를 함께 고려하여, 일관된 UI 디자인에 활용할 수 있는 색상과 기능의 조합을 생성합니다.
 
 ## 공개 문서
 
+- [프로젝트 방향](docs/product-direction.md)
+- [개발 및 검증](docs/development.md)
+- [협업 및 공개 저장소 원칙](docs/collaboration.md)
+- [단기 로드맵](docs/roadmap.md)
+- [운영자 인수 기준](docs/operator-acceptance.md)
 - [프로토타입 도메인 명세](docs/prototype-domain-spec.md)
 - [초기 설계 기록](docs/prototype-plan.md)
 - [엔진 검증 및 한계](docs/engine-testing-plan.md)
@@ -84,9 +94,10 @@ http://localhost:4173/v1/   # v1 experiment
 v1에서는 초기 입력 `#FF0000`과 `balanced` vibe를 사용하며 Palette, Content,
 Form, States, Debug 탭에서 계산 결과와 적용 예시를 확인할 수 있습니다.
 
-v2 팔레트의 실제 소비처는 Craken입니다. 팔레트 작성 도구는 중립적인 기준면을
-유지하고, 적용 샘플은 공개 Craken Design Atlas의 Foundation, Navigation,
-Messages, Composer, component state 구성을 기준으로 검증합니다.
+팔레트 작성 도구는 중립적인 기준면을 유지하고, 적용 샘플은 공개된 디자인
+아틀라스의 Foundation, Navigation, Messages, Composer, component state 구성을
+참고해 검증합니다. 이 공개 참고 사례는 내부 서비스 관계나 런타임 의존성을
+의미하지 않습니다.
 
 v2는 입력을 achromatic, subdued, chromatic으로 분류하고, 입력 hue와 상대
 chroma를 보존하면서 모드별로 사용 가능한 primary 명도를 계산합니다. 텍스트는
@@ -113,9 +124,16 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 - `lib/palette-engine.js`: 입력과 vibe/harmony 해석
 - `lib/palette-generator.js`: semantic token과 디버깅 trace 생성
 - `lib/constraints.js`: 대비, 색역, 상태 변화, hue 관계 검증
-- `v1/`: 기존의 입력 처리, 시각화, 사용자 인터랙션
-- `v2/`: 기본 primary-only light/dark palette와 독립 UI
-- `docs/v2-spec.md`: v2 범위, Craken 참고 규칙, APCA 선택 근거
+- `v1/`: 유지보수 전용인 기존 입력 처리, 시각화, 사용자 인터랙션
+- `v2/lib/palette.js`: 팔레트 생성 오케스트레이션
+- `v2/lib/pair-selection.js`: light/dark 후보 쌍의 순위 결정
+- `v2/lib/quality.js`: 독립 품질 평가와 상태 진행 검증
+- `v2/lib/palette-runtime.js`: worker 실행과 결과 캐시
+- `v2/lib/evaluation-store.js`: 로컬 디자이너 평가 저장 경계
+- `v2/lib/view.js`: 순수 HTML 마크업 생성
+- `v2/styles/`: base, specimen, decision graph, review, responsive 스타일 경계
+- `v2/app.js`: DOM 상태와 사용자 이벤트를 연결하는 controller
+- `docs/v2-spec.md`: v2 범위, 공개 디자인 참고 규칙, APCA 선택 근거
 
 브라우저 없이 계산 규칙과 진입 스크립트 문법을 함께 확인하려면 다음을
 실행합니다.
@@ -123,6 +141,9 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 ```sh
 npm run check
 ```
+
+이 빠른 게이트에는 v2/shared 코드 20, 유지보수 전용 v1 코드 25를 상한으로
+하는 순환 복잡도 검사도 포함됩니다.
 
 테스트는 대표 primary 색상과 모든 vibe, harmony 후보, 입력 모드를
 조합하여 필수 function, trace, 대비 및 관계 조건을 검사합니다.

@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-10`.
+Current policy version: `v2-policy-model-11`.
 
 ## Candidate search implemented
 
@@ -52,8 +52,8 @@ and the per-candidate result of each rule.
 - gallery ratings and notes persist locally and support versioned JSON exchange.
 - gallery summaries are precomputed at build time; complete inspector results
   are calculated in a worker only when requested;
-- Craken JSON export maps every supported semantic role to a stable consumer
-  token.
+- A public-reference JSON export maps every supported semantic role to a stable
+  example consumer token.
 
 Disabled and popover roles are explicit semantic aliases to foundation roles.
 No semantic output role remains a policy anchor.
@@ -64,19 +64,22 @@ No semantic output role remains a policy anchor.
   every foreground/background pairing in the 216-color RGB grid;
 - every semantic role must have a selected decision and provenance;
 - searched roles must retain a counterfactual candidate;
-- text and non-text contracts run across a 216-color RGB grid;
+- text and non-text contracts run across a 216-color RGB grid in the weekly or
+  manually triggered exhaustive tier;
 - v1 and v2 remain separate applications.
-- Playwright verifies input handling, semantic specimens, graph-to-card
-  synchronization, lazy gallery rendering, and persisted designer ratings in a
-  real browser.
-- fixed screenshots guard the paired palettes and Craken specimen against broad
-  visual regression.
+- Pull-request Playwright smoke checks verify generation, mode switching, and
+  invalid input handling. The full weekly/manual tier verifies semantic
+  specimens, graph-to-card synchronization, lazy gallery rendering, persisted
+  designer ratings, and visual snapshots in a real browser.
+- fixed screenshots guard the paired palettes and public-reference specimen
+  against broad visual regression.
 
 ## Next migration
 
 1. Validate foundation and focus search targets through designer ratings.
-2. Decide from Craken use cases whether popover and disabled aliases need
-   independent searches; accent and secondary remain intentionally unsupported.
+2. Decide from demonstrated consumer use cases whether popover and disabled
+   aliases need independent searches; accent and secondary remain intentionally
+   unsupported.
 3. Aggregate exported designer evaluations and analyze inter-rater agreement.
 4. Promote thresholds from `heuristic` to `empirical` only with recorded data.
 5. Review upstream `apca-w3` releases before changing the pinned verification

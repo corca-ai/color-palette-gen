@@ -65,7 +65,7 @@ await writeFile(
 
 const v2Index = await readFile(join(projectRoot, "v2", "index.html"), "utf8");
 const rootIndex = v2Index
-  .replace('href="./style.css"', 'href="./v2/style.css"')
+  .replaceAll('href="./styles/', 'href="./v2/styles/')
   .replace('href="../">Color Lab</a>', 'href="./">Color Lab</a>')
   .replace('href="../v1/">v1</a>', 'href="./v1/">v1</a>')
   .replace('src="./app.js"', 'src="./v2/app.js"');

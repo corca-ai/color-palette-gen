@@ -8,7 +8,11 @@
       content="Color Lab v2: primary-only light and dark color palettes."
     />
     <title>Color Lab v2 — Light and dark palettes</title>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/specimens.css" />
+    <link rel="stylesheet" href="./styles/decision-graphs.css" />
+    <link rel="stylesheet" href="./styles/review.css" />
+    <link rel="stylesheet" href="./styles/responsive.css" />
   </head>
   <body>
     <header class="topbar">
@@ -94,12 +98,12 @@
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">Foundation search map</p>
-            <h2 id="foundation-title">Why each foundation color won.</h2>
+            <h2 id="foundation-title">From recipe target to chosen color.</h2>
           </div>
           <p>
-            Read one role at a time. Each row compares the chosen color with the
-            closest failed option and another valid option. Position shows
-            lightness and tint—not similarity between different roles.
+            Each role has separate lightness and tint tracks with explicit
+            numeric scales. Compare its recipe target, chosen color, closest
+            failed option, and another valid option.
           </p>
         </div>
         <div id="foundation-map" class="foundation-maps"></div>
@@ -166,8 +170,8 @@
       <section class="example-section" aria-labelledby="example-title">
         <div class="section-heading compact">
           <div>
-            <p class="eyebrow">Craken compatibility specimen</p>
-            <h2 id="example-title">The palette in its intended system.</h2>
+            <p class="eyebrow">Public-reference compatibility specimen</p>
+            <h2 id="example-title">The palette in an example system.</h2>
           </div>
           <p>
             Foundation, navigation, messages, composer, and forced component

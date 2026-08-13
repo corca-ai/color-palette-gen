@@ -11,8 +11,8 @@ are split by question so a palette role can link directly to the relevant rule.
   foundation, boundary, focus, and destructive rules
 - [Implementation status](v2-decisions/status.md): what is searched today and
   what remains a policy anchor
-- [Craken integration](v2-decisions/craken-integration.md): why the sample, not
-  the full tool, adopts the target design system
+- [Public reference compatibility](v2-decisions/craken-integration.md): why the
+  sample, not the full tool, adopts an externally observable design structure
 
 For a specific color, start from its `Why?` panel in the v2 page. Its provenance
 links should open the relevant source or the exact role-policy section rather

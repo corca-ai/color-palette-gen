@@ -1,0 +1,21 @@
+# Development
+
+## Verification
+
+- Run `npm run check` and `npm run build` for every change. `npm run check`
+  intentionally uses the fast unit-test tier and the ESLint complexity gate.
+- `npm run build` also scans the assembled public artifact for credential-like
+  assignments, private-key material, local-only addresses, non-public source
+  markers.
+- Run `npm run check:e2e:smoke` locally when core browser behavior may change.
+  Pull-request CI runs this three-test smoke tier.
+- Run `npm run check:full` before high-risk palette-policy or broad UI changes.
+  It adds a Node-reachable engine/runtime coverage floor, the 216-color
+  exhaustive grid, and the complete Playwright suite including visual
+  snapshots. DOM rendering remains covered by Playwright rather than the Node
+  coverage percentage. GitHub Actions also runs it weekly and on demand.
+- Install the Playwright browser once with `npx playwright install chromium`;
+  CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
+- GitHub Actions are pinned to commit SHAs and updated through Dependabot.
+- No repository hook is installed. Maintainers run `npm run check` explicitly;
+  pull-request and deploy workflows remain the enforced shared boundary.

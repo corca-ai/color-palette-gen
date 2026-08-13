@@ -1,58 +1,18 @@
-import {
-  hexToRgb,
-  isHex,
-  normalizeHex,
-  rgbToOklch,
-} from "../lib/color-math.js";
+import { isHex, normalizeHex } from "../lib/color-math.js";
 import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
 import { serializeCrakenTokens } from "./lib/craken.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
-
-const GROUPS = [
-  {
-    name: "Foundation",
-    roles: ["background", "surface", "raised surface", "muted surface"],
-  },
-  { name: "Content", roles: ["foreground", "muted text"] },
-  { name: "Boundary", roles: ["border", "input border"] },
-  {
-    name: "Brand",
-    roles: [
-      "brand source",
-      "primary",
-      "primary hover",
-      "primary active",
-      "primary text",
-      "primary border",
-      "focus ring",
-    ],
-  },
-  {
-    name: "Feedback",
-    roles: [
-      "destructive",
-      "destructive hover",
-      "destructive active",
-      "destructive text",
-      "warning",
-      "warning hover",
-      "warning active",
-      "warning text",
-    ],
-  },
-  {
-    name: "Utility",
-    roles: [
-      "selection",
-      "selection text",
-      "disabled background",
-      "disabled text",
-      "disabled border",
-      "popover",
-      "popover text",
-    ],
-  },
-];
+import {
+  loadEvaluationRecords,
+  saveEvaluationRecords,
+} from "./lib/evaluation-store.js";
+import { createPaletteRuntime } from "./lib/palette-runtime.js";
+import {
+  appliedExampleView,
+  colorCoordinates,
+  escapeHtml,
+  paletteView,
+} from "./lib/view.js";
 
 const form = document.querySelector("#v2-form");
 const picker = document.querySelector("#v2-picker");
@@ -86,25 +46,7 @@ try {
 let resultMode = ["light", "dark", "compare"].includes(storedResultMode)
   ? storedResultMode
   : "light";
-let workerSequence = 0;
-const pendingCalculations = new Map();
-const resultCache = new Map();
-const paletteWorker =
-  typeof Worker === "undefined"
-    ? null
-    : new Worker(new URL("./palette-worker.js", import.meta.url), {
-        type: "module",
-      });
-
-paletteWorker?.addEventListener("message", ({ data }) => {
-  const pending = pendingCalculations.get(data.id);
-  if (!pending) return;
-  pendingCalculations.delete(data.id);
-  if (data.error) pending.reject(new Error(data.error));
-  else pending.resolve(data);
-});
-
-const EVALUATION_STORAGE_KEY = "color-lab-v2-evaluations";
+const paletteRuntime = createPaletteRuntime();
 const FOUNDATION_ROLES = [
   "background",
   "surface",
@@ -128,181 +70,15 @@ function syncResultMode() {
   }
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-function loadEvaluationRecords() {
-  try {
-    return JSON.parse(localStorage.getItem(EVALUATION_STORAGE_KEY)) ?? {};
-  } catch {
-    return {};
-  }
-}
-
-function saveEvaluationRecords() {
-  try {
-    localStorage.setItem(
-      EVALUATION_STORAGE_KEY,
-      JSON.stringify(evaluationRecords),
-    );
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function colorValues(tokens) {
-  return Object.fromEntries(tokens.map(([color, role]) => [role, color]));
-}
-
-function colorCoordinates(hex) {
-  const { l, c, h } = rgbToOklch(hexToRgb(hex));
-  return `L ${Math.round(l * 100)} · C ${c.toFixed(3)} · H ${h.toFixed(1)}°`;
-}
-
-function constraintView(value, selected) {
-  const results = selected
-    ? (value.constraintResults ?? [])
-    : (value.constraintResults ?? []).filter(({ passed }) => !passed);
-  if (!results.length) {
-    return `<small class="candidate-summary pass">✓ All must-pass rules satisfied</small>`;
-  }
-  return `<ul class="candidate-rules">${results
-    .map(
-      (rule) =>
-        `<li class="${rule.passed ? "pass" : "fail"}"><b>${rule.passed ? "✓" : "×"}</b><span>${rule.label}</span><em>${rule.reasons?.[0] ?? ""}</em></li>`,
-    )
-    .join("")}</ul>`;
-}
-
-function candidateView(
-  label,
-  value,
-  selected = false,
-  kind = "",
-  showRules = true,
-) {
-  if (!value) return "";
-  const score = value.objectiveResults?.[0];
-  const passedRules = (value.constraintResults ?? []).filter(
-    ({ passed }) => passed,
-  ).length;
-  return `<div class="decision-candidate" data-candidate-kind="${kind}"><span>${label}</span><i style="background:${value.hex}"></i><strong>${value.hex}</strong>${score ? `<em>${score.label}: ${typeof score.value === "number" ? score.value.toFixed(3) : score.value}</em>` : ""}${showRules ? constraintView(value, selected) : `<small class="candidate-summary pass">✓ ${passedRules} must-pass rule${passedRules === 1 ? "" : "s"}</small>`}</div>`;
-}
-
-function policyView(policy) {
-  if (!policy) return "";
-  const group = (label, rules) =>
-    `<div><span>${label}</span>${rules
-      .map(
-        (rule, index) =>
-          `<b><i>${index + 1}</i><span>${rule.label}<small>${rule.authority}</small></span></b>`,
-      )
-      .join("")}</div>`;
-  return `<div class="decision-policy"><header><span>Selection order</span><small>Reject first, optimize second, resolve exact ties last.</small></header>${group("Must pass", policy.constraints)}${group("Then optimize", policy.objectives)}${group("Exact ties", policy.tieBreakers)}</div>`;
-}
-
-function decisionView(decision) {
-  const alias = decision.strategy === "semantic alias";
-  return `<div class="decision-detail">
-    <div class="decision-intent"><span>${decision.strategy} · ${decision.candidateCount} candidate${decision.candidateCount === 1 ? "" : "s"}</span><p>${decision.intent}</p></div>
-    ${alias ? `<div class="alias-callout"><strong>No new color calculated</strong><span>Reuses ${decision.aliases.join(", ")} because the current application contract does not require independent differentiation.</span></div>` : candidateView("Selected", decision.selected, true, "selected", false)}
-    <details class="decision-more"><summary>${alias ? "View provenance" : "Compare alternatives and rules"}</summary>
-      ${policyView(decision.policy)}
-      ${alias ? "" : `<div class="decision-candidates">${candidateView("Selected · full rules", decision.selected, true)}${candidateView("Best-ranked rejected", decision.alternatives.nearestRejected, false, "rejected")}${candidateView("Next passing", decision.alternatives.nextPassing, false, "passing")}</div>`}
-      <div class="decision-evidence"><span>Rule provenance</span>${decision.evidence.map((item) => `<a href="${item.url}" target="_blank" rel="noreferrer"><b>${item.class}</b>${item.label}</a>`).join("")}</div>
-    </details>
-  </div>`;
-}
-
-function swatch(color, role, decision, mode) {
-  return `<details class="swatch" data-mode="${mode}" data-role="${role}"${role === "primary" ? " open" : ""}><summary><div class="swatch-color" style="background:${color}"></div><div class="swatch-copy"><strong>${role}</strong><code>${color}</code><small>${colorCoordinates(color)}</small></div><span class="why-label">Why?</span></summary>${decisionView(decision)}</details>`;
-}
-
-function palette(modeResult) {
-  const values = colorValues(modeResult.tokens);
-  const uniqueColors = new Set(modeResult.tokens.map(([color]) => color)).size;
-  const shift = modeResult.adaptations.largeBrandShift
-    ? `<mark>Large source shift · ΔE ${modeResult.adaptations.primarySourceDistance.toFixed(3)}</mark>`
-    : "";
-  return `<article class="palette ${modeResult.mode}">
-    <header class="palette-header"><div><span>${modeResult.mode} palette</span><strong>${modeResult.tokens.length} roles · ${uniqueColors} unique colors</strong>${shift}</div><i style="background:${values.primary}" aria-label="Primary ${values.primary}"></i></header>
-    <div class="palette-strip" aria-hidden="true">${modeResult.tokens
-      .filter(([, role]) => !role.includes("text") && role !== "focus ring")
-      .map(([color]) => `<i style="background:${color}"></i>`)
-      .join("")}</div>
-    <div class="palette-groups">${GROUPS.map((group) => `<section class="color-group"><h3>${group.name}</h3><div class="swatch-grid">${group.roles.map((role) => swatch(values[role], role, modeResult.decisions[role], modeResult.mode)).join("")}</div></section>`).join("")}</div>
-  </article>`;
-}
-
 function renderPalettes() {
   palettes.innerHTML = visibleModes()
-    .map((mode) => palette(currentResult.modes[mode]))
+    .map((mode) => paletteView(currentResult.modes[mode]))
     .join("");
-}
-
-function exampleStyle(modeResult) {
-  return modeResult.tokens
-    .map(([color, role]) => `--sample-${role.replaceAll(" ", "-")}:${color}`)
-    .join(";");
-}
-
-function appliedExample(modeResult) {
-  return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}">
-    <header class="example-header"><strong>Craken · ${modeResult.mode}</strong><span>Generated palette compatibility</span></header>
-    <div class="example-canvas">
-      <div class="craken-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
-      <section class="craken-state-specimen">
-        <header><strong>Primary button</strong><small>Normal, forced pseudo-state, and focus in one scan</small></header>
-        <div class="craken-state-grid">
-          <div><span>Normal</span><button>✓ Save</button></div>
-          <div><span>Hover</span><button class="hover">✓ Save</button></div>
-          <div><span>Active</span><button class="active">✓ Save</button></div>
-          <div><span>Focus</span><button class="focused">✓ Save</button></div>
-        </div>
-        <div class="craken-semantic-grid">
-          <button class="warning">Review warning</button>
-          <button class="destructive">Delete workspace</button>
-          <button class="destructive hover">Delete · hover</button>
-          <button class="destructive active">Delete · active</button>
-          <button class="disabled" disabled>Unavailable</button>
-        </div>
-      </section>
-      <section class="craken-shell">
-        <aside class="craken-sidebar">
-          <div class="craken-workspace"><i>C</i><span><strong>Color Lab</strong><small>Craken workspace</small></span></div>
-          <nav aria-label="Craken specimen navigation">
-            <a class="selected"><span>◫</span>General<b>3</b></a>
-            <a><span>◇</span>Design review</a>
-            <a><span>⌁</span>Files</a>
-          </nav>
-          <button class="craken-secondary">＋ New conversation</button>
-        </aside>
-        <div class="craken-main">
-          <header class="craken-channel"><div><strong># design-review</strong><small>Palette integration check</small></div><button>•••</button></header>
-          <aside class="craken-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
-          <div class="craken-messages">
-            <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the Craken hierarchy in both modes?</span></div></article>
-            <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, interaction states, focus, and feedback are rendered from the same semantic output.</span><em>Palette ready</em></div></article>
-            <article class="selected-message"><i>DS</i><div><p><strong>Design system</strong><small>10:28</small></p><span>Selected content uses a restrained brand tint with readable text.</span></div></article>
-          </div>
-          <form class="craken-composer"><label><span>Message #design-review</span><textarea rows="2" readonly>Review the generated colors…</textarea></label><div><button type="button" class="craken-secondary">Attach</button><button type="button" class="craken-primary">Send</button></div></form>
-        </div>
-      </section>
-      <aside class="craken-popover"><strong>Palette actions</strong><button>Copy CSS</button><button>Export tokens</button></aside>
-      <footer class="craken-feedback"><span><strong>Destructive feedback</strong><small>Semantic red remains separate from brand action.</small></span><button>Move to Trash</button></footer>
-    </div>
-  </article>`;
 }
 
 function renderExamples() {
   examples.innerHTML = visibleModes()
-    .map((mode) => appliedExample(currentResult.modes[mode]))
+    .map((mode) => appliedExampleView(currentResult.modes[mode]))
     .join("");
 }
 
@@ -325,12 +101,30 @@ function renderRelationships() {
     </div>`;
 }
 
-function foundationMarker(mode, role, value, kind) {
+function foundationTrackMarker(mode, role, value, kind, axis, domain) {
   if (!value) return "";
-  const x = Math.max(1, Math.min(99, value.oklch.l * 100));
-  const y = Math.max(12, Math.min(88, (value.oklch.c / 0.012) * 100));
+  const coordinate = axis === "lightness" ? value.oklch.l : value.oklch.c;
+  const span = domain[1] - domain[0] || 1;
+  const x = Math.max(1, Math.min(99, ((coordinate - domain[0]) / span) * 100));
   const title = `${role} · ${kind} · ${value.hex} · L ${value.oklch.l.toFixed(3)} C ${value.oklch.c.toFixed(4)}`;
-  return `<button class="foundation-node ${kind}" type="button" data-mode="${mode}" data-role="${role}" data-kind="${kind}" style="left:${x}%;bottom:${y}%;--node-color:${value.hex}" title="${title}" aria-label="Open ${kind} ${role} candidate, ${value.hex}"></button>`;
+  if (kind === "target") {
+    return `<i class="decision-marker target" style="left:${x}%" title="${title}"></i>`;
+  }
+  return `<button class="decision-marker ${kind}" type="button" data-mode="${mode}" data-role="${role}" data-kind="${kind}" data-axis="${axis}" style="left:${x}%;--node-color:${value.hex}" title="${title}" aria-label="Open ${kind} ${role} candidate on ${axis}, ${value.hex}"></button>`;
+}
+
+function foundationTrack(mode, role, decision, axis) {
+  const domain = decision.searchDomain[axis];
+  const precision = axis === "lightness" ? 3 : 4;
+  const label = axis === "lightness" ? "Lightness L" : "Tint chroma C";
+  const lane = (laneLabel, value, kind) =>
+    `<div class="decision-track-lane ${kind}"><span>${laneLabel}</span><div>${foundationTrackMarker(mode, role, value, kind, axis, domain)}</div></div>`;
+  return `<div class="decision-track ${axis}"><header><strong>${label}</strong><span>${domain[0].toFixed(precision)} → ${domain[1].toFixed(precision)}</span></header><div class="decision-track-lanes">
+    ${lane("Target", decision.target, "target")}
+    ${lane("Chosen", decision.selected, "selected")}
+    ${lane("Closest failed", decision.alternatives.nearestRejected, "rejected")}
+    ${lane("Another pass", decision.alternatives.nextPassing, "passing")}
+  </div><footer><span>${domain[0].toFixed(precision)}</span><span>${axis === "lightness" ? `step ${decision.searchDomain.lightnessStep.toFixed(3)}` : "neutral → tint cap"}</span><span>${domain[1].toFixed(precision)}</span></footer></div>`;
 }
 
 function foundationRoleRow(mode, role) {
@@ -341,14 +135,15 @@ function foundationRoleRow(mode, role) {
   const alternatives = [rejected, passing].filter(Boolean).length;
   const failedRule = rejected?.constraintResults?.find(({ passed }) => !passed);
   const ruleCount = selected.constraintResults?.length ?? 0;
+  const targetDistance = selected.objectiveResults?.[0]?.value ?? 0;
+  const explanation =
+    targetDistance < 0.0005
+      ? `The recipe target ${decision.target.hex} passed every rule, so no correction was needed.`
+      : `The recipe target required correction. ${selected.hex} is the closest candidate that passed every rule.`;
   return `<div class="foundation-role-row">
-    <div class="foundation-role-label"><span>${role}</span><strong><i style="background:${selected.hex}"></i>${selected.hex}</strong><small>L ${selected.oklch.l.toFixed(3)} · C ${selected.oklch.c.toFixed(4)}</small></div>
-    <div class="foundation-role-plot">
-      ${foundationMarker(mode, role, rejected, "rejected")}
-      ${foundationMarker(mode, role, passing, "passing")}
-      ${foundationMarker(mode, role, selected, "selected")}
-    </div>
-    <div class="foundation-role-result"><strong>Passed all ${ruleCount} rules</strong><small>Then closest to the intended recipe</small>${failedRule ? `<em>Nearby failure: ${failedRule.label}</em>` : ""}<small>${decision.candidateCount} checked · ${alternatives} nearby shown</small></div>
+    <header class="foundation-role-label"><span>${role}</span><strong><i style="background:${selected.hex}"></i>${selected.hex}</strong><small>Chosen L ${selected.oklch.l.toFixed(3)} · C ${selected.oklch.c.toFixed(4)}</small></header>
+    <div class="foundation-role-tracks">${foundationTrack(mode, role, decision, "lightness")}${foundationTrack(mode, role, decision, "chroma")}</div>
+    <div class="foundation-role-result"><strong>${explanation}</strong><span>Passed ${ruleCount}/${ruleCount} required rules · ${decision.candidateCount} candidates checked</span>${failedRule ? `<em>Closest failed option: ${failedRule.label} — ${failedRule.reasons?.[0] ?? "required condition missed"}</em>` : ""}<small>${alternatives} comparison candidates shown; click a marker for full evidence.</small></div>
   </div>`;
 }
 
@@ -361,7 +156,7 @@ function foundationMode(mode) {
     const decision = result.decisions[role];
     return `<div><span>${role}</span><i style="background:${decision.selected.hex}"></i><strong>${decision.selected.hex}</strong><small>${decision.selected.objectiveResults?.[0]?.value.toFixed(1) ?? "–"} Lc weakest</small></div>`;
   };
-  return `<article class="foundation-map-card"><header><span>${mode} mode</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} total candidates checked</strong></header><div class="foundation-axis"><span>dark · L 0</span><strong>lightness → · vertical = tint</strong><span>L 1 · light</span></div><div class="foundation-rows">${rows}</div><div class="foundation-legend"><span><i class="selected"></i>Chosen</span><span><i class="rejected"></i>Closest option that failed a rule</span><span><i class="passing"></i>Another option that passed</span></div><div class="binary-heading"><strong>Text choice is separate</strong><span>Black and white are compared by their weakest APCA contrast.</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
+  return `<article class="foundation-map-card"><header><span>${mode} mode</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} total candidates checked</strong></header><p class="foundation-reading-guide"><strong>Read each role independently.</strong> Every lightness axis is zoomed to that role's actual search range. Chroma always runs from neutral to the calm tint cap.</p><div class="foundation-rows">${rows}</div><div class="foundation-legend"><span><i class="target"></i>Recipe target</span><span><i class="selected"></i>Chosen</span><span><i class="rejected"></i>Closest failed</span><span><i class="passing"></i>Another passing option</span></div><div class="binary-heading"><strong>Text choice is separate</strong><span>Black and white are compared by their weakest APCA contrast.</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
 }
 
 function renderFoundationMap() {
@@ -584,29 +379,6 @@ function render(result) {
   renderChecks();
 }
 
-function calculatePalette(primary) {
-  if (resultCache.has(primary)) {
-    return Promise.resolve({
-      result: resultCache.get(primary),
-      duration: 0,
-      cached: true,
-    });
-  }
-  if (!paletteWorker) {
-    const startedAt = performance.now();
-    return Promise.resolve({
-      result: generatePaletteV2({ primary }),
-      duration: performance.now() - startedAt,
-      cached: false,
-    });
-  }
-  const id = ++workerSequence;
-  return new Promise((resolve, reject) => {
-    pendingCalculations.set(id, { resolve, reject });
-    paletteWorker.postMessage({ id, primary });
-  });
-}
-
 picker.addEventListener("input", () => {
   primaryInput.value = picker.value.toUpperCase();
 });
@@ -632,8 +404,8 @@ form.addEventListener("submit", async (event) => {
   form.setAttribute("aria-busy", "true");
   calculationStatus.textContent = "Calculating in a background worker…";
   try {
-    const calculated = await calculatePalette(primary);
-    resultCache.set(primary, calculated.result);
+    const calculated = await paletteRuntime.calculate(primary);
+    paletteRuntime.remember(calculated.result);
     render(calculated.result);
     calculationStatus.textContent = calculated.cached
       ? "Ready · reused cached result"
@@ -681,8 +453,8 @@ gallery.addEventListener("click", async (event) => {
     picker.value = card.dataset.primary;
     calculationStatus.textContent =
       "Loading the full inspector in a background worker…";
-    const calculated = await calculatePalette(card.dataset.primary);
-    resultCache.set(card.dataset.primary, calculated.result);
+    const calculated = await paletteRuntime.calculate(card.dataset.primary);
+    paletteRuntime.remember(calculated.result);
     render(calculated.result);
     calculationStatus.textContent = calculated.cached
       ? "Ready · reused cached result"
@@ -696,7 +468,7 @@ gallery.addEventListener("click", async (event) => {
     rating: rating.dataset.rating,
     policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
   };
-  saveEvaluationRecords();
+  saveEvaluationRecords(evaluationRecords);
   card
     .querySelectorAll("[data-rating]")
     .forEach((button) =>
@@ -712,7 +484,7 @@ gallery.addEventListener("change", (event) => {
     note: event.target.value.trim(),
     policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
   };
-  saveEvaluationRecords();
+  saveEvaluationRecords(evaluationRecords);
 });
 
 document.querySelector("#export-ratings").addEventListener("click", () => {
@@ -762,7 +534,7 @@ ratingsFile.addEventListener("change", async () => {
           },
         ]),
     );
-    saveEvaluationRecords();
+    saveEvaluationRecords(evaluationRecords);
     renderGallery();
     toast.textContent = "Evaluation JSON imported";
   } catch {
@@ -785,10 +557,10 @@ galleryPanel.addEventListener("toggle", () => {
 });
 
 foundationMap.addEventListener("click", (event) => {
-  const node = event.target.closest(".foundation-node");
+  const node = event.target.closest(".decision-marker:is(button)");
   if (!node) return;
   foundationMap
-    .querySelectorAll(".foundation-node.active")
+    .querySelectorAll(".decision-marker.active")
     .forEach((item) => item.classList.remove("active"));
   node.classList.add("active");
   const swatch = document.querySelector(
@@ -812,10 +584,10 @@ palettes.addEventListener("click", (event) => {
   if (!summary) return;
   const swatch = summary.parentElement;
   foundationMap
-    .querySelectorAll(".foundation-node.active")
+    .querySelectorAll(".decision-marker.active")
     .forEach((node) => node.classList.remove("active"));
   const node = foundationMap.querySelector(
-    `.foundation-node.selected[data-mode="${swatch.dataset.mode}"][data-role="${swatch.dataset.role}"]`,
+    `.decision-marker.selected[data-mode="${swatch.dataset.mode}"][data-role="${swatch.dataset.role}"]`,
   );
   node?.classList.add("active");
 });
@@ -837,5 +609,5 @@ for (const button of modeButtons) {
 
 syncResultMode();
 const initialResult = generatePaletteV2({ primary: primaryInput.value });
-resultCache.set(initialResult.input.primary, initialResult);
+paletteRuntime.remember(initialResult);
 render(initialResult);
