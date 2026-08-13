@@ -160,6 +160,12 @@ not change generated colors or redefine the palette contract pass result:
 `result.semanticEvaluation.satisfied` remains false whenever a required human
 judgment is still `needs-review`.
 
+Interactive hover judgments are browser-local reviewer evidence rather than
+generator input. A matching versioned record identifies the primary input,
+policy version, specimen version, and separate Light/Dark judgments with notes.
+It may resolve the UI's semantic evaluation, but it does not mutate
+`result.passed`, generated colors, or exported token JSON.
+
 The UI reports semantic role count and unique color count separately. Multiple
 roles may intentionally alias one color when documented, but `primary` and
 `focus ring` are independently searched because their component duties differ;

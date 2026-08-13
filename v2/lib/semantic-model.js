@@ -68,7 +68,11 @@ export function formatSemanticCounts(counts) {
     : summary;
 }
 
-export function evaluatePrimaryActionSemantics(modes, structuralQuality) {
+export function evaluatePrimaryActionSemantics(
+  modes,
+  structuralQuality,
+  hoverEvidence = { complete: false, satisfies: false, record: null },
+) {
   const declarations = Object.fromEntries(
     PRIMARY_ACTION_SEMANTIC_MODEL.declarations.map((item) => [item.id, item]),
   );
@@ -162,9 +166,17 @@ export function evaluatePrimaryActionSemantics(modes, structuralQuality) {
     ),
     resultFor(
       declarations["hover-discoverable"],
-      "needs-review",
-      [],
-      "No recorded interactive specimen rating proves this intent for the current input in both modes.",
+      !hoverEvidence.complete
+        ? "needs-review"
+        : hoverEvidence.satisfies
+          ? "satisfied"
+          : "unsatisfied",
+      hoverEvidence.record ? [hoverEvidence.record] : [],
+      !hoverEvidence.complete
+        ? "A matching interactive specimen judgment and note are required in both modes."
+        : hoverEvidence.satisfies
+          ? "The recorded Light and Dark specimen judgments both meet the declared intent."
+          : "At least one recorded mode judges the hover as too subtle or too strong.",
     ),
   ];
   const statuses = ["satisfied", "needs-review", "unsatisfied"];

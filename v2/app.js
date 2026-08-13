@@ -4,10 +4,22 @@ import { serializeReferenceTokens } from "./lib/reference-export.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 import {
   loadEvaluationRecords,
+  loadHoverEvaluationRecords,
   saveEvaluationRecords,
+  saveHoverEvaluationRecords,
 } from "./lib/evaluation-store.js";
+import {
+  HOVER_EVALUATION_SCHEMA,
+  HOVER_SPECIMEN,
+  hoverEvaluationEvidence,
+  hoverEvaluationKey,
+  normalizeHoverEvaluation,
+} from "./lib/hover-evaluation.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
-import { formatSemanticCounts } from "./lib/semantic-model.js";
+import {
+  evaluatePrimaryActionSemantics,
+  formatSemanticCounts,
+} from "./lib/semantic-model.js";
 import {
   appliedExampleView,
   colorCoordinates,
@@ -58,6 +70,19 @@ const FOUNDATION_ROLES = [
 ];
 const galleryResults = new Map();
 let evaluationRecords = loadEvaluationRecords();
+let hoverEvaluationRecords = loadHoverEvaluationRecords();
+
+function currentHoverEvaluation() {
+  if (!currentResult) return null;
+  return normalizeHoverEvaluation(
+    hoverEvaluationRecords[
+      hoverEvaluationKey(
+        currentResult.input.primary,
+        currentResult.policyVersion,
+      )
+    ],
+  );
+}
 
 function visibleModes() {
   return resultMode === "compare" ? ["light", "dark"] : [resultMode];
@@ -78,8 +103,11 @@ function renderPalettes() {
 }
 
 function renderExamples() {
+  const review = currentHoverEvaluation();
   examples.innerHTML = visibleModes()
-    .map((mode) => appliedExampleView(currentResult.modes[mode]))
+    .map((mode) =>
+      appliedExampleView(currentResult.modes[mode], review?.modes[mode]),
+    )
     .join("");
 
   for (const button of examples.querySelectorAll(".reference-primary-demo")) {
@@ -296,7 +324,15 @@ function renderQuality() {
     resultMode === "compare"
       ? `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>`
       : `<aside class="mode-review-note"><strong>${resultMode} review</strong><span>Cross-mode identity and pair ranking are available in Compare.</span></aside>`;
-  const semanticModel = currentResult.semanticEvaluation;
+  const semanticModel = evaluatePrimaryActionSemantics(
+    currentResult.modes,
+    currentResult.quality,
+    hoverEvaluationEvidence(
+      currentHoverEvaluation(),
+      currentResult.input.primary,
+      currentResult.policyVersion,
+    ),
+  );
   const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared design intent</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
   quality.innerHTML = `${semanticIntent}${pairedReview}<article><header><span>Independent source fidelity</span><strong>${sourceChecks.filter(({ pass }) => pass).length}/${sourceChecks.length} signals</strong></header><ul>${sourceChecks.map(qualityCheck).join("")}</ul></article><article><header><span>Semantic ambiguity</span><strong>${semanticChecks.filter(({ pass }) => pass).length}/${semanticChecks.length} signals</strong></header><ul>${semanticChecks.map(qualityCheck).join("")}</ul></article>${modes
     .map((mode) => {
@@ -534,6 +570,50 @@ document
     toast.classList.add("visible");
     window.setTimeout(() => toast.classList.remove("visible"), 1600);
   });
+
+function updateHoverEvaluation(mode, change) {
+  const key = hoverEvaluationKey(
+    currentResult.input.primary,
+    currentResult.policyVersion,
+  );
+  const existing = currentHoverEvaluation();
+  hoverEvaluationRecords[key] = {
+    schema: HOVER_EVALUATION_SCHEMA,
+    input: currentResult.input.primary,
+    policyVersion: currentResult.policyVersion,
+    specimen: HOVER_SPECIMEN,
+    modes: {
+      light: { ...(existing?.modes.light ?? {}) },
+      dark: { ...(existing?.modes.dark ?? {}) },
+      [mode]: { ...(existing?.modes[mode] ?? {}), ...change },
+    },
+  };
+  saveHoverEvaluationRecords(hoverEvaluationRecords);
+}
+
+examples.addEventListener("click", (event) => {
+  const judgment = event.target.closest("[data-hover-judgment]");
+  if (!judgment) return;
+  const fieldset = judgment.closest("[data-hover-mode]");
+  const previous = currentHoverEvaluation()?.modes[fieldset.dataset.hoverMode];
+  updateHoverEvaluation(fieldset.dataset.hoverMode, {
+    judgment: judgment.dataset.hoverJudgment,
+    ...(previous?.judgment !== judgment.dataset.hoverJudgment
+      ? { note: "" }
+      : {}),
+  });
+  renderExamples();
+  renderQuality();
+});
+
+examples.addEventListener("change", (event) => {
+  if (!event.target.matches(".hover-review textarea")) return;
+  const fieldset = event.target.closest("[data-hover-mode]");
+  updateHoverEvaluation(fieldset.dataset.hoverMode, {
+    note: event.target.value.trim(),
+  });
+  renderQuality();
+});
 
 gallery.addEventListener("click", async (event) => {
   const card = event.target.closest("[data-primary]");

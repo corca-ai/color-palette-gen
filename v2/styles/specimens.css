@@ -54,6 +54,65 @@
   display: block;
   font-size: 9px;
 }
+.hover-review {
+  border: 0;
+  border-top: 1px solid var(--sample-border);
+  margin: 10px 0 0;
+  padding: 10px 0 0;
+}
+.hover-review legend {
+  color: var(--sample-muted-text);
+  font-size: 9px;
+  padding: 0;
+}
+.hover-review > div {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 7px;
+}
+.hover-review button {
+  background: var(--sample-muted-surface);
+  border: 1px solid var(--sample-border);
+  border-radius: 4px;
+  color: var(--sample-foreground);
+  cursor: pointer;
+  font-size: 9px;
+  min-height: 30px;
+}
+.hover-review button[aria-pressed="true"] {
+  background: var(--sample-selection);
+  border-color: var(--sample-input-border);
+  color: var(--sample-selection-text);
+  font-weight: 700;
+}
+.hover-review button:focus-visible,
+.hover-review textarea:focus-visible {
+  outline: 3px solid var(--sample-focus-ring);
+  outline-offset: 2px;
+}
+.hover-review label,
+.hover-review label span {
+  display: block;
+}
+.hover-review label {
+  margin-top: 7px;
+}
+.hover-review label span {
+  color: var(--sample-muted-text);
+  font-size: 8px;
+  margin-bottom: 4px;
+}
+.hover-review textarea {
+  background: var(--sample-background);
+  border: 1px solid var(--sample-input-border);
+  border-radius: 4px;
+  color: var(--sample-foreground);
+  font: 9px/1.4 var(--sans);
+  padding: 7px 8px;
+  resize: vertical;
+  width: 100%;
+}
 .reference-primary-playground output {
   color: var(--sample-foreground);
   font-family: var(--mono);

@@ -38,9 +38,12 @@ Missing or incomplete automated evidence also resolves to `needs-review`; an
 empty evidence set must never pass by vacuous truth. Evidence that is complete
 and directly contradicts a declaration resolves to `unsatisfied`.
 
-Automated checks must not convert `needs-review` into `satisfied`. A future
-rating record must identify the input, mode, specimen, policy version, judgment,
-and note before it can satisfy a judgment-backed intent.
+Automated checks must not convert `needs-review` into `satisfied`. The versioned
+`color-lab-hover-evaluation-1` record identifies the input, specimen, policy
+version, and a judgment plus note for each mode. Only matching Light and Dark
+records that both judge the applied Primary button as `meets-intent` satisfy the
+judgment-backed intent. `too-subtle` or `too-strong` is contradictory evidence;
+missing, stale, or incomplete evidence remains `needs-review`.
 
 ## Deliberately not doing
 
@@ -49,7 +52,15 @@ and note before it can satisfy a judgment-backed intent.
 - The current Oklab thresholds are not promoted from heuristic to empirical.
 - This slice does not change generated colors.
 
+## Current evidence capture
+
+The applied example keeps the judgment controls beside the real interactive
+button. Records stay in browser-local storage and are not mixed into the palette
+generator or exported token payload. This preserves the distinction between a
+deterministic palette result and reviewer-specific experiential evidence.
+
 ## Next slice
 
-Define a versioned interactive-specimen rating record and evaluate representative
-inputs in Light and Dark before changing the hover candidate strategy.
+Use the versioned record across representative inputs before changing the hover
+candidate strategy. Compare recurring `too-subtle` or `too-strong` judgments by
+hue and mode instead of tuning the formula from one example.

@@ -76,7 +76,7 @@ test("the applied example exposes real primary and destructive interactions", as
   expect(width).toBeLessThanOrEqual(760);
   await expect(
     page.locator(
-      '.example :is(button, textarea):not(.reference-primary-demo):not(.reference-destructive-demo):not([tabindex="-1"]), .example a[href]',
+      '.example :is(button, textarea):not(.reference-primary-demo):not(.reference-destructive-demo):not(.hover-review button):not(.hover-review textarea):not([tabindex="-1"]), .example a[href]',
     ),
   ).toHaveCount(0);
 
@@ -90,6 +90,54 @@ test("the applied example exposes real primary and destructive interactions", as
   await expect(destructive).toHaveText("Undo move");
   await destructive.click();
   await expect(destructive).toHaveText("Move to Trash");
+});
+
+test("Light and Dark hover judgments resolve the declared intent", async ({
+  page,
+}) => {
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  for (const mode of ["light", "dark"]) {
+    const review = page.locator(`[data-hover-mode="${mode}"]`);
+    await review.getByRole("button", { name: "Meets intent" }).click();
+    await review.getByRole("textbox").fill(`The ${mode} hover is noticeable.`);
+    await review.getByRole("textbox").press("Tab");
+  }
+  await expect(
+    page.locator(".semantic-intent-review header strong"),
+  ).toHaveText("4 satisfied · 0 needs review");
+  await expect(page.locator(".semantic-intent-review")).toContainText(
+    "both meet the declared intent",
+  );
+
+  const lightReview = page.locator('[data-hover-mode="light"]');
+  await lightReview.getByRole("button", { name: "Too subtle" }).click();
+  await expect(lightReview.getByRole("textbox")).toHaveValue("");
+  await expect(
+    page.locator(".semantic-intent-review header strong"),
+  ).toHaveText("3 satisfied · 1 needs review");
+  await lightReview.getByRole("textbox").fill("The light hover is too subtle.");
+  await lightReview.getByRole("textbox").press("Tab");
+  await expect(
+    page.locator(".semantic-intent-review header strong"),
+  ).toHaveText("3 satisfied · 0 needs review · 1 unsatisfied");
+  await lightReview.getByRole("button", { name: "Meets intent" }).click();
+  await expect(lightReview.getByRole("textbox")).toHaveValue("");
+  await lightReview.getByRole("textbox").fill("The light hover is noticeable.");
+  await lightReview.getByRole("textbox").press("Tab");
+
+  await page.reload();
+  for (const mode of ["light", "dark"]) {
+    const review = page.locator(`[data-hover-mode="${mode}"]`);
+    await expect(
+      review.getByRole("button", { name: "Meets intent" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(review.getByRole("textbox")).toHaveValue(
+      `The ${mode} hover is noticeable.`,
+    );
+  }
+  await expect(
+    page.locator(".semantic-intent-review header strong"),
+  ).toHaveText("4 satisfied · 0 needs review");
 });
 
 test("@smoke result mode switches the complete inspector and persists", async ({
@@ -274,7 +322,7 @@ test("core palette and reference specimen retain their visual structure", async 
     },
   );
   await page.locator(".topbar").evaluate((element) => {
-    element.hidden = true;
+    element.style.display = "none";
   });
   await expect(page.locator(".examples")).toHaveScreenshot(
     "reference-specimens.png",
@@ -283,6 +331,9 @@ test("core palette and reference specimen retain their visual structure", async 
       maxDiffPixelRatio: 0.12,
     },
   );
+  await page.locator(".topbar").evaluate((element) => {
+    element.style.display = "";
+  });
   await expect(page.locator("#semantic-map")).toHaveScreenshot(
     "semantic-search-maps.png",
     {

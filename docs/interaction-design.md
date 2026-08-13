@@ -113,6 +113,10 @@ provisional or empirical signals such as source fidelity, cross-mode identity,
 semantic ambiguity, and state pacing. They must not present these signals as
 accessibility pass/fail.
 
+The applied example owns hover evidence capture because it contains the actual
+interactive Primary button. Light and Dark each require a judgment and note;
+the Quality section only renders the resulting semantic status.
+
 ### Representative evaluation set
 
 Question:

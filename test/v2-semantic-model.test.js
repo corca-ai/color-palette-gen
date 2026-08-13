@@ -3,6 +3,11 @@ import test from "node:test";
 
 import { generatePaletteV2 } from "../v2/lib/palette.js";
 import {
+  HOVER_EVALUATION_SCHEMA,
+  HOVER_SPECIMEN,
+  hoverEvaluationEvidence,
+} from "../v2/lib/hover-evaluation.js";
+import {
   evaluatePrimaryActionSemantics,
   formatSemanticCounts,
   PRIMARY_ACTION_SEMANTIC_MODEL,
@@ -27,6 +32,30 @@ test("numeric checks cannot claim that hover discoverability is satisfied", () =
   assert.equal(byId["hover-discoverable"].status, "needs-review");
   assert.deepEqual(byId["hover-discoverable"].observedEvidence, []);
   assert.equal(result.semanticEvaluation.satisfied, false);
+});
+
+test("complete interactive evidence can resolve hover discoverability", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  const record = {
+    schema: HOVER_EVALUATION_SCHEMA,
+    input: result.input.primary,
+    policyVersion: result.policyVersion,
+    specimen: HOVER_SPECIMEN,
+    modes: {
+      light: { judgment: "meets-intent", note: "Clearly visible." },
+      dark: { judgment: "meets-intent", note: "Clearly visible." },
+    },
+  };
+  const evaluation = evaluatePrimaryActionSemantics(
+    result.modes,
+    result.quality,
+    hoverEvaluationEvidence(record, result.input.primary, result.policyVersion),
+  );
+  assert.equal(
+    evaluation.evaluations.find(({ id }) => id === "hover-discoverable").status,
+    "satisfied",
+  );
+  assert.equal(evaluation.satisfied, true);
 });
 
 function semanticFixture() {
