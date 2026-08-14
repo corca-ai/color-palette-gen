@@ -11,7 +11,143 @@ import {
   evaluatePrimaryActionSemantics,
   formatSemanticCounts,
   PRIMARY_ACTION_SEMANTIC_MODEL,
+  SEMANTIC_EVALUATORS,
+  SEMANTIC_EVIDENCE_CONTRACTS,
+  validateSemanticTraceability,
 } from "../v2/lib/semantic-model.js";
+
+function acceptanceScenario(declaration, outcome, evaluator, mutate) {
+  const expectedStatus = {
+    positive: "satisfied",
+    contradictory: "unsatisfied",
+    "missing-evidence": "needs-review",
+  }[outcome];
+  return {
+    id: `${declaration}.${outcome}`,
+    declaration,
+    outcome,
+    evaluator,
+    expectedStatus,
+    context() {
+      const fixture = semanticFixture();
+      const context = {
+        modes: fixture.modes,
+        structuralQuality: fixture.quality,
+        hoverEvidence: { complete: false, satisfies: false, record: null },
+      };
+      mutate?.(context);
+      return context;
+    },
+  };
+}
+
+const SEMANTIC_ACCEPTANCE_SCENARIOS = [
+  acceptanceScenario(
+    "shared-label-readable",
+    "positive",
+    "evaluator.primary-label-readable.v1",
+  ),
+  acceptanceScenario(
+    "shared-label-readable",
+    "contradictory",
+    "evaluator.primary-label-readable.v1",
+    ({ modes }) => {
+      modes.light.textChecks.find(
+        ({ role }) => role === "Label on primary hover",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "shared-label-readable",
+    "missing-evidence",
+    "evaluator.primary-label-readable.v1",
+    ({ modes }) => {
+      modes.light.textChecks = [];
+    },
+  ),
+  acceptanceScenario(
+    "states-distinct",
+    "positive",
+    "evaluator.primary-states-distinct.v1",
+  ),
+  acceptanceScenario(
+    "states-distinct",
+    "contradictory",
+    "evaluator.primary-states-distinct.v1",
+    ({ modes }) => {
+      modes.dark.values["primary hover"] = modes.dark.values.primary;
+    },
+  ),
+  acceptanceScenario(
+    "states-distinct",
+    "missing-evidence",
+    "evaluator.primary-states-distinct.v1",
+    ({ modes }) => {
+      delete modes.dark;
+    },
+  ),
+  acceptanceScenario(
+    "active-continues-beyond-hover",
+    "positive",
+    "evaluator.primary-state-progression.v1",
+  ),
+  acceptanceScenario(
+    "active-continues-beyond-hover",
+    "contradictory",
+    "evaluator.primary-state-progression.v1",
+    ({ structuralQuality }) => {
+      structuralQuality.states.light.checks.find(({ id }) =>
+        id.endsWith("monotonic-lightness"),
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "active-continues-beyond-hover",
+    "missing-evidence",
+    "evaluator.primary-state-progression.v1",
+    ({ structuralQuality }) => {
+      structuralQuality.states.dark.checks = [];
+    },
+  ),
+  acceptanceScenario(
+    "hover-discoverable",
+    "positive",
+    "evaluator.primary-hover-discoverable.v1",
+    (context) => {
+      context.hoverEvidence = {
+        complete: true,
+        satisfies: true,
+        record: { modes: { light: {}, dark: {} } },
+      };
+    },
+  ),
+  acceptanceScenario(
+    "hover-discoverable",
+    "contradictory",
+    "evaluator.primary-hover-discoverable.v1",
+    (context) => {
+      context.hoverEvidence = {
+        complete: true,
+        satisfies: false,
+        record: { modes: { light: {}, dark: {} } },
+      };
+    },
+  ),
+  acceptanceScenario(
+    "hover-discoverable",
+    "missing-evidence",
+    "evaluator.primary-hover-discoverable.v1",
+  ),
+];
+
+for (const scenario of SEMANTIC_ACCEPTANCE_SCENARIOS) {
+  test(`semantic acceptance · ${scenario.id}`, () => {
+    const result = SEMANTIC_EVALUATORS[scenario.evaluator].evaluate(
+      scenario.context(),
+    );
+    assert.equal(result.status, scenario.expectedStatus);
+  });
+}
 
 test("the primary action semantic model separates intent from mechanisms", () => {
   assert.deepEqual(
@@ -19,6 +155,74 @@ test("the primary action semantic model separates intent from mechanisms", () =>
     ["constraint", "invariant", "relation", "intent"],
   );
   assert.equal(PRIMARY_ACTION_SEMANTIC_MODEL.strategies[0].kind, "heuristic");
+});
+
+test("every declaration chains through evidence, evaluator, and acceptance scenarios", () => {
+  assert.equal(
+    validateSemanticTraceability({
+      acceptanceScenarios: SEMANTIC_ACCEPTANCE_SCENARIOS,
+    }),
+    true,
+  );
+  for (const declaration of PRIMARY_ACTION_SEMANTIC_MODEL.declarations) {
+    assert.ok(SEMANTIC_EVALUATORS[declaration.evaluator]);
+    for (const evidence of declaration.evidence) {
+      assert.ok(SEMANTIC_EVIDENCE_CONTRACTS[evidence]);
+    }
+  }
+});
+
+test("semantic traceability rejects dangling and incomplete acceptance links", () => {
+  const danglingModel = structuredClone(PRIMARY_ACTION_SEMANTIC_MODEL);
+  danglingModel.declarations[0].evidence = ["evidence.unknown.v1"];
+  assert.throws(
+    () => validateSemanticTraceability({ model: danglingModel }),
+    /references unknown evidence.unknown.v1/,
+  );
+  assert.throws(
+    () =>
+      validateSemanticTraceability({
+        acceptanceScenarios: SEMANTIC_ACCEPTANCE_SCENARIOS.filter(
+          ({ id }) => id !== "hover-discoverable.missing-evidence",
+        ),
+      }),
+    /hover-discoverable lacks missing-evidence acceptance coverage/,
+  );
+  assert.throws(
+    () =>
+      validateSemanticTraceability({
+        acceptanceScenarios: [
+          ...SEMANTIC_ACCEPTANCE_SCENARIOS,
+          {
+            id: "unknown.positive",
+            declaration: "unknown",
+            outcome: "positive",
+            evaluator: "unknown",
+          },
+        ],
+      }),
+    /references unknown unknown/,
+  );
+  assert.throws(
+    () =>
+      validateSemanticTraceability({
+        acceptanceScenarios: [
+          ...SEMANTIC_ACCEPTANCE_SCENARIOS,
+          SEMANTIC_ACCEPTANCE_SCENARIOS[0],
+        ],
+      }),
+    /Acceptance scenario ids must be unique/,
+  );
+});
+
+test("impossible hover evidence cannot satisfy declared intent", () => {
+  const result = SEMANTIC_EVALUATORS[
+    "evaluator.primary-hover-discoverable.v1"
+  ].evaluate({
+    hoverEvidence: { complete: true, satisfies: true, record: null },
+  });
+  assert.equal(result.status, "needs-review");
+  assert.deepEqual(result.observedEvidence, []);
 });
 
 test("numeric checks cannot claim that hover discoverability is satisfied", () => {
@@ -31,6 +235,11 @@ test("numeric checks cannot claim that hover discoverability is satisfied", () =
   assert.equal(byId["active-continues-beyond-hover"].status, "satisfied");
   assert.equal(byId["hover-discoverable"].status, "needs-review");
   assert.deepEqual(byId["hover-discoverable"].observedEvidence, []);
+  assert.deepEqual(byId["hover-discoverable"].trace, {
+    declaration: "hover-discoverable",
+    evaluator: "evaluator.primary-hover-discoverable.v1",
+    evidence: ["evidence.interactive-hover-rating.v1"],
+  });
   assert.equal(result.semanticEvaluation.satisfied, false);
 });
 

@@ -55,6 +55,22 @@ and the per-candidate result of each rule.
 - A general-purpose reference JSON export maps every supported semantic role to
   a stable example token namespace.
 
+## Declarative semantic evaluation
+
+- the first executable semantic model covers the Primary action state family;
+- constraint, invariant, relation, intent, and generation strategy remain
+  distinct concepts;
+- every declaration names versioned evidence trace metadata and one registered
+  evaluator;
+- evaluation results retain declaration, evaluator, and evidence IDs so the
+  reason for a status is inspectable;
+- each declaration has executable positive, contradictory, and missing-evidence
+  acceptance scenarios in the fast unit tier;
+- automated metrics cannot satisfy `hover-discoverable`, and a logically
+  impossible human-evidence summary cannot pass;
+- human-backed `satisfied` and `unsatisfied` remain scoped to the current local,
+  version-matched evaluation instance rather than the policy as a whole.
+
 Disabled and popover roles are explicit semantic aliases to foundation roles.
 Their independent searches are intentionally deferred until a reproducible
 public component case demonstrates a distinct duty under the documented
@@ -78,8 +94,13 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Next migration
 
-1. Validate foundation and focus search targets through designer ratings.
-2. Aggregate exported designer evaluations and analyze inter-rater agreement.
-3. Promote thresholds from `heuristic` to `empirical` only with recorded data.
-4. Review upstream `apca-w3` releases before changing the pinned verification
+1. Run the single-browser hover pilot and record instruction or evidence-boundary
+   ambiguity before expanding collection.
+2. Add a privacy-reviewed append-only hover exchange format and independent-run
+   marker before aggregating reviewer observations.
+3. Extend the semantic model to Foundation hierarchy and Focus visibility after
+   reviewing the Primary trace shape.
+4. Promote thresholds from `heuristic` to `empirical` only with recorded data
+   and preserved disagreement.
+5. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

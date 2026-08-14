@@ -178,6 +178,12 @@ reversal. These diagnostics may prioritize review but cannot satisfy the
 `hover-discoverable` intent or change the deterministic palette verdict. See
 [`v2-decisions/hover-diagnostics.md`](v2-decisions/hover-diagnostics.md).
 
+Each `result.semanticEvaluation.evaluations` entry carries a `trace` containing
+the stable declaration ID, registered evaluator ID, and versioned evidence trace
+IDs. This trace explains which semantic claim caused the evaluation to exist;
+it does not turn explanatory evidence metadata into a runtime schema or make a
+human judgment policy-level evidence.
+
 The representative gallery derives a bounded review shortlist from named metric
 extremes rather than a composite score. It keeps all inputs visible and exposes
 the reason for each recommendation so ranking mechanics cannot masquerade as a

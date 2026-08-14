@@ -14,6 +14,13 @@ this document owns component and runtime boundaries.
   cross-mode pair ranking, and `quality.js` owns independent quality and
   state-progression review. `evaluation-store.js` isolates local browser
   persistence.
+- `v2/lib/semantic-model.js` owns declarative design declarations, evidence
+  contracts, evaluator registration, and evaluation-instance traceability.
+  Test-owned acceptance scenarios prove coverage without becoming runtime
+  generation policy.
+- `v2/lib/hover-evaluation.js` owns the versioned human-record schema and emits
+  normalized evidence; the semantic model consumes that boundary and does not
+  independently reinterpret browser storage records.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive
   CSS. Each file owns complete declaration blocks; `v2/style.css` remains a
   compatibility aggregator.
