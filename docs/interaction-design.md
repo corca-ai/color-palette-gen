@@ -4,10 +4,12 @@ This document defines the current v2 public-site story, section order, and
 visualization contract. The maintained v1 experiment has a separate input model
 and must not be used to justify v2 interactions.
 
-## Product message
+## Research message
 
 Color Lab v2 turns one primary color into complete light and dark semantic UI
-palettes. The generated palette is the product. Evidence views exist to answer
+palettes. The versioned policy's behavior and limits are the research object;
+each generated palette and applied interface form an observable specimen.
+Evidence views exist to answer
 why a color was selected, whether the palette satisfies its declared contracts,
 and how it behaves in a representative interface.
 
@@ -20,6 +22,11 @@ the implementation documentation:
 4. deeper evidence is available without dominating the first reading;
 5. every automated result remains an experimental design aid, not a production
    or accessibility certification.
+
+The page is an instrument as well as an explanation surface. It must keep
+deterministic output, provisional diagnostics, and reviewer observations
+visually and conceptually distinct. Interface polish supports consistent
+observation; it is not itself evidence that the policy is valid.
 
 ## Current v2 journey
 

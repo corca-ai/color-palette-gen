@@ -24,9 +24,14 @@ It does not accept vibe, secondary, additional, or harmony inputs. Its visual
 direction is fixed: calm and minimal, with neutral foundations and one brand
 hue. It produces paired light and dark palettes from the same primary.
 
-The palette is the product. Component previews, export formats, and contrast
-reports are permitted only as supporting inspection tools; they must not define
-the page hierarchy or expand the palette input contract.
+The behavior and limits of the versioned declarative palette policy are the
+research object. Each generated palette and applied interface form an
+observable specimen. Component previews, export formats, and contrast reports
+are permitted only as supporting inspection tools; they
+must not define the page hierarchy or expand the palette input contract. The
+prototype studies how design declarations, generation strategies, automated
+evidence, and human judgment relate; it does not claim that passing formulas
+establish palette quality.
 
 The public page therefore leads with input, the applied example, and a compact
 generated palette. Role-level decision evidence, broader evaluation, relationship

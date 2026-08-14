@@ -95,6 +95,11 @@ test("the applied example exposes real primary and destructive interactions", as
 test("Light and Dark hover judgments resolve the declared intent", async ({
   page,
 }) => {
+  const intentReview = page.locator(".semantic-intent-review");
+  await expect(
+    intentReview.getByText("Current local intent evaluation"),
+  ).toBeVisible();
+  await expect(intentReview).toContainText("not a policy-level finding");
   await page.getByRole("button", { name: "Compare", exact: true }).click();
   for (const mode of ["light", "dark"]) {
     const review = page.locator(`[data-hover-mode="${mode}"]`);

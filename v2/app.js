@@ -387,7 +387,7 @@ function renderQuality() {
       currentResult.policyVersion,
     ),
   );
-  const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared design intent</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
+  const semanticIntent = `<article class="semantic-intent-review"><header><span>Current local intent evaluation</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><p>Human-backed status reflects this browser's version-matched observation, not a policy-level finding.</p><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
   const hoverDiagnostics = currentResult.hoverDiagnostics;
   const diagnosticPair = (mode, context, name, label) => {
     const pair = hoverDiagnostics.modes[mode].pairs[name];
