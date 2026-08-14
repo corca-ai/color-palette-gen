@@ -29,9 +29,9 @@ research object. Each generated palette and applied interface form an
 observable specimen. Component previews, export formats, and contrast reports
 are permitted only as supporting inspection tools; they
 must not define the page hierarchy or expand the palette input contract. The
-prototype studies how design declarations, generation strategies, automated
-evidence, and human judgment relate; it does not claim that passing formulas
-establish palette quality.
+prototype studies how design declarations, generation strategies, and automated
+evidence relate while keeping perceptual outcomes explicitly unmeasured. It does
+not claim that passing formulas establish palette quality.
 
 The public page therefore leads with input, the applied example, and a compact
 generated palette. Role-level decision evidence, broader evaluation, relationship
@@ -156,36 +156,27 @@ non-text checks. Light/dark results are siblings, not one mode calculated by
 inverting the other.
 
 The result also exposes a versioned semantic evaluation for the Primary action,
-Foundation, Focus, Feedback, and Selection families. It keeps declarations of
-design intent separate
-from generation strategies: automated evidence can satisfy measurable
-constraints, invariants, and relations, while hover discoverability remains
-`needs-review` until an interactive specimen rating exists. This evaluation is informative and does
-not change generated colors or redefine the palette contract pass result:
-`result.passed` remains the automated palette verdict, while
-`result.semanticEvaluation.satisfied` remains false whenever a required human
-judgment is still `needs-review`.
-
-Interactive hover judgments are browser-local reviewer evidence rather than
-generator input. A matching versioned record identifies the primary input,
-policy version, specimen version, and separate Light/Dark judgments with notes.
-It may resolve the UI's semantic evaluation, but it does not mutate
-`result.passed`, generated colors, or exported token JSON.
+Foundation, Focus, Feedback, and Selection families. It keeps measurable
+constraints, invariants, and relations separate from generation strategies.
+This evaluation does not change generated colors or redefine the palette
+contract pass result. Its `satisfied` field means only that the currently modeled
+automated declarations pass; it does not establish overall palette quality or
+perceived hover discoverability.
 
 `result.hoverDiagnostics` supplies non-normative review signals calculated from
 final sRGB output: Oklab Delta E, CIEDE2000, contrast trajectories against the
 declared surface and background, duplicate detection, and surface-trajectory
-reversal. These diagnostics may prioritize review but cannot satisfy the
-`hover-discoverable` intent or change the deterministic palette verdict. See
+reversal. These diagnostics may prioritize inspection but cannot establish
+hover discoverability or change the deterministic palette verdict. See
 [`v2-decisions/hover-diagnostics.md`](v2-decisions/hover-diagnostics.md).
 
 Each `result.semanticEvaluation.evaluations` entry carries a `trace` containing
 the stable declaration ID, registered evaluator ID, and versioned evidence trace
 IDs. This trace explains which semantic claim caused the evaluation to exist;
-it does not turn explanatory evidence metadata into a runtime schema or make a
-human judgment policy-level evidence.
+it does not turn explanatory evidence metadata into a runtime schema or establish
+an unmeasured perceptual outcome.
 
-The representative gallery derives a bounded review shortlist from named metric
+The representative gallery derives a bounded inspection shortlist from named metric
 extremes rather than a composite score. It keeps all inputs visible and exposes
 the reason for each recommendation so ranking mechanics cannot masquerade as a
 calibrated perceptual model.

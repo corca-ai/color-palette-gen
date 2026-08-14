@@ -4,8 +4,8 @@
 
 Study the behavior and limits of a versioned declarative palette policy: how one
 key color can become reusable light and dark semantic UI palettes when design
-intent, generation strategies, automated checks, and human visual judgment
-remain explicitly separate. Each generated palette and its applied interface
+intent, generation strategies, automated checks, and unmeasured perceptual
+claims remain explicitly separate. Each generated palette and its applied interface
 form an observable specimen; inspectable decision evidence makes the policy's
 behavior reproducible and contestable. The retained v1 experiment separately
 explores additional colors and an optional desired mood.
@@ -22,18 +22,16 @@ service.
    require observation in an interactive specimen?
 3. Can decision records and counterfactuals expose when a passing formula does
    not establish the intended visual outcome?
-4. Across varied primary colors and Light/Dark modes, where do reviewers agree
-   or disagree about hierarchy, source fidelity, and interaction-state pacing?
-5. What evidence is sufficient to replace a provisional heuristic without
-   turning one reviewer's preference into a universal rule?
+4. Across varied primary colors and Light/Dark modes, where do automated
+   diagnostics expose hierarchy, source-fidelity, and interaction-state risks?
+5. What evidence would be sufficient to replace a provisional heuristic without
+   turning one metric into a universal perceptual rule?
 
-## Participants and readers
+## Readers
 
-No single customer group is designated. Designers and developers can use the
-prototype both to inspect a palette and to contribute bounded observations.
-Maintainers use the same evidence to study policy behavior. A participant's
-rating is one observation under a versioned specimen and policy, not a claim
-about every viewer or interface.
+No single customer group is designated. Designers and developers can inspect
+palettes, interaction specimens, and decision evidence. The runtime does not
+collect scores, notes, judgments, or observations.
 
 The project may support internal services while remaining publicly available as
 a general-purpose open-source prototype. Public documentation and UI must stand
@@ -43,20 +41,18 @@ on public evidence and must not expose or imply private consumer relationships.
 
 The site leads with a generic applied specimen and then a compact generated
 palette so visual judgment has a concrete case. It then offers progressively
-deeper decision evidence, multi-input evaluation, relationship explanation, and
+deeper decision evidence, multi-input diagnostics, relationship explanation, and
 explicit contract validation. Analysis supports the palette; it does not
 replace the versioned policy as the object of inquiry. The interface should make
 clear which claims are deterministic results, provisional diagnostics, or
-reviewer evidence.
+explicitly unmeasured perceptual questions.
 
 ## Research posture
 
-- Prefer falsifiable questions and versioned observations over feature breadth.
-- Keep automated evidence and human judgment separate even when both appear in
-  one result.
+- Prefer falsifiable questions and versioned automated evidence over feature breadth.
+- Keep automated evidence from standing in for unmeasured human perception.
 - Treat the current `calm and minimal` direction as one fixed research policy,
   not as proof that it is a universal palette style.
 - Add inputs, recipes, exports, or delivery surfaces only when they answer a
   named research question or make an experiment reproducible.
-- Preserve raw disagreement and negative results; do not tune generation from a
-  single observation.
+- Do not tune generation from an informal visual impression or a single metric.

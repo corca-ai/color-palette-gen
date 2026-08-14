@@ -13,7 +13,7 @@ direction as:
 - roles existing for semantic needs rather than palette variety.
 
 Achromatic inputs prohibit invented hue tint. The current chroma and tint bounds
-are heuristics and still need designer evaluation.
+are heuristics without empirical calibration.
 
 ## Primary default
 
@@ -87,8 +87,8 @@ The engine performs a sampled cross-mode comparison over each mode's baseline
 plus the start, midpoint, and end of its primary lightness range. It is not an
 exhaustive joint search. Pair selection minimizes worst-mode and total source
 distance before using structural review misses as a later discriminator.
-The target bands and ordering remain provisional until designer evaluation
-provides stronger evidence.
+The target bands and ordering remain provisional until a separately authorized,
+documented dataset provides stronger evidence.
 
 ## Independent review
 
@@ -144,8 +144,9 @@ from generated primary. The closest passing candidate to the preferred semantic
 anchor is selected.
 
 The separation threshold is a `heuristic`, not a published accessibility rule.
-If designer evaluation shows that red-brand cases remain ambiguous, the search
-space must expand to limited hue alternatives or use an additional non-color cue.
+If reproducible component cases show that red-brand cases remain ambiguous, the
+search space must expand to limited hue alternatives or use an additional
+non-color cue.
 
 ## Warning and selection
 

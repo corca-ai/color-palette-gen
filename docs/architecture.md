@@ -12,15 +12,11 @@ this document owns component and runtime boundaries.
   `lib/palette-runtime.js` owns worker execution and caching.
 - `v2/lib/palette.js` orchestrates generation, `pair-selection.js` owns
   cross-mode pair ranking, and `quality.js` owns independent quality and
-  state-progression review. `evaluation-store.js` isolates local browser
-  persistence.
+  state-progression review.
 - `v2/lib/semantic-model.js` owns declarative design declarations, evidence
   contracts, evaluator registration, and evaluation-instance traceability.
   Test-owned acceptance scenarios prove coverage without becoming runtime
   generation policy.
-- `v2/lib/hover-evaluation.js` owns the versioned human-record schema and emits
-  normalized evidence; the semantic model consumes that boundary and does not
-  independently reinterpret browser storage records.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive
   CSS. Each file owns complete declaration blocks; `v2/style.css` remains a
   compatibility aggregator.
@@ -31,12 +27,10 @@ this document owns component and runtime boundaries.
   the static build where applicable.
 - `scripts/build-site.mjs` assembles v2 at the artifact root, v1 under
   `dist/v1/`, and shared browser modules under `dist/lib/`.
-- There is no backend, account system, database, analytics, or cookie. Palette
-  generation alone does not persist the primary. Hover evidence stores primary,
-  policy/specimen identity, and per-mode judgment/note in browser-local storage
-  and currently has no export path. Overall gallery evaluation stores a
-  primary-keyed policy version and optional rating/note separately; only those
-  overall records can be explicitly exported.
+- There is no backend, account system, database, analytics, or cookie. The
+  runtime does not persist the primary, score, judgment, note, or observation;
+  only the selected result-view mode is stored locally. Legacy evaluation keys
+  from earlier versions are no longer read or transmitted.
 
 ## Change boundaries
 

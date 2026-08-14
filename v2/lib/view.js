@@ -152,9 +152,7 @@ function exampleStyle(modeResult) {
     .join(";");
 }
 
-export function appliedExampleView(modeResult, hoverReview = {}) {
-  const judgmentButton = (value, label) =>
-    `<button type="button" data-hover-judgment="${value}" aria-pressed="${hoverReview.judgment === value}">${label}</button>`;
+export function appliedExampleView(modeResult) {
   return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}">
     <header class="example-header"><strong>Example application · ${modeResult.mode}</strong><span>Semantic roles in context</span></header>
     <div class="example-canvas">
@@ -165,11 +163,6 @@ export function appliedExampleView(modeResult, hoverReview = {}) {
           <button type="button" class="reference-primary-demo">✓ Save changes</button>
           <p><span>Current state</span><output>Default</output></p>
         </div>
-        <fieldset class="hover-review" data-hover-mode="${modeResult.mode}">
-          <legend>After trying hover, how does the change feel?</legend>
-          <div>${judgmentButton("too-subtle", "Too subtle")}${judgmentButton("meets-intent", "Meets intent")}${judgmentButton("too-strong", "Too strong")}</div>
-          <label><span>What did you notice?</span><textarea rows="2" maxlength="1000" placeholder="A short observation is required as evidence.">${escapeHtml(hoverReview.note ?? "")}</textarea></label>
-        </fieldset>
       </section>
       <section class="reference-shell">
         <aside class="reference-sidebar">

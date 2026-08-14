@@ -23,7 +23,7 @@ test("hover diagnostics report independent post-export signals", () => {
       }
     }
   }
-  assert.equal(result.semanticEvaluation.satisfied, false);
+  assert.equal(result.semanticEvaluation.satisfied, true);
 });
 
 test("diagnostics flag exported duplicates and surface trajectory reversal", () => {

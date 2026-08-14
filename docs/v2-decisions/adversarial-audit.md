@@ -21,7 +21,8 @@ establish specific contrast properties, not visual balance.
 
 The primary lightness ranges, state Delta E thresholds, semantic separation,
 cross-mode bands, and source-shift threshold remain provisional. They must not
-be described as empirical until exported designer evaluations support them.
+be described as empirical without a separately authorized, documented dataset
+and analysis.
 
 ## Grid evidence
 
@@ -55,6 +56,6 @@ cannot preserve very bright, dark, or saturated brand sources.
 
 ## Promotion gate
 
-A provisional rule can become empirical only when its policy version, input
-set, designer ratings, and analysis are recorded. Passing automated checks is
-not sufficient evidence for promotion.
+A provisional rule can become empirical only through a separately authorized,
+documented dataset and analysis bound to its policy version and input set.
+Passing automated checks is not sufficient evidence for promotion.

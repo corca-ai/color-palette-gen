@@ -17,22 +17,6 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
     requires: ["light-and-dark", "monotonic-lightness-check"],
     cannotEstablish: ["hover-discoverability"],
   },
-  "evidence.interactive-hover-rating.v1": {
-    producer: "human-observation",
-    scope: "local-version-matched-evaluation-instance",
-    requires: [
-      "normalized-primary",
-      "policy-version",
-      "specimen-version",
-      "light-judgment-and-note",
-      "dark-judgment-and-note",
-    ],
-    cannotEstablish: [
-      "policy-level-discoverability",
-      "population-preference",
-      "accessibility-conformance",
-    ],
-  },
   "evidence.foundation-hierarchy-decisions.v1": {
     producer: "selected-decision-trace",
     scope: "foundation-surface-family",
@@ -142,15 +126,6 @@ export const PRIMARY_ACTION_SEMANTIC_MODEL = {
         "Active continues beyond hover in the same mode-specific direction.",
       evidence: ["evidence.primary-state-progression.v1"],
       evaluator: "evaluator.primary-state-progression.v1",
-    },
-    {
-      id: "hover-discoverable",
-      kind: "intent",
-      authority: "declared-intent",
-      statement:
-        "Hover is noticeable during interaction without overpowering brand identity.",
-      evidence: ["evidence.interactive-hover-rating.v1"],
-      evaluator: "evaluator.primary-hover-discoverable.v1",
     },
   ],
   strategies: [
@@ -284,7 +259,7 @@ export const SELECTION_SEMANTIC_MODEL = {
 
 export const V2_SEMANTIC_MODEL = {
   id: "v2-declarative-design",
-  version: 2,
+  version: 3,
   components: [
     {
       id: PRIMARY_ACTION_SEMANTIC_MODEL.id,
@@ -409,23 +384,6 @@ function evaluateStateProgression({ structuralQuality }) {
       : passed
         ? "Every mode preserves the declared default → hover → active direction."
         : "At least one mode reverses or collapses the declared state direction.",
-  );
-}
-
-function evaluateHoverDiscoverability({ hoverEvidence }) {
-  const complete = hoverEvidence.complete && hoverEvidence.record !== null;
-  return evaluation(
-    !complete
-      ? "needs-review"
-      : hoverEvidence.satisfies
-        ? "satisfied"
-        : "unsatisfied",
-    complete ? [hoverEvidence.record] : [],
-    !complete
-      ? "A matching interactive specimen judgment and note are required in both modes."
-      : hoverEvidence.satisfies
-        ? "The recorded Light and Dark specimen judgments both meet the declared intent."
-        : "At least one recorded mode judges the hover as too subtle or too strong.",
   );
 }
 
@@ -588,11 +546,6 @@ export const SEMANTIC_EVALUATORS = {
     declaration: "active-continues-beyond-hover",
     consumes: ["evidence.primary-state-progression.v1"],
     evaluate: evaluateStateProgression,
-  },
-  "evaluator.primary-hover-discoverable.v1": {
-    declaration: "hover-discoverable",
-    consumes: ["evidence.interactive-hover-rating.v1"],
-    evaluate: evaluateHoverDiscoverability,
   },
   "evaluator.foundation-hierarchy.v1": {
     declaration: "foundation-hierarchy-ordered",
@@ -766,12 +719,8 @@ export function formatSemanticCounts(counts) {
     : summary;
 }
 
-export function evaluateV2Semantics(
-  modes,
-  structuralQuality,
-  hoverEvidence = { complete: false, satisfies: false, record: null },
-) {
-  const context = { modes, structuralQuality, hoverEvidence };
+export function evaluateV2Semantics(modes, structuralQuality) {
+  const context = { modes, structuralQuality };
   const evaluations = V2_SEMANTIC_MODEL.declarations.map((declaration) => {
     const evaluator = SEMANTIC_EVALUATORS[declaration.evaluator];
     return resultFor(

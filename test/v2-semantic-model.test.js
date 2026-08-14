@@ -3,11 +3,6 @@ import test from "node:test";
 
 import { generatePaletteV2 } from "../v2/lib/palette.js";
 import {
-  HOVER_EVALUATION_SCHEMA,
-  HOVER_SPECIMEN,
-  hoverEvaluationEvidence,
-} from "../v2/lib/hover-evaluation.js";
-import {
   evaluateV2Semantics,
   formatSemanticCounts,
   PRIMARY_ACTION_SEMANTIC_MODEL,
@@ -34,7 +29,6 @@ function acceptanceScenario(declaration, outcome, evaluator, mutate) {
       const context = {
         modes: fixture.modes,
         structuralQuality: fixture.quality,
-        hoverEvidence: { complete: false, satisfies: false, record: null },
       };
       mutate?.(context);
       return context;
@@ -109,35 +103,6 @@ const SEMANTIC_ACCEPTANCE_SCENARIOS = [
     ({ structuralQuality }) => {
       structuralQuality.states.dark.checks = [];
     },
-  ),
-  acceptanceScenario(
-    "hover-discoverable",
-    "positive",
-    "evaluator.primary-hover-discoverable.v1",
-    (context) => {
-      context.hoverEvidence = {
-        complete: true,
-        satisfies: true,
-        record: { modes: { light: {}, dark: {} } },
-      };
-    },
-  ),
-  acceptanceScenario(
-    "hover-discoverable",
-    "contradictory",
-    "evaluator.primary-hover-discoverable.v1",
-    (context) => {
-      context.hoverEvidence = {
-        complete: true,
-        satisfies: false,
-        record: { modes: { light: {}, dark: {} } },
-      };
-    },
-  ),
-  acceptanceScenario(
-    "hover-discoverable",
-    "missing-evidence",
-    "evaluator.primary-hover-discoverable.v1",
   ),
   acceptanceScenario(
     "foundation-hierarchy-ordered",
@@ -370,10 +335,10 @@ for (const scenario of SEMANTIC_ACCEPTANCE_SCENARIOS) {
   });
 }
 
-test("the primary action semantic model separates intent from mechanisms", () => {
+test("the primary action semantic model separates declarations from mechanisms", () => {
   assert.deepEqual(
     PRIMARY_ACTION_SEMANTIC_MODEL.declarations.map(({ kind }) => kind),
-    ["constraint", "invariant", "relation", "intent"],
+    ["constraint", "invariant", "relation"],
   );
   assert.equal(PRIMARY_ACTION_SEMANTIC_MODEL.strategies[0].kind, "heuristic");
 });
@@ -397,7 +362,7 @@ test("the aggregate result exposes the exact semantic model boundary", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   assert.deepEqual(result.semanticEvaluation.model, {
     id: "v2-declarative-design",
-    version: 2,
+    version: 3,
     components: [
       { id: "primary-action-state-family", version: 1 },
       { id: "foundation-focus-family", version: 1 },
@@ -411,7 +376,6 @@ test("the aggregate result exposes the exact semantic model boundary", () => {
       "shared-label-readable",
       "states-distinct",
       "active-continues-beyond-hover",
-      "hover-discoverable",
       "foundation-hierarchy-ordered",
       "foundation-text-targets-pass",
       "focus-adjacent-contrast-passes",
@@ -443,10 +407,10 @@ test("semantic traceability rejects dangling and incomplete acceptance links", (
     () =>
       validateSemanticTraceability({
         acceptanceScenarios: SEMANTIC_ACCEPTANCE_SCENARIOS.filter(
-          ({ id }) => id !== "hover-discoverable.missing-evidence",
+          ({ id }) => id !== "active-continues-beyond-hover.missing-evidence",
         ),
       }),
-    /hover-discoverable lacks missing-evidence acceptance coverage/,
+    /active-continues-beyond-hover lacks missing-evidence acceptance coverage/,
   );
   assert.throws(
     () =>
@@ -473,16 +437,6 @@ test("semantic traceability rejects dangling and incomplete acceptance links", (
       }),
     /Acceptance scenario ids must be unique/,
   );
-});
-
-test("impossible hover evidence cannot satisfy declared intent", () => {
-  const result = SEMANTIC_EVALUATORS[
-    "evaluator.primary-hover-discoverable.v1"
-  ].evaluate({
-    hoverEvidence: { complete: true, satisfies: true, record: null },
-  });
-  assert.equal(result.status, "needs-review");
-  assert.deepEqual(result.observedEvidence, []);
 });
 
 test("matching automated evidence without an explicit boolean remains needs-review", () => {
@@ -562,46 +516,10 @@ test("destructive and warning label evidence fail independently", () => {
   );
 });
 
-test("numeric checks cannot claim that hover discoverability is satisfied", () => {
+test("the aggregate result is limited to measurable declarations", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  const byId = Object.fromEntries(
-    result.semanticEvaluation.evaluations.map((item) => [item.id, item]),
-  );
-  assert.equal(byId["shared-label-readable"].status, "satisfied");
-  assert.equal(byId["states-distinct"].status, "satisfied");
-  assert.equal(byId["active-continues-beyond-hover"].status, "satisfied");
-  assert.equal(byId["hover-discoverable"].status, "needs-review");
-  assert.deepEqual(byId["hover-discoverable"].observedEvidence, []);
-  assert.deepEqual(byId["hover-discoverable"].trace, {
-    declaration: "hover-discoverable",
-    evaluator: "evaluator.primary-hover-discoverable.v1",
-    evidence: ["evidence.interactive-hover-rating.v1"],
-  });
-  assert.equal(result.semanticEvaluation.satisfied, false);
-});
-
-test("complete interactive evidence can resolve hover discoverability", () => {
-  const result = generatePaletteV2({ primary: "#507096" });
-  const record = {
-    schema: HOVER_EVALUATION_SCHEMA,
-    input: result.input.primary,
-    policyVersion: result.policyVersion,
-    specimen: HOVER_SPECIMEN,
-    modes: {
-      light: { judgment: "meets-intent", note: "Clearly visible." },
-      dark: { judgment: "meets-intent", note: "Clearly visible." },
-    },
-  };
-  const evaluation = evaluateV2Semantics(
-    result.modes,
-    result.quality,
-    hoverEvaluationEvidence(record, result.input.primary, result.policyVersion),
-  );
-  assert.equal(
-    evaluation.evaluations.find(({ id }) => id === "hover-discoverable").status,
-    "satisfied",
-  );
-  assert.equal(evaluation.satisfied, true);
+  assert.equal(result.semanticEvaluation.evaluations.length, 12);
+  assert.equal(result.semanticEvaluation.satisfied, true);
 });
 
 function semanticFixture() {

@@ -12,12 +12,12 @@ noticeable during interaction.
 The executable semantic model currently covers the Primary action state family,
 Foundation hierarchy and text, Focus adjacent contrast and Oklab control
 separation, Feedback label and pair relations, and Selection text and Surface
-relations. It keeps five concepts separate:
+relations. It keeps four modeled concepts separate while leaving experiential
+intent explicitly unmodeled:
 
 - **constraint:** a requirement an automated evaluator can accept or reject;
 - **invariant:** a structural property that must always hold;
 - **relation:** an intended ordering between semantic roles;
-- **intent:** a human-facing outcome that may require judgment evidence;
 - **strategy:** a replaceable mechanism that proposes candidate colors.
 
 | Declaration ID                              | Kind       | Required evidence contract                   |
@@ -25,7 +25,6 @@ relations. It keeps five concepts separate:
 | `shared-label-readable`                     | constraint | `evidence.primary-label-apca.v1`             |
 | `states-distinct`                           | invariant  | `evidence.primary-exported-states.v1`        |
 | `active-continues-beyond-hover`             | relation   | `evidence.primary-state-progression.v1`      |
-| `hover-discoverable`                        | intent     | `evidence.interactive-hover-rating.v1`       |
 | `foundation-hierarchy-ordered`              | relation   | `evidence.foundation-hierarchy-decisions.v1` |
 | `foundation-text-targets-pass`              | constraint | `evidence.foundation-text-apca.v1`           |
 | `focus-adjacent-contrast-passes`            | constraint | `evidence.focus-foundation-contrast.v1`      |
@@ -37,12 +36,11 @@ relations. It keeps five concepts separate:
 | `selection-surface-oklab-separation-passes` | relation   | `evidence.selection-surface-separation.v1`   |
 
 The current lightness search is a heuristic strategy. Passing its distance
-threshold is not evidence that `hover-discoverable` is satisfied.
+threshold is not evidence that hover is perceptually discoverable.
 
 The aggregate model version identifies its serialized component and declaration
-schema. Adding the Feedback and Selection components changes that boundary from
-`v2-declarative-design@1` to `v2-declarative-design@2`; each newly introduced
-component begins at version 1.
+schema. The current automated 12-declaration boundary is
+`v2-declarative-design@3` and remains model-scoped.
 
 ## Traceability contract
 
@@ -62,11 +60,8 @@ Each declaration names one registered evaluator and one or more evidence trace
 contracts. These contracts state the expected producer, required observations,
 evaluation scope, and claims they cannot establish. Their `requires` and
 `cannotEstablish` fields are explanatory trace metadata rather than a general
-runtime schema system. The owning producer still validates the actual payload;
-for example, `hover-evaluation.js` validates and normalizes versioned human
-records before the semantic evaluator consumes its verdict. The semantic layer
-also rejects logically impossible summaries such as complete human evidence
-without a record.
+runtime schema system. The owning automated producer still validates the actual
+payload before the semantic evaluator consumes its verdict.
 
 Evaluator metadata declares which declaration it owns and which declared
 evidence trace it consumes. The registry dispatches the actual evaluator
@@ -91,18 +86,16 @@ declared evaluation semantics and makes the reason for each test discoverable.
 
 - `satisfied`: the declaration has the evidence type it requires and passes;
 - `unsatisfied`: available evidence directly contradicts the declaration;
-- `needs-review`: required judgment evidence is absent or insufficient.
+- `needs-review`: required automated evidence is absent or incomplete.
 
 Missing or incomplete automated evidence also resolves to `needs-review`; an
 empty evidence set must never pass by vacuous truth. Evidence that is complete
 and directly contradicts a declaration resolves to `unsatisfied`.
 
-Automated checks must not convert `needs-review` into `satisfied`. The versioned
-`color-lab-hover-evaluation-1` record identifies the input, specimen, policy
-version, and a judgment plus note for each mode. Only matching Light and Dark
-records that both judge the applied Primary button as `meets-intent` satisfy the
-judgment-backed intent. `too-subtle` or `too-strong` is contradictory evidence;
-missing, stale, or incomplete evidence remains `needs-review`.
+An aggregate `satisfied` result means only that every currently modeled
+measurable declaration passed. It does not establish overall palette quality,
+hover discoverability, feedback meaning, selection discoverability, or complete
+accessibility conformance. The runtime records no human score or observation.
 
 ## Deliberately not doing
 
@@ -113,13 +106,6 @@ missing, stale, or incomplete evidence remains `needs-review`.
 - Strategies and metric thresholds are not promoted into semantic declarations.
 - Utility-role declarations remain deferred until a non-alias relationship
   needs an executable semantic owner.
-
-## Current evidence capture
-
-The applied example keeps the judgment controls beside the real interactive
-button. Records stay in browser-local storage and are not mixed into the palette
-generator or exported token payload. This preserves the distinction between a
-deterministic palette result and reviewer-specific experiential evidence.
 
 ## Foundation and Focus boundary
 
@@ -140,10 +126,9 @@ unclaimed until a separate observation protocol exists.
 
 ## Current implementation slice
 
-Add five Feedback and Selection declarations by consuming existing APCA and
-Oklab check outputs without changing palette generation. Carry their trace
-through the same evaluation result and require positive, contradictory, and
-missing-evidence acceptance scenarios for each declaration.
+Maintain 12 automated declarations with positive, contradictory, and
+missing-evidence acceptance scenarios for each, without changing palette
+generation.
 
 Success means the existing palette colors and pass/fail contract remain stable,
 the new declarations are satisfied for the established representative input,
@@ -152,8 +137,8 @@ and missing or contradictory upstream evidence resolves honestly.
 ## Next slice
 
 Review whether utility aliases need declarations beyond their existing
-promotion contract. Human-rating expansion remains separate from structural
-modeling.
+promotion contract. Human-study infrastructure is outside the current runtime
+and roadmap.
 
 ## Feedback and Selection boundary
 

@@ -2,21 +2,6 @@ import { isHex, normalizeHex } from "../lib/color-math.js";
 import { generatePaletteV2, serializeModeCss } from "./lib/palette.js";
 import { serializeReferenceTokens } from "./lib/reference-export.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
-import {
-  clearHoverEvaluationRecords,
-  inspectHoverEvaluationStorage,
-  loadEvaluationRecords,
-  loadHoverEvaluationRecords,
-  saveEvaluationRecords,
-  saveHoverEvaluationRecords,
-} from "./lib/evaluation-store.js";
-import {
-  HOVER_EVALUATION_SCHEMA,
-  HOVER_SPECIMEN,
-  hoverEvaluationEvidence,
-  hoverEvaluationKey,
-  normalizeHoverEvaluation,
-} from "./lib/hover-evaluation.js";
 import { prioritizeHoverReview } from "./lib/hover-review-priority.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
 import {
@@ -36,10 +21,6 @@ const primaryInput = document.querySelector("#v2-primary");
 const error = document.querySelector("#v2-error");
 const palettes = document.querySelector("#palettes");
 const examples = document.querySelector("#examples");
-const hoverEvidenceSummary = document.querySelector("#hover-evidence-summary");
-const hoverEvidenceRecords = document.querySelector("#hover-evidence-records");
-const clearHoverEvidence = document.querySelector("#clear-hover-evidence");
-const hoverEvidenceStatus = document.querySelector("#hover-evidence-status");
 const relationships = document.querySelector("#relationships");
 const checks = document.querySelector("#checks");
 const quality = document.querySelector("#quality");
@@ -47,7 +28,6 @@ const gallery = document.querySelector("#gallery");
 const hoverComparison = document.querySelector("#hover-comparison");
 const galleryPanel = document.querySelector("#gallery-panel");
 const sourceAlternatives = document.querySelector("#source-alternatives");
-const ratingsFile = document.querySelector("#ratings-file");
 const foundationMap = document.querySelector("#foundation-map");
 const focusSpecimens = document.querySelector("#focus-specimens");
 const paletteTitle = document.querySelector("#palette-title");
@@ -77,66 +57,6 @@ const FOUNDATION_ROLES = [
   "input border",
 ];
 const galleryResults = new Map();
-let evaluationRecords = loadEvaluationRecords();
-let hoverEvaluationRecords = loadHoverEvaluationRecords();
-let hoverStorageState = inspectHoverEvaluationStorage();
-let clearHoverEvidenceArmed = false;
-let clearHoverEvidenceTimer;
-
-function currentHoverEvaluation() {
-  if (!currentResult) return null;
-  return normalizeHoverEvaluation(
-    hoverEvaluationRecords[
-      hoverEvaluationKey(
-        currentResult.input.primary,
-        currentResult.policyVersion,
-      )
-    ],
-  );
-}
-
-function validHoverEvaluations() {
-  return Object.values(hoverEvaluationRecords)
-    .map(normalizeHoverEvaluation)
-    .filter(Boolean);
-}
-
-function renderHoverEvidenceManager() {
-  const records = validHoverEvaluations();
-  const storedCount = Object.keys(hoverEvaluationRecords).length;
-  const ignoredCount =
-    storedCount - records.length + (hoverStorageState.unreadable ? 1 : 0);
-  const judgments = records.reduce(
-    (total, record) =>
-      total +
-      ["light", "dark"].filter((mode) => record.modes[mode].judgment).length,
-    0,
-  );
-  hoverEvidenceSummary.textContent = records.length
-    ? `${records.length} record${records.length === 1 ? "" : "s"} · ${judgments} mode judgment${judgments === 1 ? "" : "s"}${ignoredCount ? ` · ${ignoredCount} unreadable` : ""}`
-    : ignoredCount
-      ? `${ignoredCount} unreadable record${ignoredCount === 1 ? "" : "s"}`
-      : "No saved observations";
-  clearHoverEvidence.disabled = !hoverStorageState.present;
-  if (!records.length) {
-    hoverEvidenceRecords.innerHTML = `<p class="hover-evidence-empty">${ignoredCount ? "Stored data does not match the current hover evidence schema. You can clear it below." : "Nothing is stored in the hover evidence boundary."}</p>`;
-    return;
-  }
-  hoverEvidenceRecords.innerHTML = records
-    .map(
-      (record) =>
-        `<article><header><strong>${record.input}</strong><small>${escapeHtml(record.policyVersion)} · ${escapeHtml(record.specimen)}</small></header>${[
-          "light",
-          "dark",
-        ]
-          .map((mode) => {
-            const observation = record.modes[mode];
-            return `<div><b>${mode}</b><span>${escapeHtml(observation.judgment ?? "not rated")}</span>${observation.note ? `<q>${escapeHtml(observation.note)}</q>` : ""}</div>`;
-          })
-          .join("")}</article>`,
-    )
-    .join("");
-}
 
 function visibleModes() {
   return resultMode === "compare" ? ["light", "dark"] : [resultMode];
@@ -157,11 +77,8 @@ function renderPalettes() {
 }
 
 function renderExamples() {
-  const review = currentHoverEvaluation();
   examples.innerHTML = visibleModes()
-    .map((mode) =>
-      appliedExampleView(currentResult.modes[mode], review?.modes[mode]),
-    )
+    .map((mode) => appliedExampleView(currentResult.modes[mode]))
     .join("");
 
   for (const button of examples.querySelectorAll(".reference-primary-demo")) {
@@ -381,13 +298,8 @@ function renderQuality() {
   const semanticModel = evaluateV2Semantics(
     currentResult.modes,
     currentResult.quality,
-    hoverEvaluationEvidence(
-      currentHoverEvaluation(),
-      currentResult.input.primary,
-      currentResult.policyVersion,
-    ),
   );
-  const semanticIntent = `<article class="semantic-intent-review"><header><span>Current local intent evaluation</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><p>Human-backed status reflects this browser's version-matched observation, not a policy-level finding.</p><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
+  const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared measurable relations</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><p>This model-scoped result covers only the listed automated declarations. It does not establish overall palette quality or perceived hover discoverability.</p><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
   const hoverDiagnostics = currentResult.hoverDiagnostics;
   const diagnosticPair = (mode, context, name, label) => {
     const pair = hoverDiagnostics.modes[mode].pairs[name];
@@ -448,7 +360,6 @@ function galleryCard(result, priorityRow) {
   const light = result.modes.light.values;
   const dark = result.modes.dark.values;
   const passed = result.quality.checks.filter(({ pass }) => pass).length;
-  const record = evaluationRecords[result.input.primary] ?? {};
   const pairKey = `${light.primary}/${dark.primary}`;
   const convergesWith = [...galleryResults.values()]
     .filter(
@@ -458,9 +369,7 @@ function galleryCard(result, priorityRow) {
           pairKey,
     )
     .map((other) => other.input.primary);
-  const ratingButton = (rating) =>
-    `<button type="button" data-rating="${rating}" aria-pressed="${record.rating === rating}">${rating}</button>`;
-  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} independent review signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-trials" role="group" aria-label="Interactive state trials">${hoverTrial(light, "Light", result.input.primary, priorityRow.metrics.light)}${hoverTrial(dark, "Dark", result.input.primary, priorityRow.metrics.dark)}</div><div class="gallery-rating" role="group" aria-label="Overall palette rating">${ratingButton("Prefer")}${ratingButton("Acceptable")}${ratingButton("Reject")}</div><details class="gallery-note"><summary>Add note</summary><textarea rows="2" placeholder="What feels right or wrong?">${escapeHtml(record.note ?? "")}</textarea></details></article>`;
+  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} automated quality signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-trials" role="group" aria-label="Interactive state trials">${hoverTrial(light, "Light", result.input.primary, priorityRow.metrics.light)}${hoverTrial(dark, "Dark", result.input.primary, priorityRow.metrics.dark)}</div></article>`;
 }
 
 async function renderGallery() {
@@ -482,7 +391,7 @@ async function renderGallery() {
     const metric = row.metrics[mode];
     return `<span role="cell"><b>ΔE ${metric.oklabDeltaE.toFixed(3)}</b><b>DE00 ${metric.ciede2000.toFixed(2)}</b><small>surface ${metric.surfaceContrastChange >= 0 ? "+" : ""}${metric.surfaceContrastChange.toFixed(2)}</small></span>`;
   };
-  hoverComparison.innerHTML = `<header><div><small>Automated review shortlist</small><strong>${priority.recommendations.length} inputs cover ${priority.coveredReasonCount}/${priority.totalReasonCount} named extremes</strong></div><p>The table explains which cases deserve attention. Interact with the Light and Dark buttons inside each card, then rate that same card. ${priority.method}${priority.uncoveredReasons.length ? ` Uncovered by the five-input cap: ${priority.uncoveredReasons.join("; ")}.` : ""}</p></header><div class="hover-comparison-table" role="table" aria-label="Representative hover diagnostics"><div class="hover-comparison-row heading" role="row"><span role="columnheader">Input</span><span role="columnheader">Light metrics</span><span role="columnheader">Dark metrics</span><span role="columnheader">Why review</span></div>${priority.rows.map((row) => `<div class="hover-comparison-row ${recommendations.has(row.primary) ? "recommended" : ""}" role="row"><span class="hover-comparison-source" role="cell"><i style="background:${row.primary}"></i><b>${row.primary}</b></span>${metricCell(row, "light")}${metricCell(row, "dark")}<span role="cell">${recommendations.get(row.primary)?.join(" · ") ?? "No named extreme"}</span></div>`).join("")}</div>`;
+  hoverComparison.innerHTML = `<header><div><small>Automated inspection shortlist</small><strong>${priority.recommendations.length} inputs cover ${priority.coveredReasonCount}/${priority.totalReasonCount} named extremes</strong></div><p>The table identifies metric extremes for direct inspection. Interact with the Light and Dark buttons inside each card. ${priority.method}${priority.uncoveredReasons.length ? ` Uncovered by the five-input cap: ${priority.uncoveredReasons.join("; ")}.` : ""}</p></header><div class="hover-comparison-table" role="table" aria-label="Representative hover diagnostics"><div class="hover-comparison-row heading" role="row"><span role="columnheader">Input</span><span role="columnheader">Light metrics</span><span role="columnheader">Dark metrics</span><span role="columnheader">Why inspect</span></div>${priority.rows.map((row) => `<div class="hover-comparison-row ${recommendations.has(row.primary) ? "recommended" : ""}" role="row"><span class="hover-comparison-source" role="cell"><i style="background:${row.primary}"></i><b>${row.primary}</b></span>${metricCell(row, "light")}${metricCell(row, "dark")}<span role="cell">${recommendations.get(row.primary)?.join(" · ") ?? "No named extreme"}</span></div>`).join("")}</div>`;
   const priorityRows = new Map(priority.rows.map((row) => [row.primary, row]));
   gallery.innerHTML = EVALUATION_INPUTS.map((primary) =>
     galleryCard(galleryResults.get(primary), priorityRows.get(primary)),
@@ -574,7 +483,6 @@ function render(result) {
   paletteTitle.textContent = `${result.input.primary} · ${resultMode === "compare" ? "Light and dark" : `${resultMode[0].toUpperCase()}${resultMode.slice(1)}`}`;
   renderPalettes();
   renderExamples();
-  renderHoverEvidenceManager();
   renderRelationships();
   renderFoundationMap();
   renderSemanticMaps();
@@ -651,96 +559,6 @@ document
     window.setTimeout(() => toast.classList.remove("visible"), 1600);
   });
 
-function updateHoverEvaluation(mode, change) {
-  window.clearTimeout(clearHoverEvidenceTimer);
-  clearHoverEvidenceArmed = false;
-  clearHoverEvidence.textContent = "Clear hover evidence";
-  hoverEvidenceStatus.textContent = "";
-  const key = hoverEvaluationKey(
-    currentResult.input.primary,
-    currentResult.policyVersion,
-  );
-  const existing = currentHoverEvaluation();
-  hoverEvaluationRecords[key] = {
-    schema: HOVER_EVALUATION_SCHEMA,
-    input: currentResult.input.primary,
-    policyVersion: currentResult.policyVersion,
-    specimen: HOVER_SPECIMEN,
-    modes: {
-      light: { ...(existing?.modes.light ?? {}) },
-      dark: { ...(existing?.modes.dark ?? {}) },
-      [mode]: { ...(existing?.modes[mode] ?? {}), ...change },
-    },
-  };
-  if (!saveHoverEvaluationRecords(hoverEvaluationRecords)) {
-    hoverEvidenceStatus.textContent =
-      "Could not save browser storage; this observation is temporary.";
-  } else {
-    hoverStorageState = {
-      present: true,
-      unreadable: false,
-      records: hoverEvaluationRecords,
-    };
-  }
-  renderHoverEvidenceManager();
-}
-
-clearHoverEvidence.addEventListener("click", () => {
-  if (!clearHoverEvidenceArmed) {
-    clearHoverEvidenceArmed = true;
-    clearHoverEvidence.textContent = "Confirm clear all";
-    hoverEvidenceStatus.textContent =
-      "Click again to delete every hover observation. This cannot be undone.";
-    window.clearTimeout(clearHoverEvidenceTimer);
-    clearHoverEvidenceTimer = window.setTimeout(() => {
-      clearHoverEvidenceArmed = false;
-      clearHoverEvidence.textContent = "Clear hover evidence";
-      hoverEvidenceStatus.textContent = "Clear cancelled.";
-    }, 5000);
-    return;
-  }
-  window.clearTimeout(clearHoverEvidenceTimer);
-  if (!clearHoverEvaluationRecords()) {
-    clearHoverEvidenceArmed = false;
-    clearHoverEvidence.textContent = "Clear hover evidence";
-    hoverEvidenceStatus.textContent = "Could not clear browser storage.";
-    return;
-  }
-  hoverEvaluationRecords = {};
-  hoverStorageState = { present: false, unreadable: false, records: {} };
-  clearHoverEvidenceArmed = false;
-  clearHoverEvidence.textContent = "Clear hover evidence";
-  hoverEvidenceStatus.textContent =
-    "Hover evidence cleared. Overall gallery ratings were kept.";
-  renderExamples();
-  renderQuality();
-  renderHoverEvidenceManager();
-});
-
-examples.addEventListener("click", (event) => {
-  const judgment = event.target.closest("[data-hover-judgment]");
-  if (!judgment) return;
-  const fieldset = judgment.closest("[data-hover-mode]");
-  const previous = currentHoverEvaluation()?.modes[fieldset.dataset.hoverMode];
-  updateHoverEvaluation(fieldset.dataset.hoverMode, {
-    judgment: judgment.dataset.hoverJudgment,
-    ...(previous?.judgment !== judgment.dataset.hoverJudgment
-      ? { note: "" }
-      : {}),
-  });
-  renderExamples();
-  renderQuality();
-});
-
-examples.addEventListener("change", (event) => {
-  if (!event.target.matches(".hover-review textarea")) return;
-  const fieldset = event.target.closest("[data-hover-mode]");
-  updateHoverEvaluation(fieldset.dataset.hoverMode, {
-    note: event.target.value.trim(),
-  });
-  renderQuality();
-});
-
 gallery.addEventListener("click", async (event) => {
   const card = event.target.closest("[data-primary]");
   if (!card) return;
@@ -755,98 +573,15 @@ gallery.addEventListener("click", async (event) => {
     calculationStatus.textContent = calculated.cached
       ? "Ready · reused cached result"
       : `Ready · calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
-    return;
   }
-  const rating = event.target.closest("[data-rating]");
-  if (!rating) return;
-  evaluationRecords[card.dataset.primary] = {
-    ...(evaluationRecords[card.dataset.primary] ?? {}),
-    rating: rating.dataset.rating,
-    policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
-  };
-  saveEvaluationRecords(evaluationRecords);
-  card
-    .querySelectorAll("[data-rating]")
-    .forEach((button) =>
-      button.setAttribute("aria-pressed", button === rating ? "true" : "false"),
-    );
-});
-
-gallery.addEventListener("change", (event) => {
-  if (!event.target.matches("textarea")) return;
-  const card = event.target.closest("[data-primary]");
-  evaluationRecords[card.dataset.primary] = {
-    ...(evaluationRecords[card.dataset.primary] ?? {}),
-    note: event.target.value.trim(),
-    policyVersion: galleryResults.get(card.dataset.primary).policyVersion,
-  };
-  saveEvaluationRecords(evaluationRecords);
-});
-
-document.querySelector("#export-ratings").addEventListener("click", () => {
-  const payload = {
-    schema: "color-lab-evaluation-1",
-    exportedAt: new Date().toISOString(),
-    records: evaluationRecords,
-  };
-  const url = URL.createObjectURL(
-    new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "color-lab-v2-evaluations.json";
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
-});
-
-document
-  .querySelector("#import-ratings")
-  .addEventListener("click", () => ratingsFile.click());
-
-ratingsFile.addEventListener("change", async () => {
-  const file = ratingsFile.files?.[0];
-  if (!file) return;
-  try {
-    const payload = JSON.parse(await file.text());
-    if (payload.schema !== "color-lab-evaluation-1" || !payload.records) {
-      throw new TypeError("Unsupported evaluation file.");
-    }
-    const allowedRatings = new Set(["Prefer", "Acceptable", "Reject"]);
-    evaluationRecords = Object.fromEntries(
-      Object.entries(payload.records)
-        .filter(([primary, record]) => isHex(primary) && record)
-        .map(([primary, record]) => [
-          normalizeHex(primary),
-          {
-            ...(allowedRatings.has(record.rating)
-              ? { rating: record.rating }
-              : {}),
-            ...(typeof record.note === "string"
-              ? { note: record.note.slice(0, 1000) }
-              : {}),
-            ...(typeof record.policyVersion === "string"
-              ? { policyVersion: record.policyVersion }
-              : {}),
-          },
-        ]),
-    );
-    saveEvaluationRecords(evaluationRecords);
-    renderGallery();
-    toast.textContent = "Evaluation JSON imported";
-  } catch {
-    toast.textContent = "Could not import this evaluation file";
-  }
-  toast.classList.add("visible");
-  window.setTimeout(() => toast.classList.remove("visible"), 1600);
-  ratingsFile.value = "";
 });
 
 galleryPanel.addEventListener("toggle", () => {
   if (galleryPanel.open && !gallery.childElementCount) {
-    gallery.innerHTML = `<p class="gallery-loading">Loading precomputed evaluation palettes…</p>`;
+    gallery.innerHTML = `<p class="gallery-loading">Loading precomputed diagnostic palettes…</p>`;
     window.requestAnimationFrame(() => {
       renderGallery().catch(() => {
-        gallery.innerHTML = `<p class="gallery-loading">Precomputed evaluation set unavailable.</p>`;
+        gallery.innerHTML = `<p class="gallery-loading">Precomputed diagnostic set unavailable.</p>`;
       });
     });
   }

@@ -88,23 +88,6 @@
           </p>
         </div>
         <div id="examples" class="examples"></div>
-        <details id="hover-evidence-manager" class="hover-evidence-manager">
-          <summary>
-            <span>Stored hover evidence</span>
-            <strong id="hover-evidence-summary">No saved observations</strong>
-          </summary>
-          <p>
-            These browser-local records are separate from overall gallery
-            ratings and are not included in Export JSON.
-          </p>
-          <div id="hover-evidence-records"></div>
-          <div class="hover-evidence-actions">
-            <button id="clear-hover-evidence" type="button" disabled>
-              Clear hover evidence
-            </button>
-            <output id="hover-evidence-status" aria-live="polite"></output>
-          </div>
-        </details>
       </section>
 
       <section class="palette-section" aria-labelledby="palette-title">
@@ -166,9 +149,9 @@
             <h2 id="quality-title">Review the mode you are viewing.</h2>
           </div>
           <p>
-            Declared design intent stays separate from formulas. Automated
-            evidence can verify constraints and relations, while experiential
-            intent remains marked for human review until rated.
+            Declared measurable relations stay separate from broader visual
+            claims. Automated evidence cannot establish overall palette quality
+            or perceived hover discoverability.
           </p>
         </div>
         <div id="quality" class="quality-grid"></div>
@@ -178,7 +161,7 @@
       <details id="gallery-panel" class="gallery-section">
         <summary>
           <span
-            ><small>Representative evaluation set</small
+            ><small>Representative diagnostic set</small
             ><strong>Compare 14 primary inputs</strong></span
           >
           <span aria-hidden="true">Open gallery</span>
@@ -186,22 +169,9 @@
         <p class="gallery-help">
           This fixed set exposes hue, chroma, achromatic convergence, and
           source-shift edge cases. Load any card into the complete inspector
-          above. Your rating is one local observation, not a universal visual
-          truth or an automatic pass condition.
+          above. The buttons remain interactive inspection specimens; no scores,
+          notes, or observations are recorded.
         </p>
-        <div class="gallery-tools">
-          <span
-            >Ratings stay in this browser and do not change generation.</span
-          >
-          <button id="export-ratings" type="button">Export JSON</button>
-          <button id="import-ratings" type="button">Import JSON</button>
-          <input
-            id="ratings-file"
-            type="file"
-            accept="application/json"
-            hidden
-          />
-        </div>
         <div id="hover-comparison" class="hover-comparison"></div>
         <div id="gallery" class="evaluation-gallery"></div>
       </details>

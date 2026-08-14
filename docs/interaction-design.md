@@ -24,9 +24,9 @@ the implementation documentation:
    or accessibility certification.
 
 The page is an instrument as well as an explanation surface. It must keep
-deterministic output, provisional diagnostics, and reviewer observations
-visually and conceptually distinct. Interface polish supports consistent
-observation; it is not itself evidence that the policy is valid.
+deterministic output, provisional diagnostics, and unmeasured perceptual claims
+visually and conceptually distinct. Interface polish supports inspection; it is
+not itself evidence that the policy is valid.
 
 ## Current v2 journey
 
@@ -35,7 +35,7 @@ The primary reading order is:
 > Input → Applied example → Generated palette → Decision evidence → Broader
 > evaluation → Relationship explanation → Contract validation
 
-The visitor first judges the output, then chooses how deeply to inspect it.
+The visitor first inspects the output, then chooses how deeply to examine it.
 Evidence sections never introduce another input model, harmony choice, or
 application-specific requirement.
 
@@ -111,37 +111,31 @@ Question:
 
 > What design-quality concerns remain after hard palette contracts pass?
 
-This section begins with the small semantic model that declares constraints,
-invariants, relations, and experiential intent independently from the formulas
-used to generate colors. Automated evidence may satisfy measurable declarations,
-but experiential intent such as hover discoverability remains `needs-review`
-until an interactive specimen rating is recorded. The remaining cards contain
-provisional or empirical signals such as source fidelity, cross-mode identity,
-semantic ambiguity, and state pacing. They must not present these signals as
-accessibility pass/fail.
-
-The applied example owns hover evidence capture because it contains the actual
-interactive Primary button. Light and Dark each require a judgment and note;
-the Quality section only renders the resulting semantic status.
+This section begins with the small semantic model that declares measurable
+constraints, invariants, and relations independently from the formulas used to
+generate colors. The remaining cards contain provisional signals such as source
+fidelity, cross-mode identity, semantic ambiguity, and state pacing. They must
+not present these signals as accessibility pass/fail or evidence of perceived
+hover discoverability.
 
 The Quality section also exposes hover risk diagnostics below the semantic
 model. It presents Oklab and CIEDE2000 differences plus context-contrast
-trajectories as measurements, never as an accessibility pass or a substitute
-for the interactive judgment.
+trajectories as measurements, never as an accessibility pass or proof of
+perceived discoverability from direct interactive inspection.
 
-### Representative evaluation set
+### Representative diagnostic set
 
 Question:
 
 > How does the policy behave across varied and adversarial primary inputs?
 
 The gallery is optional and collapsed by default. It supports comparison,
-designer ratings, notes, import/export, and loading one case into the inspector.
-The expanded section first compares hover diagnostics across the complete set.
+interactive Light/Dark specimens, and loading one case into the inspector. It
+does not collect scores, notes, or observations. The expanded section first
+compares hover diagnostics across the complete set.
 It places up to five named metric extremes first and explains why each deserves
-direct review. This order is not presented as a calibrated risk score; all 14
+direct inspection. This order is not presented as a calibrated risk score; all 14
 inputs remain available below it.
-Ratings are local evidence, not universal preference claims.
 
 ### Color relationships
 

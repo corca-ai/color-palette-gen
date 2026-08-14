@@ -28,7 +28,9 @@ v1은 유지보수 전용입니다. 보안·호환성·명백한 결함 수정�
 v2의 공개 계약은 단순합니다.
 
 ```js
-{ primary: "#507096" }
+{
+  primary: "#507096";
+}
 ```
 
 하나의 primary로 완성된 light/dark semantic palette를 만들고, 다음 순서로
@@ -217,15 +219,10 @@ soft surface 위 텍스트에는 대응하는 `accent text`, accent fill 위 텍
 포함하지 않습니다.
 
 사용자가 입력한 색상은 브라우저 안에서만 계산하며 외부 API, analytics 또는
-cookie로 전송하지 않습니다. 생성만으로는 primary를 영속화하지 않습니다.
-다만 사용자가 hover 평가를 명시적으로 기록하면 primary, 정책·specimen 버전,
-Light/Dark 판단과 메모가 현재 브라우저의 local storage에 저장됩니다. 이 hover
-evidence는 현재 export되지 않습니다. 카드의 전체 팔레트 평가는 primary를 key로
-정책 버전, 선택적 rating·메모와 함께 별도로 저장되며, 사용자가 `Export JSON`을
-실행하면 이 전체 평가 기록만 파일에 포함됩니다. 결과 보기 모드도 local
-storage에 저장됩니다.
-Applied palette 아래의 `Stored hover evidence` 패널에서 hover 기록을 확인하고
-전체 삭제할 수 있습니다. 삭제는 전체 팔레트 평가 기록에는 영향을 주지 않습니다.
+cookie로 전송하지 않습니다. primary, 점수, 판단, 메모는 저장하지 않습니다.
+Light/Dark/Compare 결과 보기 모드만 local storage에 저장됩니다. 이전 버전이
+브라우저에 남긴 평가 데이터가 있다면 현재 코드는 이를 읽거나 전송하지 않으며,
+브라우저의 사이트 데이터 설정에서 직접 제거할 수 있습니다.
 
 ## GitHub Pages 배포
 

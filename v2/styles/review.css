@@ -254,26 +254,6 @@ body:not([data-result-mode="compare"]) .quality-grid {
   color: var(--muted);
   font-size: 10px;
 }
-.gallery-tools {
-  align-items: center;
-  display: flex;
-  gap: 7px;
-  justify-content: flex-end;
-  padding: 10px 20px 0;
-}
-.gallery-tools span {
-  color: var(--muted);
-  font-size: 8px;
-  margin-right: auto;
-}
-.gallery-tools button {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: inherit;
-  font-size: 8px;
-  min-height: 28px;
-  padding: 0 9px;
-}
 .hover-comparison {
   border: 1px solid var(--line);
   margin: 0 20px 18px;
@@ -316,7 +296,10 @@ body:not([data-result-mode="compare"]) .quality-grid {
   display: grid;
   font-size: 8px;
   gap: 10px;
-  grid-template-columns: 100px repeat(2, minmax(130px, 0.7fr)) minmax(190px, 1.6fr);
+  grid-template-columns: 100px repeat(2, minmax(130px, 0.7fr)) minmax(
+      190px,
+      1.6fr
+    );
   padding: 9px 12px;
 }
 .hover-comparison-row.heading {
@@ -517,49 +500,6 @@ body:not([data-result-mode="compare"]) .quality-grid {
 }
 .gallery-result.review {
   color: var(--review);
-}
-.gallery-rating {
-  display: grid;
-  gap: 3px;
-  grid-template-columns: repeat(3, 1fr);
-}
-.gallery-rating button {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 6px;
-  min-height: 24px;
-  padding: 2px;
-  text-transform: uppercase;
-}
-.gallery-rating button[aria-pressed="true"] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-}
-.gallery-note {
-  border-top: 1px solid var(--line);
-  padding-top: 7px;
-}
-.gallery-note summary {
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 7px;
-  list-style: none;
-  text-transform: uppercase;
-}
-.gallery-note summary::-webkit-details-marker {
-  display: none;
-}
-.gallery-note textarea {
-  background: var(--field);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font-size: 8px;
-  margin-top: 7px;
-  padding: 6px;
-  resize: vertical;
-  width: 100%;
 }
 
 .source-alternatives:not(:empty) {

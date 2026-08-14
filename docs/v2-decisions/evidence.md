@@ -8,7 +8,7 @@ be claimed about the rule; it does not measure how important the rule is.
 | `normative`      | Published accessibility requirement used in its actual scope   | Required input boundary has `>= 3:1` adjacent contrast    |
 | `reference`      | Observable precedent from a public design system               | Carbon uses a smaller hover step and stronger active step |
 | `product-policy` | Deliberate definition chosen for Color Lab v2                  | One brand hue and neutral-dominant foundations            |
-| `empirical`      | Supported by a recorded experiment or evaluation dataset       | A threshold selected from designer rating data            |
+| `empirical`      | Supported by a documented experiment or external dataset       | A threshold calibrated from a published study             |
 | `heuristic`      | Provisional and replaceable value without empirical validation | Current interaction-state Delta E threshold               |
 
 ## External sources and their limits

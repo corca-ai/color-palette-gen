@@ -2,28 +2,13 @@
 
 ## Immediate research sequence
 
-1. Run a single-browser hover pilot with the versioned applied specimen and
-   public representative input set. Exit when the task exposes whether
-   participants can distinguish hover observations from diagnostics and overall
-   palette ratings. Hover records bind input, mode, policy, specimen, judgment,
-   and visible reason; overall ratings remain separate exploratory annotations
-   with their own schema.
-2. Review the pilot for task ambiguity before comparing preferences. Exit when
-   participants can distinguish generated results, automated checks,
-   diagnostics, and human judgments without facilitator correction.
-3. Add a privacy-reviewed, append-only exchange format with an anonymous
-   participant, session, or run marker before collecting independent hover
-   observations. Exit when negative and revised observations remain available
-   for analysis instead of being overwritten.
-4. Define an aggregation method, then collect independent observations. Exit
-   when the report preserves disagreement by input and mode instead of reducing
-   it to an unexplained average.
-5. Test one narrowly stated heuristic hypothesis, starting with primary hover
-   pacing. Exit when the evidence can support retaining, revising, or rejecting
-   the heuristic without treating APCA or another unrelated metric as a proxy
-   for temporal state perception.
-6. Promote a heuristic only when the recorded dataset, analysis, policy
-   version, tests, rationale, and affected generated outputs move together.
+1. Keep the 12-declaration automated semantic trace synchronized with its APCA,
+   WCAG contrast, Oklab, and selected-decision producers.
+2. Use the fixed 14-input diagnostic set to expose metric extremes,
+   convergence, source shifts, and mode differences without collecting scores.
+3. Test one narrowly stated heuristic hypothesis at a time. Exit only when the
+   evidence can support retaining, revising, or rejecting it without treating an
+   unrelated metric as a proxy for perception.
 
 ## Completed decisions
 
@@ -40,4 +25,7 @@
 - A stable public package, CLI, or service API until the research result schema
   is stable enough to support a compatibility promise.
 - Claims of accessibility certification or production suitability.
+- In-app human scoring, notes, observation storage, or evaluation exchange.
+- Empirical calibration or human-study infrastructure unless a new, explicit
+  research decision adds it outside the current runtime scope.
 - Publication of internal service details or private-resource content.

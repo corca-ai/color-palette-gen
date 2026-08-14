@@ -39,9 +39,8 @@ call the palette low risk merely because structural failures are absent.
 - CIEDE2000 predicts small color differences under defined colorimetric viewing
   assumptions. It is a useful countercheck, not proof that a changing UI control
   will be noticed.
-- No diagnostic result changes generated colors, `result.passed`, or the
-  `hover-discoverable` semantic declaration. Only matching Light and Dark
-  interactive evidence can resolve that intent.
+- No diagnostic result changes generated colors or `result.passed`. The runtime
+  does not claim or record perceived hover discoverability.
 
 ## Sources
 
@@ -64,13 +63,12 @@ none supplies a universal default-to-hover threshold.
 ## Deferred decisions
 
 - color-vision-deficiency simulation and a weakest-simulation signal;
-- calibration of review bands from accumulated Light/Dark judgments;
 - component size, duration, motion, display, and ambient-adaptation modeling.
 
-## Representative review shortlist
+## Representative inspection shortlist
 
 When the representative gallery opens, the UI compares all 14 precomputed
-inputs and recommends at most five for direct review. The shortlist is the union
+inputs and recommends at most five for direct inspection. The shortlist is the union
 of named extremes: the smallest Oklab Delta E, smallest CIEDE2000, and smallest
 absolute surface-contrast change in each mode, plus the largest Light/Dark
 CIEDE2000 disagreement. Duplicate selections accumulate reasons. When more than
@@ -83,25 +81,18 @@ it does not optimize total coverage and is not a weighted risk score. Every row
 remains visible, each recommendation states its reason, and no threshold or
 human verdict is inferred from the ranking.
 
-Each evaluation card renders its Light and Dark generated values as real
-buttons beside that card's rating and note controls. Pointer hover, press, and
-keyboard focus therefore exercise the same state tokens being reviewed before
-the observation is recorded. The comparison table remains supporting evidence
-rather than a substitute for interaction.
-
-A saved rating is one evaluator's local observation. It does not change palette
-generation, satisfy the declared intent by itself, or claim to represent other
-viewers. Exported records support later comparison of repeated observations;
-only such a separately designed evaluation could justify an empirical policy
-change.
+Each diagnostic card renders its Light and Dark generated values as real
+buttons. Pointer hover, press, and keyboard focus exercise the same state tokens
+being inspected. No score, note, judgment, or observation is recorded. The
+comparison table remains supporting evidence rather than a substitute for
+interaction, and neither surface establishes perceived discoverability.
 
 ## Acceptance checks
 
 - `unit`: published CIEDE2000 reference pairs match the implementation.
 - `unit`: both modes expose both color-difference metrics and context trajectories.
 - `unit`: duplicate exports and surface reversals produce structural flags.
-- `e2e`: the UI identifies the card as diagnostic and preserves the separate
-  human `needs-review` verdict.
+- `e2e`: the UI identifies the card as diagnostic and makes no human verdict.
 - `unit`: representative recommendations are deterministic, bounded, and carry
   named reasons without a synthetic score.
 - `e2e`: a representative button changes its computed fill for hover and press,

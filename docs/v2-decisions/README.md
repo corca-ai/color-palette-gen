@@ -41,8 +41,6 @@ must fail the decision-record test.
   [Declarative design semantic model](semantic-model.md).
 - To understand non-normative signals that prioritize hover review, read
   [Hover risk diagnostics](hover-diagnostics.md).
-- To understand designer ratings and their limits, read
-  [Evaluation protocol](evaluation.md).
 - To understand worker generation, caching, and the precomputed gallery, read
   [Runtime and performance](runtime.md).
 - To understand what the engine still cannot justify, read the

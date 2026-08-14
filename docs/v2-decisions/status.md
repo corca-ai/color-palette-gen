@@ -49,7 +49,6 @@ and the per-candidate result of each rule.
   trade-offs with per-mode availability;
 - selected, next-ranked, source-faithful, and quality-boundary pairs can be
   compared directly;
-- gallery ratings and notes persist locally and support versioned JSON exchange.
 - gallery summaries are precomputed at build time; complete inspector results
   are calculated in a worker only when requested;
 - A general-purpose reference JSON export maps every supported semantic role to
@@ -61,18 +60,16 @@ and the per-candidate result of each rule.
   text, Focus adjacent contrast and Oklab control separation, Feedback label
   APCA and pairwise Oklab relations, and Selection text APCA and Surface Oklab
   relations;
-- constraint, invariant, relation, intent, and generation strategy remain
-  distinct concepts;
+- constraint, invariant, relation, and generation strategy remain distinct
+  concepts; experiential intent is explicitly unmodeled;
 - every declaration names versioned evidence trace metadata and one registered
   evaluator;
 - evaluation results retain declaration, evaluator, and evidence IDs so the
   reason for a status is inspectable;
 - each declaration has executable positive, contradictory, and missing-evidence
   acceptance scenarios in the fast unit tier;
-- automated metrics cannot satisfy `hover-discoverable`, and a logically
-  impossible human-evidence summary cannot pass;
-- human-backed `satisfied` and `unsatisfied` remain scoped to the current local,
-  version-matched evaluation instance rather than the policy as a whole.
+- aggregate satisfaction is scoped to 12 measurable declarations and does not
+  establish overall palette quality or perceived hover discoverability;
 
 Disabled and popover roles are explicit semantic aliases to foundation roles.
 Their independent searches are intentionally deferred until a reproducible
@@ -90,20 +87,16 @@ promotion contract. No semantic output role remains a policy anchor.
 - v1 and v2 remain separate applications.
 - Pull-request Playwright smoke checks verify generation, mode switching, and
   invalid input handling. The full weekly/manual tier verifies semantic
-  specimens, graph-to-card synchronization, lazy gallery rendering, persisted
-  designer ratings, and visual snapshots in a real browser.
+  specimens, graph-to-card synchronization, lazy diagnostic gallery rendering,
+  interactive state trials, and visual snapshots in a real browser.
 - fixed screenshots guard the paired palettes and public-reference specimen
   against broad visual regression.
 
 ## Next migration
 
-1. Run the single-browser hover pilot and record instruction or evidence-boundary
-   ambiguity before expanding collection.
-2. Add a privacy-reviewed append-only hover exchange format and independent-run
-   marker before aggregating reviewer observations.
-3. Review whether utility aliases need semantic declarations beyond their
+1. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-4. Promote thresholds from `heuristic` to `empirical` only with recorded data
-   and preserved disagreement.
-5. Review upstream `apca-w3` releases before changing the pinned verification
+2. Promote thresholds from `heuristic` to `empirical` only with a separately
+   authorized dataset and analysis.
+3. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

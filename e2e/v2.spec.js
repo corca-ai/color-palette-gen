@@ -76,7 +76,7 @@ test("the applied example exposes real primary and destructive interactions", as
   expect(width).toBeLessThanOrEqual(760);
   await expect(
     page.locator(
-      '.example :is(button, textarea):not(.reference-primary-demo):not(.reference-destructive-demo):not(.hover-review button):not(.hover-review textarea):not([tabindex="-1"]), .example a[href]',
+      '.example :is(button, textarea):not(.reference-primary-demo):not(.reference-destructive-demo):not([tabindex="-1"]), .example a[href]',
     ),
   ).toHaveCount(0);
 
@@ -90,105 +90,6 @@ test("the applied example exposes real primary and destructive interactions", as
   await expect(destructive).toHaveText("Undo move");
   await destructive.click();
   await expect(destructive).toHaveText("Move to Trash");
-});
-
-test("Light and Dark hover judgments resolve the declared intent", async ({
-  page,
-}) => {
-  const intentReview = page.locator(".semantic-intent-review");
-  await expect(
-    intentReview.getByText("Current local intent evaluation"),
-  ).toBeVisible();
-  await expect(intentReview).toContainText("not a policy-level finding");
-  await page.getByRole("button", { name: "Compare", exact: true }).click();
-  for (const mode of ["light", "dark"]) {
-    const review = page.locator(`[data-hover-mode="${mode}"]`);
-    await review.getByRole("button", { name: "Meets intent" }).click();
-    await review.getByRole("textbox").fill(`The ${mode} hover is noticeable.`);
-    await review.getByRole("textbox").press("Tab");
-  }
-  await expect(
-    page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("13 satisfied · 0 needs review");
-  await expect(page.locator(".semantic-intent-review")).toContainText(
-    "both meet the declared intent",
-  );
-
-  const lightReview = page.locator('[data-hover-mode="light"]');
-  await lightReview.getByRole("button", { name: "Too subtle" }).click();
-  await expect(lightReview.getByRole("textbox")).toHaveValue("");
-  await expect(
-    page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("12 satisfied · 1 needs review");
-  await lightReview.getByRole("textbox").fill("The light hover is too subtle.");
-  await lightReview.getByRole("textbox").press("Tab");
-  await expect(
-    page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("12 satisfied · 0 needs review · 1 unsatisfied");
-  await lightReview.getByRole("button", { name: "Meets intent" }).click();
-  await expect(lightReview.getByRole("textbox")).toHaveValue("");
-  await lightReview.getByRole("textbox").fill("The light hover is noticeable.");
-  await lightReview.getByRole("textbox").press("Tab");
-
-  await page.reload();
-  for (const mode of ["light", "dark"]) {
-    const review = page.locator(`[data-hover-mode="${mode}"]`);
-    await expect(
-      review.getByRole("button", { name: "Meets intent" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(review.getByRole("textbox")).toHaveValue(
-      `The ${mode} hover is noticeable.`,
-    );
-  }
-  await expect(
-    page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("13 satisfied · 0 needs review");
-  const evidenceManager = page.locator("#hover-evidence-manager");
-  await expect(evidenceManager.locator("summary")).toContainText(
-    "1 record · 2 mode judgments",
-  );
-  await evidenceManager.locator("summary").click();
-  await expect(evidenceManager).toContainText("#507096");
-  await expect(evidenceManager).toContainText("The dark hover is noticeable.");
-  const clearEvidence = evidenceManager.locator("#clear-hover-evidence");
-  await clearEvidence.click();
-  await expect(clearEvidence).toHaveText("Confirm clear all");
-  await clearEvidence.click();
-  await expect(evidenceManager.locator("summary")).toContainText(
-    "No saved observations",
-  );
-  await expect(evidenceManager).toContainText(
-    "Overall gallery ratings were kept",
-  );
-  await page.reload();
-  await expect(page.locator("#hover-evidence-manager summary")).toContainText(
-    "No saved observations",
-  );
-  await expect(
-    page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("12 satisfied · 1 needs review");
-});
-
-test("malformed hover evidence remains visible and clearable", async ({
-  page,
-}) => {
-  await page.evaluate(() => {
-    localStorage.setItem("color-lab-v2-hover-evaluations", "{");
-  });
-  await page.reload();
-  const manager = page.locator("#hover-evidence-manager");
-  await expect(manager.locator("summary")).toContainText("1 unreadable record");
-  await manager.locator("summary").click();
-  await expect(manager).toContainText("does not match the current");
-  const clear = manager.locator("#clear-hover-evidence");
-  await expect(clear).toBeEnabled();
-  await clear.click();
-  await expect(manager).toContainText("cannot be undone");
-  await clear.click();
-  await page.reload();
-  await expect(page.locator("#hover-evidence-manager summary")).toContainText(
-    "No saved observations",
-  );
 });
 
 test("@smoke result mode switches the complete inspector and persists", async ({
@@ -237,7 +138,7 @@ test("result mode control remains usable without mobile overflow", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("accessibility pass and independent review remain separate", async ({
+test("automated contracts and diagnostic limits remain separate", async ({
   page,
 }) => {
   await page.locator("#v2-primary").fill("#FFFF00");
@@ -249,17 +150,14 @@ test("accessibility pass and independent review remain separate", async ({
     "Independent source fidelity",
   );
   await expect(page.locator("#quality")).toContainText(
-    "Declared design intent",
+    "Declared measurable relations",
   );
   await expect(page.locator(".semantic-intent-review")).toContainText(
-    "Hover is noticeable during interaction",
-  );
-  await expect(page.locator(".semantic-intent-review")).toContainText(
-    "needs-review",
+    "does not establish overall palette quality",
   );
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("12 satisfied · 1 needs review");
+  ).toHaveText("12 satisfied · 0 needs review");
   await expect(page.locator(".hover-diagnostic-review")).toContainText(
     "Signals review priority",
   );
@@ -309,14 +207,16 @@ test("compact palette remains expandable in mobile compare mode", async ({
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("gallery is lazy and designer ratings persist", async ({ page }) => {
+test("gallery is lazy and keeps interactive diagnostic specimens", async ({
+  page,
+}) => {
   await expect(page.locator(".gallery-card")).toHaveCount(0);
   await page.locator("#gallery-panel summary").click();
   await expect(page.locator(".gallery-card")).toHaveCount(14, {
     timeout: 30_000,
   });
   await expect(page.locator("#hover-comparison")).toContainText(
-    "Automated review shortlist",
+    "Automated inspection shortlist",
   );
   await expect(page.locator(".hover-comparison-row.recommended")).toHaveCount(
     5,
@@ -356,34 +256,21 @@ test("gallery is lazy and designer ratings persist", async ({ page }) => {
   await expect(lightTrial).toHaveCSS("outline-style", "solid");
   await page.locator("body").focus();
   await expect(page.locator(".gallery-card").first()).toHaveScreenshot(
-    "interactive-rating-card.png",
+    "interactive-diagnostic-card.png",
     { animations: "disabled", maxDiffPixelRatio: 0.12 },
   );
   await page.locator(".topbar").evaluate((element) => {
     element.style.display = "none";
   });
   await expect(page.locator("#hover-comparison")).toHaveScreenshot(
-    "hover-review-shortlist.png",
+    "hover-inspection-shortlist.png",
     { animations: "disabled", maxDiffPixelRatio: 0.12 },
   );
   await page.locator(".topbar").evaluate((element) => {
     element.style.display = "";
   });
   await expect(page.locator(".gallery-convergence").first()).toBeVisible();
-  const first = page.locator(".gallery-card").first();
-  await first.getByRole("button", { name: "Prefer" }).click();
-  await expect(first.getByRole("button", { name: "Prefer" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
-  await page.reload();
-  await page.locator("#gallery-panel summary").click();
-  await expect(
-    page
-      .locator(".gallery-card")
-      .first()
-      .getByRole("button", { name: "Prefer" }),
-  ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+  await expect(page.locator(".gallery-trials button")).toHaveCount(28);
 });
 
 test("@smoke invalid input is announced without replacing the current palette", async ({

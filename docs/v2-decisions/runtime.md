@@ -10,9 +10,9 @@ reports measured worker duration when the result returns. Repeated normalized
 inputs reuse the complete in-memory result. The synchronous path exists only as
 a compatibility fallback when workers are unavailable.
 
-## Evaluation gallery
+## Diagnostic gallery
 
-The fixed 14-input evaluation set is generated during `npm run build`. Its
+The fixed 14-input diagnostic set is generated during `npm run build`. Its
 static JSON contains the values, paired-quality summary, and non-normative hover
 diagnostics required to draw and prioritize the gallery, not the much larger
 candidate traces. Opening the gallery therefore performs no palette search.
@@ -27,5 +27,5 @@ engine policy changes; the normal site build already enforces that coupling.
 Fast Node tests cover named edge inputs on every pull request. A weekly and
 manually triggered full check adds the 216-color RGB grid. Pull requests run a
 small Playwright smoke tier; the full browser tier covers worker generation,
-lazy static gallery loading, persistence, graph/card synchronization, and fixed
+lazy static gallery loading, result-mode persistence, graph/card synchronization, and fixed
 screenshots of the paired palettes and public-reference specimen.
