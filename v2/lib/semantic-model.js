@@ -67,6 +67,44 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
       "perceived-semantic-distinctness",
     ],
   },
+  "evidence.destructive-label-apca.v1": {
+    producer: "automated-check",
+    scope: "destructive-state-family",
+    requires: [
+      "light-and-dark",
+      "destructive-default-hover-active",
+      "actual-label-fill",
+    ],
+    cannotEstablish: ["feedback-meaning", "accessibility-conformance"],
+  },
+  "evidence.warning-label-apca.v1": {
+    producer: "automated-check",
+    scope: "warning-state-family",
+    requires: [
+      "light-and-dark",
+      "warning-default-hover-active",
+      "actual-label-fill",
+    ],
+    cannotEstablish: ["feedback-meaning", "accessibility-conformance"],
+  },
+  "evidence.feedback-oklab-separation.v1": {
+    producer: "automated-check",
+    scope: "brand-destructive-warning-relations",
+    requires: ["light-and-dark", "all-three-pairs", "final-srgb"],
+    cannotEstablish: ["perceived-feedback-meaning"],
+  },
+  "evidence.selection-text-apca.v1": {
+    producer: "automated-check",
+    scope: "selection-family",
+    requires: ["light-and-dark", "selected-content-pair", "actual-text-pair"],
+    cannotEstablish: ["selection-discoverability", "accessibility-conformance"],
+  },
+  "evidence.selection-surface-separation.v1": {
+    producer: "automated-check",
+    scope: "selection-foundation-relation",
+    requires: ["light-and-dark", "surface-selection-pair", "final-srgb"],
+    cannotEstablish: ["selection-discoverability"],
+  },
 };
 
 export const PRIMARY_ACTION_SEMANTIC_MODEL = {
@@ -175,9 +213,78 @@ export const FOUNDATION_FOCUS_SEMANTIC_MODEL = {
   strategies: [],
 };
 
+export const FEEDBACK_SEMANTIC_MODEL = {
+  id: "feedback-family",
+  version: 1,
+  roles: {
+    destructive: ["destructive", "destructive hover", "destructive active"],
+    destructiveLabel: "destructive text",
+    warning: ["warning", "warning hover", "warning active"],
+    warningLabel: "warning text",
+  },
+  declarations: [
+    {
+      id: "feedback-destructive-label-targets-pass",
+      kind: "constraint",
+      authority: "heuristic",
+      statement:
+        "Destructive labels pass their declared APCA targets across default, hover, and active.",
+      evidence: ["evidence.destructive-label-apca.v1"],
+      evaluator: "evaluator.feedback-destructive-label-targets.v1",
+    },
+    {
+      id: "feedback-warning-label-targets-pass",
+      kind: "constraint",
+      authority: "heuristic",
+      statement:
+        "Warning labels pass their declared APCA targets across default, hover, and active.",
+      evidence: ["evidence.warning-label-apca.v1"],
+      evaluator: "evaluator.feedback-warning-label-targets.v1",
+    },
+    {
+      id: "feedback-oklab-separation-passes",
+      kind: "relation",
+      authority: "heuristic",
+      statement:
+        "Brand, Destructive, and Warning pass their declared pairwise Oklab separation heuristics.",
+      evidence: ["evidence.feedback-oklab-separation.v1"],
+      evaluator: "evaluator.feedback-oklab-separation.v1",
+    },
+  ],
+  strategies: [],
+};
+
+export const SELECTION_SEMANTIC_MODEL = {
+  id: "selection-family",
+  version: 1,
+  roles: {
+    selection: ["selection", "selection text"],
+  },
+  declarations: [
+    {
+      id: "selection-text-target-passes",
+      kind: "constraint",
+      authority: "heuristic",
+      statement: "Selected content passes its declared APCA target.",
+      evidence: ["evidence.selection-text-apca.v1"],
+      evaluator: "evaluator.selection-text-target.v1",
+    },
+    {
+      id: "selection-surface-oklab-separation-passes",
+      kind: "relation",
+      authority: "heuristic",
+      statement:
+        "Selection passes its declared Oklab separation heuristic from Surface.",
+      evidence: ["evidence.selection-surface-separation.v1"],
+      evaluator: "evaluator.selection-surface-oklab-separation.v1",
+    },
+  ],
+  strategies: [],
+};
+
 export const V2_SEMANTIC_MODEL = {
   id: "v2-declarative-design",
-  version: 1,
+  version: 2,
   components: [
     {
       id: PRIMARY_ACTION_SEMANTIC_MODEL.id,
@@ -187,10 +294,20 @@ export const V2_SEMANTIC_MODEL = {
       id: FOUNDATION_FOCUS_SEMANTIC_MODEL.id,
       version: FOUNDATION_FOCUS_SEMANTIC_MODEL.version,
     },
+    {
+      id: FEEDBACK_SEMANTIC_MODEL.id,
+      version: FEEDBACK_SEMANTIC_MODEL.version,
+    },
+    {
+      id: SELECTION_SEMANTIC_MODEL.id,
+      version: SELECTION_SEMANTIC_MODEL.version,
+    },
   ],
   declarations: [
     ...PRIMARY_ACTION_SEMANTIC_MODEL.declarations,
     ...FOUNDATION_FOCUS_SEMANTIC_MODEL.declarations,
+    ...FEEDBACK_SEMANTIC_MODEL.declarations,
+    ...SELECTION_SEMANTIC_MODEL.declarations,
   ],
   strategies: [...PRIMARY_ACTION_SEMANTIC_MODEL.strategies],
 };
@@ -413,6 +530,49 @@ function evaluateFocusSeparation({ modes }) {
   );
 }
 
+function evaluateFeedbackLabels(modes, family) {
+  const roles = [family, `${family} hover`, `${family} active`].map(
+    (role) => `Label on ${role}`,
+  );
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "textChecks", roles),
+    `Expected one ${family} label check for every state in Light and Dark.`,
+    `Every ${family} label passes its declared APCA target.`,
+    `At least one ${family} label misses its declared APCA target.`,
+  );
+}
+
+function evaluateFeedbackSeparation({ modes }) {
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "nonTextChecks", [
+      "Brand → destructive",
+      "Brand → warning",
+      "Destructive → warning",
+    ]),
+    "Expected all three Feedback separation checks in Light and Dark.",
+    "Every Feedback pair passes its declared Oklab separation heuristic.",
+    "At least one Feedback pair misses its declared Oklab separation heuristic.",
+  );
+}
+
+function evaluateSelectionText({ modes }) {
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "textChecks", ["Selected content"]),
+    "Expected one selected-content text check in Light and Dark.",
+    "Selected content passes its declared APCA target in both modes.",
+    "Selected content misses its declared APCA target in at least one mode.",
+  );
+}
+
+function evaluateSelectionSeparation({ modes }) {
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "nonTextChecks", ["Surface → selection"]),
+    "Expected one Surface-to-selection separation check in Light and Dark.",
+    "Selection passes its declared Oklab separation heuristic from Surface in both modes.",
+    "Selection misses its declared Oklab separation heuristic from Surface in at least one mode.",
+  );
+}
+
 export const SEMANTIC_EVALUATORS = {
   "evaluator.primary-label-readable.v1": {
     declaration: "shared-label-readable",
@@ -453,6 +613,31 @@ export const SEMANTIC_EVALUATORS = {
     declaration: "focus-control-oklab-separation-passes",
     consumes: ["evidence.focus-semantic-separation.v1"],
     evaluate: evaluateFocusSeparation,
+  },
+  "evaluator.feedback-destructive-label-targets.v1": {
+    declaration: "feedback-destructive-label-targets-pass",
+    consumes: ["evidence.destructive-label-apca.v1"],
+    evaluate: ({ modes }) => evaluateFeedbackLabels(modes, "destructive"),
+  },
+  "evaluator.feedback-warning-label-targets.v1": {
+    declaration: "feedback-warning-label-targets-pass",
+    consumes: ["evidence.warning-label-apca.v1"],
+    evaluate: ({ modes }) => evaluateFeedbackLabels(modes, "warning"),
+  },
+  "evaluator.feedback-oklab-separation.v1": {
+    declaration: "feedback-oklab-separation-passes",
+    consumes: ["evidence.feedback-oklab-separation.v1"],
+    evaluate: evaluateFeedbackSeparation,
+  },
+  "evaluator.selection-text-target.v1": {
+    declaration: "selection-text-target-passes",
+    consumes: ["evidence.selection-text-apca.v1"],
+    evaluate: evaluateSelectionText,
+  },
+  "evaluator.selection-surface-oklab-separation.v1": {
+    declaration: "selection-surface-oklab-separation-passes",
+    consumes: ["evidence.selection-surface-separation.v1"],
+    evaluate: evaluateSelectionSeparation,
   },
 };
 

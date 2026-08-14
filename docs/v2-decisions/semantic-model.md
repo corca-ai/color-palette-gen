@@ -10,8 +10,9 @@ noticeable during interaction.
 ## Model boundary
 
 The executable semantic model currently covers the Primary action state family,
-Foundation hierarchy and text, and Focus adjacent contrast and Oklab control
-separation. It keeps five concepts separate:
+Foundation hierarchy and text, Focus adjacent contrast and Oklab control
+separation, Feedback label and pair relations, and Selection text and Surface
+relations. It keeps five concepts separate:
 
 - **constraint:** a requirement an automated evaluator can accept or reject;
 - **invariant:** a structural property that must always hold;
@@ -19,19 +20,29 @@ separation. It keeps five concepts separate:
 - **intent:** a human-facing outcome that may require judgment evidence;
 - **strategy:** a replaceable mechanism that proposes candidate colors.
 
-| Declaration ID                          | Kind       | Required evidence contract                   |
-| --------------------------------------- | ---------- | -------------------------------------------- |
-| `shared-label-readable`                 | constraint | `evidence.primary-label-apca.v1`             |
-| `states-distinct`                       | invariant  | `evidence.primary-exported-states.v1`        |
-| `active-continues-beyond-hover`         | relation   | `evidence.primary-state-progression.v1`      |
-| `hover-discoverable`                    | intent     | `evidence.interactive-hover-rating.v1`       |
-| `foundation-hierarchy-ordered`          | relation   | `evidence.foundation-hierarchy-decisions.v1` |
-| `foundation-text-targets-pass`          | constraint | `evidence.foundation-text-apca.v1`           |
-| `focus-adjacent-contrast-passes`        | constraint | `evidence.focus-foundation-contrast.v1`      |
-| `focus-control-oklab-separation-passes` | relation   | `evidence.focus-semantic-separation.v1`      |
+| Declaration ID                              | Kind       | Required evidence contract                   |
+| ------------------------------------------- | ---------- | -------------------------------------------- |
+| `shared-label-readable`                     | constraint | `evidence.primary-label-apca.v1`             |
+| `states-distinct`                           | invariant  | `evidence.primary-exported-states.v1`        |
+| `active-continues-beyond-hover`             | relation   | `evidence.primary-state-progression.v1`      |
+| `hover-discoverable`                        | intent     | `evidence.interactive-hover-rating.v1`       |
+| `foundation-hierarchy-ordered`              | relation   | `evidence.foundation-hierarchy-decisions.v1` |
+| `foundation-text-targets-pass`              | constraint | `evidence.foundation-text-apca.v1`           |
+| `focus-adjacent-contrast-passes`            | constraint | `evidence.focus-foundation-contrast.v1`      |
+| `focus-control-oklab-separation-passes`     | relation   | `evidence.focus-semantic-separation.v1`      |
+| `feedback-destructive-label-targets-pass`   | constraint | `evidence.destructive-label-apca.v1`         |
+| `feedback-warning-label-targets-pass`       | constraint | `evidence.warning-label-apca.v1`             |
+| `feedback-oklab-separation-passes`          | relation   | `evidence.feedback-oklab-separation.v1`      |
+| `selection-text-target-passes`              | constraint | `evidence.selection-text-apca.v1`            |
+| `selection-surface-oklab-separation-passes` | relation   | `evidence.selection-surface-separation.v1`   |
 
 The current lightness search is a heuristic strategy. Passing its distance
 threshold is not evidence that `hover-discoverable` is satisfied.
+
+The aggregate model version identifies its serialized component and declaration
+schema. Adding the Feedback and Selection components changes that boundary from
+`v2-declarative-design@1` to `v2-declarative-design@2`; each newly introduced
+component begins at version 1.
 
 ## Traceability contract
 
@@ -100,8 +111,8 @@ missing, stale, or incomplete evidence remains `needs-review`.
 - The current Oklab thresholds are not promoted from heuristic to empirical.
 - This slice does not change generated colors.
 - Strategies and metric thresholds are not promoted into semantic declarations.
-- Feedback, selection, and utility-role declarations remain deferred until the
-  combined trace proves the registry shape is useful.
+- Utility-role declarations remain deferred until a non-alias relationship
+  needs an executable semantic owner.
 
 ## Current evidence capture
 
@@ -129,10 +140,10 @@ unclaimed until a separate observation protocol exists.
 
 ## Current implementation slice
 
-Add four Foundation and Focus declarations by consuming existing decision and
-check outputs without changing palette generation. Carry their trace through the
-same evaluation result and require positive, contradictory, and missing-evidence
-acceptance scenarios for each declaration.
+Add five Feedback and Selection declarations by consuming existing APCA and
+Oklab check outputs without changing palette generation. Carry their trace
+through the same evaluation result and require positive, contradictory, and
+missing-evidence acceptance scenarios for each declaration.
 
 Success means the existing palette colors and pass/fail contract remain stable,
 the new declarations are satisfied for the established representative input,
@@ -140,6 +151,20 @@ and missing or contradictory upstream evidence resolves honestly.
 
 ## Next slice
 
-Review whether the combined trace improves explanation and maintenance before
-adding Feedback, Selection, or utility-role declarations. Human-rating expansion
-remains separate from structural modeling.
+Review whether utility aliases need declarations beyond their existing
+promotion contract. Human-rating expansion remains separate from structural
+modeling.
+
+## Feedback and Selection boundary
+
+Destructive and Warning label declarations each consume their own final APCA
+checks across default, hover, and active states. Their evidence contracts are
+separate so one family can remain satisfied while the other is incomplete.
+Feedback separation consumes the three final Brand/Destructive/Warning Oklab
+pair checks. These declarations do not establish that a viewer interprets
+either color as a particular meaning.
+
+Selection text consumes the final Selected-content APCA check, while Selection
+surface separation consumes the final Surface-to-selection Oklab check. These
+relations do not establish selection discoverability in a particular component
+or interaction context.

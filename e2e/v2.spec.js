@@ -109,7 +109,7 @@ test("Light and Dark hover judgments resolve the declared intent", async ({
   }
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("8 satisfied · 0 needs review");
+  ).toHaveText("13 satisfied · 0 needs review");
   await expect(page.locator(".semantic-intent-review")).toContainText(
     "both meet the declared intent",
   );
@@ -119,12 +119,12 @@ test("Light and Dark hover judgments resolve the declared intent", async ({
   await expect(lightReview.getByRole("textbox")).toHaveValue("");
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("7 satisfied · 1 needs review");
+  ).toHaveText("12 satisfied · 1 needs review");
   await lightReview.getByRole("textbox").fill("The light hover is too subtle.");
   await lightReview.getByRole("textbox").press("Tab");
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("7 satisfied · 0 needs review · 1 unsatisfied");
+  ).toHaveText("12 satisfied · 0 needs review · 1 unsatisfied");
   await lightReview.getByRole("button", { name: "Meets intent" }).click();
   await expect(lightReview.getByRole("textbox")).toHaveValue("");
   await lightReview.getByRole("textbox").fill("The light hover is noticeable.");
@@ -142,7 +142,7 @@ test("Light and Dark hover judgments resolve the declared intent", async ({
   }
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("8 satisfied · 0 needs review");
+  ).toHaveText("13 satisfied · 0 needs review");
   const evidenceManager = page.locator("#hover-evidence-manager");
   await expect(evidenceManager.locator("summary")).toContainText(
     "1 record · 2 mode judgments",
@@ -166,7 +166,7 @@ test("Light and Dark hover judgments resolve the declared intent", async ({
   );
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("7 satisfied · 1 needs review");
+  ).toHaveText("12 satisfied · 1 needs review");
 });
 
 test("malformed hover evidence remains visible and clearable", async ({
@@ -259,7 +259,7 @@ test("accessibility pass and independent review remain separate", async ({
   );
   await expect(
     page.locator(".semantic-intent-review header strong"),
-  ).toHaveText("7 satisfied · 1 needs review");
+  ).toHaveText("12 satisfied · 1 needs review");
   await expect(page.locator(".hover-diagnostic-review")).toContainText(
     "Signals review priority",
   );

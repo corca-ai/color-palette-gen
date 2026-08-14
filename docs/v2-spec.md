@@ -156,7 +156,8 @@ non-text checks. Light/dark results are siblings, not one mode calculated by
 inverting the other.
 
 The result also exposes a versioned semantic evaluation for the Primary action,
-Foundation, and Focus families. It keeps declarations of design intent separate
+Foundation, Focus, Feedback, and Selection families. It keeps declarations of
+design intent separate
 from generation strategies: automated evidence can satisfy measurable
 constraints, invariants, and relations, while hover discoverability remains
 `needs-review` until an interactive specimen rating exists. This evaluation is informative and does

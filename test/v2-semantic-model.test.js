@@ -234,6 +234,131 @@ const SEMANTIC_ACCEPTANCE_SCENARIOS = [
       modes.light.decisions["focus ring"].selected.constraintResults = [];
     },
   ),
+  acceptanceScenario(
+    "feedback-destructive-label-targets-pass",
+    "positive",
+    "evaluator.feedback-destructive-label-targets.v1",
+  ),
+  acceptanceScenario(
+    "feedback-destructive-label-targets-pass",
+    "contradictory",
+    "evaluator.feedback-destructive-label-targets.v1",
+    ({ modes }) => {
+      modes.light.textChecks.find(
+        ({ role }) => role === "Label on destructive hover",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "feedback-destructive-label-targets-pass",
+    "missing-evidence",
+    "evaluator.feedback-destructive-label-targets.v1",
+    ({ modes }) => {
+      modes.dark.textChecks = modes.dark.textChecks.filter(
+        ({ role }) => role !== "Label on destructive active",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "feedback-warning-label-targets-pass",
+    "positive",
+    "evaluator.feedback-warning-label-targets.v1",
+  ),
+  acceptanceScenario(
+    "feedback-warning-label-targets-pass",
+    "contradictory",
+    "evaluator.feedback-warning-label-targets.v1",
+    ({ modes }) => {
+      modes.dark.textChecks.find(
+        ({ role }) => role === "Label on warning active",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "feedback-warning-label-targets-pass",
+    "missing-evidence",
+    "evaluator.feedback-warning-label-targets.v1",
+    ({ modes }) => {
+      modes.light.textChecks = modes.light.textChecks.filter(
+        ({ role }) => role !== "Label on warning",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "feedback-oklab-separation-passes",
+    "positive",
+    "evaluator.feedback-oklab-separation.v1",
+  ),
+  acceptanceScenario(
+    "feedback-oklab-separation-passes",
+    "contradictory",
+    "evaluator.feedback-oklab-separation.v1",
+    ({ modes }) => {
+      modes.light.nonTextChecks.find(
+        ({ role }) => role === "Brand → warning",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "feedback-oklab-separation-passes",
+    "missing-evidence",
+    "evaluator.feedback-oklab-separation.v1",
+    ({ modes }) => {
+      modes.dark.nonTextChecks = modes.dark.nonTextChecks.filter(
+        ({ role }) => role !== "Destructive → warning",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "selection-text-target-passes",
+    "positive",
+    "evaluator.selection-text-target.v1",
+  ),
+  acceptanceScenario(
+    "selection-text-target-passes",
+    "contradictory",
+    "evaluator.selection-text-target.v1",
+    ({ modes }) => {
+      modes.dark.textChecks.find(
+        ({ role }) => role === "Selected content",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "selection-text-target-passes",
+    "missing-evidence",
+    "evaluator.selection-text-target.v1",
+    ({ modes }) => {
+      modes.light.textChecks = modes.light.textChecks.filter(
+        ({ role }) => role !== "Selected content",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "selection-surface-oklab-separation-passes",
+    "positive",
+    "evaluator.selection-surface-oklab-separation.v1",
+  ),
+  acceptanceScenario(
+    "selection-surface-oklab-separation-passes",
+    "contradictory",
+    "evaluator.selection-surface-oklab-separation.v1",
+    ({ modes }) => {
+      modes.light.nonTextChecks.find(
+        ({ role }) => role === "Surface → selection",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "selection-surface-oklab-separation-passes",
+    "missing-evidence",
+    "evaluator.selection-surface-oklab-separation.v1",
+    ({ modes }) => {
+      modes.dark.nonTextChecks = modes.dark.nonTextChecks.filter(
+        ({ role }) => role !== "Surface → selection",
+      );
+    },
+  ),
 ];
 
 for (const scenario of SEMANTIC_ACCEPTANCE_SCENARIOS) {
@@ -272,10 +397,12 @@ test("the aggregate result exposes the exact semantic model boundary", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   assert.deepEqual(result.semanticEvaluation.model, {
     id: "v2-declarative-design",
-    version: 1,
+    version: 2,
     components: [
       { id: "primary-action-state-family", version: 1 },
       { id: "foundation-focus-family", version: 1 },
+      { id: "feedback-family", version: 1 },
+      { id: "selection-family", version: 1 },
     ],
   });
   assert.deepEqual(
@@ -289,7 +416,19 @@ test("the aggregate result exposes the exact semantic model boundary", () => {
       "foundation-text-targets-pass",
       "focus-adjacent-contrast-passes",
       "focus-control-oklab-separation-passes",
+      "feedback-destructive-label-targets-pass",
+      "feedback-warning-label-targets-pass",
+      "feedback-oklab-separation-passes",
+      "selection-text-target-passes",
+      "selection-surface-oklab-separation-passes",
     ],
+  );
+});
+
+test("the acceptance manifest has exactly one scenario per declaration outcome", () => {
+  assert.equal(
+    SEMANTIC_ACCEPTANCE_SCENARIOS.length,
+    V2_SEMANTIC_MODEL.declarations.length * 3,
   );
 });
 
@@ -358,6 +497,18 @@ test("matching automated evidence without an explicit boolean remains needs-revi
     "needs-review",
   );
 
+  const missingFeedbackVerdict = semanticFixture();
+  delete missingFeedbackVerdict.modes.light.textChecks.find(
+    ({ role }) => role === "Label on warning hover",
+  ).pass;
+  assert.equal(
+    evaluationsFor(
+      missingFeedbackVerdict.modes,
+      missingFeedbackVerdict.quality,
+    )["feedback-warning-label-targets-pass"].status,
+    "needs-review",
+  );
+
   const missingProgressionVerdict = semanticFixture();
   delete missingProgressionVerdict.quality.states.dark.checks.find(({ id }) =>
     id.endsWith("monotonic-lightness"),
@@ -392,6 +543,22 @@ test("matching automated evidence without an explicit boolean remains needs-revi
       "focus-control-oklab-separation-passes"
     ].status,
     "needs-review",
+  );
+});
+
+test("destructive and warning label evidence fail independently", () => {
+  const fixture = semanticFixture();
+  fixture.modes.light.textChecks = fixture.modes.light.textChecks.filter(
+    ({ role }) => role !== "Label on destructive hover",
+  );
+  const evaluations = evaluationsFor(fixture.modes, fixture.quality);
+  assert.equal(
+    evaluations["feedback-destructive-label-targets-pass"].status,
+    "needs-review",
+  );
+  assert.equal(
+    evaluations["feedback-warning-label-targets-pass"].status,
+    "satisfied",
   );
 });
 
