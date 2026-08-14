@@ -20,7 +20,7 @@ import {
 import { prioritizeHoverReview } from "./lib/hover-review-priority.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
 import {
-  evaluatePrimaryActionSemantics,
+  evaluateV2Semantics,
   formatSemanticCounts,
 } from "./lib/semantic-model.js";
 import {
@@ -378,7 +378,7 @@ function renderQuality() {
     resultMode === "compare"
       ? `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>`
       : `<aside class="mode-review-note"><strong>${resultMode} review</strong><span>Cross-mode identity and pair ranking are available in Compare.</span></aside>`;
-  const semanticModel = evaluatePrimaryActionSemantics(
+  const semanticModel = evaluateV2Semantics(
     currentResult.modes,
     currentResult.quality,
     hoverEvaluationEvidence(

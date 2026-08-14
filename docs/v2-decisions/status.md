@@ -57,7 +57,8 @@ and the per-candidate result of each rule.
 
 ## Declarative semantic evaluation
 
-- the first executable semantic model covers the Primary action state family;
+- the executable semantic model covers the Primary action, Foundation hierarchy
+  and text, and Focus adjacent contrast and Oklab control separation;
 - constraint, invariant, relation, intent, and generation strategy remain
   distinct concepts;
 - every declaration names versioned evidence trace metadata and one registered
@@ -98,8 +99,8 @@ promotion contract. No semantic output role remains a policy anchor.
    ambiguity before expanding collection.
 2. Add a privacy-reviewed append-only hover exchange format and independent-run
    marker before aggregating reviewer observations.
-3. Extend the semantic model to Foundation hierarchy and Focus visibility after
-   reviewing the Primary trace shape.
+3. Review the combined Primary, Foundation, and Focus trace shape before adding
+   Feedback, Selection, or utility-role declarations.
 4. Promote thresholds from `heuristic` to `empirical` only with recorded data
    and preserved disagreement.
 5. Review upstream `apca-w3` releases before changing the pinned verification

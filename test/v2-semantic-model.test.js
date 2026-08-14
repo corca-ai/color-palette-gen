@@ -8,11 +8,12 @@ import {
   hoverEvaluationEvidence,
 } from "../v2/lib/hover-evaluation.js";
 import {
-  evaluatePrimaryActionSemantics,
+  evaluateV2Semantics,
   formatSemanticCounts,
   PRIMARY_ACTION_SEMANTIC_MODEL,
   SEMANTIC_EVALUATORS,
   SEMANTIC_EVIDENCE_CONTRACTS,
+  V2_SEMANTIC_MODEL,
   validateSemanticTraceability,
 } from "../v2/lib/semantic-model.js";
 
@@ -138,6 +139,101 @@ const SEMANTIC_ACCEPTANCE_SCENARIOS = [
     "missing-evidence",
     "evaluator.primary-hover-discoverable.v1",
   ),
+  acceptanceScenario(
+    "foundation-hierarchy-ordered",
+    "positive",
+    "evaluator.foundation-hierarchy.v1",
+  ),
+  acceptanceScenario(
+    "foundation-hierarchy-ordered",
+    "contradictory",
+    "evaluator.foundation-hierarchy.v1",
+    ({ modes }) => {
+      modes.light.decisions.surface.selected.constraintResults.find(
+        ({ id }) => id === "foundation.hierarchy",
+      ).passed = false;
+    },
+  ),
+  acceptanceScenario(
+    "foundation-hierarchy-ordered",
+    "missing-evidence",
+    "evaluator.foundation-hierarchy.v1",
+    ({ modes }) => {
+      modes.dark.decisions["raised surface"].selected.constraintResults = [];
+    },
+  ),
+  acceptanceScenario(
+    "foundation-text-targets-pass",
+    "positive",
+    "evaluator.foundation-text-targets.v1",
+  ),
+  acceptanceScenario(
+    "foundation-text-targets-pass",
+    "contradictory",
+    "evaluator.foundation-text-targets.v1",
+    ({ modes }) => {
+      modes.dark.textChecks.find(({ role }) => role === "Muted text").pass =
+        false;
+    },
+  ),
+  acceptanceScenario(
+    "foundation-text-targets-pass",
+    "missing-evidence",
+    "evaluator.foundation-text-targets.v1",
+    ({ modes }) => {
+      modes.light.textChecks = modes.light.textChecks.filter(
+        ({ role }) => role !== "Text on surface",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "focus-adjacent-contrast-passes",
+    "positive",
+    "evaluator.focus-adjacent-contrast.v1",
+  ),
+  acceptanceScenario(
+    "focus-adjacent-contrast-passes",
+    "contradictory",
+    "evaluator.focus-adjacent-contrast.v1",
+    ({ modes }) => {
+      modes.light.nonTextChecks.find(
+        ({ role }) => role === "Focus on surface",
+      ).pass = false;
+    },
+  ),
+  acceptanceScenario(
+    "focus-adjacent-contrast-passes",
+    "missing-evidence",
+    "evaluator.focus-adjacent-contrast.v1",
+    ({ modes }) => {
+      modes.dark.nonTextChecks = modes.dark.nonTextChecks.filter(
+        ({ role }) => role !== "Focus on background",
+      );
+    },
+  ),
+  acceptanceScenario(
+    "focus-control-oklab-separation-passes",
+    "positive",
+    "evaluator.focus-control-oklab-separation.v1",
+  ),
+  acceptanceScenario(
+    "focus-control-oklab-separation-passes",
+    "contradictory",
+    "evaluator.focus-control-oklab-separation.v1",
+    ({ modes }) => {
+      modes.dark.decisions["focus ring"].selected.constraintResults.find(
+        ({ id }) => id === "focus.semantic-separation",
+      ).passed = false;
+    },
+  ),
+  acceptanceScenario(
+    "focus-control-oklab-separation-passes",
+    "missing-evidence",
+    "evaluator.focus-control-oklab-separation.v1",
+    ({ modes }) => {
+      modes.light.decisions["focus ring"].selected.constraintResults = [];
+    },
+  ),
 ];
 
 for (const scenario of SEMANTIC_ACCEPTANCE_SCENARIOS) {
@@ -164,12 +260,37 @@ test("every declaration chains through evidence, evaluator, and acceptance scena
     }),
     true,
   );
-  for (const declaration of PRIMARY_ACTION_SEMANTIC_MODEL.declarations) {
+  for (const declaration of V2_SEMANTIC_MODEL.declarations) {
     assert.ok(SEMANTIC_EVALUATORS[declaration.evaluator]);
     for (const evidence of declaration.evidence) {
       assert.ok(SEMANTIC_EVIDENCE_CONTRACTS[evidence]);
     }
   }
+});
+
+test("the aggregate result exposes the exact semantic model boundary", () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  assert.deepEqual(result.semanticEvaluation.model, {
+    id: "v2-declarative-design",
+    version: 1,
+    components: [
+      { id: "primary-action-state-family", version: 1 },
+      { id: "foundation-focus-family", version: 1 },
+    ],
+  });
+  assert.deepEqual(
+    result.semanticEvaluation.evaluations.map(({ id }) => id),
+    [
+      "shared-label-readable",
+      "states-distinct",
+      "active-continues-beyond-hover",
+      "hover-discoverable",
+      "foundation-hierarchy-ordered",
+      "foundation-text-targets-pass",
+      "focus-adjacent-contrast-passes",
+      "focus-control-oklab-separation-passes",
+    ],
+  );
 });
 
 test("semantic traceability rejects dangling and incomplete acceptance links", () => {
@@ -225,6 +346,55 @@ test("impossible hover evidence cannot satisfy declared intent", () => {
   assert.deepEqual(result.observedEvidence, []);
 });
 
+test("matching automated evidence without an explicit boolean remains needs-review", () => {
+  const missingLabelVerdict = semanticFixture();
+  delete missingLabelVerdict.modes.light.textChecks.find(
+    ({ role }) => role === "Label on primary hover",
+  ).pass;
+  assert.equal(
+    evaluationsFor(missingLabelVerdict.modes, missingLabelVerdict.quality)[
+      "shared-label-readable"
+    ].status,
+    "needs-review",
+  );
+
+  const missingProgressionVerdict = semanticFixture();
+  delete missingProgressionVerdict.quality.states.dark.checks.find(({ id }) =>
+    id.endsWith("monotonic-lightness"),
+  ).pass;
+  assert.equal(
+    evaluationsFor(
+      missingProgressionVerdict.modes,
+      missingProgressionVerdict.quality,
+    )["active-continues-beyond-hover"].status,
+    "needs-review",
+  );
+
+  const missingCheckVerdict = semanticFixture();
+  delete missingCheckVerdict.modes.light.nonTextChecks.find(
+    ({ role }) => role === "Focus on surface",
+  ).pass;
+  assert.equal(
+    evaluationsFor(missingCheckVerdict.modes, missingCheckVerdict.quality)[
+      "focus-adjacent-contrast-passes"
+    ].status,
+    "needs-review",
+  );
+
+  const missingRuleVerdict = semanticFixture();
+  delete missingRuleVerdict.modes.dark.decisions[
+    "focus ring"
+  ].selected.constraintResults.find(
+    ({ id }) => id === "focus.semantic-separation",
+  ).passed;
+  assert.equal(
+    evaluationsFor(missingRuleVerdict.modes, missingRuleVerdict.quality)[
+      "focus-control-oklab-separation-passes"
+    ].status,
+    "needs-review",
+  );
+});
+
 test("numeric checks cannot claim that hover discoverability is satisfied", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   const byId = Object.fromEntries(
@@ -255,7 +425,7 @@ test("complete interactive evidence can resolve hover discoverability", () => {
       dark: { judgment: "meets-intent", note: "Clearly visible." },
     },
   };
-  const evaluation = evaluatePrimaryActionSemantics(
+  const evaluation = evaluateV2Semantics(
     result.modes,
     result.quality,
     hoverEvaluationEvidence(record, result.input.primary, result.policyVersion),
@@ -277,7 +447,7 @@ function semanticFixture() {
 
 function evaluationsFor(modes, quality) {
   return Object.fromEntries(
-    evaluatePrimaryActionSemantics(modes, quality).evaluations.map((item) => [
+    evaluateV2Semantics(modes, quality).evaluations.map((item) => [
       item.id,
       item,
     ]),

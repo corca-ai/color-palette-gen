@@ -33,6 +33,40 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
       "accessibility-conformance",
     ],
   },
+  "evidence.foundation-hierarchy-decisions.v1": {
+    producer: "selected-decision-trace",
+    scope: "foundation-surface-family",
+    requires: ["light-and-dark", "surface-raised-muted", "hierarchy-rule"],
+    cannotEstablish: ["universal-depth-perception"],
+  },
+  "evidence.foundation-text-apca.v1": {
+    producer: "automated-check",
+    scope: "foundation-text-family",
+    requires: [
+      "light-and-dark",
+      "body-surface-muted-text",
+      "actual-text-pairs",
+    ],
+    cannotEstablish: ["accessibility-conformance"],
+  },
+  "evidence.focus-foundation-contrast.v1": {
+    producer: "automated-check",
+    scope: "focus-foundation-pairs",
+    requires: ["light-and-dark", "background-and-surface", "final-srgb"],
+    cannotEstablish: [
+      "universal-focus-discoverability",
+      "accessibility-conformance",
+    ],
+  },
+  "evidence.focus-semantic-separation.v1": {
+    producer: "selected-decision-trace",
+    scope: "focus-authored-control-relation",
+    requires: ["light-and-dark", "primary-and-destructive", "final-srgb"],
+    cannotEstablish: [
+      "universal-focus-discoverability",
+      "perceived-semantic-distinctness",
+    ],
+  },
 };
 
 export const PRIMARY_ACTION_SEMANTIC_MODEL = {
@@ -91,6 +125,76 @@ export const PRIMARY_ACTION_SEMANTIC_MODEL = {
   ],
 };
 
+export const FOUNDATION_FOCUS_SEMANTIC_MODEL = {
+  id: "foundation-focus-family",
+  version: 1,
+  roles: {
+    foundation: ["background", "surface", "raised surface", "muted surface"],
+    text: ["foreground", "muted text"],
+    focus: "focus ring",
+    authoredControls: ["primary", "destructive"],
+  },
+  declarations: [
+    {
+      id: "foundation-hierarchy-ordered",
+      kind: "relation",
+      authority: "research-policy",
+      statement:
+        "Selected Surface, Raised, and Muted candidates pass their declared role-local hierarchy relations.",
+      evidence: ["evidence.foundation-hierarchy-decisions.v1"],
+      evaluator: "evaluator.foundation-hierarchy.v1",
+    },
+    {
+      id: "foundation-text-targets-pass",
+      kind: "constraint",
+      authority: "heuristic",
+      statement:
+        "Foundation body, surface, and muted text pass their declared readability targets.",
+      evidence: ["evidence.foundation-text-apca.v1"],
+      evaluator: "evaluator.foundation-text-targets.v1",
+    },
+    {
+      id: "focus-adjacent-contrast-passes",
+      kind: "constraint",
+      authority: "normative",
+      statement:
+        "The focus indicator passes its declared adjacent-contrast target on background and surface.",
+      evidence: ["evidence.focus-foundation-contrast.v1"],
+      evaluator: "evaluator.focus-adjacent-contrast.v1",
+    },
+    {
+      id: "focus-control-oklab-separation-passes",
+      kind: "relation",
+      authority: "heuristic",
+      statement:
+        "The focus indicator passes the declared Oklab separation heuristic from Primary and Destructive controls.",
+      evidence: ["evidence.focus-semantic-separation.v1"],
+      evaluator: "evaluator.focus-control-oklab-separation.v1",
+    },
+  ],
+  strategies: [],
+};
+
+export const V2_SEMANTIC_MODEL = {
+  id: "v2-declarative-design",
+  version: 1,
+  components: [
+    {
+      id: PRIMARY_ACTION_SEMANTIC_MODEL.id,
+      version: PRIMARY_ACTION_SEMANTIC_MODEL.version,
+    },
+    {
+      id: FOUNDATION_FOCUS_SEMANTIC_MODEL.id,
+      version: FOUNDATION_FOCUS_SEMANTIC_MODEL.version,
+    },
+  ],
+  declarations: [
+    ...PRIMARY_ACTION_SEMANTIC_MODEL.declarations,
+    ...FOUNDATION_FOCUS_SEMANTIC_MODEL.declarations,
+  ],
+  strategies: [...PRIMARY_ACTION_SEMANTIC_MODEL.strategies],
+};
+
 const EXPECTED_MODES = ["light", "dark"];
 const EXPECTED_LABEL_ROLES = [
   "Label on primary",
@@ -118,10 +222,13 @@ function evaluateSharedLabel({ modes }) {
     EXPECTED_LABEL_ROLES.every(
       (role) =>
         checks.filter((check) => check.mode === mode && check.role === role)
-          .length === 1,
+          .length === 1 &&
+        explicitVerdict(
+          checks.find((check) => check.mode === mode && check.role === role),
+        ) !== null,
     ),
   );
-  const passed = checks.every(({ pass }) => pass);
+  const passed = checks.every((check) => explicitVerdict(check));
   return evaluation(
     !complete ? "needs-review" : passed ? "satisfied" : "unsatisfied",
     checks,
@@ -167,11 +274,15 @@ function evaluateStateProgression({ structuralQuality }) {
     const state = structuralQuality?.states?.[mode];
     const expectedId = `${mode}.primary.state.monotonic-lightness`;
     const checks = (state?.checks ?? []).filter(({ id }) => id === expectedId);
-    return { mode, checks, complete: checks.length === 1 };
+    return {
+      mode,
+      checks,
+      complete: checks.length === 1 && explicitVerdict(checks[0]) !== null,
+    };
   });
   const complete = observed.every((item) => item.complete);
   const passed = observed.every(({ checks }) =>
-    checks.every(({ pass }) => pass),
+    checks.every((check) => explicitVerdict(check)),
   );
   return evaluation(
     !complete ? "needs-review" : passed ? "satisfied" : "unsatisfied",
@@ -201,6 +312,107 @@ function evaluateHoverDiscoverability({ hoverEvidence }) {
   );
 }
 
+function explicitVerdict(record) {
+  const verdicts = [record?.pass, record?.passed].filter(
+    (value) => typeof value === "boolean",
+  );
+  return verdicts.length === 1 ? verdicts[0] : null;
+}
+
+function selectedRuleEvidence(modes, roles, ruleId) {
+  return EXPECTED_MODES.flatMap((mode) =>
+    roles.map((role) => {
+      const results =
+        modes[mode]?.decisions?.[role]?.selected?.constraintResults ?? [];
+      const matches = results.filter(({ id }) => id === ruleId);
+      return {
+        mode,
+        role,
+        matches,
+        complete: matches.length === 1 && explicitVerdict(matches[0]) !== null,
+      };
+    }),
+  );
+}
+
+function checkEvidence(modes, collection, roles) {
+  return EXPECTED_MODES.flatMap((mode) =>
+    roles.map((role) => {
+      const matches = (modes[mode]?.[collection] ?? []).filter(
+        (check) => check.role === role,
+      );
+      return {
+        mode,
+        role,
+        matches,
+        complete: matches.length === 1 && explicitVerdict(matches[0]) !== null,
+      };
+    }),
+  );
+}
+
+function evaluateRecordedChecks(
+  observed,
+  completeReason,
+  passReason,
+  failReason,
+) {
+  const complete = observed.every((item) => item.complete);
+  const passed = observed.every(({ matches }) => explicitVerdict(matches[0]));
+  return evaluation(
+    !complete ? "needs-review" : passed ? "satisfied" : "unsatisfied",
+    observed,
+    !complete ? completeReason : passed ? passReason : failReason,
+  );
+}
+
+function evaluateFoundationHierarchy({ modes }) {
+  return evaluateRecordedChecks(
+    selectedRuleEvidence(
+      modes,
+      ["surface", "raised surface", "muted surface"],
+      "foundation.hierarchy",
+    ),
+    "Expected one selected hierarchy result for every Foundation layer in Light and Dark.",
+    "Every selected Foundation layer preserves the declared hierarchy.",
+    "At least one selected Foundation layer contradicts the declared hierarchy.",
+  );
+}
+
+function evaluateFoundationText({ modes }) {
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "textChecks", [
+      "Body text",
+      "Text on surface",
+      "Muted text",
+    ]),
+    "Expected one Foundation text check for every declared pair in Light and Dark.",
+    "Every Foundation text pair passes its declared APCA target.",
+    "At least one Foundation text pair misses its declared APCA target.",
+  );
+}
+
+function evaluateFocusContrast({ modes }) {
+  return evaluateRecordedChecks(
+    checkEvidence(modes, "nonTextChecks", [
+      "Focus on background",
+      "Focus on surface",
+    ]),
+    "Expected focus contrast checks on both foundations in Light and Dark.",
+    "Focus passes its declared adjacent-contrast target on both foundations.",
+    "Focus misses its declared adjacent-contrast target on at least one foundation.",
+  );
+}
+
+function evaluateFocusSeparation({ modes }) {
+  return evaluateRecordedChecks(
+    selectedRuleEvidence(modes, ["focus ring"], "focus.semantic-separation"),
+    "Expected one selected Focus semantic-separation result in Light and Dark.",
+    "Focus passes its declared Oklab separation heuristic from authored controls in both modes.",
+    "Focus misses its declared Oklab separation heuristic from an authored control in at least one mode.",
+  );
+}
+
 export const SEMANTIC_EVALUATORS = {
   "evaluator.primary-label-readable.v1": {
     declaration: "shared-label-readable",
@@ -221,6 +433,26 @@ export const SEMANTIC_EVALUATORS = {
     declaration: "hover-discoverable",
     consumes: ["evidence.interactive-hover-rating.v1"],
     evaluate: evaluateHoverDiscoverability,
+  },
+  "evaluator.foundation-hierarchy.v1": {
+    declaration: "foundation-hierarchy-ordered",
+    consumes: ["evidence.foundation-hierarchy-decisions.v1"],
+    evaluate: evaluateFoundationHierarchy,
+  },
+  "evaluator.foundation-text-targets.v1": {
+    declaration: "foundation-text-targets-pass",
+    consumes: ["evidence.foundation-text-apca.v1"],
+    evaluate: evaluateFoundationText,
+  },
+  "evaluator.focus-adjacent-contrast.v1": {
+    declaration: "focus-adjacent-contrast-passes",
+    consumes: ["evidence.focus-foundation-contrast.v1"],
+    evaluate: evaluateFocusContrast,
+  },
+  "evaluator.focus-control-oklab-separation.v1": {
+    declaration: "focus-control-oklab-separation-passes",
+    consumes: ["evidence.focus-semantic-separation.v1"],
+    evaluate: evaluateFocusSeparation,
   },
 };
 
@@ -299,7 +531,7 @@ function validateAcceptanceCoverage(declaration, acceptanceScenarios) {
 }
 
 export function validateSemanticTraceability({
-  model = PRIMARY_ACTION_SEMANTIC_MODEL,
+  model = V2_SEMANTIC_MODEL,
   evidenceContracts = SEMANTIC_EVIDENCE_CONTRACTS,
   evaluators = SEMANTIC_EVALUATORS,
   acceptanceScenarios = null,
@@ -349,27 +581,26 @@ export function formatSemanticCounts(counts) {
     : summary;
 }
 
-export function evaluatePrimaryActionSemantics(
+export function evaluateV2Semantics(
   modes,
   structuralQuality,
   hoverEvidence = { complete: false, satisfies: false, record: null },
 ) {
   const context = { modes, structuralQuality, hoverEvidence };
-  const evaluations = PRIMARY_ACTION_SEMANTIC_MODEL.declarations.map(
-    (declaration) => {
-      const evaluator = SEMANTIC_EVALUATORS[declaration.evaluator];
-      return resultFor(
-        declaration,
-        declaration.evaluator,
-        evaluator.evaluate(context),
-      );
-    },
-  );
+  const evaluations = V2_SEMANTIC_MODEL.declarations.map((declaration) => {
+    const evaluator = SEMANTIC_EVALUATORS[declaration.evaluator];
+    return resultFor(
+      declaration,
+      declaration.evaluator,
+      evaluator.evaluate(context),
+    );
+  });
   const statuses = ["satisfied", "needs-review", "unsatisfied"];
   return {
     model: {
-      id: PRIMARY_ACTION_SEMANTIC_MODEL.id,
-      version: PRIMARY_ACTION_SEMANTIC_MODEL.version,
+      id: V2_SEMANTIC_MODEL.id,
+      version: V2_SEMANTIC_MODEL.version,
+      components: V2_SEMANTIC_MODEL.components,
     },
     evaluations,
     counts: Object.fromEntries(

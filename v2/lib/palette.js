@@ -9,7 +9,7 @@ import {
   pairedQuality,
   sourceUsageAlternatives,
 } from "./quality.js";
-import { evaluatePrimaryActionSemantics } from "./semantic-model.js";
+import { evaluateV2Semantics } from "./semantic-model.js";
 import { diagnosePrimaryHover } from "./hover-diagnostics.js";
 import {
   apcaContrast,
@@ -1306,7 +1306,7 @@ export function generatePaletteV2({ primary }) {
     pairSelection.quality,
   );
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
-  const semanticEvaluation = evaluatePrimaryActionSemantics(modes, quality);
+  const semanticEvaluation = evaluateV2Semantics(modes, quality);
   const hoverDiagnostics = diagnosePrimaryHover(modes);
   const result = {
     version: 2,
