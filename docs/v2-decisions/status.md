@@ -91,6 +91,12 @@ promotion contract. No semantic output role remains a policy anchor.
   interactive state trials, and visual snapshots in a real browser.
 - fixed screenshots guard the paired palettes and public-reference specimen
   against broad visual regression.
+- `npm run diagnose:adversarial` emits a deterministic 216-input diagnostic map
+  grouped by named signals and convergent generated action families; it does
+  not score visual quality or establish perception.
+- the same report decomposes large source shifts by descriptive source-OKLCH
+  cohorts, affected mode, actual L/C movement, and the existing constraint IDs
+  recorded on the producer's best-ranked rejected Primary candidate.
 
 ## Next migration
 

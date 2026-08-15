@@ -10,6 +10,7 @@
     "check:e2e": "npm run check:e2e:smoke",
     "check:e2e:smoke": "playwright test --grep @smoke",
     "check:e2e:full": "playwright test",
+    "diagnose:adversarial": "node scripts/report-adversarial-diagnostics.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,mjs,json,yml}\"",
     "format:check": "prettier --check \"**/*.{js,mjs,json,yml}\"",

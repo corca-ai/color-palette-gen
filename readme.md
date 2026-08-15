@@ -190,6 +190,16 @@ npm run check
 v2 fast 테스트는 대표 primary 입력과 Light/Dark 계약을 검사합니다. 모든
 vibe/harmony 후보 및 다중 색상 입력 조합은 보존된 v1 엔진의 회귀 검증입니다.
 
+현재 v2 정책을 고정된 216색 RGB grid 전체에서 비교하는 진단 리포트는 다음과
+같이 생성할 수 있습니다.
+
+```sh
+npm run diagnose:adversarial > report.json
+```
+
+이 명령은 필요할 때만 실행하며 CI 합격 조건이 아닙니다. 출력의 신호 수와 결과
+수렴 그룹은 팔레트 점수나 시지각 품질 판정으로 해석하지 않습니다.
+
 ## 보존된 v1 접근성 대비 모델
 
 팔레트는 OKLCH의 지각 명도 축으로 후보를 만든 뒤, gamut mapping과 8-bit HEX
