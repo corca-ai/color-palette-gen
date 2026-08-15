@@ -130,6 +130,27 @@ producing paired lightness-gap or state-pacing misses on 186 inputs. These
 results motivate testing a candidate-selection hypothesis before another
 undirected interval expansion.
 
+`npm run diagnose:pair-ranking` tests that narrower hypothesis without changing
+the ranges or sampled candidates. It applies two fixed lexicographic orders to
+the same candidate-set identity: the current source-first order and
+`paired-quality-miss-count-first`. The latter name is intentionally narrow: it
+counts the existing provisional `pairedQuality` check misses before comparing
+source distance; it does not prioritize every structural, semantic, or
+perceptual concern.
+
+Against the same policy and 216-input grid, all 4 current
+`pair.primary-lightness-gap` misses have a zero-miss alternative in the sampled
+candidate set. The counterfactual changes exactly those 4 selected pairs and
+resolves the recorded misses without introducing another named pair check,
+contract failure, semantic finding, downstream quality finding, or large-source
+shift. Mean worst-mode source distance moves from 0.2109404 to 0.2111579 and
+mean total source distance from 0.3604809 to 0.3608402; maxima remain unchanged.
+Within this fixed grid and sampled candidate inventory, changing only the
+lexicographic order selects zero-miss alternatives for these four cases. It does
+not establish that miss-count-first is a better policy: check categories are
+counted equally in this probe, the candidate search remains bounded, and
+perceived pair quality remains unmeasured.
+
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;
 - warning search uses a research-policy amber family rather than learning a

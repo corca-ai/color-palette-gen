@@ -101,12 +101,22 @@ promotion contract. No semantic output role remains a policy anchor.
   counterfactuals. In the reviewed 216-input run, symmetric, outward-only, and
   source-inclusive expansion are not policy candidates as tested: none resolves
   source fidelity without adding pair-quality or contract losses.
+- `npm run diagnose:pair-ranking` applies source-first and
+  paired-quality-miss-count-first ordering to identical sampled pair candidates.
+  In the reviewed 216-input run, all 4 current lightness-gap misses are avoidable
+  within that inventory; resolving them changes exactly 4 pairs and produces a
+  small mean source-distance increase without newly failing a named check,
+  contract, semantic declaration, or large-shift threshold. This is a diagnostic
+  ordering result, not a policy or perceptual verdict.
 
 ## Next migration
 
-1. Review whether utility aliases need semantic declarations beyond their
+1. Specify whether the four isolated pair-ordering cases justify a bounded
+   policy proposal or remain diagnostic evidence; do not promote the probe from
+   counts alone.
+2. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-2. Promote thresholds from `heuristic` to `empirical` only with a separately
+3. Promote thresholds from `heuristic` to `empirical` only with a separately
    authorized dataset and analysis.
-3. Review upstream `apca-w3` releases before changing the pinned verification
+4. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

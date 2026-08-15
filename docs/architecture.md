@@ -19,8 +19,10 @@ this document owns component and runtime boundaries.
   generation policy.
 - `v2/lib/adversarial-diagnostics.js` and
   `mode-range-counterfactual.js` own on-demand, non-normative analysis over
-  generated results. Counterfactual range overrides bypass the production
-  palette cache and are not exposed through the site UI.
+  generated results. `pair-ranking-counterfactual.js` isolates one fixed
+  pair-selection ordering probe over the unchanged sampled candidate set.
+  Counterfactual overrides bypass the production palette cache and are not
+  exposed through the site UI.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive
   CSS. Each file owns complete declaration blocks; `v2/style.css` remains a
   compatibility aggregator.

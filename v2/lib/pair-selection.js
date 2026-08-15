@@ -3,6 +3,11 @@ import { pairedQuality } from "./quality.js";
 import { candidate, distance } from "./runtime.js";
 import { NoCandidateError } from "./decision.js";
 
+export const PAIR_RANKING_STRATEGIES = Object.freeze({
+  SOURCE_FIRST: "source-first",
+  PAIRED_QUALITY_MISS_COUNT_FIRST: "paired-quality-miss-count-first",
+});
+
 function exactModeCandidate(input, mode, lightness, buildMode) {
   try {
     return {
@@ -57,9 +62,49 @@ function qualityPenalty(quality) {
   }, 0);
 }
 
-function comparePair(first, second) {
-  const firstRank = first.rank;
-  const secondRank = second.rank;
+function ranking(pair, strategy) {
+  if (strategy === PAIR_RANKING_STRATEGIES.SOURCE_FIRST) {
+    return [
+      pair.maximumSourceDistance,
+      pair.totalSourceDistance,
+      pair.qualityMissCount,
+      pair.qualityPenalty,
+    ];
+  }
+  if (strategy === PAIR_RANKING_STRATEGIES.PAIRED_QUALITY_MISS_COUNT_FIRST) {
+    return [
+      pair.qualityMissCount,
+      pair.maximumSourceDistance,
+      pair.totalSourceDistance,
+      pair.qualityPenalty,
+    ];
+  }
+  throw new TypeError(`Unsupported pair ranking strategy: ${strategy}.`);
+}
+
+function rankingLabels(strategy) {
+  if (strategy === PAIR_RANKING_STRATEGIES.SOURCE_FIRST) {
+    return [
+      "smallest worst-mode source distance",
+      "smallest total source distance",
+      "fewest structural review misses",
+      "smallest quality miss",
+    ];
+  }
+  if (strategy === PAIR_RANKING_STRATEGIES.PAIRED_QUALITY_MISS_COUNT_FIRST) {
+    return [
+      "fewest paired-quality misses",
+      "smallest worst-mode source distance",
+      "smallest total source distance",
+      "smallest paired-quality penalty",
+    ];
+  }
+  throw new TypeError(`Unsupported pair ranking strategy: ${strategy}.`);
+}
+
+function comparePair(first, second, strategy) {
+  const firstRank = ranking(first, strategy);
+  const secondRank = ranking(second, strategy);
   for (let index = 0; index < firstRank.length; index += 1) {
     if (firstRank[index] !== secondRank[index]) {
       return firstRank[index] - secondRank[index];
@@ -68,12 +113,22 @@ function comparePair(first, second) {
   return first.id.localeCompare(second.id);
 }
 
+export function comparePairMetrics(first, second, strategy) {
+  rankingLabels(strategy);
+  return comparePair(first, second, strategy);
+}
+
 export function selectModePair(
   input,
   baselineModes,
   buildMode,
   primaryRanges = V2_POLICY.primary.lightnessRange,
+  {
+    rankingStrategy = PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+    includeCandidateSetIdentity = false,
+  } = {},
 ) {
+  rankingLabels(rankingStrategy);
   const source = candidate(input.hex);
   const lightSearch = uniqueModeCandidates(
     input,
@@ -96,34 +151,45 @@ export function selectModePair(
         const quality = pairedQuality(modes);
         const lightDistance = distance(source, candidate(light.values.primary));
         const darkDistance = distance(source, candidate(dark.values.primary));
+        const qualityMissCount = quality.checks.filter(
+          ({ pass }) => !pass,
+        ).length;
         return {
           id: `${light.values.primary}/${dark.values.primary}`,
           modes,
           quality,
           lightDistance,
           darkDistance,
-          rank: [
-            Math.max(lightDistance, darkDistance),
-            lightDistance + darkDistance,
-            quality.checks.filter(({ pass }) => !pass).length,
-            qualityPenalty(quality),
-          ],
+          maximumSourceDistance: Math.max(lightDistance, darkDistance),
+          totalSourceDistance: lightDistance + darkDistance,
+          qualityMissCount,
+          qualityPenalty: qualityPenalty(quality),
         };
       }),
     )
-    .sort(comparePair);
+    .sort((first, second) =>
+      comparePairMetrics(first, second, rankingStrategy),
+    );
   const selected = pairs[0];
-  const compactPair = (pair) =>
+  const compactPair = (pair, includeDiagnosticEvidence = false) =>
     pair
       ? {
           light: pair.modes.light.values.primary,
           dark: pair.modes.dark.values.primary,
-          qualityMisses: pair.quality.checks.filter(({ pass }) => !pass).length,
-          maximumSourceDistance: pair.rank[0],
-          totalSourceDistance: pair.rank[1],
+          qualityMisses: pair.qualityMissCount,
+          maximumSourceDistance: pair.maximumSourceDistance,
+          totalSourceDistance: pair.totalSourceDistance,
           hueDrift: pair.quality.crossMode.hueDrift,
           chromaDifference: pair.quality.crossMode.chromaDifference,
           lightnessGap: pair.quality.crossMode.lightnessGap,
+          ...(includeDiagnosticEvidence
+            ? {
+                failedPairedQualityChecks: pair.quality.checks
+                  .filter(({ pass }) => !pass)
+                  .map(({ id }) => id)
+                  .sort(),
+              }
+            : {}),
         }
       : null;
   const sourceFidelity = [...pairs].sort(
@@ -133,40 +199,43 @@ export function selectModePair(
         (second.lightDistance + second.darkDistance) ||
       first.id.localeCompare(second.id),
   )[0];
-  const selectedMisses = selected.quality.checks.filter(
-    ({ pass }) => !pass,
-  ).length;
+  const selectedMisses = selected.qualityMissCount;
   const qualityRejected = pairs.find(
-    (pair) =>
-      pair.quality.checks.filter(({ pass }) => !pass).length > selectedMisses,
+    (pair) => pair.qualityMissCount > selectedMisses,
   );
+  const droppedSamples = [
+    ...lightSearch.droppedSamples,
+    ...darkSearch.droppedSamples,
+  ];
   return {
     modes: selected.modes,
     quality: selected.quality,
     decision: {
-      strategy: "sampled cross-mode pair search",
+      strategy:
+        rankingStrategy === PAIR_RANKING_STRATEGIES.SOURCE_FIRST
+          ? "sampled cross-mode pair search"
+          : "sampled cross-mode pair search (diagnostic ranking)",
       candidateCount: pairs.length,
-      ranking: [
-        "smallest worst-mode source distance",
-        "smallest total source distance",
-        "fewest structural review misses",
-        "smallest quality miss",
-      ],
-      selected: compactPair(selected),
+      ranking: rankingLabels(rankingStrategy),
+      selected: compactPair(selected, includeCandidateSetIdentity),
       alternatives: {
         nextRanked: compactPair(pairs[1]),
         sourceFidelity: compactPair(sourceFidelity),
         qualityRejected: compactPair(qualityRejected),
       },
-      ...([...lightSearch.droppedSamples, ...darkSearch.droppedSamples].length >
-      0
+      ...(includeCandidateSetIdentity
         ? {
-            droppedSamples: [
-              ...lightSearch.droppedSamples,
-              ...darkSearch.droppedSamples,
-            ],
+            rankingStrategy,
+            minimumAvailablePairQualityMissCount: Math.min(
+              ...pairs.map(({ qualityMissCount }) => qualityMissCount),
+            ),
+            candidateSetIdentity: pairs
+              .map(({ id }) => id)
+              .sort()
+              .join("|"),
           }
         : {}),
+      ...(droppedSamples.length > 0 ? { droppedSamples } : {}),
     },
   };
 }

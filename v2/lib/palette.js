@@ -7,7 +7,7 @@ import {
   selectCandidate,
 } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
-import { selectModePair } from "./pair-selection.js";
+import { PAIR_RANKING_STRATEGIES, selectModePair } from "./pair-selection.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
 import {
   independentPaletteReview,
@@ -1326,13 +1326,13 @@ function validatePrimaryRanges(primaryRanges) {
   }
 }
 
-function generatePalette(primary, primaryRanges, diagnosticOverride = false) {
+function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
   if (typeof primary !== "string" || !isHex(primary)) {
     throw new TypeError("primary must be a six-digit hex color.");
   }
   const normalizedPrimary = normalizeHex(primary);
   const cacheKey = `${V2_POLICY.version}/${normalizedPrimary}`;
-  const cached = diagnosticOverride ? null : paletteCache.get(cacheKey);
+  const cached = diagnosticOptions ? null : paletteCache.get(cacheKey);
   if (cached) return cached;
   const rawInput = candidate(normalizedPrimary).oklch;
   const classification = classifyInput(rawInput);
@@ -1348,7 +1348,9 @@ function generatePalette(primary, primaryRanges, diagnosticOverride = false) {
   const buildMode = (input, mode, options = {}) =>
     modePalette(input, mode, {
       ...options,
-      allowInfeasibleStateCandidates: diagnosticOverride,
+      allowInfeasibleStateCandidates: Boolean(
+        diagnosticOptions?.allowInfeasibleStateCandidates,
+      ),
     });
   const baselineModes = {
     light: buildMode(inputColor, "light", {
@@ -1363,6 +1365,15 @@ function generatePalette(primary, primaryRanges, diagnosticOverride = false) {
     baselineModes,
     buildMode,
     primaryRanges,
+    diagnosticOptions
+      ? {
+          rankingStrategy:
+            diagnosticOptions.pairRankingStrategy ??
+            PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+          includeCandidateSetIdentity:
+            diagnosticOptions.experiment === "pair-ranking",
+        }
+      : undefined,
   );
   const { modes } = pairSelection;
   const quality = independentPaletteReview(
@@ -1395,18 +1406,17 @@ function generatePalette(primary, primaryRanges, diagnosticOverride = false) {
     pairDecision: pairSelection.decision,
     sourceAlternatives,
     passed: Object.values(modes).every((mode) => mode.passed),
-    ...(diagnosticOverride
+    ...(diagnosticOptions
       ? {
           diagnosticOverride: {
             authority: "diagnostic",
-            experiment: "primary-lightness-range",
             baselinePolicyVersion: V2_POLICY.version,
-            primaryLightnessRanges: primaryRanges,
+            ...diagnosticOptions,
           },
         }
       : {}),
   };
-  return diagnosticOverride
+  return diagnosticOptions
     ? result
     : boundedSet(paletteCache, cacheKey, result, 128);
 }
@@ -1420,7 +1430,24 @@ export function generatePaletteV2Counterfactual({
   primaryLightnessRanges,
 }) {
   validatePrimaryRanges(primaryLightnessRanges);
-  return generatePalette(primary, primaryLightnessRanges, true);
+  return generatePalette(primary, primaryLightnessRanges, {
+    experiment: "primary-lightness-range",
+    allowInfeasibleStateCandidates: true,
+    primaryLightnessRanges,
+  });
+}
+
+export function generatePaletteV2PairRankingCounterfactual({
+  primary,
+  strategy,
+}) {
+  if (!Object.values(PAIR_RANKING_STRATEGIES).includes(strategy)) {
+    throw new TypeError(`Unsupported pair ranking strategy: ${strategy}.`);
+  }
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: "pair-ranking",
+    pairRankingStrategy: strategy,
+  });
 }
 
 export function serializeModeCss(modeResult) {
