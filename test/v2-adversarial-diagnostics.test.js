@@ -9,7 +9,7 @@ test("adversarial diagnostics are deterministic and keep claims bounded", () => 
   const second = buildAdversarialDiagnosticReport({ channels: [255, 0] });
 
   assert.deepEqual(first, second);
-  assert.equal(first.schema, "color-palette-adversarial-diagnostics.v1");
+  assert.equal(first.schema, "color-palette-adversarial-diagnostics.v2");
   assert.equal(first.authority, "diagnostic");
   assert.match(first.interpretation, /does not score palette quality/);
   assert.equal(first.summary.inputCount, 8);
@@ -76,15 +76,40 @@ test("source-fidelity cohorts preserve input traits and producer rejection evide
       ),
       mode.shiftedModeCount,
     );
+    assert.equal(
+      Object.values(mode.sourceLightnessRoleRangePositionCounts).reduce(
+        (total, count) => total + count,
+        0,
+      ),
+      mode.shiftedModeCount,
+    );
+    assert.equal(
+      Object.values(mode.bestRankedRejectedConstraintCombinationCounts).reduce(
+        (total, count) => total + count,
+        0,
+      ),
+      mode.shiftedModeCount,
+    );
   }
   assert.equal(yellow.sourceProfile.lightnessCohort, "very-light");
   assert.equal(yellow.sourceProfile.chromaCohort, "high");
   assert.equal(yellow.sourceProfile.hueSector, "60–120");
   assert.deepEqual(
-    yellow.sourceShiftByMode.light.nearestRejectedConstraintIds,
+    yellow.sourceShiftByMode.light.bestRankedRejectedConstraintIds,
     ["primary.calm-chroma", "primary.mode-range"],
   );
   assert.equal(yellow.sourceShiftByMode.light.lightnessDirection, "decrease");
+  assert.equal(
+    yellow.sourceShiftByMode.light.sourceLightnessRoleRange.position,
+    "above",
+  );
+  assert.deepEqual(
+    {
+      minimum: yellow.sourceShiftByMode.light.sourceLightnessRoleRange.minimum,
+      maximum: yellow.sourceShiftByMode.light.sourceLightnessRoleRange.maximum,
+    },
+    { minimum: 0.46, maximum: 0.54 },
+  );
   assert.equal(
     report.sourceFidelity.cohortDefinitions.chroma.at(-1).maximumExclusive,
     null,
@@ -112,6 +137,27 @@ test("adversarial diagnostics preserve named contract and semantic failures", ()
   assert.ok(
     item.signals.includes("semantic:shared-label-readable:needs-review"),
   );
+});
+
+test("source range evidence preserves inclusive producer-recorded bounds", () => {
+  const report = buildAdversarialDiagnosticReport({
+    channels: [0],
+    generate: ({ primary }) => {
+      const result = structuredClone(generatePaletteV2({ primary }));
+      result.modes.light.adaptations.largeBrandShift = true;
+      const modeRange =
+        result.modes.light.decisions.primary.alternatives.nearestRejected.constraintResults.find(
+          ({ id }) => id === "primary.mode-range",
+        );
+      result.source.oklch.l = modeRange.metrics.minimum;
+      return result;
+    },
+  });
+  const range =
+    report.cases[0].sourceShiftByMode.light.sourceLightnessRoleRange;
+
+  assert.equal(range.position, "inside");
+  assert.equal(range.sourceLightness, range.minimum);
 });
 
 test("adversarial diagnostics reject missing verdicts and mixed versions", () => {
@@ -192,6 +238,75 @@ test("adversarial diagnostics reject missing verdicts and mixed versions", () =>
         },
       }),
     /best-ranked rejected Primary evidence/,
+  );
+  assert.throws(
+    () =>
+      buildAdversarialDiagnosticReport({
+        channels: [0],
+        generate: ({ primary }) => {
+          const result = structuredClone(generatePaletteV2({ primary }));
+          result.modes.light.adaptations.largeBrandShift = true;
+          const constraints =
+            result.modes.light.decisions.primary.alternatives.nearestRejected
+              .constraintResults;
+          constraints.push(structuredClone(constraints[0]));
+          return result;
+        },
+      }),
+    /unique constraints, one ordered mode range, and a failed verdict/,
+  );
+  assert.throws(
+    () =>
+      buildAdversarialDiagnosticReport({
+        channels: [0],
+        generate: ({ primary }) => {
+          const result = structuredClone(generatePaletteV2({ primary }));
+          result.modes.light.adaptations.largeBrandShift = true;
+          const constraints =
+            result.modes.light.decisions.primary.alternatives.nearestRejected
+              .constraintResults;
+          result.modes.light.decisions.primary.alternatives.nearestRejected.constraintResults =
+            constraints.filter(({ id }) => id !== "primary.mode-range");
+          return result;
+        },
+      }),
+    /unique constraints, one ordered mode range, and a failed verdict/,
+  );
+  assert.throws(
+    () =>
+      buildAdversarialDiagnosticReport({
+        channels: [0],
+        generate: ({ primary }) => {
+          const result = structuredClone(generatePaletteV2({ primary }));
+          result.modes.light.adaptations.largeBrandShift = true;
+          const modeRange =
+            result.modes.light.decisions.primary.alternatives.nearestRejected.constraintResults.find(
+              ({ id }) => id === "primary.mode-range",
+            );
+          [modeRange.metrics.minimum, modeRange.metrics.maximum] = [
+            modeRange.metrics.maximum,
+            modeRange.metrics.minimum,
+          ];
+          return result;
+        },
+      }),
+    /unique constraints, one ordered mode range, and a failed verdict/,
+  );
+  assert.throws(
+    () =>
+      buildAdversarialDiagnosticReport({
+        channels: [0],
+        generate: ({ primary }) => {
+          const result = structuredClone(generatePaletteV2({ primary }));
+          result.modes.light.adaptations.largeBrandShift = true;
+          for (const constraint of result.modes.light.decisions.primary
+            .alternatives.nearestRejected.constraintResults) {
+            constraint.passed = true;
+          }
+          return result;
+        },
+      }),
+    /unique constraints, one ordered mode range, and a failed verdict/,
   );
 
   let call = 0;

@@ -19,6 +19,7 @@ test("v2 contracts hold across an RGB input grid", () => {
   });
 
   assert.equal(report.policyVersion, "v2-policy-model-11");
+  assert.equal(report.schema, "color-palette-adversarial-diagnostics.v2");
   assert.equal(report.summary.inputCount, 216);
   assert.equal(report.summary.signaledInputCount, 151);
   assert.equal(report.sourceFidelity.shiftedInputCount, 115);
@@ -55,26 +56,56 @@ test("v2 contracts hold across an RGB input grid", () => {
     decrease: 72,
     increase: 18,
   });
+  assert.deepEqual(
+    report.sourceFidelity.modes.light.sourceLightnessRoleRangePositionCounts,
+    { above: 89, below: 7 },
+  );
+  assert.deepEqual(
+    report.sourceFidelity.modes.dark.sourceLightnessRoleRangePositionCounts,
+    { above: 64, below: 26 },
+  );
+  assert.deepEqual(
+    report.sourceFidelity.modes.light
+      .bestRankedRejectedConstraintCombinationCounts,
+    {
+      "primary.calm-chroma+primary.mode-range": 31,
+      "primary.calm-chroma+primary.mode-range+primary.shared-label": 21,
+      "primary.generated-family+primary.mode-range+primary.shared-label": 1,
+      "primary.mode-range": 25,
+      "primary.mode-range+primary.shared-label": 18,
+    },
+  );
+  assert.deepEqual(
+    report.sourceFidelity.modes.dark
+      .bestRankedRejectedConstraintCombinationCounts,
+    {
+      "primary.calm-chroma+primary.generated-family+primary.mode-range+primary.shared-label": 11,
+      "primary.calm-chroma+primary.mode-range": 32,
+      "primary.calm-chroma+primary.mode-range+primary.shared-label": 2,
+      "primary.generated-family+primary.mode-range+primary.shared-label": 12,
+      "primary.mode-range": 33,
+    },
+  );
   assert.equal(
-    report.sourceFidelity.modes.light.nearestRejectedConstraintCounts[
+    report.sourceFidelity.modes.light.bestRankedRejectedConstraintCounts[
       "primary.mode-range"
     ],
     96,
   );
   assert.equal(
-    report.sourceFidelity.modes.dark.nearestRejectedConstraintCounts[
+    report.sourceFidelity.modes.dark.bestRankedRejectedConstraintCounts[
       "primary.mode-range"
     ],
     90,
   );
   assert.equal(
-    report.sourceFidelity.modes.light.nearestRejectedConstraintCounts[
+    report.sourceFidelity.modes.light.bestRankedRejectedConstraintCounts[
       "primary.calm-chroma"
     ],
     52,
   );
   assert.equal(
-    report.sourceFidelity.modes.dark.nearestRejectedConstraintCounts[
+    report.sourceFidelity.modes.dark.bestRankedRejectedConstraintCounts[
       "primary.calm-chroma"
     ],
     45,

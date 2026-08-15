@@ -18,9 +18,11 @@
   snapshots. DOM rendering remains covered by Playwright rather than the Node
   coverage percentage. GitHub Actions also runs it weekly and on demand.
 - Run `npm run diagnose:adversarial > report.json` when comparing policy
-  behavior across the fixed 216-input RGB grid. This deterministic diagnostic
-  is intentionally not an acceptance gate or CI step: its named signals and
-  convergence groups do not score palette quality or establish perception.
+  behavior across the fixed 216-input RGB grid. The standalone command is not
+  a required gate. Weekly/manual exhaustive CI snapshots the same deterministic
+  report behavior and reviewed counts; a changed count requires interpretation,
+  not automatic design rejection. Named signals and convergence groups do not
+  score palette quality or establish perception.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

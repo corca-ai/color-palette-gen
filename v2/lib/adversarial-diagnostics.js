@@ -73,6 +73,39 @@ function movementDirection(delta, tolerance = 1e-9) {
   return delta > 0 ? "increase" : "decrease";
 }
 
+function sourceLightnessRelativeToRange(sourceLightness, modeRange) {
+  if (sourceLightness < modeRange.metrics.minimum) return "below";
+  if (sourceLightness > modeRange.metrics.maximum) return "above";
+  return "inside";
+}
+
+function bestRankedRejectedEvidence(constraintResults, mode) {
+  const ids = constraintResults.map(({ id }) => id);
+  const modeRanges = constraintResults.filter(
+    ({ id }) => id === "primary.mode-range",
+  );
+  const failedConstraintIds = [
+    ...new Set(
+      constraintResults
+        .filter(({ passed }) => passed === false)
+        .map(({ id }) => id),
+    ),
+  ].sort();
+  if (
+    new Set(ids).size !== ids.length ||
+    modeRanges.length !== 1 ||
+    !Number.isFinite(modeRanges[0].metrics?.minimum) ||
+    !Number.isFinite(modeRanges[0].metrics?.maximum) ||
+    modeRanges[0].metrics.minimum > modeRanges[0].metrics.maximum ||
+    failedConstraintIds.length === 0
+  ) {
+    throw new TypeError(
+      `modes.${mode} best-ranked rejected Primary evidence must contain unique constraints, one ordered mode range, and a failed verdict.`,
+    );
+  }
+  return { modeRange: modeRanges[0], failedConstraintIds };
+}
+
 function sourceShiftEvidence(result, mode) {
   const modeResult = result.modes[mode];
   const selected = modeResult.decisions?.primary?.selected?.oklch;
@@ -93,19 +126,25 @@ function sourceShiftEvidence(result, mode) {
       `modes.${mode} primary decision must expose valid selected and best-ranked rejected Primary evidence.`,
     );
   }
+  const { modeRange, failedConstraintIds } = bestRankedRejectedEvidence(
+    nearestRejected.constraintResults,
+    mode,
+  );
+  const sourceLightness = result.source.oklch.l;
   return {
     sourceDistance: modeResult.adaptations.primarySourceDistance,
     lightnessDelta: selected.l - result.source.oklch.l,
     lightnessDirection: movementDirection(selected.l - result.source.oklch.l),
     chromaDelta: selected.c - result.source.oklch.c,
     chromaDirection: movementDirection(selected.c - result.source.oklch.c),
-    nearestRejectedConstraintIds: [
-      ...new Set(
-        nearestRejected.constraintResults
-          .filter(({ passed }) => passed === false)
-          .map(({ id }) => id),
-      ),
-    ].sort(),
+    sourceLightnessRoleRange: {
+      sourceLightness,
+      minimum: modeRange.metrics.minimum,
+      maximum: modeRange.metrics.maximum,
+      position: sourceLightnessRelativeToRange(sourceLightness, modeRange),
+    },
+    bestRankedRejectedConstraintIds: failedConstraintIds,
+    bestRankedRejectedConstraintCombination: failedConstraintIds.join("+"),
   };
 }
 
@@ -289,7 +328,9 @@ function sourceFidelityAnalysis(cases) {
         shiftedModeCount: 0,
         lightnessDirectionCounts: {},
         chromaDirectionCounts: {},
-        nearestRejectedConstraintCounts: {},
+        sourceLightnessRoleRangePositionCounts: {},
+        bestRankedRejectedConstraintCounts: {},
+        bestRankedRejectedConstraintCombinationCounts: {},
       },
     ]),
   );
@@ -307,16 +348,30 @@ function sourceFidelityAnalysis(cases) {
         evidence.lightnessDirection,
       );
       increment(modes[mode].chromaDirectionCounts, evidence.chromaDirection);
-      for (const id of evidence.nearestRejectedConstraintIds) {
-        increment(modes[mode].nearestRejectedConstraintCounts, id);
+      increment(
+        modes[mode].sourceLightnessRoleRangePositionCounts,
+        evidence.sourceLightnessRoleRange.position,
+      );
+      increment(
+        modes[mode].bestRankedRejectedConstraintCombinationCounts,
+        evidence.bestRankedRejectedConstraintCombination,
+      );
+      for (const id of evidence.bestRankedRejectedConstraintIds) {
+        increment(modes[mode].bestRankedRejectedConstraintCounts, id);
       }
     }
   }
   for (const mode of Object.values(modes)) {
     mode.lightnessDirectionCounts = sortedCounts(mode.lightnessDirectionCounts);
     mode.chromaDirectionCounts = sortedCounts(mode.chromaDirectionCounts);
-    mode.nearestRejectedConstraintCounts = sortedCounts(
-      mode.nearestRejectedConstraintCounts,
+    mode.sourceLightnessRoleRangePositionCounts = sortedCounts(
+      mode.sourceLightnessRoleRangePositionCounts,
+    );
+    mode.bestRankedRejectedConstraintCounts = sortedCounts(
+      mode.bestRankedRejectedConstraintCounts,
+    );
+    mode.bestRankedRejectedConstraintCombinationCounts = sortedCounts(
+      mode.bestRankedRejectedConstraintCombinationCounts,
     );
   }
 
@@ -422,7 +477,7 @@ export function buildAdversarialDiagnosticReport({
   const sourceFidelity = sourceFidelityAnalysis(cases);
 
   return {
-    schema: "color-palette-adversarial-diagnostics.v1",
+    schema: "color-palette-adversarial-diagnostics.v2",
     authority: "diagnostic",
     interpretation:
       "Maps named deterministic policy signals; it does not score palette quality or establish perceived design intent.",

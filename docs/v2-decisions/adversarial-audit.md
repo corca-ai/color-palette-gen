@@ -77,6 +77,20 @@ appear less often. These are rejection records, not exclusive causal labels:
 one candidate can fail several constraints, and the generator may select a
 different candidate that satisfies all of them.
 
+The report therefore records exact failed-constraint combinations as sorted
+constraint IDs joined by `+`, as well as individual counts.
+`primary.mode-range` is the only failed constraint for 25
+Light and 33 Dark cases. The other 128 mode-specific cases combine it with
+calm-chroma, shared-label, or complete-family failures, so the repeated range
+signal must not be read as a sole-cause diagnosis. None of these shifted sources
+start inside the nominal producer-recorded role-lightness bounds: Light has 89
+above and 7 below; Dark has 64 above and 26 below. Each case retains the source
+L and recorded minimum/maximum beside that classification. The producer's
+constraint verdict separately owns its ±0.001 comparison tolerance. This
+describes where the fixed corpus meets the current policy. It does not establish
+that widening or moving a range would preserve the other contracts or improve
+the resulting design.
+
 ## Known search limits
 
 - cross-mode comparison samples the baseline and three fixed lightness points
