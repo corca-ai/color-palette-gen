@@ -24,6 +24,9 @@ this document owns component and runtime boundaries.
   `feedback-candidate-availability.js` orchestrates a separate role-local
   default-fill feasibility census while `palette.js` and `quality.js` retain
   ownership of candidate inventories, constraints, objectives, and hue checks.
+  `primary-chroma-counterfactual.js` compares one Primary-only source-relative
+  chroma inventory/bound against production v12 while all non-Primary input
+  chroma consumers remain unchanged.
   Counterfactual overrides bypass the production palette cache and are not
   exposed through the site UI.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive

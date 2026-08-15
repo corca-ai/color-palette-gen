@@ -198,6 +198,7 @@ npm run diagnose:adversarial > report.json
 npm run diagnose:feedback-candidates > feedback-candidates.json
 npm run diagnose:mode-range > mode-range.json
 npm run diagnose:pair-ranking > pair-ranking.json
+npm run diagnose:primary-chroma > primary-chroma.json
 ```
 
 세 명령은 필요할 때만 실행하며 CI 합격 조건이 아닙니다. 범위 리포트는 현재
@@ -212,6 +213,9 @@ feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 
 기본색 후보군에 기존 제약과 동일한 hue 검사를 함께 통과하는 후보가 있는지
 확인합니다. hover/active 상태, 공통 label, pacing, Destructive와 Warning의 공동
 대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
+primary-chroma 리포트는 Primary에만 현재 고정 chroma cap과 대응 상한을
+source-relative 네 origin(중복 제거 후 최대 네 단계) 후보군으로 교체해 비교합니다. 요청 chroma와 실제 sRGB
+출력 chroma를 구분하며, 쨍함·미감·최적 정책을 판정하지 않습니다.
 
 ## 보존된 v1 접근성 대비 모델
 

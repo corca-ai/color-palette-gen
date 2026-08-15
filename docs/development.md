@@ -45,6 +45,14 @@
   Run `npm run test:pair-ranking-counterfactual` when refreshing its published
   216-input observations. Both commands are on-demand and excluded from CI;
   eligibility compliance does not establish a perceived result.
+- Run `npm run diagnose:primary-chroma > primary-chroma.json` to compare the
+  current v12 Primary chroma cap with the diagnostic source-relative
+  four-origin, up-to-four-distinct-rung inventory and matching Primary-only
+  bound. Run
+  `npm run test:primary-chroma-counterfactual` when refreshing its published
+  216-input observations. Both are on-demand and excluded from CI. The manual
+  run takes roughly 36 seconds on the reviewed local environment; it does not
+  establish vividness, aesthetic quality, or a production policy.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

@@ -117,14 +117,21 @@ promotion contract. No semantic output role remains a policy anchor.
   small mean source-distance increase without newly failing a named check,
   contract, semantic declaration, or large-shift threshold. This is a diagnostic
   ordering result, not a policy or perceptual verdict.
+- `npm run diagnose:primary-chroma` tests a Primary-only source-relative
+  four-origin, up-to-four-distinct-rung inventory and matching bound. It reduces the reviewed source-shift
+  census from 115 inputs / 186 modes to 108 / 177 and raises mean selected
+  realized C, but one input becomes generation-infeasible and another newly
+  misses pair chroma eligibility. It is not a production candidate as tested.
 
 ## Next migration
 
-1. Use the role-local availability split to specify a narrow Destructive
+1. Specify a narrower Primary chroma hypothesis that preserves the newly exposed
+   Dark Destructive and cross-mode chroma boundaries before any policy change.
+2. Use the role-local availability split to specify a narrow Destructive
    candidate-inventory hypothesis before changing hue thresholds or policy.
-2. Review whether utility aliases need semantic declarations beyond their
+3. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-3. Promote thresholds from `heuristic` to `empirical` only with a separately
+4. Promote thresholds from `heuristic` to `empirical` only with a separately
    authorized dataset and analysis.
-4. Review upstream `apca-w3` releases before changing the pinned verification
+5. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

@@ -322,7 +322,7 @@ function assertSource(source) {
   }
 }
 
-function assertDiagnosticResult(result) {
+export function assertDiagnosticResult(result) {
   if (
     !result ||
     typeof result.passed !== "boolean" ||

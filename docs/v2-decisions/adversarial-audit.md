@@ -204,6 +204,38 @@ semantic meaning, or recommend a production-policy change. Its denominator is
 the 120 failed checks, not all 236 cells within the 59-input flagged scope or a
 population sample.
 
+## Primary chroma restraint counterfactual
+
+`npm run diagnose:primary-chroma` compares production v12 with one diagnostic
+Primary-only intervention. At every existing Primary lightness sample it asks
+for source C, 90% source C, 75% source C, and the current effective cap; it
+deduplicates after sRGB rendering while retaining all requested origins. The
+matching `primary.calm-chroma` maximum is relaxed only for this diagnostic to
+the source C. Foundations, Selection, ranges, state search, pair eligibility,
+pair ranking, downstream formulas, production cache, and policy v12 remain
+unchanged. Requested C is not treated as realized C after gamut mapping.
+
+In the reviewed 216-input run, 160 inputs and 265 evaluated mode selections
+change. Among the 215 inputs that still generate a complete result, mean
+selected realized C moves from 0.12471 to 0.14726 and mean mode source distance
+moves from 0.18065 to 0.16610. Large source-shift observations move from 115
+inputs / 186 modes to 108 inputs / 177 modes; nine exact input×mode shifts are
+resolved and none introduced. The maximum source distance remains 0.57951.
+
+The intervention is not a production candidate as tested. `#FF6666` cannot
+generate a Dark Destructive role after the changed Primary is selected, and
+`#3300FF` newly misses the provisional cross-mode Primary chroma-difference
+eligibility check. The 36,684 requested ladder occurrences render to 27,899
+unique ladder candidate occurrences, with 8,785 recorded request convergences.
+These are per-mode candidate occurrences, not unique colors across the corpus.
+
+This experiment changes both the Primary candidate inventory and its matching
+calm-chroma bound; it does not isolate either mechanism as a sole cause.
+Downstream roles respond to the selected Primary, so the result describes the
+coupled engine. Higher realized OKLCH C does not establish perceived vividness,
+aesthetic improvement, optimal chroma, population prevalence, or a policy
+recommendation.
+
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;
 - warning search uses a research-policy amber family rather than learning a

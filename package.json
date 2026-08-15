@@ -14,6 +14,7 @@
     "diagnose:feedback-candidates": "node scripts/report-feedback-candidate-availability.mjs",
     "diagnose:mode-range": "node scripts/report-mode-range-counterfactual.mjs",
     "diagnose:pair-ranking": "node scripts/report-pair-ranking-counterfactual.mjs",
+    "diagnose:primary-chroma": "node scripts/report-primary-chroma-counterfactual.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{js,mjs,json,yml}\"",
     "format:check": "prettier --check \"**/*.{js,mjs,json,yml}\"",
@@ -22,6 +23,7 @@
     "test:counterfactual": "node --test test/heavy/v2-mode-range-counterfactual.test.js",
     "test:feedback-candidates": "node --test test/heavy/v2-feedback-candidate-availability.test.js",
     "test:pair-ranking-counterfactual": "node --test test/heavy/v2-pair-ranking-counterfactual.test.js",
+    "test:primary-chroma-counterfactual": "node --test test/heavy/v2-primary-chroma-counterfactual.test.js",
     "test:fast": "node --test test/*.test.js",
     "test:exhaustive": "node --test test/exhaustive/*.test.js"
   },

@@ -137,9 +137,16 @@ export function selectCandidate({
       evidence,
       searchPlot:
         retainPlot === "detailed"
-          ? evaluated.map(({ candidate, evaluation, ranking }) =>
-              compactCandidate(candidate, evaluation, ranking),
-            )
+          ? evaluated.map(({ candidate, evaluation, ranking }) => ({
+              ...compactCandidate(candidate, evaluation, ranking),
+              parameters: candidate.parameters,
+              stateFamily: candidate.family
+                ? {
+                    hover: candidate.family.hover.value.hex,
+                    active: candidate.family.active.value.hex,
+                  }
+                : null,
+            }))
           : retainPlot
             ? evaluated.map(({ candidate, evaluation }) => ({
                 hex: candidate.hex,

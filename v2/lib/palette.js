@@ -18,6 +18,10 @@ import {
 import { evaluateV2Semantics } from "./semantic-model.js";
 import { diagnosePrimaryHover } from "./hover-diagnostics.js";
 import {
+  PRIMARY_CHROMA_EXPERIMENT,
+  primaryChromaRequests,
+} from "./primary-chroma-experiment.js";
+import {
   apcaContrast,
   bindRule,
   boundedSet,
@@ -445,10 +449,14 @@ function brandFamilySearch({
   surface,
   primaryRange,
   allowInfeasibleStateCandidates = false,
+  primaryChromaExperiment = null,
 }) {
   const policy = decisionPolicy("primary");
   const [start, end] = primaryRange ?? V2_POLICY.primary.lightnessRange[mode];
-  const source = candidate(input.hex, { lightness: input.l });
+  const source = candidate(input.hex, {
+    lightness: input.l,
+    ...(primaryChromaExperiment ? { requestedOrigins: [] } : {}),
+  });
   const candidates = [];
   let infeasibleStateCandidateCount = 0;
   const addFamily = (primary) => {
@@ -480,13 +488,50 @@ function brandFamilySearch({
   const sourceCanGenerateStates =
     mode === "light" ? source.oklch.l > 0.1 : source.oklch.l < 0.9;
   candidates.push(sourceCanGenerateStates ? addFamily(source) : source);
-  for (
-    let lightness = start;
-    lightness <= end + V2_POLICY.search.candidateStep / 2;
-    lightness += V2_POLICY.search.candidateStep
-  ) {
-    const primary = brandCandidate(input, lightness);
-    if (primary.hex !== source.hex) candidates.push(addFamily(primary));
+  if (!primaryChromaExperiment) {
+    for (
+      let lightness = start;
+      lightness <= end + V2_POLICY.search.candidateStep / 2;
+      lightness += V2_POLICY.search.candidateStep
+    ) {
+      const primary = brandCandidate(input, lightness);
+      if (primary.hex !== source.hex) candidates.push(addFamily(primary));
+    }
+  } else {
+    const generated = new Map();
+    for (
+      let lightness = start;
+      lightness <= end + V2_POLICY.search.candidateStep / 2;
+      lightness += V2_POLICY.search.candidateStep
+    ) {
+      for (const requestedChroma of primaryChromaExperiment.requestedChromas) {
+        const primary = candidate(
+          tone({ l: lightness, c: requestedChroma, h: input.h }),
+          {
+            lightness,
+            requestedOrigins: [
+              { requestedLightness: lightness, requestedChroma },
+            ],
+          },
+        );
+        if (primary.hex === source.hex) {
+          source.parameters.requestedOrigins.push(
+            ...primary.parameters.requestedOrigins,
+          );
+          continue;
+        }
+        const existing = generated.get(primary.hex);
+        if (existing) {
+          existing.parameters.requestedOrigins.push(
+            ...primary.parameters.requestedOrigins,
+          );
+        } else {
+          generated.set(primary.hex, primary);
+        }
+      }
+    }
+    for (const primary of generated.values())
+      candidates.push(addFamily(primary));
   }
   const selection = selectCandidate({
     id: `${mode}.primary`,
@@ -519,7 +564,9 @@ function brandFamilySearch({
         };
       }),
       bindRule(policy, "constraints", "primary.calm-chroma", (item) => {
-        const maximum = input.brandChroma + V2_POLICY.primary.chromaTolerance;
+        const maximum =
+          (primaryChromaExperiment?.maximumRequestedChroma ??
+            input.brandChroma) + V2_POLICY.primary.chromaTolerance;
         const passed = item.oklch.c <= maximum;
         return {
           passed,
@@ -563,6 +610,7 @@ function brandFamilySearch({
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "calmMinimal"),
     searchConstants: ["input hue", "bounded source chroma"],
+    retainPlot: primaryChromaExperiment ? "detailed" : false,
   });
   return {
     primary: selection.value,
@@ -987,6 +1035,7 @@ function modePalette(input, mode, options = {}) {
     surface: foundations.surface,
     primaryRange: options.primaryRange,
     allowInfeasibleStateCandidates: options.allowInfeasibleStateCandidates,
+    primaryChromaExperiment: options.primaryChromaExperiment,
   });
   const primary = brandFamily.primary.hex;
   const primaryHover = brandFamily.hover.hex;
@@ -1490,12 +1539,23 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
         ? 0
         : Math.min(V2_POLICY.primary.chromaCap, rawInput.c),
   };
+  const chromaRequests = primaryChromaRequests(rawInput.c);
+  const primaryChromaExperiment =
+    diagnosticOptions?.experiment === "primary-chroma-ladder"
+      ? {
+          ...PRIMARY_CHROMA_EXPERIMENT,
+          requestedChromaOrigins: chromaRequests.origins,
+          requestedChromas: chromaRequests.distinct,
+          maximumRequestedChroma: rawInput.c,
+        }
+      : null;
   const buildMode = (input, mode, options = {}) =>
     modePalette(input, mode, {
       ...options,
       allowInfeasibleStateCandidates: Boolean(
         diagnosticOptions?.allowInfeasibleStateCandidates,
       ),
+      primaryChromaExperiment,
     });
   const baselineModes = {
     light: buildMode(inputColor, "light", {
@@ -1555,6 +1615,7 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
             authority: "diagnostic",
             baselinePolicyVersion: V2_POLICY.version,
             ...diagnosticOptions,
+            ...(primaryChromaExperiment ? { primaryChromaExperiment } : {}),
           },
         }
       : {}),
@@ -1590,6 +1651,14 @@ export function generatePaletteV2PairRankingCounterfactual({
   return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
     experiment: "pair-ranking",
     pairRankingStrategy: strategy,
+  });
+}
+
+export function generatePaletteV2PrimaryChromaCounterfactual({ primary }) {
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: "primary-chroma-ladder",
+    strategy: PRIMARY_CHROMA_EXPERIMENT.id,
+    experimentDefinition: PRIMARY_CHROMA_EXPERIMENT,
   });
 }
 
