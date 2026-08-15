@@ -103,6 +103,10 @@ promotion contract. No semantic output role remains a policy anchor.
   provisional producer hue checks and keeps its 59 flagged inputs, 118
   input-by-mode cases, and 120 failed check occurrences distinct. Source cohorts
   and input-level overlaps remain descriptive and noncausal.
+- `npm run diagnose:feedback-candidates` examines only those 120 failed checks.
+  The reviewed v12 census finds role-local default-fill alternatives for 43:
+  42 of 54 Warning cases but only 1 of 66 Destructive cases. It does not prove
+  complete state-family or joint feedback substitution feasibility.
 - `npm run diagnose:mode-range` compares three diagnostic-only range
   counterfactuals. In the reviewed 216-input run, symmetric, outward-only, and
   source-inclusive expansion are not policy candidates as tested: none resolves
@@ -116,9 +120,11 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Next migration
 
-1. Review whether utility aliases need semantic declarations beyond their
+1. Use the role-local availability split to specify a narrow Destructive
+   candidate-inventory hypothesis before changing hue thresholds or policy.
+2. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-2. Promote thresholds from `heuristic` to `empirical` only with a separately
+3. Promote thresholds from `heuristic` to `empirical` only with a separately
    authorized dataset and analysis.
-3. Review upstream `apca-w3` releases before changing the pinned verification
+4. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

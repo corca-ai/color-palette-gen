@@ -46,6 +46,31 @@ function minimumQualityCheck({ id, label, value, minimum, unit = "" }) {
   };
 }
 
+export function semanticHueReviewCheck({
+  mode,
+  relationship,
+  primary,
+  feedback,
+}) {
+  const labels = {
+    destructive: "destructive",
+    warning: "warning",
+  };
+  if (!["light", "dark"].includes(mode) || !labels[relationship]) {
+    throw new TypeError("semantic hue review requires a known mode and role.");
+  }
+  const chromatic =
+    primary.oklch.c >= V2_POLICY.semanticReview.chromaFloor &&
+    feedback.oklch.c >= V2_POLICY.semanticReview.chromaFloor;
+  return minimumQualityCheck({
+    id: `review.${mode}.primary-${relationship}-hue`,
+    label: `${mode} primary ↔ ${labels[relationship]} hue`,
+    value: chromatic ? hueDistance(primary.oklch.h, feedback.oklch.h) : 180,
+    minimum: V2_POLICY.semanticReview.minimumHueSeparation,
+    unit: chromatic ? "°" : "° · achromatic exemption",
+  });
+}
+
 function stateProgression(modeResult, family = "primary") {
   const values = modeResult.values;
   const primary = candidate(values[family]);
@@ -175,31 +200,19 @@ export function independentPaletteReview(input, modes, structuralQuality) {
     const primary = candidate(values.primary);
     const destructive = candidate(values.destructive);
     const warning = candidate(values.warning);
-    const hueCheck = (id, label, first, second) => {
-      const chromatic =
-        first.oklch.c >= V2_POLICY.semanticReview.chromaFloor &&
-        second.oklch.c >= V2_POLICY.semanticReview.chromaFloor;
-      return minimumQualityCheck({
-        id,
-        label,
-        value: chromatic ? hueDistance(first.oklch.h, second.oklch.h) : 180,
-        minimum: V2_POLICY.semanticReview.minimumHueSeparation,
-        unit: chromatic ? "°" : "° · achromatic exemption",
-      });
-    };
     return [
-      hueCheck(
-        `review.${mode}.primary-destructive-hue`,
-        `${mode} primary ↔ destructive hue`,
+      semanticHueReviewCheck({
+        mode,
+        relationship: "destructive",
         primary,
-        destructive,
-      ),
-      hueCheck(
-        `review.${mode}.primary-warning-hue`,
-        `${mode} primary ↔ warning hue`,
+        feedback: destructive,
+      }),
+      semanticHueReviewCheck({
+        mode,
+        relationship: "warning",
         primary,
-        warning,
-      ),
+        feedback: warning,
+      }),
     ];
   });
   const checks = [

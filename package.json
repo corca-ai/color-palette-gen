@@ -11,6 +11,7 @@
     "check:e2e:smoke": "playwright test --grep @smoke",
     "check:e2e:full": "playwright test",
     "diagnose:adversarial": "node scripts/report-adversarial-diagnostics.mjs",
+    "diagnose:feedback-candidates": "node scripts/report-feedback-candidate-availability.mjs",
     "diagnose:mode-range": "node scripts/report-mode-range-counterfactual.mjs",
     "diagnose:pair-ranking": "node scripts/report-pair-ranking-counterfactual.mjs",
     "lint": "eslint .",
@@ -19,6 +20,7 @@
     "test": "npm run test:fast",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-include='lib/**/*.js' --test-coverage-include='v2/lib/**/*.js' --test-coverage-include='scripts/check-public-artifact.mjs' --test-coverage-lines=90 --test-coverage-functions=85 --test-coverage-branches=80 test/*.test.js",
     "test:counterfactual": "node --test test/heavy/v2-mode-range-counterfactual.test.js",
+    "test:feedback-candidates": "node --test test/heavy/v2-feedback-candidate-availability.test.js",
     "test:pair-ranking-counterfactual": "node --test test/heavy/v2-pair-ranking-counterfactual.test.js",
     "test:fast": "node --test test/*.test.js",
     "test:exhaustive": "node --test test/exhaustive/*.test.js"

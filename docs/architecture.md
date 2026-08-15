@@ -21,6 +21,9 @@ this document owns component and runtime boundaries.
   `mode-range-counterfactual.js` own on-demand, non-normative analysis over
   generated results. `pair-ranking-counterfactual.js` isolates one fixed
   pair-selection ordering probe over the unchanged sampled candidate set.
+  `feedback-candidate-availability.js` orchestrates a separate role-local
+  default-fill feasibility census while `palette.js` and `quality.js` retain
+  ownership of candidate inventories, constraints, objectives, and hue checks.
   Counterfactual overrides bypass the production palette cache and are not
   exposed through the site UI.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive

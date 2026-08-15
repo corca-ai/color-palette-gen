@@ -135,13 +135,18 @@ export function selectCandidate({
       candidateCount: evaluated.length,
       searchConstants,
       evidence,
-      searchPlot: retainPlot
-        ? evaluated.map(({ candidate, evaluation }) => ({
-            hex: candidate.hex,
-            oklch: candidate.oklch,
-            passed: evaluation.passed,
-          }))
-        : [],
+      searchPlot:
+        retainPlot === "detailed"
+          ? evaluated.map(({ candidate, evaluation, ranking }) =>
+              compactCandidate(candidate, evaluation, ranking),
+            )
+          : retainPlot
+            ? evaluated.map(({ candidate, evaluation }) => ({
+                hex: candidate.hex,
+                oklch: candidate.oklch,
+                passed: evaluation.passed,
+              }))
+            : [],
       selected: compactCandidate(
         selected.candidate,
         selected.evaluation,

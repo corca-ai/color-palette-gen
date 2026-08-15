@@ -177,6 +177,33 @@ same checks now gate selection, so zero selected misses demonstrate policy
 compliance rather than independent palette quality. Candidate search remains
 bounded and perceived pair quality remains unmeasured.
 
+## Feedback default-candidate availability
+
+`npm run diagnose:feedback-candidates` follows the 59 inputs and 120 failed
+semantic-hue check occurrences identified by adversarial diagnostics v3. It
+regenerates the producer-owned Destructive or Warning default-fill inventory,
+keeps the selected surrounding roles fixed, and asks whether any candidate
+passes both its existing base constraints and the same provisional hue review.
+
+The reviewed v12 census finds a role-local default-fill alternative in 43 of
+120 failed-check cells. Of 54 failed Warning-check cases, 42 have such an
+alternative; only 1 of 66 failed Destructive-check cases does (`#663300`,
+Light, `#97000D`).
+By mode, Light has 22 of 60 and Dark has 21 of 60 locally available cases.
+Under this exact probe, the existing Warning inventory contains a qualifying
+candidate in 42/54 scoped cases versus 1/66 for Destructive. The census does not
+isolate ranking, inventory shape, constraints, or frozen-role dependencies as
+the cause of that difference.
+
+This is not a full-palette repair claim. Warning alternatives are conditional
+on the selected Primary and Destructive. Destructive alternatives are
+conditional on the selected Primary, and the current Warning is not
+revalidated. The probe does not build hover/active states, select one shared
+label, check state pacing, jointly replace Destructive and Warning, establish
+semantic meaning, or recommend a production-policy change. Its denominator is
+the 120 failed checks, not all 236 cells within the 59-input flagged scope or a
+population sample.
+
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;
 - warning search uses a research-policy amber family rather than learning a

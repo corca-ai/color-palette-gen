@@ -195,6 +195,7 @@ vibe/harmony 후보 및 다중 색상 입력 조합은 보존된 v1 엔진의 �
 
 ```sh
 npm run diagnose:adversarial > report.json
+npm run diagnose:feedback-candidates > feedback-candidates.json
 npm run diagnose:mode-range > mode-range.json
 npm run diagnose:pair-ranking > pair-ranking.json
 ```
@@ -207,6 +208,10 @@ npm run diagnose:pair-ranking > pair-ranking.json
 adversarial 리포트의 `semanticHueReview`는 기존의 네 Primary ↔
 Destructive/Warning provisional hue 검사를 input, mode, relationship 단위로
 분리하지만 원인이나 시지각적 혼동을 판정하지 않습니다.
+feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 현재 역할별
+기본색 후보군에 기존 제약과 동일한 hue 검사를 함께 통과하는 후보가 있는지
+확인합니다. hover/active 상태, 공통 label, pacing, Destructive와 Warning의 공동
+대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
 
 ## 보존된 v1 접근성 대비 모델
 

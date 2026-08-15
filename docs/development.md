@@ -26,6 +26,12 @@
   section reports the four existing provisional Primary ↔ Destructive/Warning
   checks with separate input, input-by-mode, and check-opportunity denominators;
   its source cohorts and overlaps are descriptive rather than causal.
+- Run `npm run diagnose:feedback-candidates > feedback-candidates.json` to
+  inspect role-local default-fill alternatives for the 120 failed semantic-hue
+  checks identified by adversarial diagnostics v3. Run
+  `npm run test:feedback-candidates` when refreshing the reviewed census. Both
+  are on-demand and excluded from CI. This probe does not establish complete
+  state families, joint Destructive/Warning substitution, or perception.
 - Run `npm run diagnose:mode-range > mode-range.json` for the heavier,
   on-demand counterfactual comparison of current, widened,
   gap-preserving-outward, and source-inclusive Primary lightness ranges. It is

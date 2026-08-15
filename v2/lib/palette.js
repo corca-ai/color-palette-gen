@@ -12,6 +12,7 @@ import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
 import {
   independentPaletteReview,
   pairedQuality,
+  semanticHueReviewCheck,
   sourceUsageAlternatives,
 } from "./quality.js";
 import { evaluateV2Semantics } from "./semantic-model.js";
@@ -576,7 +577,12 @@ function brandFamilySearch({
   };
 }
 
-function destructiveSearch({ mode, primary, preferredLightness }) {
+function destructiveSearch({
+  mode,
+  primary,
+  preferredLightness,
+  retainPlot = false,
+}) {
   const policy = decisionPolicy("destructive");
   const [start, end] = V2_POLICY.destructive.lightnessRange[mode];
   const candidates = [];
@@ -638,10 +644,11 @@ function destructiveSearch({ mode, primary, preferredLightness }) {
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
     searchConstants: ["semantic red hue", "requested chroma"],
+    retainPlot,
   });
 }
 
-function warningSearch({ mode, primary, destructive }) {
+function warningSearch({ mode, primary, destructive, retainPlot = false }) {
   const policy = decisionPolicy("warning");
   const preferredLightness = V2_POLICY.feedback.warningLightness[mode];
   const anchor = candidate(
@@ -723,7 +730,7 @@ function warningSearch({ mode, primary, destructive }) {
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
     searchConstants: ["bounded amber hue candidates", "warning chroma"],
-    retainPlot: true,
+    retainPlot: retainPlot === "detailed" ? "detailed" : true,
   });
 }
 
@@ -1304,6 +1311,144 @@ function modePalette(input, mode, options = {}) {
         : {}),
     },
     passed: checks.every((check) => check.pass),
+  };
+}
+
+export function inspectFeedbackDefaultCandidateAvailabilityV2({
+  result,
+  mode,
+  relationship,
+}) {
+  if (
+    result?.version !== 2 ||
+    result.policyVersion !== V2_POLICY.version ||
+    !["light", "dark"].includes(mode) ||
+    !["destructive", "warning"].includes(relationship)
+  ) {
+    throw new TypeError(
+      "feedback candidate inspection requires a current v2 result, mode, and relationship.",
+    );
+  }
+  const modeResult = result.modes[mode];
+  const primary = candidate(modeResult.values.primary);
+  const selectedDestructive = candidate(modeResult.values.destructive);
+  const baselineCheckId = `review.${mode}.primary-${relationship}-hue`;
+  const baselineChecks = result.quality.semanticChecks.filter(
+    ({ id }) => id === baselineCheckId,
+  );
+  if (baselineChecks.length !== 1 || baselineChecks[0].pass) {
+    throw new TypeError(
+      "feedback candidate inspection requires one failed baseline semantic-hue check.",
+    );
+  }
+  const selectedFeedback = candidate(modeResult.values[relationship]);
+  const reproducedBaseline = semanticHueReviewCheck({
+    mode,
+    relationship,
+    primary,
+    feedback: selectedFeedback,
+  });
+  if (
+    JSON.stringify(baselineChecks[0]) !== JSON.stringify(reproducedBaseline)
+  ) {
+    throw new TypeError(
+      "feedback candidate inspection baseline hue evidence must reconcile with selected colors.",
+    );
+  }
+  const search =
+    relationship === "destructive"
+      ? destructiveSearch({
+          mode,
+          primary,
+          preferredLightness: modeResult.adaptations.redConflict
+            ? modeResult.recipe.conflictingDestructive
+            : modeResult.recipe.destructive,
+          retainPlot: "detailed",
+        })
+      : warningSearch({
+          mode,
+          primary,
+          destructive: selectedDestructive,
+          retainPlot: "detailed",
+        });
+  const productionSelected = modeResult.decisions[relationship].selected;
+  if (
+    JSON.stringify(search.trace.selected) !== JSON.stringify(productionSelected)
+  ) {
+    throw new TypeError(
+      "diagnostic feedback inventory must reproduce the production-selected candidate.",
+    );
+  }
+  const candidateIds = search.trace.searchPlot.map(({ hex }) => hex);
+  if (new Set(candidateIds).size !== candidateIds.length) {
+    throw new TypeError(
+      "diagnostic feedback inventory must contain unique rendered candidates.",
+    );
+  }
+  const evaluated = search.trace.searchPlot.map((item) => ({
+    item,
+    hueReview: semanticHueReviewCheck({
+      mode,
+      relationship,
+      primary,
+      feedback: candidate(item.hex),
+    }),
+  }));
+  const basePassing = evaluated.filter(({ item }) => item.passed);
+  const feasible = basePassing.filter(({ hueReview }) => hueReview.pass);
+  const best = feasible[0] ?? null;
+  const siblingRole =
+    relationship === "destructive" ? "warning" : "destructive";
+
+  return {
+    authority: "diagnostic",
+    scope: "role-local-default-fill",
+    input: result.input.primary,
+    mode,
+    relationship,
+    baselineCheck: baselineChecks[0],
+    conditioning: {
+      primary: primary.hex,
+      siblingRole,
+      siblingFeedback: modeResult.values[siblingRole],
+      downstreamSiblingRevalidation: false,
+    },
+    candidateSetIdentity: [
+      result.version,
+      result.policyVersion,
+      result.input.primary,
+      mode,
+      relationship,
+      primary.hex,
+      modeResult.values[siblingRole],
+      search.trace.policy.id,
+      ...search.trace.searchConstants,
+      baselineChecks[0].target,
+      ...candidateIds,
+    ].join("/"),
+    candidateCounts: {
+      inventory: evaluated.length,
+      baseConstraintPassing: basePassing.length,
+      semanticHuePassingAmongBase: feasible.length,
+    },
+    roleLocalAlternativeAvailable: feasible.length > 0,
+    objectiveBestRoleLocalAlternative: best
+      ? {
+          hex: best.item.hex,
+          oklch: best.item.oklch,
+          constraintResults: best.item.constraintResults,
+          objectiveResults: best.item.objectiveResults,
+          tieBreakerResults: best.item.tieBreakerResults,
+          semanticHueReview: best.hueReview,
+        }
+      : null,
+    unestablished: [
+      "hover-active-family-feasibility",
+      "shared-label-family-feasibility",
+      "state-pacing",
+      "joint-feedback-substitution",
+      "perceived-semantic-meaning",
+    ],
   };
 }
 
