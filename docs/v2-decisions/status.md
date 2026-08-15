@@ -99,6 +99,10 @@ promotion contract. No semantic output role remains a policy anchor.
 - the same report decomposes large source shifts by descriptive source-OKLCH
   cohorts, affected mode, actual L/C movement, and the existing constraint IDs
   recorded on the producer's best-ranked rejected Primary candidate.
+- the adversarial report's `semanticHueReview` section validates the exact four
+  provisional producer hue checks and keeps its 59 flagged inputs, 118
+  input-by-mode cases, and 120 failed check occurrences distinct. Source cohorts
+  and input-level overlaps remain descriptive and noncausal.
 - `npm run diagnose:mode-range` compares three diagnostic-only range
   counterfactuals. In the reviewed 216-input run, symmetric, outward-only, and
   source-inclusive expansion are not policy candidates as tested: none resolves

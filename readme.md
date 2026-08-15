@@ -204,6 +204,9 @@ npm run diagnose:pair-ranking > pair-ranking.json
 집합에서 이전 v11 source-first 순서와 현재 v12 zero-miss eligibility 정책을
 비교합니다. 명령 자체는 정책을 변경하거나 최적 해법을 판정하지 않습니다. 출력의
 신호 수와 결과 수렴 그룹은 팔레트 점수나 시지각 품질 판정으로 해석하지 않습니다.
+adversarial 리포트의 `semanticHueReview`는 기존의 네 Primary ↔
+Destructive/Warning provisional hue 검사를 input, mode, relationship 단위로
+분리하지만 원인이나 시지각적 혼동을 판정하지 않습니다.
 
 ## 보존된 v1 접근성 대비 모델
 

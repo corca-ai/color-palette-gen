@@ -1,4 +1,5 @@
 import { generatePaletteV2 } from "./palette.js";
+import { V2_POLICY } from "./policy.js";
 
 export const ADVERSARIAL_CHANNELS = Object.freeze([0, 51, 102, 153, 204, 255]);
 
@@ -41,6 +42,29 @@ const SOURCE_COHORTS = {
   ],
   hueSectorDegrees: 60,
 };
+
+const SEMANTIC_HUE_REVIEW_CHECKS = Object.freeze([
+  {
+    id: "review.light.primary-destructive-hue",
+    mode: "light",
+    relationship: "primary-destructive",
+  },
+  {
+    id: "review.light.primary-warning-hue",
+    mode: "light",
+    relationship: "primary-warning",
+  },
+  {
+    id: "review.dark.primary-destructive-hue",
+    mode: "dark",
+    relationship: "primary-destructive",
+  },
+  {
+    id: "review.dark.primary-warning-hue",
+    mode: "dark",
+    relationship: "primary-warning",
+  },
+]);
 
 function cohortFor(value, definitions) {
   return definitions.find(
@@ -191,10 +215,98 @@ function assertDiagnosticEvidence(result) {
     );
   if (
     !validFlags ||
-    !Number.isInteger(result.pairDecision?.selected?.qualityMisses)
+    !Number.isInteger(result.pairDecision?.selected?.qualityMisses) ||
+    !Number.isInteger(result.pairDecision?.selected?.eligibilityMisses)
   ) {
     throw new TypeError("diagnostic or pair-selection evidence is invalid.");
   }
+}
+
+function assertPairEligibilityEvidence(result) {
+  const expectedIds = V2_POLICY.crossMode.eligibilityCheckIds;
+  const traceIds = result.pairDecision?.eligibility?.checkIds;
+  const selectedMisses = result.pairDecision?.selected?.eligibilityMisses;
+  if (
+    !Array.isArray(traceIds) ||
+    traceIds.length !== expectedIds.length ||
+    traceIds.some((id, index) => id !== expectedIds[index]) ||
+    !Number.isInteger(selectedMisses) ||
+    selectedMisses < 0 ||
+    selectedMisses > expectedIds.length
+  ) {
+    throw new TypeError(
+      "pair eligibility trace must match the policy-owned check IDs and a bounded selected miss count.",
+    );
+  }
+  const checks = expectedIds.map((id) =>
+    result.quality.checks.filter((check) => check.id === id),
+  );
+  if (
+    checks.some(
+      (matches) => matches.length !== 1 || typeof matches[0].pass !== "boolean",
+    ) ||
+    checks.filter(([check]) => !check.pass).length !== selectedMisses
+  ) {
+    throw new TypeError(
+      "selected pair eligibility misses must reconcile with the policy-owned quality checks.",
+    );
+  }
+}
+
+function semanticHueReviewChecks(result) {
+  const checks = result.quality?.semanticChecks;
+  if (!Array.isArray(checks) || checks.length !== 4) {
+    throw new TypeError(
+      "quality.semanticChecks must contain exactly four semantic-hue review verdicts.",
+    );
+  }
+  const byId = new Map();
+  for (const check of checks) {
+    if (
+      typeof check?.id !== "string" ||
+      byId.has(check.id) ||
+      typeof check.pass !== "boolean" ||
+      !Number.isFinite(check.value) ||
+      !Number.isFinite(check.target) ||
+      typeof check.unit !== "string" ||
+      check.authority !== "provisional"
+    ) {
+      throw new TypeError(
+        "quality.semanticChecks must expose unique named verdicts with finite producer evidence.",
+      );
+    }
+    byId.set(check.id, check);
+  }
+  const normalized = SEMANTIC_HUE_REVIEW_CHECKS.map((definition) => {
+    const check = byId.get(definition.id);
+    const aggregate = result.quality.checks.filter(
+      ({ id }) => id === definition.id,
+    );
+    const reconciled =
+      aggregate.length === 1 &&
+      ["pass", "value", "target", "unit", "authority"].every(
+        (field) => aggregate[0][field] === check?.[field],
+      );
+    if (!check || !reconciled) {
+      throw new TypeError(
+        "semantic-hue review verdicts must match the aggregate quality evidence exactly once.",
+      );
+    }
+    return {
+      ...definition,
+      value: check.value,
+      target: check.target,
+      unit: check.unit,
+      authority: check.authority,
+      pass: check.pass,
+    };
+  });
+  if (byId.size !== normalized.length) {
+    throw new TypeError(
+      "quality.semanticChecks contains an unknown semantic-hue review verdict.",
+    );
+  }
+  return normalized;
 }
 
 function assertSource(source) {
@@ -243,14 +355,33 @@ function assertDiagnosticResult(result) {
         `modes.${mode}.adaptations.largeBrandShift must be boolean.`,
       );
     }
+    if (
+      typeof result.modes[mode].passed !== "boolean" ||
+      result.modes[mode].passed !==
+        result.modes[mode].checks.every(({ pass }) => pass)
+    ) {
+      throw new TypeError(
+        `modes.${mode}.passed must reconcile with its contract checks.`,
+      );
+    }
+  }
+  if (
+    result.passed !==
+    [result.modes.light, result.modes.dark].every(({ passed }) => passed)
+  ) {
+    throw new TypeError(
+      "result.passed must reconcile with the Light and Dark contract verdicts.",
+    );
   }
   assertSemanticEvaluation(result.semanticEvaluation);
   assertDiagnosticEvidence(result);
+  assertPairEligibilityEvidence(result);
   assertSource(result.source);
 }
 
 function diagnoseCase(primary, result) {
   assertDiagnosticResult(result);
+  const semanticHueChecks = semanticHueReviewChecks(result);
   const failedContractChecks = ["light", "dark"].flatMap((mode) =>
     result.modes[mode].checks
       .filter(({ pass }) => !pass)
@@ -297,6 +428,8 @@ function diagnoseCase(primary, result) {
     largeBrandShiftModes,
     sourceShiftByMode,
     pairQualityMisses: result.pairDecision.selected.qualityMisses,
+    pairEligibilityMisses: result.pairDecision.selected.eligibilityMisses,
+    semanticHueReviewChecks: semanticHueChecks,
     actionSignature: actionSignature(result),
   };
 }
@@ -402,6 +535,141 @@ function sourceFidelityAnalysis(cases) {
   };
 }
 
+function cohortBreakdown(cases, flagged, select) {
+  const population = {};
+  const flaggedCounts = {};
+  for (const item of cases) increment(population, select(item));
+  for (const item of flagged) increment(flaggedCounts, select(item));
+  return Object.fromEntries(
+    Object.keys(population)
+      .sort((first, second) => first.localeCompare(second))
+      .map((id) => [
+        id,
+        {
+          corpusInputCount: population[id],
+          flaggedInputCount: flaggedCounts[id] ?? 0,
+          flaggedFractionWithinCorpusCohort:
+            (flaggedCounts[id] ?? 0) / population[id],
+        },
+      ]),
+  );
+}
+
+function overlapTable(cases, isFlagged, otherCondition) {
+  const table = { both: 0, semanticHueOnly: 0, otherOnly: 0, neither: 0 };
+  for (const item of cases) {
+    const semanticHue = isFlagged(item);
+    const other = otherCondition(item);
+    if (semanticHue && other) table.both += 1;
+    else if (semanticHue) table.semanticHueOnly += 1;
+    else if (other) table.otherOnly += 1;
+    else table.neither += 1;
+  }
+  return table;
+}
+
+function semanticHueReviewAnalysis(cases) {
+  const failed = (item) =>
+    item.semanticHueReviewChecks.filter(({ pass }) => !pass);
+  const flagged = cases.filter((item) => failed(item).length > 0);
+  const failedCheckCounts = {};
+  const relationshipCounts = {};
+  const modeCounts = {};
+  const exactPatternCounts = {};
+  let failedCheckOccurrenceCount = 0;
+  let flaggedModeCaseCount = 0;
+
+  for (const item of flagged) {
+    const failures = failed(item);
+    failedCheckOccurrenceCount += failures.length;
+    flaggedModeCaseCount += new Set(failures.map(({ mode }) => mode)).size;
+    increment(
+      exactPatternCounts,
+      failures
+        .map(({ id }) => id)
+        .sort()
+        .join("+"),
+    );
+    for (const check of failures) {
+      increment(failedCheckCounts, check.id);
+      increment(relationshipCounts, check.relationship);
+      increment(modeCounts, check.mode);
+    }
+  }
+
+  const isFlagged = (item) => failed(item).length > 0;
+  return {
+    authority: "diagnostic",
+    interpretation:
+      "Describes where four provisional producer hue-separation checks fire in the fixed RGB grid. Source cohorts describe input colors, not the selected Primary colors used by the checks; counts and overlaps do not establish cause, semantic confusion, perception, prevalence, or an empirical threshold.",
+    opportunityCounts: {
+      input: cases.length,
+      inputMode: cases.length * 2,
+      inputModeRelationshipCheck: cases.length * 4,
+    },
+    flaggedInputCount: flagged.length,
+    flaggedModeCaseCount,
+    failedCheckOccurrenceCount,
+    failedCheckCounts: sortedCounts(failedCheckCounts),
+    failedCheckOccurrenceCountsByRelationship: sortedCounts(relationshipCounts),
+    failedCheckOccurrenceCountsByMode: sortedCounts(modeCounts),
+    exactPatternInputCounts: sortedCounts(exactPatternCounts),
+    cohortDefinitions: {
+      lightness: SOURCE_COHORTS.lightness.map(({ id, maximumExclusive }) => ({
+        id,
+        maximumExclusive,
+      })),
+      chroma: [
+        { id: "achromatic", classification: "achromatic" },
+        ...SOURCE_COHORTS.chroma,
+      ],
+      hue: {
+        achromatic: "classification=achromatic",
+        chromaticSectorDegrees: SOURCE_COHORTS.hueSectorDegrees,
+      },
+    },
+    sourceCohorts: {
+      lightness: cohortBreakdown(
+        cases,
+        flagged,
+        ({ sourceProfile }) => sourceProfile.lightnessCohort,
+      ),
+      chroma: cohortBreakdown(
+        cases,
+        flagged,
+        ({ sourceProfile }) => sourceProfile.chromaCohort,
+      ),
+      hueSector: cohortBreakdown(
+        cases,
+        flagged,
+        ({ sourceProfile }) => sourceProfile.hueSector,
+      ),
+    },
+    inputLevelOverlaps: {
+      sourceShift: overlapTable(
+        cases,
+        isFlagged,
+        ({ largeBrandShiftModes }) => largeBrandShiftModes.length > 0,
+      ),
+      contractFailure: overlapTable(
+        cases,
+        isFlagged,
+        ({ failedContractChecks }) => failedContractChecks.length > 0,
+      ),
+      pairEligibilityMiss: overlapTable(
+        cases,
+        isFlagged,
+        ({ pairEligibilityMisses }) => pairEligibilityMisses > 0,
+      ),
+    },
+    flaggedCases: flagged.map((item) => ({
+      input: item.input,
+      sourceProfile: item.sourceProfile,
+      failedChecks: failed(item),
+    })),
+  };
+}
+
 function countSignals(cases) {
   const counts = new Map();
   for (const item of cases) {
@@ -437,6 +705,13 @@ function convergenceGroups(cases) {
           JSON.stringify(second.signature),
         ),
     );
+}
+
+function publicDiagnosticCase(item) {
+  const publicCase = { ...item };
+  delete publicCase.semanticHueReviewChecks;
+  delete publicCase.pairEligibilityMisses;
+  return publicCase;
 }
 
 export function buildAdversarialDiagnosticReport({
@@ -475,9 +750,10 @@ export function buildAdversarialDiagnosticReport({
   const signaledCases = cases.filter(({ signals }) => signals.length > 0);
   const convergences = convergenceGroups(cases);
   const sourceFidelity = sourceFidelityAnalysis(cases);
+  const semanticHueReview = semanticHueReviewAnalysis(cases);
 
   return {
-    schema: "color-palette-adversarial-diagnostics.v2",
+    schema: "color-palette-adversarial-diagnostics.v3",
     authority: "diagnostic",
     interpretation:
       "Maps named deterministic policy signals; it does not score palette quality or establish perceived design intent.",
@@ -496,7 +772,8 @@ export function buildAdversarialDiagnosticReport({
       signalCounts: countSignals(cases),
     },
     sourceFidelity,
-    cases: signaledCases,
+    semanticHueReview,
+    cases: signaledCases.map(publicDiagnosticCase),
     convergenceGroups: convergences,
   };
 }

@@ -53,6 +53,34 @@ that selection does not guarantee source fidelity or semantic hue separation,
 and that the current action recipe often cannot preserve very bright, dark, or
 saturated brand sources.
 
+## Semantic-hue review map
+
+The report separately validates and summarizes the four provisional producer
+checks for Light/Dark Primary ↔ Destructive and Primary ↔ Warning hue
+separation. Their observation units remain distinct: 216 inputs, 432
+input-by-mode cases, and 864 input-by-mode-by-relationship check opportunities.
+The reviewed grid contains 59 flagged inputs, 118 flagged mode cases, and 120
+failed check occurrences.
+
+- Primary ↔ Destructive accounts for 66 failed occurrences: 33 in Light and 33
+  in Dark.
+- Primary ↔ Warning accounts for 54 failed occurrences: 27 in Light and 27 in
+  Dark.
+- 32 inputs fail only the Destructive relationship in both modes, 26 fail only
+  the Warning relationship in both modes, and one fails both relationships in
+  both modes.
+- 26 of the 59 flagged inputs also have a large source shift. No generated
+  contract or selected pair-eligibility miss overlaps the flagged set in this
+  policy/grid snapshot.
+
+The source-cohort marginals include both the full fixed-grid cohort denominator
+and the flagged numerator. They describe the input source color, not the selected
+Primary colors used by the hue checks. In this coarse fixed grid, 32 flagged
+inputs occupy the 0–60° source-hue sector, 26 occupy 60–120°, and one occupies
+300–360°. These bins and overlaps do not establish a cause, semantic confusion,
+perceived meaning, population prevalence, independence between checks, or an
+empirical basis for the 30° threshold.
+
 ## Source-fidelity cohorts
 
 The diagnostic report groups the 115 inputs with at least one large source

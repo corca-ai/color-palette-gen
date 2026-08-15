@@ -22,7 +22,10 @@
   a required gate. Weekly/manual exhaustive CI snapshots the same deterministic
   report behavior and reviewed counts; a changed count requires interpretation,
   not automatic design rejection. Named signals and convergence groups do not
-  score palette quality or establish perception.
+  score palette quality or establish perception. The `semanticHueReview`
+  section reports the four existing provisional Primary ↔ Destructive/Warning
+  checks with separate input, input-by-mode, and check-opportunity denominators;
+  its source cohorts and overlaps are descriptive rather than causal.
 - Run `npm run diagnose:mode-range > mode-range.json` for the heavier,
   on-demand counterfactual comparison of current, widened,
   gap-preserving-outward, and source-inclusive Primary lightness ranges. It is

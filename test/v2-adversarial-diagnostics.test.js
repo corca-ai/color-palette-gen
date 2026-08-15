@@ -9,7 +9,7 @@ test("adversarial diagnostics are deterministic and keep claims bounded", () => 
   const second = buildAdversarialDiagnosticReport({ channels: [255, 0] });
 
   assert.deepEqual(first, second);
-  assert.equal(first.schema, "color-palette-adversarial-diagnostics.v2");
+  assert.equal(first.schema, "color-palette-adversarial-diagnostics.v3");
   assert.equal(first.authority, "diagnostic");
   assert.match(first.interpretation, /does not score palette quality/);
   assert.equal(first.summary.inputCount, 8);
@@ -18,6 +18,151 @@ test("adversarial diagnostics are deterministic and keep claims bounded", () => 
     0,
     "the current engine contracts hold for the small adversarial cube",
   );
+  assert.ok(
+    first.cases.every(
+      (item) =>
+        item.semanticHueReviewChecks === undefined &&
+        item.pairEligibilityMisses === undefined,
+    ),
+  );
+});
+
+test("semantic-hue review keeps input, mode, and check units distinct", () => {
+  const report = buildAdversarialDiagnosticReport({
+    channels: [0],
+    generate: ({ primary }) => {
+      const result = structuredClone(generatePaletteV2({ primary }));
+      const failedIds = new Set([
+        "review.light.primary-destructive-hue",
+        "review.light.primary-warning-hue",
+        "review.dark.primary-warning-hue",
+      ]);
+      for (const check of result.quality.semanticChecks) {
+        check.pass = !failedIds.has(check.id);
+        result.quality.checks.find(({ id }) => id === check.id).pass =
+          check.pass;
+      }
+      return result;
+    },
+  });
+  const review = report.semanticHueReview;
+
+  assert.equal(review.flaggedInputCount, 1);
+  assert.equal(review.flaggedModeCaseCount, 2);
+  assert.equal(review.failedCheckOccurrenceCount, 3);
+  assert.equal(
+    Object.values(review.exactPatternInputCounts).reduce(
+      (total, count) => total + count,
+      0,
+    ),
+    review.flaggedInputCount,
+  );
+  assert.equal(
+    Object.values(review.failedCheckOccurrenceCountsByMode).reduce(
+      (total, count) => total + count,
+      0,
+    ),
+    review.failedCheckOccurrenceCount,
+  );
+  assert.equal(
+    Object.values(review.failedCheckOccurrenceCountsByRelationship).reduce(
+      (total, count) => total + count,
+      0,
+    ),
+    review.failedCheckOccurrenceCount,
+  );
+});
+
+test("adversarial overlaps reconcile contract and eligibility producer evidence", () => {
+  const mutations = [
+    (result) => {
+      result.pairDecision.selected.eligibilityMisses = -1;
+    },
+    (result) => {
+      result.pairDecision.eligibility.checkIds.pop();
+    },
+    (result) => {
+      result.pairDecision.eligibility.checkIds[1] =
+        result.pairDecision.eligibility.checkIds[0];
+    },
+    (result) => {
+      result.pairDecision.selected.eligibilityMisses += 1;
+    },
+    (result) => {
+      const id = result.pairDecision.eligibility.checkIds[0];
+      result.quality.checks = result.quality.checks.filter(
+        (check) => check.id !== id,
+      );
+    },
+    (result) => {
+      const id = result.pairDecision.eligibility.checkIds[0];
+      result.quality.checks.push(
+        result.quality.checks.find((check) => check.id === id),
+      );
+    },
+    (result) => {
+      result.passed = !result.passed;
+    },
+    (result) => {
+      result.modes.light.passed = !result.modes.light.passed;
+    },
+  ];
+
+  for (const mutate of mutations) {
+    assert.throws(
+      () =>
+        buildAdversarialDiagnosticReport({
+          channels: [0],
+          generate: ({ primary }) => {
+            const result = structuredClone(generatePaletteV2({ primary }));
+            mutate(result);
+            return result;
+          },
+        }),
+      /eligibility|passed must reconcile/,
+    );
+  }
+});
+
+test("semantic-hue review fails closed on malformed or divergent producer evidence", () => {
+  const invalid = [
+    (result) => result.quality.semanticChecks.pop(),
+    (result) =>
+      result.quality.semanticChecks.push(result.quality.semanticChecks[0]),
+    (result) => {
+      result.quality.semanticChecks[0].id = "review.light.unknown-hue";
+    },
+    (result) => {
+      delete result.quality.semanticChecks[0].pass;
+    },
+    (result) => {
+      result.quality.semanticChecks[0].authority = "empirical";
+    },
+    (result) => {
+      const semantic = result.quality.semanticChecks[0];
+      const index = result.quality.checks.findIndex(
+        ({ id }) => id === semantic.id,
+      );
+      result.quality.checks[index] = { ...result.quality.checks[index] };
+      result.quality.semanticChecks[0].pass =
+        !result.quality.semanticChecks[0].pass;
+    },
+  ];
+
+  for (const mutate of invalid) {
+    assert.throws(
+      () =>
+        buildAdversarialDiagnosticReport({
+          channels: [0],
+          generate: ({ primary }) => {
+            const result = structuredClone(generatePaletteV2({ primary }));
+            mutate(result);
+            return result;
+          },
+        }),
+      /semantic-hue review|semanticChecks|quality\.checks/,
+    );
+  }
 });
 
 test("adversarial diagnostics expose named signals and convergence", () => {
