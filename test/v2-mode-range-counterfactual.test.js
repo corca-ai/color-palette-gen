@@ -61,6 +61,10 @@ test("mode-range counterfactuals expose gains and losses without a verdict", () 
     light: [0.42, 0.58],
     dark: [0.54, 0.66],
   });
+  assert.deepEqual(first.experiments["gap-preserving-outward"].ranges, {
+    light: [0.42, 0.54],
+    dark: [0.58, 0.66],
+  });
   assert.equal(first.summaries.current.inputCount, 1);
   assert.equal(first.resultVersion, 2);
   assert.equal(first.semanticModel.id, "v2-declarative-design");

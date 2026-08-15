@@ -93,9 +93,11 @@ the resulting design.
 
 ## Known search limits
 
-`npm run diagnose:mode-range` separately runs two counterfactual Primary-range
+`npm run diagnose:mode-range` separately runs three counterfactual Primary-range
 experiments over the same fixed grid. `widened` expands each current endpoint by
-0.04. `source-inclusive` extends each mode range only far enough to contain that
+0.04. `gap-preserving-outward` lowers only the Light minimum and raises only the
+Dark maximum by 0.04, leaving the inward-facing endpoints unchanged.
+`source-inclusive` extends each mode range only far enough to contain that
 input's source OKLCH lightness. The report compares source-shift, contract,
 quality, semantic, pair-quality, and distance outcomes against the unchanged
 policy baseline. These are deliberately strong probes, not candidate policy
@@ -113,15 +115,20 @@ Against `v2-policy-model-11`, the fixed 216-input run shows:
 - widening every endpoint by 0.04 reduces shifted inputs from 115 to 95 and
   mean mode source distance from 0.1802 to 0.1602, with no generated-contract
   failures, but increases inputs with paired-quality misses from 4 to 150;
+- widening only the outward endpoints leaves shifted inputs unchanged at 115,
+  reduces affected mode cases by 3 and mean mode source distance from 0.1802
+  to 0.1779, but increases paired-quality misses from 4 to 16;
 - extending both ranges to include each source reduces shifted inputs to 1 and
   mean mode source distance to 0.0513, but produces 3 generated-contract
   failures and 186 inputs with paired-quality misses.
 
-Neither probe is a policy candidate as tested. The first exchanges a modest
-source-fidelity gain for widespread cross-mode or pacing failures; the second
-mostly removes source distance while producing paired lightness-gap or state-
-pacing misses on 186 inputs. Future range work needs a more constrained
-hypothesis rather than a larger interval alone.
+None of the three probes is a policy candidate as tested. Symmetric widening
+exchanges a modest source-fidelity gain for widespread cross-mode failures;
+outward-only widening does not resolve any shifted input and still adds
+lightness-gap misses; source inclusion mostly removes source distance while
+producing paired lightness-gap or state-pacing misses on 186 inputs. These
+results motivate testing a candidate-selection hypothesis before another
+undirected interval expansion.
 
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;

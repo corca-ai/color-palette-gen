@@ -24,9 +24,10 @@
   not automatic design rejection. Named signals and convergence groups do not
   score palette quality or establish perception.
 - Run `npm run diagnose:mode-range > mode-range.json` for the heavier,
-  on-demand counterfactual comparison of current, widened, and source-inclusive
-  Primary lightness ranges. It is deliberately excluded from CI and does not
-  change the production policy or identify an optimal range.
+  on-demand counterfactual comparison of current, widened,
+  gap-preserving-outward, and source-inclusive Primary lightness ranges. It is
+  deliberately excluded from CI and does not change the production policy or
+  identify an optimal range.
   Run `npm run test:counterfactual` when refreshing its published 216-input
   counts; this dedicated heavy snapshot is also excluded from CI.
 - Install the Playwright browser once with `npx playwright install chromium`;

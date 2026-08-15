@@ -40,6 +40,15 @@ function widenedRanges() {
   );
 }
 
+function gapPreservingOutwardRanges() {
+  const light = V2_POLICY.primary.lightnessRange.light;
+  const dark = V2_POLICY.primary.lightnessRange.dark;
+  return {
+    light: [bounded(light[0] - WIDENING), light[1]],
+    dark: [dark[0], bounded(dark[1] + WIDENING)],
+  };
+}
+
 function sourceInclusiveRanges(sourceLightness) {
   return Object.fromEntries(
     Object.entries(V2_POLICY.primary.lightnessRange).map(
@@ -308,7 +317,12 @@ export function buildModeRangeCounterfactualReport({
 } = {}) {
   validateChannels(channels);
   const inputs = inputGrid([...new Set(channels)].sort((a, b) => a - b));
-  const variants = { current: [], widened: [], "source-inclusive": [] };
+  const variants = {
+    current: [],
+    widened: [],
+    "gap-preserving-outward": [],
+    "source-inclusive": [],
+  };
   let baselineIdentity;
 
   for (const input of inputs) {
@@ -318,6 +332,7 @@ export function buildModeRangeCounterfactualReport({
     assertIdentity(currentResult, baselineIdentity);
     const currentRanges = copyRanges(V2_POLICY.primary.lightnessRange);
     const wideRanges = widenedRanges();
+    const outwardRanges = gapPreservingOutwardRanges();
     const inclusiveRanges = sourceInclusiveRanges(currentResult.source.oklch.l);
     const widenedResult = generatePaletteV2Counterfactual({
       primary: input,
@@ -327,17 +342,25 @@ export function buildModeRangeCounterfactualReport({
       primary: input,
       primaryLightnessRanges: inclusiveRanges,
     });
+    const outwardResult = generatePaletteV2Counterfactual({
+      primary: input,
+      primaryLightnessRanges: outwardRanges,
+    });
     assertIdentity(widenedResult, baselineIdentity);
+    assertIdentity(outwardResult, baselineIdentity);
     assertIdentity(sourceInclusiveResult, baselineIdentity);
     variants.current.push(observation(input, currentResult, currentRanges));
     variants.widened.push(observation(input, widenedResult, wideRanges));
+    variants["gap-preserving-outward"].push(
+      observation(input, outwardResult, outwardRanges),
+    );
     variants["source-inclusive"].push(
       observation(input, sourceInclusiveResult, inclusiveRanges),
     );
   }
 
   return {
-    schema: "color-palette-mode-range-counterfactual.v1",
+    schema: "color-palette-mode-range-counterfactual.v2",
     authority: "diagnostic",
     ...baselineIdentity,
     interpretation:
@@ -356,6 +379,12 @@ export function buildModeRangeCounterfactualReport({
         wideningPerEndpoint: WIDENING,
         ranges: widenedRanges(),
       },
+      "gap-preserving-outward": {
+        kind: "fixed-outward-endpoint-expansion",
+        wideningPerOuterEndpoint: WIDENING,
+        rule: "Lower only the Light minimum and raise only the Dark maximum, preserving the current inward-facing endpoints.",
+        ranges: gapPreservingOutwardRanges(),
+      },
       "source-inclusive": {
         kind: "per-input-range-extension",
         rule: "Extend each current mode range only far enough to include the source OKLCH lightness.",
@@ -366,6 +395,10 @@ export function buildModeRangeCounterfactualReport({
     ),
     comparisonsToCurrent: {
       widened: comparison(variants.current, variants.widened),
+      "gap-preserving-outward": comparison(
+        variants.current,
+        variants["gap-preserving-outward"],
+      ),
       "source-inclusive": comparison(
         variants.current,
         variants["source-inclusive"],
