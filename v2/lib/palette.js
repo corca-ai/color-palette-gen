@@ -1,6 +1,11 @@
 import { isHex, normalizeHex } from "../../lib/color-math.js";
 import { apcaCheck } from "./apca.js";
-import { aliasDecision, inputDecision, selectCandidate } from "./decision.js";
+import {
+  aliasDecision,
+  inputDecision,
+  NoCandidateError,
+  selectCandidate,
+} from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 import { selectModePair } from "./pair-selection.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
@@ -432,25 +437,44 @@ function stateSearch({ mode, base, role, target, labelText, labelLc }) {
   });
 }
 
-function brandFamilySearch({ input, mode, background, surface, primaryRange }) {
+function brandFamilySearch({
+  input,
+  mode,
+  background,
+  surface,
+  primaryRange,
+  allowInfeasibleStateCandidates = false,
+}) {
   const policy = decisionPolicy("primary");
   const [start, end] = primaryRange ?? V2_POLICY.primary.lightnessRange[mode];
   const source = candidate(input.hex, { lightness: input.l });
   const candidates = [];
+  let infeasibleStateCandidateCount = 0;
   const addFamily = (primary) => {
-    const hover = stateSearch({
-      mode,
-      base: primary,
-      role: "primary hover",
-      target: V2_POLICY.state.separation.hoverFromDefault,
-    });
-    const active = stateSearch({
-      mode,
-      base: primary,
-      role: "primary active",
-      target: V2_POLICY.state.separation.activeFromDefault,
-    });
-    return { ...primary, family: { hover, active } };
+    try {
+      const hover = stateSearch({
+        mode,
+        base: primary,
+        role: "primary hover",
+        target: V2_POLICY.state.separation.hoverFromDefault,
+      });
+      const active = stateSearch({
+        mode,
+        base: primary,
+        role: "primary active",
+        target: V2_POLICY.state.separation.activeFromDefault,
+      });
+      return { ...primary, family: { hover, active } };
+    } catch (error) {
+      if (
+        !allowInfeasibleStateCandidates ||
+        !(error instanceof NoCandidateError)
+      ) {
+        throw error;
+      }
+      infeasibleStateCandidateCount += 1;
+      return primary;
+    }
   };
   const sourceCanGenerateStates =
     mode === "light" ? source.oklch.l > 0.1 : source.oklch.l < 0.9;
@@ -548,6 +572,7 @@ function brandFamilySearch({ input, mode, background, surface, primaryRange }) {
       "primary hover": selection.value.family.hover.trace,
       "primary active": selection.value.family.active.trace,
     },
+    infeasibleStateCandidateCount,
   };
 }
 
@@ -954,6 +979,7 @@ function modePalette(input, mode, options = {}) {
     background: foundations.background,
     surface: foundations.surface,
     primaryRange: options.primaryRange,
+    allowInfeasibleStateCandidates: options.allowInfeasibleStateCandidates,
   });
   const primary = brandFamily.primary.hex;
   const primaryHover = brandFamily.hover.hex;
@@ -1270,18 +1296,43 @@ function modePalette(input, mode, options = {}) {
           ? 0
           : Math.min(V2_POLICY.neutral.tintCap, input.brandChroma * 0.52),
       redConflict,
+      ...(options.allowInfeasibleStateCandidates
+        ? {
+            diagnosticInfeasiblePrimaryStateCandidateCount:
+              brandFamily.infeasibleStateCandidateCount,
+          }
+        : {}),
     },
     passed: checks.every((check) => check.pass),
   };
 }
 
-export function generatePaletteV2({ primary }) {
+function validatePrimaryRanges(primaryRanges) {
+  const valid = ["light", "dark"].every((mode) => {
+    const range = primaryRanges?.[mode];
+    return (
+      Array.isArray(range) &&
+      range.length === 2 &&
+      range.every(Number.isFinite) &&
+      range[0] >= 0 &&
+      range[1] <= 1 &&
+      range[0] <= range[1]
+    );
+  });
+  if (!valid) {
+    throw new TypeError(
+      "primaryLightnessRanges must contain ordered light and dark ranges within 0–1.",
+    );
+  }
+}
+
+function generatePalette(primary, primaryRanges, diagnosticOverride = false) {
   if (typeof primary !== "string" || !isHex(primary)) {
     throw new TypeError("primary must be a six-digit hex color.");
   }
   const normalizedPrimary = normalizeHex(primary);
   const cacheKey = `${V2_POLICY.version}/${normalizedPrimary}`;
-  const cached = paletteCache.get(cacheKey);
+  const cached = diagnosticOverride ? null : paletteCache.get(cacheKey);
   if (cached) return cached;
   const rawInput = candidate(normalizedPrimary).oklch;
   const classification = classifyInput(rawInput);
@@ -1294,11 +1345,25 @@ export function generatePaletteV2({ primary }) {
         ? 0
         : Math.min(V2_POLICY.primary.chromaCap, rawInput.c),
   };
+  const buildMode = (input, mode, options = {}) =>
+    modePalette(input, mode, {
+      ...options,
+      allowInfeasibleStateCandidates: diagnosticOverride,
+    });
   const baselineModes = {
-    light: modePalette(inputColor, "light"),
-    dark: modePalette(inputColor, "dark"),
+    light: buildMode(inputColor, "light", {
+      primaryRange: primaryRanges.light,
+    }),
+    dark: buildMode(inputColor, "dark", {
+      primaryRange: primaryRanges.dark,
+    }),
   };
-  const pairSelection = selectModePair(inputColor, baselineModes, modePalette);
+  const pairSelection = selectModePair(
+    inputColor,
+    baselineModes,
+    buildMode,
+    primaryRanges,
+  );
   const { modes } = pairSelection;
   const quality = independentPaletteReview(
     inputColor,
@@ -1330,8 +1395,32 @@ export function generatePaletteV2({ primary }) {
     pairDecision: pairSelection.decision,
     sourceAlternatives,
     passed: Object.values(modes).every((mode) => mode.passed),
+    ...(diagnosticOverride
+      ? {
+          diagnosticOverride: {
+            authority: "diagnostic",
+            experiment: "primary-lightness-range",
+            baselinePolicyVersion: V2_POLICY.version,
+            primaryLightnessRanges: primaryRanges,
+          },
+        }
+      : {}),
   };
-  return boundedSet(paletteCache, cacheKey, result, 128);
+  return diagnosticOverride
+    ? result
+    : boundedSet(paletteCache, cacheKey, result, 128);
+}
+
+export function generatePaletteV2({ primary }) {
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange);
+}
+
+export function generatePaletteV2Counterfactual({
+  primary,
+  primaryLightnessRanges,
+}) {
+  validatePrimaryRanges(primaryLightnessRanges);
+  return generatePalette(primary, primaryLightnessRanges, true);
 }
 
 export function serializeModeCss(modeResult) {

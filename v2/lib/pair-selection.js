@@ -1,30 +1,44 @@
 import { V2_POLICY } from "./policy.js";
 import { pairedQuality } from "./quality.js";
 import { candidate, distance } from "./runtime.js";
+import { NoCandidateError } from "./decision.js";
 
 function exactModeCandidate(input, mode, lightness, buildMode) {
   try {
-    return buildMode(input, mode, { primaryRange: [lightness, lightness] });
-  } catch {
-    return null;
+    return {
+      candidate: buildMode(input, mode, {
+        primaryRange: [lightness, lightness],
+      }),
+      dropped: null,
+    };
+  } catch (error) {
+    if (!(error instanceof NoCandidateError)) throw error;
+    return {
+      candidate: null,
+      dropped: { mode, lightness, reason: error.message },
+    };
   }
 }
 
-function uniqueModeCandidates(input, mode, baseline, buildMode) {
-  const [start, end] = V2_POLICY.primary.lightnessRange[mode];
+function uniqueModeCandidates(input, mode, baseline, buildMode, primaryRanges) {
+  const [start, end] = primaryRanges[mode];
   const lightnesses = [start, (start + end) / 2, end];
+  const exact = lightnesses.map((lightness) =>
+    exactModeCandidate(input, mode, lightness, buildMode),
+  );
   const candidates = [
     baseline,
-    ...lightnesses.map((lightness) =>
-      exactModeCandidate(input, mode, lightness, buildMode),
-    ),
+    ...exact.map(({ candidate }) => candidate),
   ].filter(Boolean);
-  return candidates.filter(
-    (candidateMode, index) =>
-      candidates.findIndex(
-        (other) => other.values.primary === candidateMode.values.primary,
-      ) === index,
-  );
+  return {
+    candidates: candidates.filter(
+      (candidateMode, index) =>
+        candidates.findIndex(
+          (other) => other.values.primary === candidateMode.values.primary,
+        ) === index,
+    ),
+    droppedSamples: exact.flatMap(({ dropped }) => (dropped ? [dropped] : [])),
+  };
 }
 
 function qualityPenalty(quality) {
@@ -54,23 +68,30 @@ function comparePair(first, second) {
   return first.id.localeCompare(second.id);
 }
 
-export function selectModePair(input, baselineModes, buildMode) {
+export function selectModePair(
+  input,
+  baselineModes,
+  buildMode,
+  primaryRanges = V2_POLICY.primary.lightnessRange,
+) {
   const source = candidate(input.hex);
-  const lightCandidates = uniqueModeCandidates(
+  const lightSearch = uniqueModeCandidates(
     input,
     "light",
     baselineModes.light,
     buildMode,
+    primaryRanges,
   );
-  const darkCandidates = uniqueModeCandidates(
+  const darkSearch = uniqueModeCandidates(
     input,
     "dark",
     baselineModes.dark,
     buildMode,
+    primaryRanges,
   );
-  const pairs = lightCandidates
+  const pairs = lightSearch.candidates
     .flatMap((light) =>
-      darkCandidates.map((dark) => {
+      darkSearch.candidates.map((dark) => {
         const modes = { light, dark };
         const quality = pairedQuality(modes);
         const lightDistance = distance(source, candidate(light.values.primary));
@@ -137,6 +158,15 @@ export function selectModePair(input, baselineModes, buildMode) {
         sourceFidelity: compactPair(sourceFidelity),
         qualityRejected: compactPair(qualityRejected),
       },
+      ...([...lightSearch.droppedSamples, ...darkSearch.droppedSamples].length >
+      0
+        ? {
+            droppedSamples: [
+              ...lightSearch.droppedSamples,
+              ...darkSearch.droppedSamples,
+            ],
+          }
+        : {}),
     },
   };
 }

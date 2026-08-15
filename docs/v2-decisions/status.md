@@ -97,6 +97,9 @@ promotion contract. No semantic output role remains a policy anchor.
 - the same report decomposes large source shifts by descriptive source-OKLCH
   cohorts, affected mode, actual L/C movement, and the existing constraint IDs
   recorded on the producer's best-ranked rejected Primary candidate.
+- `npm run diagnose:mode-range` compares two diagnostic-only range
+  counterfactuals. Both reduce source distance, but the reviewed 216-input run
+  introduces widespread pair-quality misses; neither is a policy candidate.
 
 ## Next migration
 

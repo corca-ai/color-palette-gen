@@ -93,6 +93,36 @@ the resulting design.
 
 ## Known search limits
 
+`npm run diagnose:mode-range` separately runs two counterfactual Primary-range
+experiments over the same fixed grid. `widened` expands each current endpoint by
+0.04. `source-inclusive` extends each mode range only far enough to contain that
+input's source OKLCH lightness. The report compares source-shift, contract,
+quality, semantic, pair-quality, and distance outcomes against the unchanged
+policy baseline. These are deliberately strong probes, not candidate policy
+recommendations; a source-fidelity gain accompanied by contract or structural
+loss remains a tradeoff, not an improvement verdict.
+Named signal deltas retain producer check/declaration IDs. Expected infeasible
+state candidates and exact pair samples are separately counted; unexpected
+generation errors still abort the experiment.
+`meanModeSourceDistance` is the arithmetic mean of the producer's Oklab
+source-distance values across both modes (432 values for this corpus);
+`maximumModeSourceDistance` is the largest single mode value.
+
+Against `v2-policy-model-11`, the fixed 216-input run shows:
+
+- widening every endpoint by 0.04 reduces shifted inputs from 115 to 95 and
+  mean mode source distance from 0.1802 to 0.1602, with no generated-contract
+  failures, but increases inputs with paired-quality misses from 4 to 150;
+- extending both ranges to include each source reduces shifted inputs to 1 and
+  mean mode source distance to 0.0513, but produces 3 generated-contract
+  failures and 186 inputs with paired-quality misses.
+
+Neither probe is a policy candidate as tested. The first exchanges a modest
+source-fidelity gain for widespread cross-mode or pacing failures; the second
+mostly removes source distance while producing paired lightness-gap or state-
+pacing misses on 186 inputs. Future range work needs a more constrained
+hypothesis rather than a larger interval alone.
+
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;
 - warning search uses a research-policy amber family rather than learning a

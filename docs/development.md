@@ -23,6 +23,12 @@
   report behavior and reviewed counts; a changed count requires interpretation,
   not automatic design rejection. Named signals and convergence groups do not
   score palette quality or establish perception.
+- Run `npm run diagnose:mode-range > mode-range.json` for the heavier,
+  on-demand counterfactual comparison of current, widened, and source-inclusive
+  Primary lightness ranges. It is deliberately excluded from CI and does not
+  change the production policy or identify an optimal range.
+  Run `npm run test:counterfactual` when refreshing its published 216-input
+  counts; this dedicated heavy snapshot is also excluded from CI.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

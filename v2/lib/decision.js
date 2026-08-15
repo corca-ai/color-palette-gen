@@ -50,6 +50,8 @@ function compareRanking(first, second) {
   return 0;
 }
 
+export class NoCandidateError extends Error {}
+
 export function selectCandidate({
   id,
   role,
@@ -113,7 +115,9 @@ export function selectCandidate({
     .sort((first, second) => compareRanking(first.ranking, second.ranking));
   const passing = evaluated.filter(({ evaluation }) => evaluation.passed);
   if (!passing.length) {
-    throw new Error(`${id} has no candidate satisfying its constraints.`);
+    throw new NoCandidateError(
+      `${id} has no candidate satisfying its constraints.`,
+    );
   }
   const selected = passing[0];
   const nearestRejected = evaluated.find(
