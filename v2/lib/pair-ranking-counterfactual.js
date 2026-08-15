@@ -200,8 +200,8 @@ export function buildPairRankingCounterfactualReport({
 } = {}) {
   validateChannels(channels);
   const inputs = inputGrid([...new Set(channels)].sort((a, b) => a - b));
-  const current = [];
-  const missCountFirst = [];
+  const previousSourceFirst = [];
+  const currentPolicy = [];
   let baselineIdentity;
 
   for (const input of inputs) {
@@ -211,7 +211,8 @@ export function buildPairRankingCounterfactualReport({
     });
     const candidateResult = generatePaletteV2PairRankingCounterfactual({
       primary: input,
-      strategy: PAIR_RANKING_STRATEGIES.PAIRED_QUALITY_MISS_COUNT_FIRST,
+      strategy:
+        PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
     });
     baselineIdentity ??= identity(currentResult);
     assertSame(
@@ -234,30 +235,33 @@ export function buildPairRankingCounterfactualReport({
       candidateResult.pairDecision.droppedSamples ?? [],
       "pair-ranking strategies must share dropped-sample provenance.",
     );
-    current.push(pairRankingObservation(input, currentResult));
-    missCountFirst.push(pairRankingObservation(input, candidateResult));
+    previousSourceFirst.push(pairRankingObservation(input, currentResult));
+    currentPolicy.push(pairRankingObservation(input, candidateResult));
   }
 
-  const currentSummary = summarize(current);
-  const candidateSummary = summarize(missCountFirst);
-  const changedCases = missCountFirst
+  const previousSummary = summarize(previousSourceFirst);
+  const currentSummary = summarize(currentPolicy);
+  const changedCases = currentPolicy
     .filter(
       (item, index) =>
-        item.selectedPair.light !== current[index].selectedPair.light ||
-        item.selectedPair.dark !== current[index].selectedPair.dark,
+        item.selectedPair.light !==
+          previousSourceFirst[index].selectedPair.light ||
+        item.selectedPair.dark !== previousSourceFirst[index].selectedPair.dark,
     )
     .map((item) => {
-      const before = current.find(({ input }) => input === item.input);
+      const before = previousSourceFirst.find(
+        ({ input }) => input === item.input,
+      );
       return {
         input: item.input,
         candidateSetIdentity: item.candidateSetIdentity,
         minimumAvailablePairQualityMissCount:
           item.minimumAvailablePairQualityMissCount,
-        current: {
+        "previous-v11-source-first": {
           selectedPair: before.selectedPair,
           failedPairChecks: before.failedPairChecks,
         },
-        "paired-quality-miss-count-first": {
+        "current-v12-zero-miss-gated": {
           selectedPair: item.selectedPair,
           failedPairChecks: item.failedPairChecks,
         },
@@ -265,18 +269,23 @@ export function buildPairRankingCounterfactualReport({
     });
 
   return {
-    schema: "color-palette-pair-ranking-counterfactual.v1",
+    schema: "color-palette-pair-ranking-counterfactual.v2",
     authority: "diagnostic",
     ...baselineIdentity,
     interpretation:
-      "Compares two fixed lexicographic rankings over identical sampled pair candidates. Fewer recorded paired-quality misses does not establish a better policy or perceived palette quality.",
+      "Compares the previous v11 source-first ordering with the current v12 conditional zero-miss eligibility policy over identical sampled pair candidates. Eligibility compliance does not establish perceived palette quality.",
     corpus: {
       kind: "rgb-channel-grid",
       channels: [...new Set(channels)].sort((a, b) => a - b),
     },
     strategies: {
-      current: {
+      previous: {
         id: PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+        provenance: {
+          originPolicyVersion: "v2-policy-model-11",
+          evaluationPolicyVersion: baselineIdentity.policyVersion,
+          scope: "ranking-order-only-on-current-candidates",
+        },
         order: [
           "maximumSourceDistance",
           "totalSourceDistance",
@@ -285,56 +294,57 @@ export function buildPairRankingCounterfactualReport({
           "stablePairId",
         ],
       },
-      counterfactual: {
-        id: PAIR_RANKING_STRATEGIES.PAIRED_QUALITY_MISS_COUNT_FIRST,
+      current: {
+        id: PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
         order: [
-          "pairQualityMissCount",
+          "zeroEligibilityMissGate",
           "maximumSourceDistance",
           "totalSourceDistance",
+          "pairQualityMissCountWhenNoEligibleCandidateExists",
           "pairQualityPenalty",
           "stablePairId",
         ],
       },
     },
     summaries: {
-      current: currentSummary,
-      "paired-quality-miss-count-first": candidateSummary,
+      "previous-v11-source-first": previousSummary,
+      "current-v12-zero-miss-gated": currentSummary,
     },
-    comparisonToCurrent: {
+    comparisonToPrevious: {
       selectedPairChangedInputCount: changedCases.length,
       contractFailureTransitions: booleanTransitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         ({ contractFailure }) => contractFailure,
       ),
       sourceShiftTransitions: booleanTransitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         ({ shiftedModes }) => shiftedModes.length > 0,
       ),
       sourceShiftModeTransitions: transitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         "shiftedModes",
       ),
       pairCheckTransitions: transitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         "failedPairChecks",
       ),
       contractCheckTransitions: transitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         "failedContractChecks",
       ),
       downstreamQualityTransitions: transitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         "downstreamQualityFindings",
       ),
       semanticTransitions: transitions(
-        current,
-        missCountFirst,
+        previousSourceFirst,
+        currentPolicy,
         "semanticFindings",
       ),
     },

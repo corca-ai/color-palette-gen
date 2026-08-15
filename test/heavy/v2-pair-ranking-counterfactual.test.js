@@ -34,8 +34,8 @@ function inputGrid() {
 test("reviewed pair-ranking counterfactual remains reproducible", () => {
   const report = buildPairRankingCounterfactualReport();
 
-  assert.equal(report.schema, "color-palette-pair-ranking-counterfactual.v1");
-  assert.equal(report.policyVersion, "v2-policy-model-11");
+  assert.equal(report.schema, "color-palette-pair-ranking-counterfactual.v2");
+  assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.equal(report.resultVersion, 2);
   assert.deepEqual(report.semanticModel, {
     id: "v2-declarative-design",
@@ -66,7 +66,7 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
       ]),
     ),
     {
-      current: {
+      "previous-v11-source-first": {
         inputCount: 216,
         pairMissInputs: 4,
         pairMisses: 4,
@@ -78,7 +78,7 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
         shiftedModes: 186,
         droppedSamples: 433,
       },
-      "paired-quality-miss-count-first": {
+      "current-v12-zero-miss-gated": {
         inputCount: 216,
         pairMissInputs: 0,
         pairMisses: 0,
@@ -93,7 +93,7 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
     },
   );
   assert.deepEqual(
-    report.comparisonToCurrent.pairCheckTransitions[
+    report.comparisonToPrevious.pairCheckTransitions[
       "pair.primary-lightness-gap"
     ],
     {
@@ -101,21 +101,21 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
       resolved: ["#6633FF", "#6666CC", "#9933CC", "#996633"],
     },
   );
-  assert.equal(report.comparisonToCurrent.selectedPairChangedInputCount, 4);
-  assert.deepEqual(report.comparisonToCurrent.contractFailureTransitions, {
+  assert.equal(report.comparisonToPrevious.selectedPairChangedInputCount, 4);
+  assert.deepEqual(report.comparisonToPrevious.contractFailureTransitions, {
     introduced: [],
     resolved: [],
   });
-  assert.deepEqual(report.comparisonToCurrent.sourceShiftTransitions, {
+  assert.deepEqual(report.comparisonToPrevious.sourceShiftTransitions, {
     introduced: [],
     resolved: [],
   });
-  assert.deepEqual(report.comparisonToCurrent.sourceShiftModeTransitions, {
+  assert.deepEqual(report.comparisonToPrevious.sourceShiftModeTransitions, {
     dark: { introduced: [], resolved: [] },
     light: { introduced: [], resolved: [] },
   });
-  assert.deepEqual(report.comparisonToCurrent.contractCheckTransitions, {});
-  assert.deepEqual(report.comparisonToCurrent.downstreamQualityTransitions, {
+  assert.deepEqual(report.comparisonToPrevious.contractCheckTransitions, {});
+  assert.deepEqual(report.comparisonToPrevious.downstreamQualityTransitions, {
     "review.dark.primary-destructive-hue": {
       introduced: [],
       resolved: [],
@@ -129,43 +129,46 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
     "review.light.primary-warning-hue": { introduced: [], resolved: [] },
     "review.light.source-fidelity": { introduced: [], resolved: [] },
   });
-  assert.deepEqual(report.comparisonToCurrent.semanticTransitions, {});
+  assert.deepEqual(report.comparisonToPrevious.semanticTransitions, {});
   assert.equal(
-    report.summaries.current.maximumSourceDistance,
-    report.summaries["paired-quality-miss-count-first"].maximumSourceDistance,
+    report.summaries["previous-v11-source-first"].maximumSourceDistance,
+    report.summaries["current-v12-zero-miss-gated"].maximumSourceDistance,
   );
   assert.equal(
-    report.summaries.current.maximumTotalSourceDistance,
-    report.summaries["paired-quality-miss-count-first"]
-      .maximumTotalSourceDistance,
-  );
-  assert.ok(
-    Math.abs(report.summaries.current.meanMaximumSourceDistance - 0.2109404) <
-      0.0000001,
+    report.summaries["previous-v11-source-first"].maximumTotalSourceDistance,
+    report.summaries["current-v12-zero-miss-gated"].maximumTotalSourceDistance,
   );
   assert.ok(
     Math.abs(
-      report.summaries["paired-quality-miss-count-first"]
+      report.summaries["previous-v11-source-first"].meanMaximumSourceDistance -
+        0.2109404,
+    ) < 0.0000001,
+  );
+  assert.ok(
+    Math.abs(
+      report.summaries["current-v12-zero-miss-gated"]
         .meanMaximumSourceDistance - 0.2111579,
     ) < 0.0000001,
   );
   assert.ok(
-    Math.abs(report.summaries.current.meanTotalSourceDistance - 0.3604809) <
-      0.0000001,
+    Math.abs(
+      report.summaries["previous-v11-source-first"].meanTotalSourceDistance -
+        0.3604809,
+    ) < 0.0000001,
   );
   assert.ok(
     Math.abs(
-      report.summaries["paired-quality-miss-count-first"]
-        .meanTotalSourceDistance - 0.3608402,
+      report.summaries["current-v12-zero-miss-gated"].meanTotalSourceDistance -
+        0.3608402,
     ) < 0.0000001,
   );
 
-  const before = report.summaries.current.pairCheckFailureInputCounts;
+  const before =
+    report.summaries["previous-v11-source-first"].pairCheckFailureInputCounts;
   const after =
-    report.summaries["paired-quality-miss-count-first"]
-      .pairCheckFailureInputCounts;
+    report.summaries["current-v12-zero-miss-gated"].pairCheckFailureInputCounts;
   for (const [id, transition] of Object.entries(
-    report.comparisonToCurrent.pairCheckTransitions,
+    report.comparisonToPrevious.pairCheckTransitions,
   )) {
     assert.equal(
       (after[id] ?? 0) - (before[id] ?? 0),
@@ -177,7 +180,8 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
     const production = generatePaletteV2({ primary });
     const diagnostic = generatePaletteV2PairRankingCounterfactual({
       primary,
-      strategy: PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+      strategy:
+        PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
     });
     assert.deepEqual(withoutDiagnosticMetadata(diagnostic), production);
   }

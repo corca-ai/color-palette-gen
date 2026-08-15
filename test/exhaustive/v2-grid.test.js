@@ -18,10 +18,10 @@ test("v2 contracts hold across an RGB input grid", () => {
     },
   });
 
-  assert.equal(report.policyVersion, "v2-policy-model-11");
+  assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.equal(report.schema, "color-palette-adversarial-diagnostics.v2");
   assert.equal(report.summary.inputCount, 216);
-  assert.equal(report.summary.signaledInputCount, 151);
+  assert.equal(report.summary.signaledInputCount, 148);
   assert.equal(report.sourceFidelity.shiftedInputCount, 115);
   assert.deepEqual(report.sourceFidelity.byInputLightness, {
     dark: 21,
@@ -129,6 +129,6 @@ test("v2 contracts hold across an RGB input grid", () => {
     report.cases.filter(({ signals }) =>
       signals.some((signal) => signal.startsWith("quality:pair.")),
     ).length,
-    4,
+    0,
   );
 });

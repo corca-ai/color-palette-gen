@@ -6,6 +6,8 @@ import { NoCandidateError } from "./decision.js";
 export const PAIR_RANKING_STRATEGIES = Object.freeze({
   SOURCE_FIRST: "source-first",
   PAIRED_QUALITY_MISS_COUNT_FIRST: "paired-quality-miss-count-first",
+  ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST:
+    "zero-primary-pair-quality-miss-gated-source-first",
 });
 
 function exactModeCandidate(input, mode, lightness, buildMode) {
@@ -79,6 +81,18 @@ function ranking(pair, strategy) {
       pair.qualityPenalty,
     ];
   }
+  if (
+    strategy ===
+    PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST
+  ) {
+    return [
+      pair.eligibilityMissCount > 0 ? 1 : 0,
+      pair.maximumSourceDistance,
+      pair.totalSourceDistance,
+      pair.qualityMissCount,
+      pair.qualityPenalty,
+    ];
+  }
   throw new TypeError(`Unsupported pair ranking strategy: ${strategy}.`);
 }
 
@@ -87,7 +101,7 @@ function rankingLabels(strategy) {
     return [
       "smallest worst-mode source distance",
       "smallest total source distance",
-      "fewest structural review misses",
+      "fewest paired-quality misses",
       "smallest quality miss",
     ];
   }
@@ -96,6 +110,18 @@ function rankingLabels(strategy) {
       "fewest paired-quality misses",
       "smallest worst-mode source distance",
       "smallest total source distance",
+      "smallest paired-quality penalty",
+    ];
+  }
+  if (
+    strategy ===
+    PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST
+  ) {
+    return [
+      "prefer candidates passing every policy-owned Primary pair eligibility check when available",
+      "smallest worst-mode source distance",
+      "smallest total source distance",
+      "fewest paired-quality misses when every candidate is ineligible",
       "smallest paired-quality penalty",
     ];
   }
@@ -124,7 +150,7 @@ export function selectModePair(
   buildMode,
   primaryRanges = V2_POLICY.primary.lightnessRange,
   {
-    rankingStrategy = PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+    rankingStrategy = V2_POLICY.crossMode.pairRankingStrategy,
     includeCandidateSetIdentity = false,
   } = {},
 ) {
@@ -154,6 +180,17 @@ export function selectModePair(
         const qualityMissCount = quality.checks.filter(
           ({ pass }) => !pass,
         ).length;
+        const eligibilityChecks = V2_POLICY.crossMode.eligibilityCheckIds.map(
+          (id) => {
+            const matches = quality.checks.filter((check) => check.id === id);
+            if (matches.length !== 1 || typeof matches[0].pass !== "boolean") {
+              throw new TypeError(
+                `Pair eligibility check ${id} must resolve exactly once.`,
+              );
+            }
+            return matches[0];
+          },
+        );
         return {
           id: `${light.values.primary}/${dark.values.primary}`,
           modes,
@@ -163,6 +200,8 @@ export function selectModePair(
           maximumSourceDistance: Math.max(lightDistance, darkDistance),
           totalSourceDistance: lightDistance + darkDistance,
           qualityMissCount,
+          eligibilityMissCount: eligibilityChecks.filter(({ pass }) => !pass)
+            .length,
           qualityPenalty: qualityPenalty(quality),
         };
       }),
@@ -177,6 +216,7 @@ export function selectModePair(
           light: pair.modes.light.values.primary,
           dark: pair.modes.dark.values.primary,
           qualityMisses: pair.qualityMissCount,
+          eligibilityMisses: pair.eligibilityMissCount,
           maximumSourceDistance: pair.maximumSourceDistance,
           totalSourceDistance: pair.totalSourceDistance,
           hueDrift: pair.quality.crossMode.hueDrift,
@@ -212,10 +252,27 @@ export function selectModePair(
     quality: selected.quality,
     decision: {
       strategy:
-        rankingStrategy === PAIR_RANKING_STRATEGIES.SOURCE_FIRST
+        rankingStrategy === V2_POLICY.crossMode.pairRankingStrategy
           ? "sampled cross-mode pair search"
           : "sampled cross-mode pair search (diagnostic ranking)",
       candidateCount: pairs.length,
+      eligibility: {
+        kind: "conditional-zero-miss-gate",
+        applied:
+          rankingStrategy ===
+          PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
+        authority:
+          rankingStrategy ===
+          PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST
+            ? "selection-authoritative in this policy; thresholds remain provisional"
+            : "diagnostic evidence only; not applied by this historical ordering",
+        checkIds: [...V2_POLICY.crossMode.eligibilityCheckIds],
+        eligibleCandidateCount: pairs.filter(
+          ({ eligibilityMissCount }) => eligibilityMissCount === 0,
+        ).length,
+        fallback:
+          "When no sampled candidate passes every eligibility check, preserve source-first ordering across the complete inventory.",
+      },
       ranking: rankingLabels(rankingStrategy),
       selected: compactPair(selected, includeCandidateSetIdentity),
       alternatives: {

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { selectCandidate } from "../v2/lib/decision.js";
-import { validatePolicy } from "../v2/lib/policy.js";
+import { V2_POLICY, validatePolicy } from "../v2/lib/policy.js";
 
 const definition = (id, kind, direction) => ({
   id,
@@ -73,6 +73,19 @@ test("tie-breakers run only after objective scores are equal", () => {
 
 test("the declared v2 policy schema is internally valid", () => {
   assert.equal(validatePolicy(), true);
+  assert.equal(
+    V2_POLICY.crossMode.pairRankingStrategy,
+    "zero-primary-pair-quality-miss-gated-source-first",
+  );
+  assert.deepEqual(V2_POLICY.crossMode.eligibilityCheckIds, [
+    "pair.primary-hue-drift",
+    "pair.primary-chroma-difference",
+    "pair.primary-lightness-gap",
+    "light.primary.state.interval-ratio",
+    "light.primary.state.monotonic-lightness",
+    "dark.primary.state.interval-ratio",
+    "dark.primary.state.monotonic-lightness",
+  ]);
 });
 
 test("invalid objective values fail instead of silently changing rank order", () => {

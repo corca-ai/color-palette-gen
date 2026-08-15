@@ -113,10 +113,12 @@ Question:
 
 This section begins with the small semantic model that declares measurable
 constraints, invariants, and relations independently from the formulas used to
-generate colors. The remaining cards contain provisional signals such as source
-fidelity, cross-mode identity, semantic ambiguity, and state pacing. They must
-not present these signals as accessibility pass/fail or evidence of perceived
-hover discoverability.
+generate colors. Primary cross-mode and state cards retain the seven
+selection-authoritative eligibility checks as inspectable compliance evidence.
+The remaining cards contain independent signals such as source fidelity,
+semantic ambiguity, and Destructive/Warning state pacing. They must not present
+either category as accessibility certification or evidence of perceived hover
+discoverability.
 
 The Quality section also exposes hover risk diagnostics below the semantic
 model. It presents Oklab and CIEDE2000 differences plus context-contrast

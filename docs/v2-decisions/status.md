@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-11`.
+Current policy version: `v2-policy-model-12`.
 
 ## Candidate search implemented
 
@@ -30,14 +30,16 @@ and the per-candidate result of each rule.
 
 - a sampled cross-mode comparison evaluates baseline and three fixed lightness
   points per mode;
-- pair ranking minimizes worst-mode and total source shift before structural
-  review misses;
+- an explicit seven-check Primary pair eligibility gate prefers zero-miss
+  sampled pairs before source-first ranking, with exact v11 source-first fallback
+  when no eligible pair exists;
 - cross-mode primary hue, chroma, and lightness relationships are evaluated;
 - default, hover, and active interval pacing is evaluated for both modes;
 - destructive and warning state pacing is reviewed alongside primary pacing;
 - provisional quality objectives remain distinct from accessibility pass/fail;
-- source fidelity and structural signals are evaluated after pair selection, so
-  review status is not guaranteed by construction;
+- source fidelity, semantic hue separation, and non-eligibility pacing signals
+  remain independent post-selection review; only the seven named eligibility
+  relations are guaranteed when an eligible sampled pair exists;
 - primary/destructive and primary/warning hue ambiguity is reviewed separately
   from total perceptual distance;
 - a fixed 14-input gallery exposes chromatic, achromatic convergence, and
@@ -101,22 +103,18 @@ promotion contract. No semantic output role remains a policy anchor.
   counterfactuals. In the reviewed 216-input run, symmetric, outward-only, and
   source-inclusive expansion are not policy candidates as tested: none resolves
   source fidelity without adding pair-quality or contract losses.
-- `npm run diagnose:pair-ranking` applies source-first and
-  paired-quality-miss-count-first ordering to identical sampled pair candidates.
-  In the reviewed 216-input run, all 4 current lightness-gap misses are avoidable
-  within that inventory; resolving them changes exactly 4 pairs and produces a
+- `npm run diagnose:pair-ranking` compares the previous v11 source-first order
+  with the current v12 conditional eligibility rule over identical sampled pair
+  candidates. The reviewed migration changes exactly 4 pairs and produces a
   small mean source-distance increase without newly failing a named check,
   contract, semantic declaration, or large-shift threshold. This is a diagnostic
   ordering result, not a policy or perceptual verdict.
 
 ## Next migration
 
-1. Specify whether the four isolated pair-ordering cases justify a bounded
-   policy proposal or remain diagnostic evidence; do not promote the probe from
-   counts alone.
-2. Review whether utility aliases need semantic declarations beyond their
+1. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-3. Promote thresholds from `heuristic` to `empirical` only with a separately
+2. Promote thresholds from `heuristic` to `empirical` only with a separately
    authorized dataset and analysis.
-4. Review upstream `apca-w3` releases before changing the pinned verification
+3. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

@@ -20,13 +20,16 @@ function pair(
   qualityMissCount,
   maximumSourceDistance,
   totalSourceDistance,
+  eligibilityMissCount = qualityMissCount,
+  qualityPenalty = qualityMissCount,
 ) {
   return {
     id,
     qualityMissCount,
     maximumSourceDistance,
     totalSourceDistance,
-    qualityPenalty: qualityMissCount,
+    qualityPenalty,
+    eligibilityMissCount,
   };
 }
 
@@ -78,12 +81,13 @@ test("pair ranking strategies change only their declared lexicographic priority"
   );
 });
 
-test("source-first diagnostic generation preserves production output and cache", () => {
+test("current zero-miss-gated diagnostic preserves production output and cache", () => {
   const production = generatePaletteV2({ primary: "#507096" });
   const size = paletteCache.size;
   const diagnostic = generatePaletteV2PairRankingCounterfactual({
     primary: "#507096",
-    strategy: PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
+    strategy:
+      PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
   });
 
   assert.deepEqual(withoutDiagnosticMetadata(diagnostic), production);
@@ -98,19 +102,50 @@ test("source-first diagnostic generation preserves production output and cache",
   assert.ok(diagnostic.pairDecision.candidateSetIdentity.length > 0);
 });
 
-test("pair-ranking report is deterministic and non-normative", () => {
+test("pair-ranking report preserves previous/current ordering evidence", () => {
   const first = buildPairRankingCounterfactualReport({ channels: [0] });
   const second = buildPairRankingCounterfactualReport({ channels: [0] });
 
   assert.deepEqual(first, second);
-  assert.equal(first.schema, "color-palette-pair-ranking-counterfactual.v1");
+  assert.equal(first.schema, "color-palette-pair-ranking-counterfactual.v2");
   assert.equal(first.authority, "diagnostic");
-  assert.match(first.interpretation, /does not establish a better policy/);
-  assert.equal(first.summaries.current.inputCount, 1);
+  assert.match(first.interpretation, /does not establish perceived/);
+  assert.deepEqual(first.strategies.previous.provenance, {
+    originPolicyVersion: "v2-policy-model-11",
+    evaluationPolicyVersion: "v2-policy-model-12",
+    scope: "ranking-order-only-on-current-candidates",
+  });
+  assert.equal(first.summaries["previous-v11-source-first"].inputCount, 1);
   assert.equal(
-    first.strategies.counterfactual.id,
-    PAIR_RANKING_STRATEGIES.PAIRED_QUALITY_MISS_COUNT_FIRST,
+    first.strategies.current.id,
+    PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST,
   );
+});
+
+test("zero-miss gate prefers eligible pairs and preserves source-first fallback", () => {
+  const closerMiss = pair("a", 1, 0.1, 0.2, 1);
+  const fartherEligible = pair("b", 0, 0.3, 0.5, 0);
+  const strategy =
+    PAIR_RANKING_STRATEGIES.ZERO_PRIMARY_PAIR_QUALITY_MISS_GATED_SOURCE_FIRST;
+
+  assert.ok(comparePairMetrics(closerMiss, fartherEligible, strategy) > 0);
+
+  const fallbackCases = [
+    [pair("a", 2, 0.1, 0.4, 1), pair("b", 1, 0.2, 0.3, 1)],
+    [pair("a", 2, 0.2, 0.3, 1), pair("b", 1, 0.2, 0.4, 1)],
+    [pair("a", 1, 0.2, 0.3, 1), pair("b", 2, 0.2, 0.3, 1)],
+    [pair("a", 1, 0.2, 0.3, 1, 1), pair("b", 1, 0.2, 0.3, 1, 2)],
+    [pair("a", 1, 0.2, 0.3, 1, 1), pair("b", 1, 0.2, 0.3, 1, 1)],
+  ];
+
+  for (const [first, second] of fallbackCases) {
+    assert.equal(
+      Math.sign(comparePairMetrics(first, second, strategy)),
+      Math.sign(
+        comparePairMetrics(first, second, PAIR_RANKING_STRATEGIES.SOURCE_FIRST),
+      ),
+    );
+  }
 });
 
 test("pair-ranking public seams reject unsupported strategies and channels", () => {

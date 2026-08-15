@@ -122,6 +122,12 @@ test("@smoke result mode switches the complete inspector and persists", async ({
   await expect(page.locator(".palette")).toHaveCount(2);
   await expect(page.locator(".foundation-map-card")).toHaveCount(2);
   await expect(page.locator(".pair-decision")).toBeVisible();
+  await expect(page.locator(".pair-decision")).toContainText(
+    "prefer candidates passing every policy-owned Primary pair eligibility check when available",
+  );
+  await expect(page.locator(".pair-decision")).toContainText(
+    "sampled pairs compared",
+  );
 });
 
 test("result mode control remains usable without mobile overflow", async ({

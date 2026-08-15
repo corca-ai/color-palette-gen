@@ -210,7 +210,7 @@ export function independentPaletteReview(input, modes, structuralQuality) {
   return {
     ...structuralQuality,
     intent:
-      "Independently review source fidelity, cross-mode identity, and state pacing after pair selection.",
+      "Retain Primary pair eligibility evidence and independently review source fidelity, semantic hue separation, and non-eligibility state pacing on the selected result.",
     sourceChecks,
     semanticChecks,
     checks,

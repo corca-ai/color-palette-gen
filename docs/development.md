@@ -31,11 +31,11 @@
   Run `npm run test:counterfactual` when refreshing its published 216-input
   counts; this dedicated heavy snapshot is also excluded from CI.
 - Run `npm run diagnose:pair-ranking > pair-ranking.json` to compare the
-  production source-first pair ordering with the fixed
-  paired-quality-miss-count-first probe over identical sampled candidates.
+  previous v11 source-first pair ordering with the current v12 conditional
+  zero-miss eligibility policy over identical sampled candidates.
   Run `npm run test:pair-ranking-counterfactual` when refreshing its published
   216-input observations. Both commands are on-demand and excluded from CI;
-  fewer recorded misses do not establish a better policy or perceived result.
+  eligibility compliance does not establish a perceived result.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

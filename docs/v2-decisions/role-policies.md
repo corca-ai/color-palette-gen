@@ -86,17 +86,29 @@ contract while still being marked for cross-mode review.
 The engine performs a sampled cross-mode comparison over each mode's baseline
 plus the start, midpoint, and end of its primary lightness range. It is not an
 exhaustive joint search. Pair selection minimizes worst-mode and total source
-distance before using structural review misses as a later discriminator.
-The target bands and ordering remain provisional until a separately authorized,
-documented dataset provides stronger evidence.
+distance only after applying policy v12's explicit Primary pair eligibility
+gate. The gate owns seven check IDs: the three cross-mode relationships and the
+Light/Dark Primary interval-ratio and monotonic-lightness checks. When at least
+one sampled pair passes all seven, only eligible pairs proceed to source-first
+ranking. When none passes all seven, the complete inventory retains the v11
+source-first order. Destructive and Warning pacing checks remain review evidence
+and cannot silently enter Primary pair eligibility through array membership.
+
+Zero-miss eligibility is selection-authoritative under v12, while the numeric
+target bands remain provisional heuristics rather than empirical or perceptual
+findings. Within the eligible or fallback inventory, worst-mode and total source
+distance remain the leading objectives.
 
 ## Independent review
 
 Accessibility contracts determine whether a generated role is usable. They do
 not establish that it is aesthetically strong or faithful to the input.
-Source-distance, cross-mode identity, and state-pacing signals therefore run
-after pair selection and may report review even when every accessibility
-contract passes. The review label must never be described as aesthetic proof.
+The seven Primary pair eligibility checks are retained after selection as
+inspectable policy-compliance evidence. Source distance, semantic hue
+separation, and Destructive/Warning pacing remain independent post-selection
+review and may report concerns even when every accessibility contract and pair
+eligibility check passes. The review label must never be described as aesthetic
+proof.
 
 Chromatic primary is also compared with destructive and warning by hue. A
 provisional separation below 30 degrees raises semantic-ambiguity review even

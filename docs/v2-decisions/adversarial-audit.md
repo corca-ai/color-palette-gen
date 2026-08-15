@@ -1,13 +1,13 @@
 # Adversarial audit
 
-Last reviewed against `v2-policy-model-11`.
+Last reviewed against `v2-policy-model-12`.
 
 ## What the engine can establish
 
 - every application role is generated or explicitly identified as passthrough or
   alias;
-- selected colors satisfy the declared text, non-text, and research-policy
-  constraints;
+- selected colors satisfy the declared hard generation contracts; sampled pair
+  eligibility is guaranteed only when at least one eligible pair exists;
 - the exact source is preserved separately from its filled-action adaptation;
 - candidate ranking, best-ranked rejection, and next passing evidence are
   inspectable;
@@ -42,15 +42,16 @@ On the fixed 216-color RGB grid:
   foreground/background pairs;
 - every accessibility contract remains computable and passing;
 - 115 inputs trigger at least one large filled-action source shift;
-- 151 inputs trigger deterministic quality-review signals;
+- 148 inputs trigger deterministic independent quality-review signals;
 - 186 mode-specific source-fidelity checks fail;
 - 59 inputs trigger at least one provisional semantic hue review;
-- 4 structural cross-mode or pacing signals fail.
+- no selected pair fails the seven policy-owned Primary pair eligibility checks.
 
-This distribution is intentional evidence that deterministic quality signals
-are not guaranteed to pass by the selection procedure. It also shows that the
-current action recipe often cannot preserve very bright, dark, or saturated
-brand sources.
+The zero pair-eligibility misses are policy compliance, not independent evidence
+that v12 is perceptually better. The remaining independent signals still show
+that selection does not guarantee source fidelity or semantic hue separation,
+and that the current action recipe often cannot preserve very bright, dark, or
+saturated brand sources.
 
 ## Source-fidelity cohorts
 
@@ -110,46 +111,43 @@ generation errors still abort the experiment.
 source-distance values across both modes (432 values for this corpus);
 `maximumModeSourceDistance` is the largest single mode value.
 
-Against `v2-policy-model-11`, the fixed 216-input run shows:
+Against `v2-policy-model-12`, the fixed 216-input run shows:
 
-- widening every endpoint by 0.04 reduces shifted inputs from 115 to 95 and
-  mean mode source distance from 0.1802 to 0.1602, with no generated-contract
-  failures, but increases inputs with paired-quality misses from 4 to 150;
+- widening every endpoint by 0.04 increases shifted inputs from 115 to 116 and
+  mean mode source distance from 0.1804 to 0.1844; it introduces 15
+  lightness-gap eligibility misses without generated-contract failure;
 - widening only the outward endpoints leaves shifted inputs unchanged at 115,
-  reduces affected mode cases by 3 and mean mode source distance from 0.1802
-  to 0.1779, but increases paired-quality misses from 4 to 16;
-- extending both ranges to include each source reduces shifted inputs to 1 and
-  mean mode source distance to 0.0513, but produces 3 generated-contract
-  failures and 186 inputs with paired-quality misses.
+  reduces affected mode cases by 3 and mean mode source distance from 0.1804
+  to 0.1796, but introduces 1 lightness-gap eligibility miss;
+- extending both ranges to include each source reduces shifted inputs to 49 and
+  mean mode source distance to 0.1191, but produces 1 generated-contract
+  failure, 1 semantic finding, and 35 inputs with paired-quality misses.
 
-None of the three probes is a policy candidate as tested. Symmetric widening
-exchanges a modest source-fidelity gain for widespread cross-mode failures;
-outward-only widening does not resolve any shifted input and still adds
-lightness-gap misses; source inclusion mostly removes source distance while
-producing paired lightness-gap or state-pacing misses on 186 inputs. These
-results motivate testing a candidate-selection hypothesis before another
-undirected interval expansion.
+None of the three range probes is a policy candidate as tested. Symmetric
+widening now worsens mean source distance under the v12 eligibility gate;
+outward-only widening does not resolve any shifted input; source inclusion
+reduces source distance but introduces contract, semantic, and pair-eligibility
+losses. Another undirected interval expansion is therefore not the next policy
+move supported by this audit.
 
-`npm run diagnose:pair-ranking` tests that narrower hypothesis without changing
-the ranges or sampled candidates. It applies two fixed lexicographic orders to
-the same candidate-set identity: the current source-first order and
-`paired-quality-miss-count-first`. The latter name is intentionally narrow: it
-counts the existing provisional `pairedQuality` check misses before comparing
-source distance; it does not prioritize every structural, semantic, or
-perceptual concern.
+`npm run diagnose:pair-ranking` preserves the decision evidence that motivated
+v12. It applies the previous v11 source-first order and the current v12
+zero-Primary-pair-quality-miss gate to the same candidate-set identity. The gate
+owns seven explicit check IDs; it does not turn every current or future quality
+check into selection policy.
 
-Against the same policy and 216-input grid, all 4 current
+Against the same candidate construction and 216-input grid, all 4 previous v11
 `pair.primary-lightness-gap` misses have a zero-miss alternative in the sampled
-candidate set. The counterfactual changes exactly those 4 selected pairs and
+candidate set. The v12 policy changes exactly those 4 selected pairs and
 resolves the recorded misses without introducing another named pair check,
 contract failure, semantic finding, downstream quality finding, or large-source
 shift. Mean worst-mode source distance moves from 0.2109404 to 0.2111579 and
 mean total source distance from 0.3604809 to 0.3608402; maxima remain unchanged.
 Within this fixed grid and sampled candidate inventory, changing only the
-lexicographic order selects zero-miss alternatives for these four cases. It does
-not establish that miss-count-first is a better policy: check categories are
-counted equally in this probe, the candidate search remains bounded, and
-perceived pair quality remains unmeasured.
+eligibility/order rule selects zero-miss alternatives for these four cases. The
+same checks now gate selection, so zero selected misses demonstrate policy
+compliance rather than independent palette quality. Candidate search remains
+bounded and perceived pair quality remains unmeasured.
 
 - cross-mode comparison samples the baseline and three fixed lightness points
   per mode; it is not exhaustive;

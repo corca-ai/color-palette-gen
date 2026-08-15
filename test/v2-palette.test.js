@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { generatePaletteV2, serializeModeCss } from "../v2/lib/palette.js";
+import { V2_POLICY } from "../v2/lib/policy.js";
 import { ROLE_CLASSIFICATION, TOKEN_ORDER } from "../v2/lib/roles.js";
 
 const REQUIRED = TOKEN_ORDER;
@@ -65,7 +66,7 @@ test("v2 separates destructive feedback when the primary is red", () => {
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-11");
+  assert.equal(result.policyVersion, "v2-policy-model-12");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -181,6 +182,11 @@ test("sampled pair search reports its bounded alternatives honestly", () => {
   assert.ok(result.pairDecision.candidateCount > 1);
   assert.ok(result.pairDecision.alternatives.nextRanked);
   assert.ok(result.pairDecision.alternatives.sourceFidelity);
+  assert.equal(result.pairDecision.eligibility.applied, true);
+  assert.deepEqual(
+    result.pairDecision.eligibility.checkIds,
+    V2_POLICY.crossMode.eligibilityCheckIds,
+  );
   assert.ok("qualityRejected" in result.pairDecision.alternatives);
   assert.equal(
     result.pairDecision.selected.light,

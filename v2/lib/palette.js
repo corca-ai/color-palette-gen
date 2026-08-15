@@ -1365,15 +1365,13 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
     baselineModes,
     buildMode,
     primaryRanges,
-    diagnosticOptions
-      ? {
-          rankingStrategy:
-            diagnosticOptions.pairRankingStrategy ??
-            PAIR_RANKING_STRATEGIES.SOURCE_FIRST,
-          includeCandidateSetIdentity:
-            diagnosticOptions.experiment === "pair-ranking",
-        }
-      : undefined,
+    {
+      rankingStrategy:
+        diagnosticOptions?.pairRankingStrategy ??
+        V2_POLICY.crossMode.pairRankingStrategy,
+      includeCandidateSetIdentity:
+        diagnosticOptions?.experiment === "pair-ranking",
+    },
   );
   const { modes } = pairSelection;
   const quality = independentPaletteReview(

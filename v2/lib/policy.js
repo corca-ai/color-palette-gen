@@ -53,7 +53,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-11",
+  version: "v2-policy-model-12",
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -81,6 +81,16 @@ export const V2_POLICY = {
     maximumHueDrift: 4,
     maximumChromaDifference: 0.035,
     lightnessGap: [0.04, 0.16],
+    pairRankingStrategy: "zero-primary-pair-quality-miss-gated-source-first",
+    eligibilityCheckIds: [
+      "pair.primary-hue-drift",
+      "pair.primary-chroma-difference",
+      "pair.primary-lightness-gap",
+      "light.primary.state.interval-ratio",
+      "light.primary.state.monotonic-lightness",
+      "dark.primary.state.interval-ratio",
+      "dark.primary.state.monotonic-lightness",
+    ],
   },
   semanticReview: {
     minimumHueSeparation: 30,
