@@ -40,6 +40,8 @@ and the per-candidate result of each rule.
 - source fidelity, semantic hue separation, and non-eligibility pacing signals
   remain independent post-selection review; only the seven named eligibility
   relations are guaranteed when an eligible sampled pair exists;
+- the combined `quality` result is named selected-result review because it also
+  retains those seven selection-authoritative eligibility checks;
 - primary/destructive and primary/warning hue ambiguity is reviewed separately
   from total perceptual distance;
 - a fixed 14-input gallery exposes chromatic, achromatic convergence, and

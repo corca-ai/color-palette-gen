@@ -11,7 +11,7 @@ import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 import { PAIR_RANKING_STRATEGIES, selectModePair } from "./pair-selection.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
 import {
-  independentPaletteReview,
+  selectedResultReview,
   pairedQuality,
   semanticHueReviewCheck,
   sourceUsageAlternatives,
@@ -1489,7 +1489,7 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
     },
   );
   const { modes } = pairSelection;
-  const quality = independentPaletteReview(
+  const quality = selectedResultReview(
     inputColor,
     modes,
     pairSelection.quality,

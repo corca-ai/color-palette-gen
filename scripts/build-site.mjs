@@ -48,6 +48,9 @@ const evaluationResults = EVALUATION_INPUTS.map((primary) => {
     input: result.input,
     policyVersion: result.policyVersion,
     quality: result.quality,
+    verdicts: {
+      qualityReview: result.verdicts.qualityReview,
+    },
     hoverDiagnostics: result.hoverDiagnostics,
     modes: {
       light: { values: result.modes.light.values },
@@ -58,7 +61,7 @@ const evaluationResults = EVALUATION_INPUTS.map((primary) => {
 await writeFile(
   join(outputV2Directory, "evaluation-palettes.json"),
   JSON.stringify({
-    schema: "color-lab-evaluation-palettes-1",
+    schema: "color-lab-evaluation-palettes-2",
     policyVersion: evaluationResults[0].policyVersion,
     results: evaluationResults,
   }),

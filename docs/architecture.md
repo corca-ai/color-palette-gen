@@ -18,7 +18,7 @@ this document owns component and runtime boundaries.
 - `v2/lib/palette.js` orchestrates generation. Role-family producers own their
   candidate searches: `feedback-search.js` owns Destructive and Warning,
   `pair-selection.js` owns cross-mode pair ranking, and `quality.js` owns
-  independent quality and state-progression review. This keeps role-specific
+  selected-result review and state-progression evidence. This keeps role-specific
   recipes explicit without accumulating every search implementation in the
   orchestrator.
 - `v2/lib/destructive-anchor.js` owns the production source-red-band
@@ -42,7 +42,9 @@ this document owns component and runtime boundaries.
   default-fill feasibility census while `feedback-search.js` owns the
   Destructive/Warning base-fill inventories, constraints, and objectives;
   its v3 bounded Destructive hue-ladder probe remains role-local and diagnostic;
-  `quality.js` retains ownership of hue and independent review checks.
+  `quality.js` retains ownership of hue and selected-result review checks;
+  only its source-fidelity, semantic-hue, and non-eligibility pacing subset is
+  independent of pair selection.
   `primary-chroma-counterfactual.js` compares one Primary-only source-relative
   chroma inventory/bound against production v12 and owns a derived
   above-current-cap transactional fallback arm while all non-Primary input

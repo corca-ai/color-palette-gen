@@ -4,10 +4,8 @@ import { serializeReferenceTokens } from "./lib/reference-export.js";
 import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 import { prioritizeHoverReview } from "./lib/hover-review-priority.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
-import {
-  evaluateV2Semantics,
-  formatSemanticCounts,
-} from "./lib/semantic-model.js";
+import { RESULT_VERDICT_AUTHORITIES } from "./lib/result-verdicts.js";
+import { formatSemanticCounts } from "./lib/semantic-model.js";
 import {
   appliedExampleView,
   colorCoordinates,
@@ -295,10 +293,7 @@ function renderQuality() {
     resultMode === "compare"
       ? `<aside class="pair-decision"><span>${pair.strategy}</span><strong>${pair.candidateCount} sampled pairs compared</strong><p>${pair.ranking.join(" → ")}</p><code>${pair.selected.light} / ${pair.selected.dark}</code></aside><div class="pair-comparison">${pairOption("Selected", pair.selected, pair.selected)}${pairOption("Next ranked", pair.alternatives.nextRanked, pair.selected)}${pairOption("Source fidelity", pair.alternatives.sourceFidelity, pair.selected)}${pairOption("Review boundary", pair.alternatives.qualityRejected, pair.selected)}</div><article><header><span>Cross-mode primary</span><strong>${result.crossMode.checks.filter(({ pass }) => pass).length}/${result.crossMode.checks.length} signals</strong></header><ul>${result.crossMode.checks.map(qualityCheck).join("")}</ul></article>`
       : `<aside class="mode-review-note"><strong>${resultMode} review</strong><span>Cross-mode identity and pair ranking are available in Compare.</span></aside>`;
-  const semanticModel = evaluateV2Semantics(
-    currentResult.modes,
-    currentResult.quality,
-  );
+  const semanticModel = currentResult.semanticEvaluation;
   const semanticIntent = `<article class="semantic-intent-review"><header><span>Declared measurable relations</span><strong>${formatSemanticCounts(semanticModel.counts)}</strong></header><p>This model-scoped result covers only the listed automated declarations. It does not establish overall palette quality or perceived hover discoverability.</p><ul>${semanticModel.evaluations.map((item) => `<li class="${item.status === "satisfied" ? "pass" : "review"}"><i>${item.status === "satisfied" ? "✓" : item.status === "unsatisfied" ? "×" : "?"}</i><span><strong>${item.statement}</strong><small>${item.kind} · ${item.authority}</small><em>${item.reason}</em></span><b>${item.status}</b></li>`).join("")}</ul></article>`;
   const hoverDiagnostics = currentResult.hoverDiagnostics;
   const diagnosticPair = (mode, context, name, label) => {
@@ -369,7 +364,7 @@ function galleryCard(result, priorityRow) {
           pairKey,
     )
     .map((other) => other.input.primary);
-  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-result ${result.quality.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} automated quality signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-trials" role="group" aria-label="Interactive state trials">${hoverTrial(light, "Light", result.input.primary, priorityRow.metrics.light)}${hoverTrial(dark, "Dark", result.input.primary, priorityRow.metrics.dark)}</div></article>`;
+  return `<article class="gallery-card" data-primary="${result.input.primary}"><button class="gallery-load" type="button" data-action="load"><span class="gallery-source"><i style="background:${result.input.primary}"></i><strong>${result.input.primary}</strong></span><span class="gallery-result ${result.verdicts.qualityReview.passed ? "pass" : "review"}">${passed}/${result.quality.checks.length} selected-result review signals · Inspect</span>${convergesWith.length ? `<span class="gallery-convergence">Same action pair as ${convergesWith.join(", ")}</span>` : ""}</button><div class="gallery-trials" role="group" aria-label="Interactive state trials">${hoverTrial(light, "Light", result.input.primary, priorityRow.metrics.light)}${hoverTrial(dark, "Dark", result.input.primary, priorityRow.metrics.dark)}</div></article>`;
 }
 
 async function renderGallery() {
@@ -379,7 +374,23 @@ async function renderGallery() {
     );
     if (!response.ok) throw new Error("Evaluation palettes unavailable.");
     const payload = await response.json();
+    if (
+      payload.schema !== "color-lab-evaluation-palettes-2" ||
+      !Array.isArray(payload.results)
+    ) {
+      throw new TypeError("Evaluation palettes have an unsupported schema.");
+    }
     for (const result of payload.results) {
+      if (
+        result.verdicts?.qualityReview?.authority !==
+          RESULT_VERDICT_AUTHORITIES.QUALITY_REVIEW ||
+        typeof result.verdicts.qualityReview.passed !== "boolean" ||
+        result.verdicts.qualityReview.passed !== result.quality?.passed
+      ) {
+        throw new TypeError(
+          "Evaluation palette review verdict must reconcile with its producer evidence.",
+        );
+      }
       galleryResults.set(result.input.primary, result);
     }
   }

@@ -42,7 +42,7 @@ On the fixed 216-color RGB grid:
   foreground/background pairs;
 - every accessibility contract remains computable and passing;
 - 115 inputs trigger at least one large filled-action source shift;
-- 148 inputs trigger deterministic independent quality-review signals;
+- 148 inputs trigger deterministic selected-result review signals;
 - 186 mode-specific source-fidelity checks fail;
 - 59 inputs trigger at least one provisional semantic hue review;
 - no selected pair fails the seven policy-owned Primary pair eligibility checks.

@@ -1,4 +1,5 @@
 import { V2_POLICY } from "./policy.js";
+import { EVIDENCE_AUTHORITIES } from "./evidence-authority.js";
 import {
   apcaContrast,
   candidate,
@@ -17,7 +18,7 @@ function rangeQualityCheck({ id, label, value, range, unit = "" }) {
     target: range,
     unit,
     pass,
-    authority: "provisional",
+    authority: EVIDENCE_AUTHORITIES.PROVISIONAL,
   };
 }
 
@@ -29,7 +30,7 @@ function maximumQualityCheck({ id, label, value, maximum, unit = "" }) {
     target: maximum,
     unit,
     pass: value <= maximum,
-    authority: "provisional",
+    authority: EVIDENCE_AUTHORITIES.PROVISIONAL,
   };
 }
 
@@ -42,7 +43,7 @@ function minimumQualityCheck({ id, label, value, minimum, unit = "" }) {
     unit,
     direction: "minimum",
     pass: value >= minimum,
-    authority: "provisional",
+    authority: EVIDENCE_AUTHORITIES.PROVISIONAL,
   };
 }
 
@@ -102,7 +103,7 @@ function stateProgression(modeResult, family = "primary") {
       target: 1,
       unit: "ordered",
       pass: monotonic,
-      authority: "product-policy",
+      authority: EVIDENCE_AUTHORITIES.PRODUCT_POLICY,
     },
   ];
   return {
@@ -170,7 +171,7 @@ export function pairedQuality(modes) {
   return {
     intent:
       "Review whether both modes preserve one brand identity and whether interaction states advance at a balanced pace.",
-    authority: "provisional",
+    authority: EVIDENCE_AUTHORITIES.PROVISIONAL,
     crossMode: {
       hueDrift,
       chromaDifference,
@@ -184,7 +185,7 @@ export function pairedQuality(modes) {
   };
 }
 
-export function independentPaletteReview(input, modes, structuralQuality) {
+export function selectedResultReview(input, modes, structuralQuality) {
   const source = candidate(input.hex);
   const sourceChecks = ["light", "dark"].map((mode) =>
     maximumQualityCheck({

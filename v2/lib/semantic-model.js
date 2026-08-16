@@ -1,3 +1,5 @@
+import { assertEvidenceAuthority } from "./evidence-authority.js";
+
 export const SEMANTIC_EVIDENCE_CONTRACTS = {
   "evidence.primary-label-apca.v1": {
     producer: "automated-check",
@@ -602,6 +604,7 @@ function sameIds(first, second) {
 }
 
 function validateDeclaration(declaration, evidenceContracts, evaluators) {
+  assertEvidenceAuthority(declaration.authority, declaration.id);
   if (declaration.evidence.length === 0) {
     throw new Error(`${declaration.id} must declare evidence.`);
   }

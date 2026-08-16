@@ -1,3 +1,5 @@
+import { assertEvidenceAuthority } from "./evidence-authority.js";
+
 export const EVIDENCE = {
   wcagNonText: {
     class: "normative",
@@ -427,6 +429,9 @@ export function decisionPolicy(id) {
 }
 
 export function validatePolicy() {
+  for (const [ruleId, rule] of Object.entries(RULE_CATALOG)) {
+    assertEvidenceAuthority(rule.authority, ruleId);
+  }
   const groups = {
     constraints: "constraint",
     objectives: "product-objective",

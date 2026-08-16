@@ -111,11 +111,11 @@ Question:
 Show the same ring on neutral, primary, and destructive targets with a visible
 gap. Focus is not presented as an alias of primary.
 
-### Quality review
+### Selected-result review
 
 Question:
 
-> What design-quality concerns remain after hard palette contracts pass?
+> What recorded review concerns remain after generated palette contracts pass?
 
 This section begins with the small semantic model that declares measurable
 constraints, invariants, and relations independently from the formulas used to

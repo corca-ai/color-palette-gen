@@ -167,6 +167,11 @@ The latter verdicts carry stable authorities `selected-result-review` and
 `declarative-semantic-model`, respectively. These IDs are machine-readable
 scope declarations, not claims of empirical or perceptual authority.
 
+Individual decision rules and semantic declarations use the closed vocabulary
+`normative`, `product-policy`, `provisional`, `technical`, `heuristic`, and
+`research-policy`. This evidence vocabulary is distinct from aggregate verdict
+scope IDs and from report-level `diagnostic` authority.
+
 `result.contractsPassed` is the explicit top-level contract verdict.
 `result.passed` remains a backward-compatible alias of that same value; it must
 not be interpreted as overall design, perceptual, or semantic quality.

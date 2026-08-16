@@ -39,7 +39,7 @@ v2의 공개 계약은 단순합니다.
 1. **Applied example**: 생성된 역할들이 실제 interface hierarchy를 만드는가?
 2. **Generated palette**: 어떤 색이 어떤 역할로 생성되었는가?
 3. **Decision evidence**: 목표와 탈락 후보 중 왜 이 색이 선택되었는가?
-4. **Quality review**: hard contract 통과 후에도 남은 디자인 품질 신호는 무엇인가?
+4. **Selected-result review**: generated contract 통과 후에도 남은 검토 신호는 무엇인가?
 5. **Relationships**: 결과 역할들은 어떤 구조로 연결되는가?
 6. **Validation**: 명시한 text, boundary, focus, separation 계약을 통과했는가?
 
