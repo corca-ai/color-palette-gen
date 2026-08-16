@@ -39,6 +39,12 @@ The visitor first inspects the output, then chooses how deeply to examine it.
 Evidence sections never introduce another input model, harmony choice, or
 application-specific requirement.
 
+The result contract mirrors that reading order: `verdicts.contracts` owns the
+generated text/non-text contract verdict, while `verdicts.qualityReview` and
+`verdicts.semanticModel` retain separate review and declaration evidence. The
+legacy `passed` field aliases `contractsPassed`; it is never presented as an
+overall design-quality verdict.
+
 ### Input
 
 The form accepts one primary color. The direction is fixed to calm and minimal.

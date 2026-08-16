@@ -106,6 +106,28 @@ test("adversarial overlaps reconcile contract and eligibility producer evidence"
     (result) => {
       result.modes.light.passed = !result.modes.light.passed;
     },
+    (result) => {
+      delete result.contractsPassed;
+    },
+    (result) => {
+      result.verdicts.qualityReview.passed = !result.quality.passed;
+    },
+    (result) => {
+      result.verdicts.semanticModel.authority = "unknown-authority";
+    },
+    (result) => {
+      [
+        result.verdicts.contracts.authority,
+        result.verdicts.semanticModel.authority,
+      ] = [
+        result.verdicts.semanticModel.authority,
+        result.verdicts.contracts.authority,
+      ];
+    },
+    (result) => {
+      result.semanticEvaluation.satisfied =
+        !result.semanticEvaluation.satisfied;
+    },
   ];
 
   for (const mutate of mutations) {
@@ -119,7 +141,7 @@ test("adversarial overlaps reconcile contract and eligibility producer evidence"
             return result;
           },
         }),
-      /eligibility|passed must reconcile/,
+      /eligibility|passed must reconcile|result verdicts|semanticEvaluation/,
     );
   }
 });
@@ -265,9 +287,14 @@ test("adversarial diagnostics preserve named contract and semantic failures", ()
   const generate = ({ primary }) => {
     const result = structuredClone(generatePaletteV2({ primary }));
     result.passed = false;
+    result.contractsPassed = false;
+    result.verdicts.contracts.passed = false;
+    result.verdicts.contracts.modes.light = false;
     result.modes.light.passed = false;
     result.modes.light.checks[0].pass = false;
     result.semanticEvaluation.evaluations[0].status = "needs-review";
+    result.semanticEvaluation.satisfied = false;
+    result.verdicts.semanticModel.satisfied = false;
     return result;
   };
   const report = buildAdversarialDiagnosticReport({ channels: [0], generate });

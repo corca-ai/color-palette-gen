@@ -115,11 +115,11 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
   });
   assert.equal(
     report.comparison.currentFullResultDigest,
-    "a9be68204818942787de7c14689bb54b6b34ac5e9f7709d1d6c501c1d39d954a",
+    "992b39e988c45e7b81746e856bde8cb1f92d008c5d732782d0db729680670393",
   );
   assert.equal(
     report.comparison.fixedFullResultDigest,
-    "d0aab51b7f838e0a032272c8f0a02e5542b0121378e255d95667ded6ce3bf84e",
+    "84d95d8157447f1bebb593631abf4eba9135046612af0668ba37b43f4e8e7fbd",
   );
   assert.equal(
     digest(

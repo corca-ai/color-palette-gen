@@ -134,7 +134,7 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   );
   assert.equal(
     report.guardedOutputDigest,
-    "396433042ae5973508a5f21d84b578da2cfe83b2ad5de9916e003c910de92af1",
+    "db5ec8ad7c0c9897edf7644b7a281e42ff64096b117aa0042e76723feafb3e06",
   );
   assert.equal(report.comparisonToCurrent.commonSupportInputCount, 215);
   assert.equal(

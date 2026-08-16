@@ -153,6 +153,22 @@ test("state traces report actual gamut-axis movement", () => {
 test("v2 reports paired quality separately from accessibility contracts", () => {
   const result = generatePaletteV2({ primary: "#6633FF" });
   assert.equal(result.passed, true);
+  assert.equal(result.contractsPassed, result.passed);
+  assert.deepEqual(result.verdicts, {
+    contracts: {
+      passed: true,
+      authority: "generated-contracts",
+      modes: { light: true, dark: true },
+    },
+    qualityReview: {
+      passed: result.quality.passed,
+      authority: "selected-result-review",
+    },
+    semanticModel: {
+      satisfied: result.semanticEvaluation.satisfied,
+      authority: "declarative-semantic-model",
+    },
+  });
   assert.equal(typeof result.quality.passed, "boolean");
   assert.equal(result.quality.crossMode.checks.length, 3);
   assert.equal(result.quality.states.light.checks.length, 2);
@@ -218,6 +234,9 @@ test("brand source is preserved while the action boundary is independently searc
 test("independent review can reject source fidelity after accessibility passes", () => {
   const result = generatePaletteV2({ primary: "#FFFF00" });
   assert.equal(result.passed, true);
+  assert.equal(result.contractsPassed, true);
+  assert.equal(result.verdicts.contracts.passed, true);
+  assert.equal(result.verdicts.qualityReview.passed, false);
   assert.equal(result.quality.passed, false);
   assert.deepEqual(
     result.quality.sourceChecks.filter(({ pass }) => !pass).map(({ id }) => id),

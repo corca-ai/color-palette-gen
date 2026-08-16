@@ -36,6 +36,8 @@ test("the managed Mermaid flow stays bound to current production policy", async 
     assert.ok(flow.includes(dependency), `missing managed edge: ${dependency}`);
   }
   assert.match(flow, /retain complete inventory for alternatives evidence/);
+  assert.match(flow, /result\.contractsPassed/);
+  assert.match(flow, /result\.verdicts/);
   assert.doesNotMatch(flow, /Restrict ranking pool/);
   assert.match(flow, /Shared generator with explicit diagnostic-only override/);
   assert.doesNotMatch(flow, /findings --> policy/);

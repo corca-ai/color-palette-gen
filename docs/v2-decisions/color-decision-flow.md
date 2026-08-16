@@ -73,7 +73,7 @@ flowchart TD
   selected --> review["Selected-result review: retained pair evidence, source fidelity, semantic hue, feedback pacing"]
   review --> semantics["Declarative semantic-model evaluation using selected modes and quality evidence"]
   selected --> output["Role tokens, CSS-ready values, and decision traces"]
-  selected --> pass["result.passed = both selected mode contract verdicts pass"]
+  selected --> pass["contractsPassed; legacy passed alias = both selected mode contract verdicts pass"]
   review --> result["Assembled palette result"]
   semantics --> result
   output --> result
@@ -102,9 +102,11 @@ evidence에 남는다. zero-miss pair가 없으면 모든 eligibility key가 같
 threshold의 경험적 권위는 같은 개념이 아니다. 현재 threshold는 여전히
 provisional이다.
 
-`result.passed`는 선택된 Light/Dark mode의 text·non-text contract verdict만으로
-계산한다. independent quality review와 semantic evaluation은 결과에 보존되는
-증거이며 이 pass boolean의 권위가 아니다.
+`result.verdicts`는 contract, quality review, semantic model의 권위를 분리한다.
+`result.contractsPassed`는 선택된 Light/Dark mode의 text·non-text contract
+verdict만으로 계산하고, 기존 `result.passed`는 같은 값의 호환 alias로 유지한다.
+selected-result quality review와 semantic evaluation은 별도 verdict로 보존되며
+contract pass boolean의 권위가 아니다.
 
 ## Diagnostic boundary
 

@@ -16,6 +16,7 @@ import {
   sourceUsageAlternatives,
 } from "./quality.js";
 import { evaluateV2Semantics } from "./semantic-model.js";
+import { resultVerdicts } from "./result-verdicts.js";
 import { diagnosePrimaryHover } from "./hover-diagnostics.js";
 import {
   destructiveSearch,
@@ -1487,6 +1488,11 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
   const sourceAlternatives = sourceUsageAlternatives(inputColor, modes);
   const semanticEvaluation = evaluateV2Semantics(modes, quality);
   const hoverDiagnostics = diagnosePrimaryHover(modes);
+  const { contractsPassed, verdicts } = resultVerdicts(
+    modes,
+    quality,
+    semanticEvaluation,
+  );
   const result = {
     version: 2,
     policyVersion: V2_POLICY.version,
@@ -1505,10 +1511,12 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
     modes,
     quality,
     semanticEvaluation,
+    verdicts,
     hoverDiagnostics,
     pairDecision: pairSelection.decision,
     sourceAlternatives,
-    passed: Object.values(modes).every((mode) => mode.passed),
+    contractsPassed,
+    passed: contractsPassed,
     ...(diagnosticOptions
       ? {
           diagnosticOverride: {

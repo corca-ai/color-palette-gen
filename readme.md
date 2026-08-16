@@ -47,6 +47,11 @@ v2의 공개 계약은 단순합니다.
 Light, Dark, Compare 선택은 전체 inspector에 동일하게 적용됩니다. 자세한 페이지
 계약은 [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)에 있습니다.
 
+생성 결과는 `verdicts.contracts`, `verdicts.qualityReview`,
+`verdicts.semanticModel`을 분리해 contract 통과와 review·semantic evidence를 같은
+판정으로 오해하지 않게 합니다. 기존 `passed`는 `contractsPassed`의 호환 alias이며
+전체 디자인 품질 판정이 아닙니다.
+
 JSON export는 범용 example token namespace를 사용합니다. 적용 sample의 coverage는
 공개된 디자인 참고 자료에서 아이디어를 얻었지만 특정 제품과의 제휴, 실제 소비
 관계 또는 runtime dependency를 의미하지 않습니다.

@@ -80,6 +80,9 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Verification
 
+- generated results expose separate contract, selected-result review, and
+  semantic-model verdicts; legacy `result.passed` remains only an alias of the
+  explicit `contractsPassed` contract verdict;
 - the local APCA runtime is cross-checked against pinned `apca-w3` 0.1.9 over
   every foreground/background pairing in the 216-color RGB grid;
 - every semantic role must have a selected decision and provenance;

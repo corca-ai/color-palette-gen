@@ -155,6 +155,22 @@ mode also exposes source classification, adaptation decisions, text checks, and
 non-text checks. Light/dark results are siblings, not one mode calculated by
 inverting the other.
 
+The result keeps three verdict authorities separate under `result.verdicts`:
+
+- `contracts.passed` is derived only from the selected Light and Dark text and
+  non-text contract verdicts and carries authority `generated-contracts`;
+- `qualityReview.passed` summarizes selected-result quality review evidence;
+- `semanticModel.satisfied` summarizes only the modeled declarative semantic
+  evaluations.
+
+The latter verdicts carry stable authorities `selected-result-review` and
+`declarative-semantic-model`, respectively. These IDs are machine-readable
+scope declarations, not claims of empirical or perceptual authority.
+
+`result.contractsPassed` is the explicit top-level contract verdict.
+`result.passed` remains a backward-compatible alias of that same value; it must
+not be interpreted as overall design, perceptual, or semantic quality.
+
 The result also exposes a versioned semantic evaluation for the Primary action,
 Foundation, Focus, Feedback, and Selection families. It keeps measurable
 constraints, invariants, and relations separate from generation strategies.

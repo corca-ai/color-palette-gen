@@ -1,4 +1,5 @@
 import { V2_POLICY } from "./policy.js";
+import { RESULT_VERDICT_AUTHORITIES } from "./result-verdicts.js";
 
 function checkName(check) {
   return check?.id ?? check?.role;
@@ -27,10 +28,53 @@ function assertSemanticEvaluation(semanticEvaluation) {
   if (
     typeof semanticEvaluation?.model?.id !== "string" ||
     !Number.isInteger(semanticEvaluation.model.version) ||
-    !validEvaluations
+    !validEvaluations ||
+    typeof semanticEvaluation.satisfied !== "boolean" ||
+    semanticEvaluation.satisfied !==
+      semanticEvaluation.evaluations.every(
+        ({ status }) => status === "satisfied",
+      )
   ) {
     throw new TypeError(
       "semanticEvaluation must contain named status verdicts.",
+    );
+  }
+}
+
+function assertResultVerdicts(result) {
+  const expectedContractsPassed = [result.modes.light, result.modes.dark].every(
+    ({ passed }) => passed,
+  );
+  const verdicts = result.verdicts;
+  const reconciled = [
+    typeof result.contractsPassed === "boolean",
+    result.contractsPassed === expectedContractsPassed,
+    result.passed === result.contractsPassed,
+    verdicts?.contracts?.passed === result.contractsPassed,
+    verdicts?.contracts?.modes?.light === result.modes.light.passed,
+    verdicts?.contracts?.modes?.dark === result.modes.dark.passed,
+    verdicts?.qualityReview?.passed === result.quality.passed,
+    verdicts?.semanticModel?.satisfied === result.semanticEvaluation.satisfied,
+    verdicts?.contracts?.authority === RESULT_VERDICT_AUTHORITIES.CONTRACTS,
+    verdicts?.qualityReview?.authority ===
+      RESULT_VERDICT_AUTHORITIES.QUALITY_REVIEW,
+    verdicts?.semanticModel?.authority ===
+      RESULT_VERDICT_AUTHORITIES.SEMANTIC_MODEL,
+  ];
+  if (reconciled.includes(false)) {
+    throw new TypeError(
+      "result verdicts must reconcile contracts, review evidence, and semantic evaluation.",
+    );
+  }
+}
+
+function assertQualityReview(quality) {
+  if (
+    typeof quality.passed !== "boolean" ||
+    quality.passed !== quality.checks.every(({ pass }) => pass)
+  ) {
+    throw new TypeError(
+      "quality.passed must reconcile with selected-result review checks.",
     );
   }
 }
@@ -146,6 +190,8 @@ export function assertDiagnosticResult(result) {
     );
   }
   assertSemanticEvaluation(result.semanticEvaluation);
+  assertQualityReview(result.quality);
+  assertResultVerdicts(result);
   assertDiagnosticEvidence(result);
   assertPairEligibilityEvidence(result);
   assertSource(result.source);
