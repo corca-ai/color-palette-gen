@@ -82,6 +82,26 @@ export function destructiveSearch({
   });
 }
 
+export function inspectDestructiveCandidateConstraints({
+  mode,
+  primary,
+  preferredLightness,
+}) {
+  return destructiveSearch({
+    mode,
+    primary,
+    preferredLightness,
+    retainPlot: "detailed",
+  })
+    .trace.searchPlot.map(({ hex, oklch, constraintResults, passed }) => ({
+      hex,
+      oklch,
+      constraintResults,
+      passed,
+    }))
+    .sort((first, second) => first.hex.localeCompare(second.hex));
+}
+
 export function warningSearch({
   mode,
   primary,

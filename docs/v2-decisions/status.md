@@ -107,6 +107,13 @@ promotion contract. No semantic output role remains a policy anchor.
   The reviewed v12 census finds role-local default-fill alternatives for 43:
   42 of 54 Warning cases but only 1 of 66 Destructive cases. It does not prove
   complete state-family or joint feedback substitution feasibility.
+- `npm run diagnose:destructive-anchor` changes only the source-red-band
+  Destructive preferred-lightness target. Across 41 applicable inputs / 82 mode
+  cases, objective decision evidence changes in all 82 and 75 selected
+  Destructive families change. No contract, semantic-model, Warning-family,
+  source-shift, or named quality finding is introduced, and one provisional
+  Light hue-review finding resolves. This is recorded objective-target evidence,
+  not semantic or perceptual equivalence.
 - `npm run diagnose:mode-range` compares three diagnostic-only range
   counterfactuals. In the reviewed 216-input run, symmetric, outward-only, and
   source-inclusive expansion are not policy candidates as tested: none resolves
@@ -130,14 +137,17 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Next migration
 
-1. Test candidate-level alternatives for the two guarded Primary chroma
+1. Keep the Destructive source-band anchor unchanged until the fixed-default
+   result receives a separate policy/perceptual disposition; current automated
+   evidence alone does not establish equivalent semantic intent.
+2. Test candidate-level alternatives for the two guarded Primary chroma
    rejections (`#FF6666` downstream feasibility and `#3300FF` cross-mode chroma)
    before considering the dual-generation transactional fallback as policy.
-2. Use the role-local availability split to specify a narrow Destructive
+3. Use the role-local availability split to specify a narrow Destructive
    candidate-inventory hypothesis before changing hue thresholds or policy.
-3. Review whether utility aliases need semantic declarations beyond their
+4. Review whether utility aliases need semantic declarations beyond their
    existing promotion contract.
-4. Promote thresholds from `heuristic` to `empirical` only with a separately
+5. Promote thresholds from `heuristic` to `empirical` only with a separately
    authorized dataset and analysis.
-5. Review upstream `apca-w3` releases before changing the pinned verification
+6. Review upstream `apca-w3` releases before changing the pinned verification
    version; update the parity evidence and policy version together.

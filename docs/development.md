@@ -32,6 +32,13 @@
   `npm run test:feedback-candidates` when refreshing the reviewed census. Both
   are on-demand and excluded from CI. This probe does not establish complete
   state families, joint Destructive/Warning substitution, or perception.
+- Run `npm run diagnose:destructive-anchor > destructive-anchor.json` to
+  compare the production source-red-band Destructive lightness objective with
+  the normal per-mode objective over the same search and downstream engine.
+  Run `npm run test:destructive-anchor-counterfactual` when refreshing its
+  reviewed 216-input census. Both are on-demand and excluded from CI; this
+  objective-target comparison does not establish semantic or perceptual
+  equivalence.
 - Run `npm run diagnose:mode-range > mode-range.json` for the heavier,
   on-demand counterfactual comparison of current, widened,
   gap-preserving-outward, and source-inclusive Primary lightness ranges. It is

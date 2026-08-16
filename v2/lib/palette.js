@@ -19,6 +19,11 @@ import { evaluateV2Semantics } from "./semantic-model.js";
 import { diagnosePrimaryHover } from "./hover-diagnostics.js";
 import { destructiveSearch, warningSearch } from "./feedback-search.js";
 import {
+  DESTRUCTIVE_ANCHOR_POLICY,
+  DESTRUCTIVE_ANCHOR_STRATEGIES,
+  destructiveAnchorDecision,
+} from "./destructive-anchor.js";
+import {
   PRIMARY_CHROMA_EXPERIMENT,
   primaryChromaRequests,
 } from "./primary-chroma-experiment.js";
@@ -902,14 +907,18 @@ function modePalette(input, mode, options = {}) {
     candidate(input.hex),
     brandFamily.primary,
   );
-  const redConflict =
-    input.classification !== "achromatic" && hueDistance(input.h, 27) < 38;
+  const destructiveAnchor = destructiveAnchorDecision({
+    input,
+    mode,
+    strategy:
+      options.destructiveAnchorStrategy ??
+      DESTRUCTIVE_ANCHOR_STRATEGIES.CURRENT_SOURCE_BAND,
+  });
+  const redConflict = destructiveAnchor.sourceBandApplicable;
   const destructiveDecision = destructiveSearch({
     mode,
     primary: brandFamily.primary,
-    preferredLightness: redConflict
-      ? recipe.conflictingDestructive
-      : recipe.destructive,
+    preferredLightness: destructiveAnchor.preferredLightness,
   });
   const destructiveColor = destructiveDecision.value.hex;
   const destructiveLabel = chooseSharedText([destructiveColor]);
@@ -1195,6 +1204,9 @@ function modePalette(input, mode, options = {}) {
           ? 0
           : Math.min(V2_POLICY.neutral.tintCap, input.brandChroma * 0.52),
       redConflict,
+      ...(options.destructiveAnchorStrategy
+        ? { diagnosticDestructiveAnchor: destructiveAnchor }
+        : {}),
       ...(options.allowInfeasibleStateCandidates
         ? {
             diagnosticInfeasiblePrimaryStateCandidateCount:
@@ -1399,6 +1411,7 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
         diagnosticOptions?.allowInfeasibleStateCandidates,
       ),
       primaryChromaExperiment,
+      destructiveAnchorStrategy: diagnosticOptions?.destructiveAnchorStrategy,
     });
   const baselineModes = {
     light: buildMode(inputColor, "light", {
@@ -1502,6 +1515,23 @@ export function generatePaletteV2PrimaryChromaCounterfactual({ primary }) {
     experiment: "primary-chroma-ladder",
     strategy: PRIMARY_CHROMA_EXPERIMENT.id,
     experimentDefinition: PRIMARY_CHROMA_EXPERIMENT,
+  });
+}
+
+export function generatePaletteV2DestructiveAnchorCounterfactual({
+  primary,
+  strategy = DESTRUCTIVE_ANCHOR_STRATEGIES.FIXED_DEFAULT,
+}) {
+  if (!Object.values(DESTRUCTIVE_ANCHOR_STRATEGIES).includes(strategy)) {
+    throw new TypeError(
+      `Unsupported destructive anchor strategy: ${strategy}.`,
+    );
+  }
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: "destructive-anchor",
+    strategy,
+    policySnapshot: DESTRUCTIVE_ANCHOR_POLICY,
+    destructiveAnchorStrategy: strategy,
   });
 }
 

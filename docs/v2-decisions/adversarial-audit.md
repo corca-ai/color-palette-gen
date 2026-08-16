@@ -204,6 +204,33 @@ semantic meaning, or recommend a production-policy change. Its denominator is
 the 120 failed checks, not all 236 cells within the 59-input flagged scope or a
 population sample.
 
+## Destructive default-anchor counterfactual
+
+`npm run diagnose:destructive-anchor` replaces only the alternate Destructive
+preferred-lightness objective used for sources within 38° of the 27° red anchor
+with the normal Light/Dark objective. The Destructive candidates, label and
+Primary-distance constraints, objective shape, tie-breakers, state searches,
+Warning generation, pair selection, and review checks are unchanged.
+
+The reviewed 216-input grid contains 41 source-band inputs / 82 mode cases. All
+41 inputs / 82 modes have changed objective decision evidence; the selected
+Destructive family changes in 75 mode cases, while Warning and Warning states do
+not change.
+Both arms retain all 216 inputs, zero generated-contract failures, 115 shifted
+inputs / 186 shifted modes, and zero semantic-model findings. No named contract,
+semantic-model, or source-shift transition is introduced. One provisional Light
+Primary↔Destructive hue-review finding (`#663300`) resolves, with no named
+quality finding introduced. Within the 82 applicable mode cases, mean recorded
+Primary↔Destructive distance decreases from 0.11748 to 0.09764, while the
+minimum passing separation margin decreases slightly from 0.000425 to 0.000414;
+the minimum Destructive label result remains 61.40 Lc.
+
+This describes the deterministic incremental effect of the alternate objective
+target under the current engine and coarse corpus. It does not establish that
+the source-red band is semantically or perceptually unnecessary, that the
+Primary-distance constraint captures the same intent, or that the default
+anchor should replace production policy.
+
 ## Primary chroma restraint counterfactual
 
 `npm run diagnose:primary-chroma` compares production v12 with one diagnostic

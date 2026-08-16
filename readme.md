@@ -198,6 +198,7 @@ vibe/harmony 후보 및 다중 색상 입력 조합은 보존된 v1 엔진의 �
 ```sh
 npm run diagnose:adversarial > report.json
 npm run diagnose:feedback-candidates > feedback-candidates.json
+npm run diagnose:destructive-anchor > destructive-anchor.json
 npm run diagnose:mode-range > mode-range.json
 npm run diagnose:pair-ranking > pair-ranking.json
 npm run diagnose:primary-chroma > primary-chroma.json
@@ -215,6 +216,10 @@ feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 
 기본색 후보군에 기존 제약과 동일한 hue 검사를 함께 통과하는 후보가 있는지
 확인합니다. hover/active 상태, 공통 label, pacing, Destructive와 Warning의 공동
 대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
+destructive-anchor 리포트는 빨강 근처 source에서만 쓰는 별도 Destructive 목표 L을
+제거하고 기본 mode 목표를 썼을 때의 결정적 차이를 같은 후보·제약·후속 생성으로
+비교합니다. 현재 검사 결과의 차이만 설명하며 semantic red의 시지각적 동등성이나
+정책 변경을 입증하지 않습니다.
 primary-chroma 리포트는 Primary에만 현재 고정 chroma cap과 대응 상한을
 source-relative 네 origin(중복 제거 후 최대 네 단계) 후보군으로 교체해 비교합니다.
 또한 원본 C가 현재 cap을 넘을 때만 변경 결과를 고려하고, 생성 불가나 새 contract /

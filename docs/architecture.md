@@ -16,6 +16,10 @@ this document owns component and runtime boundaries.
   independent quality and state-progression review. This keeps role-specific
   recipes explicit without accumulating every search implementation in the
   orchestrator.
+- `v2/lib/destructive-anchor.js` owns the production source-red-band
+  classification and preferred-lightness strategy. Diagnostic reports may
+  select its fixed default strategy, but do not own or rewrite the production
+  predicate.
 - `v2/lib/semantic-model.js` owns declarative design declarations, evidence
   contracts, evaluator registration, and evaluation-instance traceability.
   Test-owned acceptance scenarios prove coverage without becoming runtime
@@ -32,6 +36,9 @@ this document owns component and runtime boundaries.
   chroma inventory/bound against production v12 and owns a derived
   above-current-cap transactional fallback arm while all non-Primary input
   chroma consumers remain unchanged.
+  `destructive-anchor-counterfactual.js` compares the production source-red-band
+  Destructive objective target with the normal mode target while reusing the
+  same Feedback search and complete downstream engine.
   Counterfactual overrides bypass the production palette cache and are not
   exposed through the site UI.
 - `v2/lib/diagnostic-corpus.js` owns the shared deterministic RGB sampling
