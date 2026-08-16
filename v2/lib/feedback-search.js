@@ -98,6 +98,7 @@ export function summarizeFeedbackCandidateEvidence({
     }
     candidateEvidenceIdentity.push({
       hex: item.hex,
+      parameters: item.parameters,
       constraintResults: item.constraintResults,
       hueReview,
       terminalStage,
@@ -143,16 +144,34 @@ export function destructiveSearch({
   primary,
   preferredLightness,
   retainPlot = false,
+  diagnosticHueCandidates,
 }) {
   const policy = decisionPolicy("destructive");
   const [start, end] = V2_POLICY.destructive.lightnessRange[mode];
   const candidates = [];
+  const renderedCandidates = new Map();
   for (
     let lightness = start;
     lightness <= end + V2_POLICY.destructive.candidateStep / 2;
     lightness += V2_POLICY.destructive.candidateStep
   ) {
-    candidates.push(candidate(destructiveTone(lightness), { lightness }));
+    if (diagnosticHueCandidates === undefined) {
+      candidates.push(candidate(destructiveTone(lightness), { lightness }));
+      continue;
+    }
+    for (const hue of diagnosticHueCandidates) {
+      const item = candidate(destructiveTone(lightness, hue), {
+        lightness,
+        requestedOrigins: [{ lightness, hue }],
+      });
+      const existing = renderedCandidates.get(item.hex);
+      if (existing) {
+        existing.parameters.requestedOrigins.push({ lightness, hue });
+      } else if (!existing) {
+        renderedCandidates.set(item.hex, item);
+        candidates.push(item);
+      }
+    }
   }
   return selectCandidate({
     id: `${mode}.destructive`,

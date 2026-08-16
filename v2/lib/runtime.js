@@ -92,8 +92,8 @@ export function stateCandidate(base, lightness) {
   });
 }
 
-export function destructiveTone(lightness) {
-  return tone({ l: lightness, c: 0.19, h: 27 });
+export function destructiveTone(lightness, hue = 27) {
+  return tone({ l: lightness, c: 0.19, h: hue });
 }
 
 export function chooseSharedText(backgrounds) {

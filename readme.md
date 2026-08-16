@@ -218,6 +218,8 @@ feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 
 원인, 확률, 고유 색상 수를 뜻하지 않습니다. hover/active 상태, 공통 label,
 pacing, Destructive와 Warning의 공동
 대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
+v3의 고정 12°/27°/42° Destructive ladder는 실패한 66개 관계 안에서 후보 폭만
+민감도 검사하며, semantic red·시지각 선호·production hue 정책을 정하지 않습니다.
 destructive-anchor 리포트는 빨강 근처 source에서만 쓰는 별도 Destructive 목표 L을
 제거하고 기본 mode 목표를 썼을 때의 결정적 차이를 같은 후보·제약·후속 생성으로
 비교합니다. 현재 검사 결과의 차이만 설명하며 semantic red의 시지각적 동등성이나

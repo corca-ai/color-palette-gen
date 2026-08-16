@@ -1222,10 +1222,26 @@ function modePalette(input, mode, options = {}) {
   };
 }
 
+function validateDiagnosticDestructiveHues(relationship, hues) {
+  if (hues === undefined) return;
+  if (
+    relationship !== "destructive" ||
+    !Array.isArray(hues) ||
+    hues.length === 0 ||
+    hues.some((hue) => !Number.isFinite(hue) || hue < 0 || hue >= 360) ||
+    new Set(hues).size !== hues.length
+  ) {
+    throw new TypeError(
+      "diagnostic Destructive hue candidates require a unique bounded Destructive inventory.",
+    );
+  }
+}
+
 export function inspectFeedbackDefaultCandidateAvailabilityV2({
   result,
   mode,
   relationship,
+  diagnosticDestructiveHueCandidates,
 }) {
   if (
     result?.version !== 2 ||
@@ -1237,6 +1253,10 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
       "feedback candidate inspection requires a current v2 result, mode, and relationship.",
     );
   }
+  validateDiagnosticDestructiveHues(
+    relationship,
+    diagnosticDestructiveHueCandidates,
+  );
   const modeResult = result.modes[mode];
   const primary = candidate(modeResult.values.primary);
   const selectedDestructive = candidate(modeResult.values.destructive);
@@ -1272,6 +1292,7 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
             ? modeResult.recipe.conflictingDestructive
             : modeResult.recipe.destructive,
           retainPlot: "detailed",
+          diagnosticHueCandidates: diagnosticDestructiveHueCandidates,
         })
       : warningSearch({
           mode,
@@ -1280,8 +1301,14 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
           retainPlot: "detailed",
         });
   const productionSelected = modeResult.decisions[relationship].selected;
+  const reproducedProduction = search.trace.searchPlot.find(
+    ({ hex }) => hex === productionSelected.hex,
+  );
   if (
-    JSON.stringify(search.trace.selected) !== JSON.stringify(productionSelected)
+    !reproducedProduction ||
+    (diagnosticDestructiveHueCandidates === undefined &&
+      JSON.stringify(search.trace.selected) !==
+        JSON.stringify(productionSelected))
   ) {
     throw new TypeError(
       "diagnostic feedback inventory must reproduce the production-selected candidate.",
@@ -1339,8 +1366,13 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
       search.trace.policy.id,
       ...search.trace.searchConstants,
       baselineChecks[0].target,
+      ...(diagnosticDestructiveHueCandidates ?? []),
       ...candidateIds,
     ].join("/"),
+    requestedCandidateOccurrenceCount: search.trace.searchPlot.reduce(
+      (count, item) => count + (item.parameters.requestedOrigins?.length ?? 1),
+      0,
+    ),
     candidateCounts: {
       inventory: evaluated.length,
       baseConstraintPassing: basePassing.length,

@@ -28,7 +28,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
 
   assert.equal(
     report.schema,
-    "color-palette-feedback-default-candidate-availability.v2",
+    "color-palette-feedback-default-candidate-availability.v3",
   );
   assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.deepEqual(report.upstream, {
@@ -159,6 +159,120 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
       },
     },
   );
+  assert.deepEqual(report.destructiveHueInventoryProbe.experiment, {
+    id: "bounded-red-hue-ladder",
+    anchorHue: 27,
+    requestedHues: [12, 27, 42],
+    derivation:
+      "symmetric ±15° around the existing 27° anchor, matching the existing Warning inventory spacing",
+    chroma: 0.19,
+    authority: "diagnostic",
+  });
+  assert.deepEqual(report.destructiveHueInventoryProbe.scope, {
+    failedDestructiveCheckCaseCount: 66,
+    lightCaseCount: 33,
+    darkCaseCount: 33,
+  });
+  assert.deepEqual(report.destructiveHueInventoryProbe.current, {
+    countingUnit: "candidate-occurrence-per-failed-check-case",
+    failedCheckCaseCount: 66,
+    inventoryOccurrenceCount: 2838,
+    baseConstraintRejectedOccurrenceCount: 1026,
+    baseConstraintPassedHueReviewRejectedOccurrenceCount: 1798,
+    availableOccurrenceCount: 14,
+    baseConstraintFailedIdOccurrenceCounts: {
+      "destructive.brand-separation": 861,
+      "destructive.label-contrast": 165,
+    },
+    baseConstraintFailedPatternOccurrenceCounts: {
+      "destructive.brand-separation": 861,
+      "destructive.label-contrast": 165,
+    },
+    caseOutcomeCategoryCounts: {
+      "base-and-hue-alternative-available": 1,
+      "base-pass-candidates-all-hue-rejected": 65,
+    },
+  });
+  assert.deepEqual(report.destructiveHueInventoryProbe.expanded, {
+    countingUnit: "candidate-occurrence-per-failed-check-case",
+    failedCheckCaseCount: 66,
+    inventoryOccurrenceCount: 8514,
+    baseConstraintRejectedOccurrenceCount: 2920,
+    baseConstraintPassedHueReviewRejectedOccurrenceCount: 4765,
+    availableOccurrenceCount: 829,
+    baseConstraintFailedIdOccurrenceCounts: {
+      "destructive.brand-separation": 2458,
+      "destructive.label-contrast": 462,
+    },
+    baseConstraintFailedPatternOccurrenceCounts: {
+      "destructive.brand-separation": 2458,
+      "destructive.label-contrast": 462,
+    },
+    caseOutcomeCategoryCounts: {
+      "base-and-hue-alternative-available": 20,
+      "base-pass-candidates-all-hue-rejected": 46,
+    },
+  });
+  assert.equal(
+    report.destructiveHueInventoryProbe.requestedCandidateOccurrenceCount,
+    8514,
+  );
+  assert.equal(
+    report.destructiveHueInventoryProbe.uniqueRenderedCandidateOccurrenceCount,
+    8514,
+  );
+  assert.deepEqual(
+    report.destructiveHueInventoryProbe.availabilityTransitionCounts,
+    {
+      "newly-available": 19,
+      "retained-available": 1,
+      "still-unavailable": 46,
+    },
+  );
+  assert.deepEqual(
+    report.destructiveHueInventoryProbe.hueRungOccurrenceTotals,
+    {
+      12: {
+        requestedOccurrenceCount: 2838,
+        baseConstraintRejectedOccurrenceCount: 876,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1552,
+        availableOccurrenceCount: 410,
+      },
+      27: {
+        requestedOccurrenceCount: 2838,
+        baseConstraintRejectedOccurrenceCount: 1026,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1798,
+        availableOccurrenceCount: 14,
+      },
+      42: {
+        requestedOccurrenceCount: 2838,
+        baseConstraintRejectedOccurrenceCount: 1018,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1415,
+        availableOccurrenceCount: 405,
+      },
+    },
+  );
+  assert.equal(
+    report.destructiveHueInventoryProbe.newlyAvailableCases.length,
+    19,
+  );
+  assert.ok(
+    report.destructiveHueInventoryProbe.newlyAvailableCases.every(
+      ({ firstAvailableUnderExistingTechnicalRank }) =>
+        JSON.stringify(
+          firstAvailableUnderExistingTechnicalRank.selectionBasis,
+        ) ===
+        JSON.stringify(["destructive.semantic-anchor", "stable.hex-order"]),
+    ),
+  );
+  assert.equal(
+    report.destructiveHueInventoryProbe.caseIdentityDigest,
+    "39d662d4db81ece670ac35ac1a02fc338ed29c458bde470adb1a472f5765b834",
+  );
+  assert.equal(
+    report.destructiveHueInventoryProbe.candidateEvidenceDigest,
+    "f4d4316f68b3f9ca3d9ae294607d52918c1d2737ec9bd3cbf56a59bd646c1ba6",
+  );
   assert.deepEqual(
     destructiveAvailable.map(
       ({ input, mode, objectiveBestRoleLocalAlternative }) => ({
@@ -211,7 +325,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
         ({ candidateEvidenceDigest }) => candidateEvidenceDigest,
       ),
     ),
-    "cb14eb662744fe9e602e7ae8c7387f1ea15860ed8df1f67d1854b45e3230e7b6",
+    "594004904d1dde8ac5e7d74da0066fc33b49258776dcb4c5c492963c82026d13",
   );
   assert.deepEqual(totals, {
     inventory: 9156,

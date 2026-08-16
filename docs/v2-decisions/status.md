@@ -110,6 +110,10 @@ promotion contract. No semantic output role remains a policy anchor.
   further decomposes the 66 Destructive cases' 2,838 repeated candidate
   occurrences into 1,026 base-constraint exits, 1,798 base-passing hue-review
   exits, and 14 passing both; these are pipeline counts, not causes or rates.
+  Report v3 adds the fixed 12°/27°/42° Destructive sensitivity ladder. It
+  retains the current available case, exposes 19 newly available local defaults,
+  and leaves 46 unavailable. This is inventory evidence only, not a semantic,
+  perceptual, state-family, downstream, or production-policy result.
 - `npm run diagnose:destructive-anchor` changes only the source-red-band
   Destructive preferred-lightness target. Across 41 applicable inputs / 82 mode
   cases, objective decision evidence changes in all 82 and 75 selected

@@ -1,12 +1,69 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildFeedbackCandidateAvailabilityReport } from "../v2/lib/feedback-candidate-availability.js";
-import { summarizeFeedbackCandidateEvidence } from "../v2/lib/feedback-search.js";
+import {
+  assertDestructiveHueInventoryOrigins,
+  buildFeedbackCandidateAvailabilityReport,
+} from "../v2/lib/feedback-candidate-availability.js";
+import {
+  destructiveSearch,
+  summarizeFeedbackCandidateEvidence,
+} from "../v2/lib/feedback-search.js";
 import {
   generatePaletteV2,
   inspectFeedbackDefaultCandidateAvailabilityV2,
 } from "../v2/lib/palette.js";
+import { candidate } from "../v2/lib/runtime.js";
+
+test("expanded Destructive hues retain converged requested origins", () => {
+  const search = destructiveSearch({
+    mode: "light",
+    primary: candidate("#0066CC"),
+    preferredLightness: 0.54,
+    retainPlot: "detailed",
+    diagnosticHueCandidates: [27, 27 + 1e-12],
+  });
+  assert.ok(
+    search.trace.searchPlot.some(
+      ({ parameters }) => parameters.requestedOrigins.length === 2,
+    ),
+  );
+  assert.equal(
+    search.trace.searchPlot.reduce(
+      (sum, { parameters }) => sum + parameters.requestedOrigins.length,
+      0,
+    ),
+    search.trace.searchPlot.length * 2,
+  );
+});
+
+test("expanded Destructive origins preserve the exact baseline lightness Cartesian set", () => {
+  const currentEvidence = [0.3, 0.31].map((lightness) => ({
+    parameters: { lightness },
+  }));
+  const expanded = {
+    requestedCandidateOccurrenceCount: 6,
+    candidateEvidenceIdentity: [
+      {
+        parameters: {
+          requestedOrigins: [0.3, 0.31].flatMap((lightness) =>
+            [12, 27, 42].map((hue) => ({ lightness, hue })),
+          ),
+        },
+      },
+    ],
+  };
+  assert.equal(
+    assertDestructiveHueInventoryOrigins(expanded, currentEvidence),
+    6,
+  );
+  const mutated = structuredClone(expanded);
+  mutated.candidateEvidenceIdentity[0].parameters.requestedOrigins[0].lightness = 0.32;
+  assert.throws(
+    () => assertDestructiveHueInventoryOrigins(mutated, currentEvidence),
+    /Cartesian inventory|reconcile with the current inventory/,
+  );
+});
 
 test("feedback candidate evidence preserves overlapping base failures and funnel units", () => {
   const constraint = (id, passed) => ({ id, passed });
@@ -76,7 +133,7 @@ test("feedback availability inspects failed checks without mutating production o
   const result = generatePaletteV2({ primary: "#330000" });
   const before = structuredClone(result);
   const finding = result.quality.semanticChecks.find(
-    ({ pass }) => pass === false,
+    ({ id, pass }) => pass === false && id.includes("primary-destructive"),
   );
   const [, mode, relationshipId] = finding.id.split(".");
   const availability = inspectFeedbackDefaultCandidateAvailabilityV2({
@@ -84,8 +141,15 @@ test("feedback availability inspects failed checks without mutating production o
     mode,
     relationship: relationshipId.replace("primary-", "").replace("-hue", ""),
   });
+  const expandedAvailability = inspectFeedbackDefaultCandidateAvailabilityV2({
+    result,
+    mode,
+    relationship: relationshipId.replace("primary-", "").replace("-hue", ""),
+    diagnosticDestructiveHueCandidates: [12, 27, 42],
+  });
 
   assert.deepEqual(result, before);
+  assert.strictEqual(generatePaletteV2({ primary: "#330000" }), result);
   assert.equal(availability.input, "#330000");
   assert.equal(availability.baselineCheck.id, finding.id);
   assert.equal(availability.scope, "role-local-default-fill");
@@ -98,6 +162,10 @@ test("feedback availability inspects failed checks without mutating production o
     availability.roleLocalAlternativeAvailable,
   );
   assert.match(availability.candidateSetIdentity, /v2-policy-model-12/);
+  assert.ok(
+    expandedAvailability.candidateCounts.inventory >=
+      availability.candidateCounts.inventory,
+  );
 });
 
 test("feedback availability rejects invalid or already-passing scopes", () => {
@@ -127,19 +195,32 @@ test("feedback availability rejects invalid or already-passing scopes", () => {
   );
 
   const tampered = structuredClone(result);
-  const failed = tampered.quality.semanticChecks.find(({ pass }) => !pass);
+  const failed = tampered.quality.semanticChecks.find(
+    ({ id, pass }) => !pass && id.includes("primary-destructive"),
+  );
   failed.value += 1;
   const [, failedMode, failedRelationshipId] = failed.id.split(".");
+  const failedRelationship = failedRelationshipId
+    .replace("primary-", "")
+    .replace("-hue", "");
   assert.throws(
     () =>
       inspectFeedbackDefaultCandidateAvailabilityV2({
         result: tampered,
         mode: failedMode,
-        relationship: failedRelationshipId
-          .replace("primary-", "")
-          .replace("-hue", ""),
+        relationship: failedRelationship,
       }),
     /baseline hue evidence must reconcile/,
+  );
+  assert.throws(
+    () =>
+      inspectFeedbackDefaultCandidateAvailabilityV2({
+        result,
+        mode: failedMode,
+        relationship: failedRelationship,
+        diagnosticDestructiveHueCandidates: [27, 27],
+      }),
+    /unique bounded Destructive inventory/,
   );
 });
 
@@ -181,8 +262,18 @@ test("feedback report preserves the failed-check denominator and role-local word
       policyVersion: "test-policy",
       semanticEvaluation: { model: { id: "test-semantic", version: 1 } },
     }),
-    inspect: ({ result, mode, relationship }) => {
-      calls.push({ result, mode, relationship });
+    inspect: ({
+      result,
+      mode,
+      relationship,
+      diagnosticDestructiveHueCandidates,
+    }) => {
+      calls.push({
+        result,
+        mode,
+        relationship,
+        diagnosticDestructiveHueCandidates,
+      });
       return {
         input: result.input.primary,
         mode,
@@ -206,13 +297,38 @@ test("feedback report preserves the failed-check denominator and role-local word
           relationship === "warning"
             ? "base-and-hue-alternative-available"
             : "base-pass-candidates-all-hue-rejected",
-        candidateEvidenceIdentity: [{}],
+        candidateEvidenceIdentity: [
+          {
+            hex: "#111111",
+            ...(diagnosticDestructiveHueCandidates
+              ? {
+                  parameters: {
+                    requestedOrigins: [12, 27, 42].map((hue) => ({
+                      lightness: 0.5,
+                      hue,
+                    })),
+                  },
+                }
+              : {}),
+            ...(!diagnosticDestructiveHueCandidates
+              ? { parameters: { lightness: 0.5 } }
+              : {}),
+            terminalStage:
+              relationship === "warning"
+                ? "available"
+                : "base-passed-hue-review-rejected",
+          },
+        ],
+        requestedCandidateOccurrenceCount: diagnosticDestructiveHueCandidates
+          ? 3
+          : 1,
         roleLocalAlternativeAvailable: relationship === "warning",
       };
     },
   });
 
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls[2].diagnosticDestructiveHueCandidates, [12, 27, 42]);
   assert.equal(report.upstream.flaggedInputScopeCellCount, 4);
   assert.equal(report.summary.scopedFailedCheckCaseCount, 2);
   assert.equal(report.summary.availableCaseCount, 1);
@@ -224,10 +340,22 @@ test("feedback report preserves the failed-check denominator and role-local word
   });
   assert.equal(
     report.schema,
-    "color-palette-feedback-default-candidate-availability.v2",
+    "color-palette-feedback-default-candidate-availability.v3",
   );
   assert.match(report.interpretation, /role-local default-fill/);
   assert.match(report.interpretation, /does not establish hover\/active/);
+  assert.equal(
+    report.destructiveHueInventoryProbe.scope.failedDestructiveCheckCaseCount,
+    1,
+  );
+  assert.deepEqual(
+    report.destructiveHueInventoryProbe.availabilityTransitionCounts,
+    { "still-unavailable": 1 },
+  );
+  assert.match(
+    report.destructiveHueInventoryProbe.interpretation,
+    /no semantic hue authority/,
+  );
 });
 
 test("feedback report fails closed on the wrong upstream schema", () => {

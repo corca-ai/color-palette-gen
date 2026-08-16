@@ -31,6 +31,7 @@ this document owns component and runtime boundaries.
   `feedback-candidate-availability.js` orchestrates a separate role-local
   default-fill feasibility census while `feedback-search.js` owns the
   Destructive/Warning base-fill inventories, constraints, and objectives;
+  its v3 bounded Destructive hue-ladder probe remains role-local and diagnostic;
   `quality.js` retains ownership of hue and independent review checks.
   `primary-chroma-counterfactual.js` compares one Primary-only source-relative
   chroma inventory/bound against production v12 and owns a derived

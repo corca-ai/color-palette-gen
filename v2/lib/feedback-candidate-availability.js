@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { buildAdversarialDiagnosticReport } from "./adversarial-diagnostics.js";
+import { DESTRUCTIVE_HUE_INVENTORY_EXPERIMENT } from "./destructive-hue-experiment.js";
 import {
   generatePaletteV2,
   inspectFeedbackDefaultCandidateAvailabilityV2,
@@ -172,6 +173,88 @@ function candidateOccurrenceAnalysis(items) {
   return analysis;
 }
 
+function hueRungOccurrenceCounts(candidateEvidenceIdentity) {
+  const counts = {};
+  for (const item of candidateEvidenceIdentity) {
+    for (const origin of item.parameters.requestedOrigins ?? []) {
+      const key = String(origin.hue);
+      const entry = counts[key] ?? {
+        requestedOccurrenceCount: 0,
+        baseConstraintRejectedOccurrenceCount: 0,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 0,
+        availableOccurrenceCount: 0,
+      };
+      entry.requestedOccurrenceCount += 1;
+      counts[key] = entry;
+      if (item.terminalStage === "base-constraint-rejected") {
+        entry.baseConstraintRejectedOccurrenceCount += 1;
+      } else if (item.terminalStage === "base-passed-hue-review-rejected") {
+        entry.baseConstraintPassedHueReviewRejectedOccurrenceCount += 1;
+      } else {
+        entry.availableOccurrenceCount += 1;
+      }
+    }
+  }
+  return sortedMap(counts);
+}
+
+export function assertDestructiveHueInventoryOrigins(
+  expanded,
+  currentEvidence,
+) {
+  const expectedHues = DESTRUCTIVE_HUE_INVENTORY_EXPERIMENT.requestedHues;
+  const baselineLightnesses = currentEvidence.map(
+    ({ parameters }) => parameters?.lightness,
+  );
+  if (
+    baselineLightnesses.some((lightness) => !Number.isFinite(lightness)) ||
+    new Set(baselineLightnesses).size !== baselineLightnesses.length
+  ) {
+    throw new TypeError(
+      "current Destructive inventory requires unique finite lightness origins.",
+    );
+  }
+  const expectedTuples = new Set(
+    baselineLightnesses.flatMap((lightness) =>
+      expectedHues.map((hue) => `${lightness}/${hue}`),
+    ),
+  );
+  const tuples = new Set();
+  let requestedCount = 0;
+  for (const item of expanded.candidateEvidenceIdentity) {
+    const origins = item.parameters?.requestedOrigins;
+    if (!Array.isArray(origins) || origins.length === 0) {
+      throw new TypeError(
+        "expanded Destructive hue inventory requires requested origins.",
+      );
+    }
+    for (const origin of origins) {
+      const tuple = `${origin.lightness}/${origin.hue}`;
+      if (
+        !Number.isFinite(origin.lightness) ||
+        !expectedHues.includes(origin.hue) ||
+        tuples.has(tuple)
+      ) {
+        throw new TypeError(
+          "expanded Destructive hue origins must match the fixed Cartesian inventory.",
+        );
+      }
+      tuples.add(tuple);
+      requestedCount += 1;
+    }
+  }
+  if (
+    requestedCount !== expanded.requestedCandidateOccurrenceCount ||
+    JSON.stringify([...tuples].sort()) !==
+      JSON.stringify([...expectedTuples].sort())
+  ) {
+    throw new TypeError(
+      "expanded Destructive hue origin counts must reconcile with the current inventory.",
+    );
+  }
+  return requestedCount;
+}
+
 function scopedFailedChecks(upstream) {
   const review = upstream.semanticHueReview;
   if (
@@ -239,6 +322,7 @@ export function buildFeedbackCandidateAvailabilityReport({
   const byMode = {};
   const byRelationship = {};
   const generated = new Map();
+  const baselineEvidence = new Map();
   const cases = scopedCells.map(({ input, check }) => {
     const result = generated.get(input) ?? generate({ primary: input });
     generated.set(input, result);
@@ -264,6 +348,10 @@ export function buildFeedbackCandidateAvailabilityReport({
       mode: check.mode,
       relationship,
     });
+    baselineEvidence.set(
+      `${input}/${check.mode}/${relationship}`,
+      availability,
+    );
     incrementAvailability(
       byMode,
       check.mode,
@@ -325,9 +413,119 @@ export function buildFeedbackCandidateAvailabilityReport({
       ),
     ]),
   );
+  const destructiveHueCases = scopedCells
+    .filter(({ check }) => check.relationship === "primary-destructive")
+    .map(({ input, check }) => {
+      const relationship = "destructive";
+      const expanded = inspect({
+        result: generated.get(input),
+        mode: check.mode,
+        relationship,
+        diagnosticDestructiveHueCandidates:
+          DESTRUCTIVE_HUE_INVENTORY_EXPERIMENT.requestedHues,
+      });
+      assertInspectorEvidence(expanded, {
+        input,
+        mode: check.mode,
+        relationship,
+      });
+      const current = baselineEvidence.get(
+        `${input}/${check.mode}/${relationship}`,
+      );
+      assertDestructiveHueInventoryOrigins(
+        expanded,
+        current.candidateEvidenceIdentity,
+      );
+      const expandedByHex = new Map(
+        expanded.candidateEvidenceIdentity.map((item) => [item.hex, item]),
+      );
+      const parityEvidence = ({
+        hex,
+        constraintResults,
+        hueReview,
+        terminalStage,
+      }) => ({ hex, constraintResults, hueReview, terminalStage });
+      if (
+        current.candidateEvidenceIdentity.some(
+          (item) =>
+            JSON.stringify(
+              parityEvidence(expandedByHex.get(item.hex) ?? {}),
+            ) !== JSON.stringify(parityEvidence(item)),
+        )
+      ) {
+        throw new TypeError(
+          "expanded Destructive hue inventory must preserve current candidate evidence.",
+        );
+      }
+      const transition = current.roleLocalAlternativeAvailable
+        ? expanded.roleLocalAlternativeAvailable
+          ? "retained-available"
+          : "lost-available"
+        : expanded.roleLocalAlternativeAvailable
+          ? "newly-available"
+          : "still-unavailable";
+      if (transition === "lost-available") {
+        throw new TypeError(
+          "expanded Destructive hue inventory cannot lose current availability.",
+        );
+      }
+      const {
+        candidateSetIdentity,
+        candidateEvidenceIdentity,
+        ...publicExpanded
+      } = expanded;
+      return {
+        ...publicExpanded,
+        hueRungOccurrenceCounts: hueRungOccurrenceCounts(
+          candidateEvidenceIdentity,
+        ),
+        availabilityTransition: transition,
+        candidateSetDigest: digest(candidateSetIdentity),
+        candidateEvidenceDigest: digest(candidateEvidenceIdentity),
+      };
+    });
+  const transitionCounts = {};
+  for (const item of destructiveHueCases) {
+    incrementMap(transitionCounts, item.availabilityTransition, 1);
+  }
+  const hueRungOccurrenceTotals = {};
+  for (const item of destructiveHueCases) {
+    for (const [hue, counts] of Object.entries(item.hueRungOccurrenceCounts)) {
+      const totals = (hueRungOccurrenceTotals[hue] ??= {});
+      for (const [key, count] of Object.entries(counts)) {
+        incrementMap(totals, key, count);
+      }
+    }
+  }
+  for (const counts of Object.values(hueRungOccurrenceTotals)) {
+    if (
+      counts.baseConstraintRejectedOccurrenceCount +
+        counts.baseConstraintPassedHueReviewRejectedOccurrenceCount +
+        counts.availableOccurrenceCount !==
+      counts.requestedOccurrenceCount
+    ) {
+      throw new TypeError(
+        "Destructive hue rung occurrence counts must conserve requested origins.",
+      );
+    }
+  }
+  const requestedCandidateOccurrenceCount = destructiveHueCases.reduce(
+    (sum, item) => sum + item.requestedCandidateOccurrenceCount,
+    0,
+  );
+  if (
+    Object.values(hueRungOccurrenceTotals).reduce(
+      (sum, counts) => sum + counts.requestedOccurrenceCount,
+      0,
+    ) !== requestedCandidateOccurrenceCount
+  ) {
+    throw new TypeError(
+      "Destructive hue rung totals must reconcile with requested occurrences.",
+    );
+  }
 
   return {
-    schema: "color-palette-feedback-default-candidate-availability.v2",
+    schema: "color-palette-feedback-default-candidate-availability.v3",
     authority: "diagnostic",
     resultVersion: upstream.resultVersion,
     policyVersion: upstream.policyVersion,
@@ -351,6 +549,58 @@ export function buildFeedbackCandidateAvailabilityReport({
       candidateOccurrenceFunnelsByModeAndRelationship,
       byMode: sortedAvailability(byMode),
       byRelationship: sortedAvailability(byRelationship),
+    },
+    destructiveHueInventoryProbe: {
+      experiment: DESTRUCTIVE_HUE_INVENTORY_EXPERIMENT,
+      scope: {
+        failedDestructiveCheckCaseCount: destructiveHueCases.length,
+        lightCaseCount: destructiveHueCases.filter(
+          ({ mode }) => mode === "light",
+        ).length,
+        darkCaseCount: destructiveHueCases.filter(({ mode }) => mode === "dark")
+          .length,
+      },
+      interpretation:
+        "Compares the current 27° Destructive default-fill inventory with the fixed 12°/27°/42° diagnostic inventory in the same 66 failed-check contexts. ±15° mirrors the existing Warning inventory spacing; it is not an empirical semantic-red range. Hue-rung totals count requested origins when multiple requests converge to one rendered candidate; the expanded funnel counts unique rendered candidate occurrences. Availability remains role-local default-fill evidence and does not establish state-family, downstream Warning, perception, or policy suitability. The reported first candidate follows the unchanged lightness objective and technical hex tie-break, which has no semantic hue authority.",
+      current: candidateOccurrenceAnalysis(
+        cases.filter(({ relationship }) => relationship === "destructive"),
+      ),
+      expanded: candidateOccurrenceAnalysis(destructiveHueCases),
+      requestedCandidateOccurrenceCount,
+      uniqueRenderedCandidateOccurrenceCount: destructiveHueCases.reduce(
+        (sum, item) => sum + item.candidateCounts.inventory,
+        0,
+      ),
+      availabilityTransitionCounts: sortedMap(transitionCounts),
+      hueRungOccurrenceTotals: sortedMap(hueRungOccurrenceTotals),
+      newlyAvailableCases: destructiveHueCases
+        .filter(
+          ({ availabilityTransition }) =>
+            availabilityTransition === "newly-available",
+        )
+        .map(({ input, mode, objectiveBestRoleLocalAlternative }) => ({
+          input,
+          mode,
+          firstAvailableUnderExistingTechnicalRank: {
+            selectionBasis: ["destructive.semantic-anchor", "stable.hex-order"],
+            hex: objectiveBestRoleLocalAlternative.hex,
+            oklch: objectiveBestRoleLocalAlternative.oklch,
+            semanticHueReview:
+              objectiveBestRoleLocalAlternative.semanticHueReview,
+          },
+        })),
+      caseIdentityDigest: digest(
+        destructiveHueCases.map(({ input, mode, availabilityTransition }) => ({
+          input,
+          mode,
+          availabilityTransition,
+        })),
+      ),
+      candidateEvidenceDigest: digest(
+        destructiveHueCases.map(
+          ({ candidateEvidenceDigest }) => candidateEvidenceDigest,
+        ),
+      ),
     },
     cases,
   };

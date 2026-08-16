@@ -33,8 +33,10 @@
   base-constraint failure patterns;
   treat these as descriptive pipeline exits rather than causes. Run
   `npm run test:feedback-candidates` when refreshing the reviewed census. Both
-  are on-demand and excluded from CI. This probe does not establish complete
-  state families, joint Destructive/Warning substitution, or perception.
+  are on-demand and excluded from CI. Report v3 also compares the current 27°
+  Destructive inventory with the fixed 12°/27°/42° diagnostic ladder in the 66
+  failed Destructive cells. This probe does not establish complete state
+  families, joint Destructive/Warning substitution, perception, or a hue policy.
 - Run `npm run diagnose:destructive-anchor > destructive-anchor.json` to
   compare the production source-red-band Destructive lightness objective with
   the normal per-mode objective over the same search and downstream engine.

@@ -195,7 +195,7 @@ candidate in 42/54 scoped cases versus 1/66 for Destructive. The census does not
 isolate ranking, inventory shape, constraints, or frozen-role dependencies as
 the cause of that difference.
 
-The v2 report also decomposes repeated candidate occurrences through the same
+The v3 report retains the v2 decomposition of repeated candidate occurrences through the same
 ordered probe for both relationships and for each Light/Dark subset. Across
 the 66 failed Destructive-check cases, 2,838 candidate
 occurrences comprise 1,026 rejected by at least one existing base constraint,
@@ -207,6 +207,21 @@ candidates but no hue-passing alternative, while one has an available local
 default candidate. These are conditional candidate occurrences and ordered
 pipeline exits, not unique colors, probabilities, causes, or evidence that a
 constraint should change.
+
+Report v3 adds one predeclared Destructive-only sensitivity probe over those 66
+failed cells. It expands the fixed 27° inventory to 12°/27°/42° while retaining
+the same Lightness grid, C=.19, base constraints, lightness objective, and
+technical hex tie-break. The ±15° spacing mirrors the existing Warning
+inventory; it is not an empirical semantic-red range. The expanded inventory
+contains 8,514 requested and unique rendered candidate occurrences. It retains
+the one currently available case and makes 19 additional cases locally
+available, leaving 46 unavailable. By rung, 12° supplies 410 passing
+occurrences, 27° supplies 14, and 42° supplies 405. This establishes only that
+the bounded inventory contains more candidates satisfying the same constructed
+checks. It does not establish complete states, Warning preservation, semantic
+meaning, perceptual preference, or a production hue policy; the reported first
+candidate under the unchanged technical rank still depends on a tie-break with
+no semantic hue authority.
 
 This is not a full-palette repair claim. Warning alternatives are conditional
 on the selected Primary and Destructive. Destructive alternatives are
