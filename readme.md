@@ -110,6 +110,7 @@ list[(color, function)]
 - [공개 표준 기반 설계 근거](docs/public-design-basis.md)
 - [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
 - [v2 색상 결정 정당화 모델](docs/v2-decisions/README.md)
+- [현재 색상 결정 흐름 Mermaid](docs/v2-decisions/color-decision-flow.md)
 
 ## 보존된 실험 문서
 
@@ -173,6 +174,7 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 
 - `v1/`와 `lib/`: 유지보수 전용 실험 UI와 기존 팔레트 엔진
 - `v2/lib/palette.js`: 팔레트 생성 오케스트레이션
+- `docs/v2-decisions/color-decision-flow.md`: 현재 색상 결정 단계와 의존성 Mermaid
 - `v2/lib/feedback-search.js`: Destructive·Warning 후보 검색
 - `v2/lib/diagnostic-corpus.js`, `result-evidence.js`: 진단 공통 입력과 현재 정책 결과의 사전조건 검증
 - `v2/app.js`와 `v2/styles/`: 현재 UI, 상호작용, 표시 경계

@@ -26,6 +26,8 @@ must fail the decision-record test.
 
 ## Reading order
 
+- To inspect the complete production stage and dependency map, read the
+  [Color decision flow](color-decision-flow.md).
 - To understand a source label such as `heuristic`, read [Evidence](evidence.md).
 - To understand why the engine shows three candidates, read
   [Candidate search](candidate-search.md).

@@ -7,6 +7,11 @@ this document owns component and runtime boundaries.
 
 ## Runtime boundaries
 
+현재 색상 생성의 단계와 역할 간 의존성은
+[Color decision flow](v2-decisions/color-decision-flow.md)의 Mermaid 다이어그램으로
+관리한다. 역할 단계, pair 선택 권위 또는 production/diagnostic 경계가 바뀌면 해당
+다이어그램도 같은 변경 단위에서 갱신한다.
+
 - `v2/` is the default primary-only light/dark palette application. `app.js`
   connects DOM state and events, `lib/view.js` owns pure markup, and
   `lib/palette-runtime.js` owns worker execution and caching.
