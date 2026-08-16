@@ -1,30 +1,9 @@
-import { ADVERSARIAL_CHANNELS } from "./adversarial-diagnostics.js";
+import {
+  DIAGNOSTIC_RGB_CHANNELS,
+  diagnosticInputGrid,
+} from "./diagnostic-corpus.js";
 import { PAIR_RANKING_STRATEGIES } from "./pair-selection.js";
 import { generatePaletteV2PairRankingCounterfactual } from "./palette.js";
-
-function inputGrid(channels) {
-  return channels.flatMap((red) =>
-    channels.flatMap((green) =>
-      channels.map((blue) =>
-        `#${[red, green, blue]
-          .map((channel) => channel.toString(16).padStart(2, "0"))
-          .join("")}`.toUpperCase(),
-      ),
-    ),
-  );
-}
-
-function validateChannels(channels) {
-  if (
-    !Array.isArray(channels) ||
-    channels.length === 0 ||
-    channels.some(
-      (channel) => !Number.isInteger(channel) || channel < 0 || channel > 255,
-    )
-  ) {
-    throw new TypeError("channels must contain integers from 0 through 255.");
-  }
-}
 
 function identity(result) {
   return {
@@ -196,10 +175,9 @@ function booleanTransitions(current, candidate, read) {
 }
 
 export function buildPairRankingCounterfactualReport({
-  channels = ADVERSARIAL_CHANNELS,
+  channels = DIAGNOSTIC_RGB_CHANNELS,
 } = {}) {
-  validateChannels(channels);
-  const inputs = inputGrid([...new Set(channels)].sort((a, b) => a - b));
+  const inputs = diagnosticInputGrid(channels);
   const previousSourceFirst = [];
   const currentPolicy = [];
   let baselineIdentity;

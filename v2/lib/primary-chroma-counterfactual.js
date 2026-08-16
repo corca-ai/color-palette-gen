@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 
 import {
-  ADVERSARIAL_CHANNELS,
-  assertDiagnosticResult,
-} from "./adversarial-diagnostics.js";
+  DIAGNOSTIC_RGB_CHANNELS,
+  diagnosticInputGrid,
+} from "./diagnostic-corpus.js";
 import { NoCandidateError } from "./decision.js";
 import {
   generatePaletteV2,
@@ -15,33 +15,10 @@ import {
   primaryChromaRequests,
 } from "./primary-chroma-experiment.js";
 import { V2_POLICY } from "./policy.js";
+import { assertDiagnosticResult } from "./result-evidence.js";
 
 function digest(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
-}
-
-function inputGrid(channels) {
-  return channels.flatMap((red) =>
-    channels.flatMap((green) =>
-      channels.map((blue) =>
-        `#${[red, green, blue]
-          .map((channel) => channel.toString(16).padStart(2, "0"))
-          .join("")}`.toUpperCase(),
-      ),
-    ),
-  );
-}
-
-function validateChannels(channels) {
-  if (
-    !Array.isArray(channels) ||
-    channels.length === 0 ||
-    channels.some(
-      (channel) => !Number.isInteger(channel) || channel < 0 || channel > 255,
-    )
-  ) {
-    throw new TypeError("channels must contain integers from 0 through 255.");
-  }
 }
 
 function failedIds(result) {
@@ -420,12 +397,11 @@ function identity(result) {
 }
 
 export function buildPrimaryChromaCounterfactualReport({
-  channels = ADVERSARIAL_CHANNELS,
+  channels = DIAGNOSTIC_RGB_CHANNELS,
   generateCurrent = generatePaletteV2,
   generateAdaptive = generatePaletteV2PrimaryChromaCounterfactual,
 } = {}) {
-  validateChannels(channels);
-  const inputs = inputGrid([...new Set(channels)].sort((a, b) => a - b));
+  const inputs = diagnosticInputGrid(channels);
   const current = [];
   const adaptive = [];
   let reportIdentity;

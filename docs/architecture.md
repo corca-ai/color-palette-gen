@@ -10,9 +10,12 @@ this document owns component and runtime boundaries.
 - `v2/` is the default primary-only light/dark palette application. `app.js`
   connects DOM state and events, `lib/view.js` owns pure markup, and
   `lib/palette-runtime.js` owns worker execution and caching.
-- `v2/lib/palette.js` orchestrates generation, `pair-selection.js` owns
-  cross-mode pair ranking, and `quality.js` owns independent quality and
-  state-progression review.
+- `v2/lib/palette.js` orchestrates generation. Role-family producers own their
+  candidate searches: `feedback-search.js` owns Destructive and Warning,
+  `pair-selection.js` owns cross-mode pair ranking, and `quality.js` owns
+  independent quality and state-progression review. This keeps role-specific
+  recipes explicit without accumulating every search implementation in the
+  orchestrator.
 - `v2/lib/semantic-model.js` owns declarative design declarations, evidence
   contracts, evaluator registration, and evaluation-instance traceability.
   Test-owned acceptance scenarios prove coverage without becoming runtime
@@ -22,14 +25,21 @@ this document owns component and runtime boundaries.
   generated results. `pair-ranking-counterfactual.js` isolates one fixed
   pair-selection ordering probe over the unchanged sampled candidate set.
   `feedback-candidate-availability.js` orchestrates a separate role-local
-  default-fill feasibility census while `palette.js` and `quality.js` retain
-  ownership of candidate inventories, constraints, objectives, and hue checks.
+  default-fill feasibility census while `feedback-search.js` owns the
+  Destructive/Warning base-fill inventories, constraints, and objectives;
+  `quality.js` retains ownership of hue and independent review checks.
   `primary-chroma-counterfactual.js` compares one Primary-only source-relative
   chroma inventory/bound against production v12 and owns a derived
   above-current-cap transactional fallback arm while all non-Primary input
   chroma consumers remain unchanged.
   Counterfactual overrides bypass the production palette cache and are not
   exposed through the site UI.
+- `v2/lib/diagnostic-corpus.js` owns the shared deterministic RGB sampling
+  corpus used by diagnostics. `result-evidence.js` owns the shared fail-closed
+  diagnostic precondition check and intentionally reconciles the current
+  policy/result schema. Individual reports continue to own their own
+  observations, comparisons, schemas, and interpretation; these shared
+  modules are not a generalized experiment or policy engine.
 - `v2/styles/` separates base, specimen, decision-graph, review, and responsive
   CSS. Each file owns complete declaration blocks; `v2/style.css` remains a
   compatibility aggregator.

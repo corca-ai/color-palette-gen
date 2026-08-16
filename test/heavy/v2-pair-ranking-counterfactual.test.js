@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildPairRankingCounterfactualReport } from "../../v2/lib/pair-ranking-counterfactual.js";
-import { ADVERSARIAL_CHANNELS } from "../../v2/lib/adversarial-diagnostics.js";
+import { diagnosticInputGrid } from "../../v2/lib/diagnostic-corpus.js";
 import { PAIR_RANKING_STRATEGIES } from "../../v2/lib/pair-selection.js";
 import {
   generatePaletteV2,
@@ -17,18 +17,6 @@ function withoutDiagnosticMetadata(result) {
   delete normalized.pairDecision.candidateSetIdentity;
   delete normalized.pairDecision.selected.failedPairedQualityChecks;
   return normalized;
-}
-
-function inputGrid() {
-  return ADVERSARIAL_CHANNELS.flatMap((red) =>
-    ADVERSARIAL_CHANNELS.flatMap((green) =>
-      ADVERSARIAL_CHANNELS.map((blue) =>
-        `#${[red, green, blue]
-          .map((channel) => channel.toString(16).padStart(2, "0"))
-          .join("")}`.toUpperCase(),
-      ),
-    ),
-  );
 }
 
 test("reviewed pair-ranking counterfactual remains reproducible", () => {
@@ -176,7 +164,7 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
     );
   }
 
-  for (const primary of inputGrid()) {
+  for (const primary of diagnosticInputGrid()) {
     const production = generatePaletteV2({ primary });
     const diagnostic = generatePaletteV2PairRankingCounterfactual({
       primary,

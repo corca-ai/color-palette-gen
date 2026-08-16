@@ -173,6 +173,8 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 
 - `v1/`와 `lib/`: 유지보수 전용 실험 UI와 기존 팔레트 엔진
 - `v2/lib/palette.js`: 팔레트 생성 오케스트레이션
+- `v2/lib/feedback-search.js`: Destructive·Warning 후보 검색
+- `v2/lib/diagnostic-corpus.js`, `result-evidence.js`: 진단 공통 입력과 현재 정책 결과의 사전조건 검증
 - `v2/app.js`와 `v2/styles/`: 현재 UI, 상호작용, 표시 경계
 - `scripts/build-site.mjs`: 배포 artifact와 고정 평가 세트 조립
 - `docs/v2-spec.md`: v2 범위, 공개 디자인 참고 규칙, APCA 선택 근거
