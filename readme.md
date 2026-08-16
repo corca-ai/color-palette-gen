@@ -214,7 +214,9 @@ Destructive/Warning provisional hue 검사를 input, mode, relationship 단위�
 분리하지만 원인이나 시지각적 혼동을 판정하지 않습니다.
 feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 현재 역할별
 기본색 후보군에 기존 제약과 동일한 hue 검사를 함께 통과하는 후보가 있는지
-확인합니다. hover/active 상태, 공통 label, pacing, Destructive와 Warning의 공동
+확인합니다. v2의 관계별 candidate-occurrence funnel은 단계별 이탈을 보여주지만
+원인, 확률, 고유 색상 수를 뜻하지 않습니다. hover/active 상태, 공통 label,
+pacing, Destructive와 Warning의 공동
 대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
 destructive-anchor 리포트는 빨강 근처 source에서만 쓰는 별도 Destructive 목표 L을
 제거하고 기본 mode 목표를 썼을 때의 결정적 차이를 같은 후보·제약·후속 생성으로

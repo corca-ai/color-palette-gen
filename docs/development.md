@@ -28,7 +28,10 @@
   its source cohorts and overlaps are descriptive rather than causal.
 - Run `npm run diagnose:feedback-candidates > feedback-candidates.json` to
   inspect role-local default-fill alternatives for the 120 failed semantic-hue
-  checks identified by adversarial diagnostics v3. Run
+  checks identified by adversarial diagnostics v3. Report v2 adds relationship
+  candidate-occurrence funnels by relationship and mode, plus exact
+  base-constraint failure patterns;
+  treat these as descriptive pipeline exits rather than causes. Run
   `npm run test:feedback-candidates` when refreshing the reviewed census. Both
   are on-demand and excluded from CI. This probe does not establish complete
   state families, joint Destructive/Warning substitution, or perception.

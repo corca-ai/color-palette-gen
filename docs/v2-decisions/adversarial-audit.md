@@ -195,6 +195,19 @@ candidate in 42/54 scoped cases versus 1/66 for Destructive. The census does not
 isolate ranking, inventory shape, constraints, or frozen-role dependencies as
 the cause of that difference.
 
+The v2 report also decomposes repeated candidate occurrences through the same
+ordered probe for both relationships and for each Light/Dark subset. Across
+the 66 failed Destructive-check cases, 2,838 candidate
+occurrences comprise 1,026 rejected by at least one existing base constraint,
+1,798 that pass the base constraints but fail the provisional hue review, and
+14 that pass both. The base-rejected occurrences contain 861
+`destructive.brand-separation` and 165 `destructive.label-contrast` failure
+patterns; none fail both in this census. At case level, 65 reach base-passing
+candidates but no hue-passing alternative, while one has an available local
+default candidate. These are conditional candidate occurrences and ordered
+pipeline exits, not unique colors, probabilities, causes, or evidence that a
+constraint should change.
+
 This is not a full-palette repair claim. Warning alternatives are conditional
 on the selected Primary and Destructive. Destructive alternatives are
 conditional on the selected Primary, and the current Warning is not

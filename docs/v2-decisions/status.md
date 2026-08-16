@@ -106,7 +106,10 @@ promotion contract. No semantic output role remains a policy anchor.
 - `npm run diagnose:feedback-candidates` examines only those 120 failed checks.
   The reviewed v12 census finds role-local default-fill alternatives for 43:
   42 of 54 Warning cases but only 1 of 66 Destructive cases. It does not prove
-  complete state-family or joint feedback substitution feasibility.
+  complete state-family or joint feedback substitution feasibility. Report v2
+  further decomposes the 66 Destructive cases' 2,838 repeated candidate
+  occurrences into 1,026 base-constraint exits, 1,798 base-passing hue-review
+  exits, and 14 passing both; these are pipeline counts, not causes or rates.
 - `npm run diagnose:destructive-anchor` changes only the source-red-band
   Destructive preferred-lightness target. Across 41 applicable inputs / 82 mode
   cases, objective decision evidence changes in all 82 and 75 selected

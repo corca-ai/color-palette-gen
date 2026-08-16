@@ -17,7 +17,11 @@ import {
 } from "./quality.js";
 import { evaluateV2Semantics } from "./semantic-model.js";
 import { diagnosePrimaryHover } from "./hover-diagnostics.js";
-import { destructiveSearch, warningSearch } from "./feedback-search.js";
+import {
+  destructiveSearch,
+  summarizeFeedbackCandidateEvidence,
+  warningSearch,
+} from "./feedback-search.js";
 import {
   DESTRUCTIVE_ANCHOR_POLICY,
   DESTRUCTIVE_ANCHOR_STRATEGIES,
@@ -1301,6 +1305,13 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
   const basePassing = evaluated.filter(({ item }) => item.passed);
   const feasible = basePassing.filter(({ hueReview }) => hueReview.pass);
   const best = feasible[0] ?? null;
+  const evidenceSummary = summarizeFeedbackCandidateEvidence({
+    searchPlot: search.trace.searchPlot,
+    hueReviews: evaluated.map(({ hueReview }) => hueReview),
+    expectedConstraintIds: decisionPolicy(relationship).constraints.map(
+      ({ id }) => id,
+    ),
+  });
   const siblingRole =
     relationship === "destructive" ? "warning" : "destructive";
 
@@ -1335,6 +1346,7 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
       baseConstraintPassing: basePassing.length,
       semanticHuePassingAmongBase: feasible.length,
     },
+    ...evidenceSummary,
     roleLocalAlternativeAvailable: feasible.length > 0,
     objectiveBestRoleLocalAlternative: best
       ? {

@@ -11,6 +11,133 @@ import {
   tone,
 } from "./runtime.js";
 
+function increment(counts, key) {
+  counts[key] = (counts[key] ?? 0) + 1;
+}
+
+function validatedCandidateEvidence(item, hueReview, expectedIds) {
+  if (
+    typeof item?.hex !== "string" ||
+    !Array.isArray(item.constraintResults) ||
+    typeof item.passed !== "boolean" ||
+    typeof hueReview?.pass !== "boolean"
+  ) {
+    throw new TypeError("feedback candidate evidence verdict is invalid.");
+  }
+  const constraintIds = item.constraintResults.map(({ id }) => id).sort();
+  if (
+    JSON.stringify(constraintIds) !== JSON.stringify(expectedIds) ||
+    item.constraintResults.some(({ passed }) => typeof passed !== "boolean")
+  ) {
+    throw new TypeError(
+      "feedback candidate evidence constraints must match producer policy.",
+    );
+  }
+  const failedIds = item.constraintResults
+    .filter(({ passed }) => !passed)
+    .map(({ id }) => id)
+    .sort();
+  if (item.passed !== (failedIds.length === 0)) {
+    throw new TypeError(
+      "feedback candidate passed verdict must reconcile with constraints.",
+    );
+  }
+  return failedIds;
+}
+
+export function summarizeFeedbackCandidateEvidence({
+  searchPlot,
+  hueReviews,
+  expectedConstraintIds,
+}) {
+  if (
+    !Array.isArray(searchPlot) ||
+    searchPlot.length === 0 ||
+    !Array.isArray(hueReviews) ||
+    searchPlot.length !== hueReviews.length ||
+    !Array.isArray(expectedConstraintIds) ||
+    expectedConstraintIds.length === 0 ||
+    new Set(expectedConstraintIds).size !== expectedConstraintIds.length
+  ) {
+    throw new TypeError("feedback candidate evidence shape is invalid.");
+  }
+  const expectedIds = [...expectedConstraintIds].sort();
+  const baseConstraintFailedIdOccurrenceCounts = {};
+  const baseConstraintFailedPatternOccurrenceCounts = {};
+  const candidateEvidenceIdentity = [];
+  let baseConstraintRejectedOccurrenceCount = 0;
+  let baseConstraintPassedHueReviewRejectedOccurrenceCount = 0;
+  let availableOccurrenceCount = 0;
+
+  for (let index = 0; index < searchPlot.length; index += 1) {
+    const item = searchPlot[index];
+    const hueReview = hueReviews[index];
+    const failedIds = validatedCandidateEvidence(item, hueReview, expectedIds);
+    const basePassed = failedIds.length === 0;
+    if (item.passed !== basePassed) {
+      throw new TypeError(
+        "feedback candidate passed verdict must reconcile with constraints.",
+      );
+    }
+    let terminalStage;
+    if (!basePassed) {
+      terminalStage = "base-constraint-rejected";
+      baseConstraintRejectedOccurrenceCount += 1;
+      for (const id of failedIds)
+        increment(baseConstraintFailedIdOccurrenceCounts, id);
+      increment(
+        baseConstraintFailedPatternOccurrenceCounts,
+        failedIds.join("+"),
+      );
+    } else if (!hueReview.pass) {
+      terminalStage = "base-passed-hue-review-rejected";
+      baseConstraintPassedHueReviewRejectedOccurrenceCount += 1;
+    } else {
+      terminalStage = "available";
+      availableOccurrenceCount += 1;
+    }
+    candidateEvidenceIdentity.push({
+      hex: item.hex,
+      constraintResults: item.constraintResults,
+      hueReview,
+      terminalStage,
+    });
+  }
+
+  const inventoryOccurrenceCount = searchPlot.length;
+  if (
+    baseConstraintRejectedOccurrenceCount +
+      baseConstraintPassedHueReviewRejectedOccurrenceCount +
+      availableOccurrenceCount !==
+    inventoryOccurrenceCount
+  ) {
+    throw new TypeError("feedback candidate evidence funnel must conserve.");
+  }
+  if (
+    baseConstraintRejectedOccurrenceCount === inventoryOccurrenceCount &&
+    inventoryOccurrenceCount > 0
+  ) {
+    throw new TypeError(
+      "feedback candidate inventory must reproduce a base-passing production selection.",
+    );
+  }
+  return {
+    candidateOccurrenceFunnel: {
+      inventoryOccurrenceCount,
+      baseConstraintRejectedOccurrenceCount,
+      baseConstraintPassedHueReviewRejectedOccurrenceCount,
+      availableOccurrenceCount,
+    },
+    baseConstraintFailedIdOccurrenceCounts,
+    baseConstraintFailedPatternOccurrenceCounts,
+    caseOutcomeCategory:
+      availableOccurrenceCount > 0
+        ? "base-and-hue-alternative-available"
+        : "base-pass-candidates-all-hue-rejected",
+    candidateEvidenceIdentity,
+  };
+}
+
 export function destructiveSearch({
   mode,
   primary,
