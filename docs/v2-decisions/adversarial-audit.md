@@ -229,6 +229,27 @@ eligibility check. The 36,684 requested ladder occurrences render to 27,899
 unique ladder candidate occurrences, with 8,785 recorded request convergences.
 These are per-mode candidate occurrences, not unique colors across the corpus.
 
+The v2 report also derives an `above-current-cap` transactional fallback from
+the same current/adaptive results. Raw source C must exceed the current 0.15 cap
+before an already-generated adaptive result is considered. Of 216 inputs, 92
+are outside this adoption scope, 124 are considered, 122 are adopted, and two
+retain the complete current result:
+`#FF6666` for generation infeasibility and `#3300FF` for the introduced
+`pair.primary-chroma-difference` eligibility miss. The transactional fallback
+arm therefore
+has all 216 inputs / 432 modes, zero generation or contract failures, and zero
+selected pair-eligibility misses. Relative to current v12, mean realized C is
+0.14864 instead of 0.12483, mean mode source distance is 0.16654 instead of
+0.18042, and large source shifts move from 115 inputs / 186 modes to 109 / 178.
+No contract, semantic-model, or other named quality failure is introduced.
+
+This is conditional selection between two complete engine results, not a
+homogeneous chroma policy or candidate-level solution for the two rejected
+inputs. Its preserved generation/eligibility boundaries are guaranteed by the
+guard and are not independent evidence of perceived quality or production
+suitability. A production design would still need to address dual-generation
+cost and test candidate-level alternatives for the rejected inputs.
+
 This experiment changes both the Primary candidate inventory and its matching
 calm-chroma bound; it does not isolate either mechanism as a sole cause.
 Downstream roles respond to the selected Primary, so the result describes the

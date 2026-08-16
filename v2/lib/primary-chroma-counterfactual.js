@@ -10,9 +10,11 @@ import {
   generatePaletteV2PrimaryChromaCounterfactual,
 } from "./palette.js";
 import {
+  PRIMARY_CHROMA_ADOPTION_GUARD,
   PRIMARY_CHROMA_EXPERIMENT,
   primaryChromaRequests,
 } from "./primary-chroma-experiment.js";
+import { V2_POLICY } from "./policy.js";
 
 function digest(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -107,14 +109,34 @@ function modeObservation(result, mode) {
 
 function observation(input, result) {
   assertDiagnosticResult(result);
+  const pairEligibilityFailureIds =
+    V2_POLICY.crossMode.eligibilityCheckIds.filter((id) => {
+      const matches = result.quality.checks.filter((check) => check.id === id);
+      if (matches.length !== 1 || typeof matches[0].pass !== "boolean") {
+        throw new TypeError(
+          `Pair eligibility check ${id} must resolve exactly once.`,
+        );
+      }
+      return !matches[0].pass;
+    });
+  if (
+    pairEligibilityFailureIds.length !==
+    result.pairDecision.selected.eligibilityMisses
+  ) {
+    throw new TypeError(
+      "Selected pair eligibility evidence must match the failed policy-owned checks.",
+    );
+  }
   return {
     input,
+    fullResultDigest: digest(result),
     sourceChroma: result.source.oklch.c,
     classification: result.source.classification,
     generationInfeasibility: null,
     passed: result.passed,
     failures: failedIds(result),
     pairEligibilityMisses: result.pairDecision.selected.eligibilityMisses,
+    pairEligibilityFailureIds,
     pairQualityMisses: result.pairDecision.selected.qualityMisses,
     modes: Object.fromEntries(
       ["light", "dark"].map((mode) => [mode, modeObservation(result, mode)]),
@@ -125,14 +147,105 @@ function observation(input, result) {
 function infeasibleObservation(input, currentResult, error) {
   return {
     input,
+    fullResultDigest: null,
     sourceChroma: currentResult.source.oklch.c,
     classification: currentResult.source.classification,
     generationInfeasibility: error.message,
     passed: false,
     failures: { contracts: [], quality: [], semantic: [] },
     pairEligibilityMisses: null,
+    pairEligibilityFailureIds: null,
     pairQualityMisses: null,
     modes: {},
+  };
+}
+
+function introducedIds(before, after) {
+  const prior = new Set(before);
+  return after.filter((id) => !prior.has(id));
+}
+
+export function deriveGuardedPrimaryChromaSelection(current, adaptive) {
+  if (
+    !Array.isArray(current) ||
+    !Array.isArray(adaptive) ||
+    current.length !== adaptive.length ||
+    current.some((item, index) => item.input !== adaptive[index]?.input)
+  ) {
+    throw new TypeError(
+      "Guarded Primary chroma inputs must be aligned current/adaptive observations.",
+    );
+  }
+  const guarded = [];
+  const decisions = [];
+  for (let index = 0; index < current.length; index += 1) {
+    const baseline = current[index];
+    const candidate = adaptive[index];
+    const aboveCurrentCap =
+      baseline.sourceChroma >
+      V2_POLICY.primary.chromaCap +
+        PRIMARY_CHROMA_ADOPTION_GUARD.sourceChromaTolerance;
+    if (!aboveCurrentCap) {
+      guarded.push(baseline);
+      decisions.push({
+        input: baseline.input,
+        state: "out-of-scope",
+        reasonKind: "source-at-or-below-current-cap",
+      });
+      continue;
+    }
+    if (candidate.generationInfeasibility) {
+      guarded.push(baseline);
+      decisions.push({
+        input: baseline.input,
+        state: "considered-rejected",
+        reasonKind: "generation-infeasible",
+        evidence: { message: candidate.generationInfeasibility },
+      });
+      continue;
+    }
+    const introducedContracts = introducedIds(
+      baseline.failures.contracts,
+      candidate.failures.contracts,
+    );
+    const introducedEligibilityIds = introducedIds(
+      baseline.pairEligibilityFailureIds,
+      candidate.pairEligibilityFailureIds,
+    );
+    if (introducedContracts.length || introducedEligibilityIds.length) {
+      guarded.push(baseline);
+      decisions.push({
+        input: baseline.input,
+        state: "considered-rejected",
+        reasonKind: introducedContracts.length
+          ? "generated-contract-regression"
+          : "pair-eligibility-regression",
+        evidence: { introducedContracts, introducedEligibilityIds },
+      });
+      continue;
+    }
+    guarded.push(candidate);
+    decisions.push({ input: baseline.input, state: "considered-adopted" });
+  }
+  return {
+    guarded,
+    ledger: {
+      definition: PRIMARY_CHROMA_ADOPTION_GUARD,
+      sourceChromaCap: V2_POLICY.primary.chromaCap,
+      outOfScopeInputCount: decisions.filter(
+        ({ state }) => state === "out-of-scope",
+      ).length,
+      consideredInputCount: decisions.filter(({ state }) =>
+        state.startsWith("considered-"),
+      ).length,
+      adoptedInputCount: decisions.filter(
+        ({ state }) => state === "considered-adopted",
+      ).length,
+      rejectedInputCount: decisions.filter(
+        ({ state }) => state === "considered-rejected",
+      ).length,
+      decisions,
+    },
   };
 }
 
@@ -373,8 +486,9 @@ export function buildPrimaryChromaCounterfactualReport({
     .filter((index) => index !== null);
   const commonCurrent = commonIndexes.map((index) => current[index]);
   const commonAdaptive = commonIndexes.map((index) => adaptive[index]);
+  const guardedResult = deriveGuardedPrimaryChromaSelection(current, adaptive);
   return {
-    schema: "color-palette-primary-chroma-counterfactual.v1",
+    schema: "color-palette-primary-chroma-counterfactual.v2",
     authority: "diagnostic",
     ...reportIdentity,
     corpus: {
@@ -387,15 +501,17 @@ export function buildPrimaryChromaCounterfactualReport({
         "Replace the Primary-only effective chroma cap and matching calm-chroma bound with a discrete ladder up to source chroma.",
     },
     interpretation:
-      "Compares the current v12 engine with an expanded Primary-only source-relative chroma inventory and matching bound. Requested chroma may map to lower realized chroma. Results describe this fixed corpus and coupled engine; they do not establish vividness, aesthetic quality, optimal chroma, or a production policy recommendation.",
+      "Compares the current v12 engine with an expanded Primary-only source-relative chroma inventory and matching bound, then derives an above-current-cap transactional fallback arm. The fallback adopts only complete adaptive results that introduce neither generated-contract failures nor policy-owned pair eligibility misses. Its preserved boundaries are constructed by the guard, not independent quality evidence. Requested chroma may map to lower realized chroma. Results describe this fixed corpus and coupled engine; they do not establish vividness, aesthetic quality, optimal chroma, or a production policy recommendation.",
     summaries: {
       current: summarize(current),
       adaptive: summarize(adaptive),
+      guardedAdaptive: summarize(guardedResult.guarded),
       commonSupport: {
         current: summarize(commonCurrent),
         adaptive: summarize(commonAdaptive),
       },
     },
+    guardedSelection: guardedResult.ledger,
     candidateEvidence: {
       adaptiveModeCandidateSetDigest: digest(
         commonAdaptive.flatMap(({ input, modes }) =>
@@ -408,5 +524,16 @@ export function buildPrimaryChromaCounterfactualReport({
       ),
     },
     comparisonToCurrent: comparison(current, adaptive),
+    guardedComparisonToCurrent: comparison(current, guardedResult.guarded),
+    guardedOutputDigest: digest(
+      guardedResult.guarded.map((item, index) => ({
+        input: item.input,
+        branch:
+          guardedResult.ledger.decisions[index].state === "considered-adopted"
+            ? "adaptive"
+            : "current",
+        fullResultDigest: item.fullResultDigest,
+      })),
+    ),
   };
 }

@@ -48,7 +48,10 @@
 - Run `npm run diagnose:primary-chroma > primary-chroma.json` to compare the
   current v12 Primary chroma cap with the diagnostic source-relative
   four-origin, up-to-four-distinct-rung inventory and matching Primary-only
-  bound. Run
+  bound. The same report also derives an above-current-cap transactional
+  fallback arm without another generation pass: inputs at or below the cap keep
+  v12, and considered results fall back to v12 when generation is infeasible or
+  a generated contract / policy-owned pair eligibility check regresses. Run
   `npm run test:primary-chroma-counterfactual` when refreshing its published
   216-input observations. Both are on-demand and excluded from CI. The manual
   run takes roughly 36 seconds on the reviewed local environment; it does not

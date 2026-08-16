@@ -201,7 +201,7 @@ npm run diagnose:pair-ranking > pair-ranking.json
 npm run diagnose:primary-chroma > primary-chroma.json
 ```
 
-세 명령은 필요할 때만 실행하며 CI 합격 조건이 아닙니다. 범위 리포트는 현재
+이 명령들은 필요할 때만 실행하며 CI 합격 조건이 아닙니다. 범위 리포트는 현재
 범위와 세 개의 강한 반사실적 범위를 비교하고, pair-ranking 리포트는 동일한 후보
 집합에서 이전 v11 source-first 순서와 현재 v12 zero-miss eligibility 정책을
 비교합니다. 명령 자체는 정책을 변경하거나 최적 해법을 판정하지 않습니다. 출력의
@@ -214,8 +214,12 @@ feedback-candidates 리포트는 그중 실패한 120개 검사만 대상으로 
 확인합니다. hover/active 상태, 공통 label, pacing, Destructive와 Warning의 공동
 대체 가능성은 검사하지 않으므로 전체 팔레트 수정 가능성으로 해석하지 않습니다.
 primary-chroma 리포트는 Primary에만 현재 고정 chroma cap과 대응 상한을
-source-relative 네 origin(중복 제거 후 최대 네 단계) 후보군으로 교체해 비교합니다. 요청 chroma와 실제 sRGB
-출력 chroma를 구분하며, 쨍함·미감·최적 정책을 판정하지 않습니다.
+source-relative 네 origin(중복 제거 후 최대 네 단계) 후보군으로 교체해 비교합니다.
+또한 원본 C가 현재 cap을 넘을 때만 변경 결과를 고려하고, 생성 불가나 새 contract /
+pair eligibility 실패가 생기면 입력 전체를 현재 v12 결과로 되돌리는 진단용
+transactional fallback 결과도 함께 냅니다. 요청 chroma와 실제 sRGB 출력 chroma를
+구분하며, 이 fallback 준수는 guard로 구성된 결과이지 쨍함·미감·최적 정책의 증거가
+아닙니다.
 
 ## 보존된 v1 접근성 대비 모델
 

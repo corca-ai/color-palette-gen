@@ -118,15 +118,21 @@ promotion contract. No semantic output role remains a policy anchor.
   contract, semantic declaration, or large-shift threshold. This is a diagnostic
   ordering result, not a policy or perceptual verdict.
 - `npm run diagnose:primary-chroma` tests a Primary-only source-relative
-  four-origin, up-to-four-distinct-rung inventory and matching bound. It reduces the reviewed source-shift
-  census from 115 inputs / 186 modes to 108 / 177 and raises mean selected
-  realized C, but one input becomes generation-infeasible and another newly
-  misses pair chroma eligibility. It is not a production candidate as tested.
+  four-origin, up-to-four-distinct-rung inventory and matching bound. The broad
+  arm reduces the reviewed source-shift census from 115 inputs / 186 modes to
+  108 / 177 and raises mean selected realized C, but one input becomes
+  generation-infeasible and another newly misses pair chroma eligibility. A
+  derived above-current-cap transactional fallback rejects those two results
+  and retains 122, yielding 109 / 178 shifts, zero generated/eligibility
+  regressions, mean realized C 0.14864, and mean source distance 0.16654 across
+  all 216 inputs. This compliance is constructed by the guard and is not a
+  production or perceptual verdict.
 
 ## Next migration
 
-1. Specify a narrower Primary chroma hypothesis that preserves the newly exposed
-   Dark Destructive and cross-mode chroma boundaries before any policy change.
+1. Test candidate-level alternatives for the two guarded Primary chroma
+   rejections (`#FF6666` downstream feasibility and `#3300FF` cross-mode chroma)
+   before considering the dual-generation transactional fallback as policy.
 2. Use the role-local availability split to specify a narrow Destructive
    candidate-inventory hypothesis before changing hue thresholds or policy.
 3. Review whether utility aliases need semantic declarations beyond their

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildPrimaryChromaCounterfactualReport } from "../v2/lib/primary-chroma-counterfactual.js";
+import {
+  buildPrimaryChromaCounterfactualReport,
+  deriveGuardedPrimaryChromaSelection,
+} from "../v2/lib/primary-chroma-counterfactual.js";
 import { NoCandidateError } from "../v2/lib/decision.js";
 import {
   generatePaletteV2,
@@ -14,6 +17,87 @@ function withoutDiagnostic(result) {
   delete copy.diagnosticOverride;
   return copy;
 }
+
+function guardObservation(input, sourceChroma, overrides = {}) {
+  return {
+    input,
+    sourceChroma,
+    generationInfeasibility: null,
+    failures: { contracts: [], quality: [], semantic: [] },
+    pairEligibilityFailureIds: [],
+    ...overrides,
+  };
+}
+
+test("guarded Primary chroma adopts only above-cap results without new boundaries", () => {
+  const current = [
+    guardObservation("below", 0.15),
+    guardObservation("accepted", 0.2),
+    guardObservation("eligibility", 0.2),
+    guardObservation("contract", 0.2),
+    guardObservation("infeasible", 0.2),
+  ];
+  const adaptive = [
+    guardObservation("below", 0.15, { marker: "adaptive" }),
+    guardObservation("accepted", 0.2, { marker: "adaptive" }),
+    guardObservation("eligibility", 0.2, {
+      marker: "adaptive",
+      pairEligibilityFailureIds: ["pair.primary-chroma-difference"],
+    }),
+    guardObservation("contract", 0.2, {
+      marker: "adaptive",
+      failures: {
+        contracts: ["dark:destructive-label"],
+        quality: [],
+        semantic: [],
+      },
+    }),
+    guardObservation("infeasible", 0.2, {
+      marker: "adaptive",
+      generationInfeasibility: "no destructive candidate",
+    }),
+  ];
+  const result = deriveGuardedPrimaryChromaSelection(current, adaptive);
+  assert.deepEqual(
+    result.guarded.map(({ marker }) => marker ?? "current"),
+    ["current", "adaptive", "current", "current", "current"],
+  );
+  assert.deepEqual(
+    result.ledger.decisions.map(({ state, reasonKind }) => [state, reasonKind]),
+    [
+      ["out-of-scope", "source-at-or-below-current-cap"],
+      ["considered-adopted", undefined],
+      ["considered-rejected", "pair-eligibility-regression"],
+      ["considered-rejected", "generated-contract-regression"],
+      ["considered-rejected", "generation-infeasible"],
+    ],
+  );
+});
+
+test("guarded Primary chroma scope uses the declared cap tolerance", () => {
+  const tolerance = 1e-9;
+  const current = [
+    guardObservation("inside", 0.15 + tolerance / 2),
+    guardObservation("outside", 0.15 + tolerance * 2),
+  ];
+  const adaptive = current.map((item) => ({ ...item, marker: "adaptive" }));
+  const result = deriveGuardedPrimaryChromaSelection(current, adaptive);
+  assert.deepEqual(
+    result.ledger.decisions.map(({ state }) => state),
+    ["out-of-scope", "considered-adopted"],
+  );
+  assert.deepEqual(result.ledger.definition, {
+    id: "above-current-cap-transactional-fallback",
+    sourceChromaTolerance: 1e-9,
+    considerWhen:
+      "raw source chroma is greater than the current effective cap plus tolerance",
+    rejectWhen: [
+      "the already-generated adaptive result is infeasible",
+      "adaptive introduces a generated contract failure",
+      "adaptive introduces a policy-owned pair eligibility miss",
+    ],
+  });
+});
 
 test("Primary chroma diagnostic leaves production generation and cache unchanged", () => {
   const inputs = ["#000000", "#507096", "#FF00FF", "#FFFFFF"];
@@ -63,7 +147,7 @@ test("Primary chroma report is deterministic and claim-bounded", () => {
   const second = buildPrimaryChromaCounterfactualReport({ channels: [255, 0] });
 
   assert.deepEqual(first, second);
-  assert.equal(first.schema, "color-palette-primary-chroma-counterfactual.v1");
+  assert.equal(first.schema, "color-palette-primary-chroma-counterfactual.v2");
   assert.equal(
     first.experiment.id,
     "source-relative-four-origin-primary-chroma",
@@ -71,6 +155,16 @@ test("Primary chroma report is deterministic and claim-bounded", () => {
   assert.equal(first.summaries.current.inputCount, 8);
   assert.ok(first.summaries.adaptive.requestedCandidateOccurrenceCount > 0);
   assert.ok(first.summaries.adaptive.renderedConvergenceCount > 0);
+  assert.equal(
+    first.guardedSelection.outOfScopeInputCount +
+      first.guardedSelection.consideredInputCount,
+    first.summaries.current.inputCount,
+  );
+  assert.equal(
+    first.summaries.guardedAdaptive.generationInfeasibleInputCount,
+    0,
+  );
+  assert.equal(first.guardedComparisonToCurrent.commonSupportInputCount, 8);
   assert.match(first.interpretation, /do not establish vividness/);
   assert.equal(
     first.comparisonToCurrent.changedCases[0].current.selectedRequestedOrigins

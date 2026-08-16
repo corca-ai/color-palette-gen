@@ -25,7 +25,8 @@ this document owns component and runtime boundaries.
   default-fill feasibility census while `palette.js` and `quality.js` retain
   ownership of candidate inventories, constraints, objectives, and hue checks.
   `primary-chroma-counterfactual.js` compares one Primary-only source-relative
-  chroma inventory/bound against production v12 while all non-Primary input
+  chroma inventory/bound against production v12 and owns a derived
+  above-current-cap transactional fallback arm while all non-Primary input
   chroma consumers remain unchanged.
   Counterfactual overrides bypass the production palette cache and are not
   exposed through the site UI.

@@ -9,6 +9,18 @@ export const PRIMARY_CHROMA_EXPERIMENT = Object.freeze({
     "distinct requested C, then rendered sRGB hex with all origins",
 });
 
+export const PRIMARY_CHROMA_ADOPTION_GUARD = Object.freeze({
+  id: "above-current-cap-transactional-fallback",
+  sourceChromaTolerance: 1e-9,
+  considerWhen:
+    "raw source chroma is greater than the current effective cap plus tolerance",
+  rejectWhen: Object.freeze([
+    "the already-generated adaptive result is infeasible",
+    "adaptive introduces a generated contract failure",
+    "adaptive introduces a policy-owned pair eligibility miss",
+  ]),
+});
+
 export function primaryChromaRequests(rawChroma) {
   const origins = [
     rawChroma,

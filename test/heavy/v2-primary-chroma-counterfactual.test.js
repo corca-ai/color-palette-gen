@@ -12,9 +12,10 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   const report = buildPrimaryChromaCounterfactualReport();
   const current = report.summaries.current;
   const adaptive = report.summaries.adaptive;
+  const guarded = report.summaries.guardedAdaptive;
   const comparison = report.comparisonToCurrent;
 
-  assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v1");
+  assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v2");
   assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.deepEqual(
     {
@@ -68,6 +69,73 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
     inputCount: 215,
     generationInfeasibleInputCount: 0,
   });
+  assert.deepEqual(guarded, {
+    inputCount: 216,
+    selectedFromDiagnosticLadderInputCount: 122,
+    generationInfeasibleInputCount: 0,
+    evaluatedInputCount: 216,
+    contractFailureInputCount: 0,
+    pairEligibilityMissInputCount: 0,
+    pairQualityMissInputCount: 0,
+    qualityFindingInputCount: 143,
+    semanticFindingInputCount: 0,
+    largeSourceShiftInputCount: 109,
+    largeSourceShiftModeCount: 178,
+    evaluatedModeCount: 432,
+    meanModeSourceDistance: 0.16653808678119425,
+    maximumModeSourceDistance: 0.5795099175924082,
+    meanSelectedRealizedChroma: 0.14864182796309183,
+    requestedCandidateOccurrenceCount: 22928,
+    uniqueRenderedLadderCandidateCount: 16171,
+    renderedConvergenceCount: 6757,
+  });
+  assert.deepEqual(
+    {
+      outOfScopeInputCount: report.guardedSelection.outOfScopeInputCount,
+      consideredInputCount: report.guardedSelection.consideredInputCount,
+      adoptedInputCount: report.guardedSelection.adoptedInputCount,
+      rejectedInputCount: report.guardedSelection.rejectedInputCount,
+    },
+    {
+      outOfScopeInputCount: 92,
+      consideredInputCount: 124,
+      adoptedInputCount: 122,
+      rejectedInputCount: 2,
+    },
+  );
+  assert.deepEqual(
+    report.guardedSelection.decisions.filter(
+      ({ state }) => state === "considered-rejected",
+    ),
+    [
+      {
+        input: "#3300FF",
+        state: "considered-rejected",
+        reasonKind: "pair-eligibility-regression",
+        evidence: {
+          introducedContracts: [],
+          introducedEligibilityIds: ["pair.primary-chroma-difference"],
+        },
+      },
+      {
+        input: "#FF6666",
+        state: "considered-rejected",
+        reasonKind: "generation-infeasible",
+        evidence: {
+          message:
+            "dark.destructive has no candidate satisfying its constraints.",
+        },
+      },
+    ],
+  );
+  assert.equal(
+    digest(report.guardedSelection.decisions),
+    "b00848ba54552b9c650fb1b2621153ce4f89b4591de6390b6b02029b9f42a5f9",
+  );
+  assert.equal(
+    report.guardedOutputDigest,
+    "396433042ae5973508a5f21d84b578da2cfe83b2ad5de9916e003c910de92af1",
+  );
   assert.equal(report.comparisonToCurrent.commonSupportInputCount, 215);
   assert.equal(
     report.candidateEvidence.adaptiveModeCandidateSetDigest,
@@ -118,6 +186,42 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
     dark: {
       introduced: [],
       resolved: ["#0000FF", "#3300CC", "#3300FF", "#FF00FF", "#FF33FF"],
+    },
+    light: {
+      introduced: [],
+      resolved: ["#FF00CC", "#FF00FF", "#FF33CC", "#FF6699"],
+    },
+  });
+
+  const guardedComparison = report.guardedComparisonToCurrent;
+  assert.equal(guardedComparison.commonSupportInputCount, 216);
+  assert.equal(guardedComparison.changedInputCount, 107);
+  assert.equal(guardedComparison.changedModeCount, 196);
+  assert.deepEqual(guardedComparison.generationInfeasibleInputs, []);
+  assert.equal(
+    digest(guardedComparison.changedCases),
+    "7b15f44eb9e57d8788da149e19ee08985568afd08098e263fdb53d77334a4bf7",
+  );
+  assert.deepEqual(guardedComparison.contractTransitions, {});
+  assert.deepEqual(guardedComparison.semanticTransitions, {});
+  assert.deepEqual(guardedComparison.qualityTransitions, {
+    "review.dark.primary-destructive-hue": { introduced: [], resolved: [] },
+    "review.dark.primary-warning-hue": { introduced: [], resolved: [] },
+    "review.dark.source-fidelity": {
+      introduced: [],
+      resolved: ["#0000FF", "#3300CC", "#FF00FF", "#FF33FF"],
+    },
+    "review.light.primary-destructive-hue": { introduced: [], resolved: [] },
+    "review.light.primary-warning-hue": { introduced: [], resolved: [] },
+    "review.light.source-fidelity": {
+      introduced: [],
+      resolved: ["#FF00CC", "#FF00FF", "#FF33CC", "#FF6699"],
+    },
+  });
+  assert.deepEqual(guardedComparison.sourceShiftModeTransitions, {
+    dark: {
+      introduced: [],
+      resolved: ["#0000FF", "#3300CC", "#FF00FF", "#FF33FF"],
     },
     light: {
       introduced: [],
