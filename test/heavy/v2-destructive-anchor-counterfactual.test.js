@@ -13,7 +13,7 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
 
   assert.equal(
     report.schema,
-    "color-palette-destructive-anchor-counterfactual.v1",
+    "color-palette-destructive-anchor-counterfactual.v2",
   );
   assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.equal(report.resultVersion, 2);
@@ -115,11 +115,11 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
   });
   assert.equal(
     report.comparison.currentFullResultDigest,
-    "992b39e988c45e7b81746e856bde8cb1f92d008c5d732782d0db729680670393",
+    "4fbf669725618d2df819baaf3dd9e8ebff4f0f295b105d79463c4928a736c928",
   );
   assert.equal(
     report.comparison.fixedFullResultDigest,
-    "84d95d8157447f1bebb593631abf4eba9135046612af0668ba37b43f4e8e7fbd",
+    "4686b451b4a7e8b8c6288a87511707e1eb06bdc3ae296ef5b43b18ee1972651e",
   );
   assert.equal(
     digest(

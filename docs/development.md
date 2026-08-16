@@ -40,6 +40,8 @@
 - Run `npm run diagnose:destructive-anchor > destructive-anchor.json` to
   compare the production source-red-band Destructive lightness objective with
   the normal per-mode objective over the same search and downstream engine.
+  Report v2 serializes any expected candidate exhaustion with the shared
+  structured failure contract.
   Run `npm run test:destructive-anchor-counterfactual` when refreshing its
   reviewed 216-input census. Both are on-demand and excluded from CI; this
   objective-target comparison does not establish semantic or perceptual
@@ -68,6 +70,9 @@
   216-input observations. Both are on-demand and excluded from CI. The manual
   run takes roughly 36 seconds on the reviewed local environment; it does not
   establish vividness, aesthetic quality, or a production policy.
+  Report v3 emits expected generation infeasibility as structured `NO_CANDIDATE`
+  evidence with `decisionId`, `mode`, `role`, and `stage`; consumers must not
+  parse the human-readable message to identify the failed producer stage.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

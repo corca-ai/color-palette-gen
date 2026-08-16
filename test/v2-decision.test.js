@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { selectCandidate } from "../v2/lib/decision.js";
+import {
+  NoCandidateError,
+  noCandidateFailure,
+  selectCandidate,
+} from "../v2/lib/decision.js";
 import { V2_POLICY, validatePolicy } from "../v2/lib/policy.js";
 
 const definition = (id, kind, direction) => ({
@@ -94,4 +98,45 @@ test("invalid objective values fail instead of silently changing rank order", ()
       choose([{ hex: "#000000", oklch: {}, allowed: true, cost: Number.NaN }]),
     /invalid ranking value/,
   );
+});
+
+test("candidate exhaustion exposes structured failure provenance", () => {
+  assert.throws(
+    () => choose([{ hex: "#000000", oklch: {}, allowed: false, cost: 0 }]),
+    (error) => {
+      assert.ok(error instanceof NoCandidateError);
+      assert.deepEqual(noCandidateFailure(error), {
+        code: "NO_CANDIDATE",
+        decisionId: "test.choice",
+        mode: null,
+        role: "test",
+        stage: "candidate-selection",
+        message: "test.choice has no candidate satisfying its constraints.",
+      });
+      return true;
+    },
+  );
+});
+
+test("unstructured candidate errors cannot masquerade as report evidence", () => {
+  assert.throws(
+    () => noCandidateFailure(new NoCandidateError("legacy message only")),
+    /structured decision failure provenance/,
+  );
+  for (const details of [
+    { decisionId: "", role: "test" },
+    { decisionId: "test.choice", role: "" },
+    { decisionId: "test.choice", role: "test", message: "" },
+    { decisionId: "test.choice", role: "test", stage: "unknown-stage" },
+    { decisionId: "dark.test", mode: "light", role: "test" },
+    { decisionId: "dark.test", mode: null, role: "test" },
+  ]) {
+    assert.throws(
+      () =>
+        noCandidateFailure(
+          new NoCandidateError(details.message ?? "invalid", details),
+        ),
+      /structured decision failure provenance/,
+    );
+  }
 });

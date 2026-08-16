@@ -4,7 +4,7 @@ import {
   DIAGNOSTIC_RGB_CHANNELS,
   diagnosticInputGrid,
 } from "./diagnostic-corpus.js";
-import { NoCandidateError } from "./decision.js";
+import { NoCandidateError, noCandidateFailure } from "./decision.js";
 import {
   generatePaletteV2,
   generatePaletteV2PrimaryChromaCounterfactual,
@@ -127,7 +127,7 @@ function infeasibleObservation(input, currentResult, error) {
     fullResultDigest: null,
     sourceChroma: currentResult.source.oklch.c,
     classification: currentResult.source.classification,
-    generationInfeasibility: error.message,
+    generationInfeasibility: noCandidateFailure(error),
     passed: false,
     failures: { contracts: [], quality: [], semantic: [] },
     pairEligibilityMisses: null,
@@ -177,7 +177,7 @@ export function deriveGuardedPrimaryChromaSelection(current, adaptive) {
         input: baseline.input,
         state: "considered-rejected",
         reasonKind: "generation-infeasible",
-        evidence: { message: candidate.generationInfeasibility },
+        evidence: candidate.generationInfeasibility,
       });
       continue;
     }
@@ -366,7 +366,7 @@ function comparison(current, adaptive) {
       .filter(({ generationInfeasibility }) => generationInfeasibility)
       .map(({ input, generationInfeasibility }) => ({
         input,
-        reason: generationInfeasibility,
+        failure: generationInfeasibility,
       })),
     changedCases,
     contractTransitions: transitionMap(
@@ -464,7 +464,7 @@ export function buildPrimaryChromaCounterfactualReport({
   const commonAdaptive = commonIndexes.map((index) => adaptive[index]);
   const guardedResult = deriveGuardedPrimaryChromaSelection(current, adaptive);
   return {
-    schema: "color-palette-primary-chroma-counterfactual.v2",
+    schema: "color-palette-primary-chroma-counterfactual.v3",
     authority: "diagnostic",
     ...reportIdentity,
     corpus: {

@@ -33,6 +33,7 @@ flowchart TD
     aliases["Disabled and popover aliases"]
     contracts["Mode text and non-text contract checks"]
     bundle["Complete mode candidate with values, decisions, and checks"]
+    failure["NO_CANDIDATE: decisionId, mode, role, stage, message"]
 
     foundations --> primary
     primary --> destructive
@@ -53,6 +54,14 @@ flowchart TD
     focus --> contracts
     aliases --> bundle
     contracts --> bundle
+    primary -. "zero passing candidates" .-> failure
+    foundations -. "zero passing candidates" .-> failure
+    destructive -. "zero passing candidates" .-> failure
+    destructiveStates -. "zero passing candidates" .-> failure
+    warning -. "zero passing candidates" .-> failure
+    warningStates -. "zero passing candidates" .-> failure
+    selection -. "zero passing candidates" .-> failure
+    focus -. "zero passing candidates" .-> failure
   end
 
   lightBuild -. "uses topology" .-> foundations
@@ -138,6 +147,7 @@ override를 production 노드로 그려서는 안 된다.
 | Declarative semantic evaluation                                                        | `v2/lib/semantic-model.js`                                           |
 | Mode-scoped CSS serialization                                                          | `v2/lib/palette.js`                                                  |
 | Reference-token export artifact assembly                                               | `v2/lib/reference-export.js`                                         |
+| Candidate ranking and structured exhaustion failures                                   | `v2/lib/decision.js`                                                  |
 
 ## Maintenance contract
 

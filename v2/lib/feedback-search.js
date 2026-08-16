@@ -175,6 +175,7 @@ export function destructiveSearch({
   }
   return selectCandidate({
     id: `${mode}.destructive`,
+    mode,
     role: "destructive",
     intent:
       "Stay near the semantic red anchor while remaining readable and distinct from the generated brand.",
@@ -281,6 +282,7 @@ export function warningSearch({
   }
   return selectCandidate({
     id: `${mode}.warning`,
+    mode,
     role: "warning",
     intent:
       "Resolve an amber warning fill that remains readable and distinct from brand and destructive feedback.",

@@ -4,6 +4,7 @@ import {
   aliasDecision,
   inputDecision,
   NoCandidateError,
+  noCandidateFailure,
   selectCandidate,
 } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
@@ -62,6 +63,7 @@ function sharedTextSearch({ mode, role, backgrounds, target }) {
     );
   return selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
+    mode,
     role,
     intent: `Choose one black-or-white ${role} that maximizes the weakest contrast across every intended fill.`,
     candidates,
@@ -177,6 +179,7 @@ function foundationSearch({
   );
   const resolution = selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
+    mode,
     role,
     intent: `Resolve ${role} near its ${mode} recipe while preserving the complete foundation contract.`,
     candidates,
@@ -400,6 +403,7 @@ function stateSearch({ mode, base, role, target, labelText, labelLc }) {
   }
   return selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
+    mode,
     role,
     intent: `Create the smallest ${direction < 0 ? "darker" : "lighter"} state change that remains visibly ordered${labelText ? " inside the shared label contrast envelope" : ""}.`,
     candidates,
@@ -491,6 +495,7 @@ function brandFamilySearch({
       ) {
         throw error;
       }
+      noCandidateFailure(error);
       infeasibleStateCandidateCount += 1;
       return primary;
     }
@@ -545,6 +550,7 @@ function brandFamilySearch({
   }
   const selection = selectCandidate({
     id: `${mode}.primary`,
+    mode,
     role: "primary",
     intent:
       "Stay as close to the source as possible while the complete mode state family remains usable.",
@@ -655,6 +661,7 @@ function selectionSearch({ input, mode, surface }) {
   }
   return selectCandidate({
     id: `${mode}.selection`,
+    mode,
     role: "selection",
     intent:
       "Use the least emphasized brand tint that remains readable and visibly selected from the surface.",
@@ -744,6 +751,7 @@ function focusSearch({
   );
   return selectCandidate({
     id: `${mode}.focus.ring`,
+    mode,
     role: "focus ring",
     intent:
       "Resolve an independent focus color that remains brand-related while separating from controls on both foundations.",
@@ -833,6 +841,7 @@ function primaryBorderSearch({ input, mode, primary, background, surface }) {
   );
   return selectCandidate({
     id: `${mode}.primary.border`,
+    mode,
     role: "primary border",
     intent:
       "Provide the required action boundary independently so the brand-derived fill does not carry every contrast responsibility.",

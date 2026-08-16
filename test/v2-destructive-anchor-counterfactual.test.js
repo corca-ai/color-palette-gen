@@ -10,6 +10,7 @@ import {
   generatePaletteV2,
   generatePaletteV2DestructiveAnchorCounterfactual,
 } from "../v2/lib/palette.js";
+import { NoCandidateError } from "../v2/lib/decision.js";
 import { buildDestructiveAnchorCounterfactualReport } from "../v2/lib/destructive-anchor-counterfactual.js";
 
 function input(h, classification = "chromatic") {
@@ -124,4 +125,51 @@ test("destructive anchor report represents an empty applicable cohort explicitly
     minimumPrimaryDestructiveMargin: null,
     minimumDestructiveLabelLc: null,
   });
+});
+
+test("destructive anchor report serializes only valid candidate exhaustion", () => {
+  const structured = buildDestructiveAnchorCounterfactualReport({
+    channels: [0],
+    generateFixed: () => {
+      throw new NoCandidateError("dark.destructive exhausted.", {
+        decisionId: "dark.destructive",
+        mode: "dark",
+        role: "destructive",
+      });
+    },
+  });
+  assert.deepEqual(structured.support.infeasible, [
+    {
+      input: "#000000",
+      failure: {
+        code: "NO_CANDIDATE",
+        decisionId: "dark.destructive",
+        mode: "dark",
+        role: "destructive",
+        stage: "candidate-selection",
+        message: "dark.destructive exhausted.",
+      },
+    },
+  ]);
+
+  assert.throws(
+    () =>
+      buildDestructiveAnchorCounterfactualReport({
+        channels: [0],
+        generateFixed: () => {
+          throw new NoCandidateError("legacy");
+        },
+      }),
+    /structured decision failure provenance/,
+  );
+  assert.throws(
+    () =>
+      buildDestructiveAnchorCounterfactualReport({
+        channels: [0],
+        generateFixed: () => {
+          throw new Error("unexpected");
+        },
+      }),
+    /unexpected/,
+  );
 });

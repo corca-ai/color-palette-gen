@@ -15,7 +15,7 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   const guarded = report.summaries.guardedAdaptive;
   const comparison = report.comparisonToCurrent;
 
-  assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v2");
+  assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v3");
   assert.equal(report.policyVersion, "v2-policy-model-12");
   assert.deepEqual(
     {
@@ -122,6 +122,11 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
         state: "considered-rejected",
         reasonKind: "generation-infeasible",
         evidence: {
+          code: "NO_CANDIDATE",
+          decisionId: "dark.destructive",
+          mode: "dark",
+          role: "destructive",
+          stage: "candidate-selection",
           message:
             "dark.destructive has no candidate satisfying its constraints.",
         },
@@ -130,11 +135,11 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   );
   assert.equal(
     digest(report.guardedSelection.decisions),
-    "b00848ba54552b9c650fb1b2621153ce4f89b4591de6390b6b02029b9f42a5f9",
+    "ce58f61dbcbc65b29de1b664386909fb3c143e74b17af322d066e85cbbc30994",
   );
   assert.equal(
     report.guardedOutputDigest,
-    "db5ec8ad7c0c9897edf7644b7a281e42ff64096b117aa0042e76723feafb3e06",
+    "c91fd3746a7de4f8a0054914aef9e3b359793f128a9fa7437f6bc1eb6aa4598f",
   );
   assert.equal(report.comparisonToCurrent.commonSupportInputCount, 215);
   assert.equal(
@@ -146,12 +151,20 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   assert.deepEqual(comparison.generationInfeasibleInputs, [
     {
       input: "#FF6666",
-      reason: "dark.destructive has no candidate satisfying its constraints.",
+      failure: {
+        code: "NO_CANDIDATE",
+        decisionId: "dark.destructive",
+        mode: "dark",
+        role: "destructive",
+        stage: "candidate-selection",
+        message:
+          "dark.destructive has no candidate satisfying its constraints.",
+      },
     },
   ]);
   assert.equal(
     digest(comparison.changedCases),
-    "801275efe1527e8c9f35aedeedea64098c8cc671339754aaf509b90d2d0f5167",
+    "5b5becc085505f0c65f574b1554048fc5e69055758ed18786f914605530c1ebc",
   );
   assert.equal(
     digest({

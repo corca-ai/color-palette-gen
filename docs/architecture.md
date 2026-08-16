@@ -25,6 +25,11 @@ this document owns component and runtime boundaries.
   classification and preferred-lightness strategy. Diagnostic reports may
   select its fixed default strategy, but do not own or rewrite the production
   predicate.
+- `v2/lib/decision.js` owns candidate ranking and the structured
+  `NO_CANDIDATE` failure contract. Candidate exhaustion carries stable
+  `decisionId`, nullable `mode`, `role`, and fixed `candidate-selection` stage
+  provenance; diagnostic consumers serialize that evidence while unexpected
+  errors continue to abort.
 - `v2/lib/semantic-model.js` owns declarative design declarations, evidence
   contracts, evaluator registration, and evaluation-instance traceability.
   Test-owned acceptance scenarios prove coverage without becoming runtime

@@ -29,6 +29,15 @@ function guardObservation(input, sourceChroma, overrides = {}) {
   };
 }
 
+const destructiveFailure = {
+  code: "NO_CANDIDATE",
+  decisionId: "dark.destructive",
+  mode: "dark",
+  role: "destructive",
+  stage: "candidate-selection",
+  message: "dark.destructive has no candidate.",
+};
+
 test("guarded Primary chroma adopts only above-cap results without new boundaries", () => {
   const current = [
     guardObservation("below", 0.15),
@@ -54,7 +63,7 @@ test("guarded Primary chroma adopts only above-cap results without new boundarie
     }),
     guardObservation("infeasible", 0.2, {
       marker: "adaptive",
-      generationInfeasibility: "no destructive candidate",
+      generationInfeasibility: destructiveFailure,
     }),
   ];
   const result = deriveGuardedPrimaryChromaSelection(current, adaptive);
@@ -147,7 +156,7 @@ test("Primary chroma report is deterministic and claim-bounded", () => {
   const second = buildPrimaryChromaCounterfactualReport({ channels: [255, 0] });
 
   assert.deepEqual(first, second);
-  assert.equal(first.schema, "color-palette-primary-chroma-counterfactual.v2");
+  assert.equal(first.schema, "color-palette-primary-chroma-counterfactual.v3");
   assert.equal(
     first.experiment.id,
     "source-relative-four-origin-primary-chroma",
@@ -177,7 +186,11 @@ test("Primary chroma report records expected infeasibility and rethrows defects"
   const unavailable = buildPrimaryChromaCounterfactualReport({
     channels: [0],
     generateAdaptive: () => {
-      throw new NoCandidateError("dark.destructive has no candidate.");
+      throw new NoCandidateError("dark.destructive has no candidate.", {
+        decisionId: "dark.destructive",
+        mode: "dark",
+        role: "destructive",
+      });
     },
   });
   assert.equal(
@@ -185,7 +198,7 @@ test("Primary chroma report records expected infeasibility and rethrows defects"
     1,
   );
   assert.deepEqual(unavailable.comparisonToCurrent.generationInfeasibleInputs, [
-    { input: "#000000", reason: "dark.destructive has no candidate." },
+    { input: "#000000", failure: destructiveFailure },
   ]);
   assert.throws(
     () =>

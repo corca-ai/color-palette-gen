@@ -1,7 +1,7 @@
 import { V2_POLICY } from "./policy.js";
 import { pairedQuality } from "./quality.js";
 import { candidate, distance } from "./runtime.js";
-import { NoCandidateError } from "./decision.js";
+import { NoCandidateError, noCandidateFailure } from "./decision.js";
 
 export const PAIR_RANKING_STRATEGIES = Object.freeze({
   SOURCE_FIRST: "source-first",
@@ -22,7 +22,12 @@ function exactModeCandidate(input, mode, lightness, buildMode) {
     if (!(error instanceof NoCandidateError)) throw error;
     return {
       candidate: null,
-      dropped: { mode, lightness, reason: error.message },
+      dropped: {
+        mode,
+        lightness,
+        reason: error.message,
+        failure: noCandidateFailure(error),
+      },
     };
   }
 }

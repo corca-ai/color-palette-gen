@@ -83,6 +83,9 @@ promotion contract. No semantic output role remains a policy anchor.
 - generated results expose separate contract, selected-result review, and
   semantic-model verdicts; legacy `result.passed` remains only an alias of the
   explicit `contractsPassed` contract verdict;
+- candidate exhaustion uses a structured `NO_CANDIDATE` producer contract with
+  stable decision, mode, role, and stage provenance; diagnostic reports retain
+  the message only as human-readable context;
 - the local APCA runtime is cross-checked against pinned `apca-w3` 0.1.9 over
   every foreground/background pairing in the 216-color RGB grid;
 - every semantic role must have a selected decision and provenance;

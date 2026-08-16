@@ -38,6 +38,16 @@ test("the managed Mermaid flow stays bound to current production policy", async 
   assert.match(flow, /retain complete inventory for alternatives evidence/);
   assert.match(flow, /result\.contractsPassed/);
   assert.match(flow, /result\.verdicts/);
+  assert.match(flow, /NO_CANDIDATE: decisionId, mode, role, stage, message/);
+  assert.ok(
+    flow.includes('foundations -. "zero passing candidates" .-> failure'),
+  );
+  assert.ok(
+    flow.includes('destructiveStates -. "zero passing candidates" .-> failure'),
+  );
+  assert.ok(
+    flow.includes('warningStates -. "zero passing candidates" .-> failure'),
+  );
   assert.doesNotMatch(flow, /Restrict ranking pool/);
   assert.match(flow, /Shared generator with explicit diagnostic-only override/);
   assert.doesNotMatch(flow, /findings --> policy/);

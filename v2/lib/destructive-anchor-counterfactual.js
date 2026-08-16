@@ -4,7 +4,7 @@ import {
   DESTRUCTIVE_ANCHOR_POLICY,
   DESTRUCTIVE_ANCHOR_STRATEGIES,
 } from "./destructive-anchor.js";
-import { NoCandidateError } from "./decision.js";
+import { NoCandidateError, noCandidateFailure } from "./decision.js";
 import {
   DIAGNOSTIC_RGB_CHANNELS,
   diagnosticInputGrid,
@@ -249,7 +249,7 @@ export function buildDestructiveAnchorCounterfactualReport({
       fixed.push(fixedObservation);
     } catch (error) {
       if (!(error instanceof NoCandidateError)) throw error;
-      infeasible.push({ input, name: error.name, message: error.message });
+      infeasible.push({ input, failure: noCandidateFailure(error) });
     }
   }
 
@@ -328,7 +328,7 @@ export function buildDestructiveAnchorCounterfactualReport({
   );
 
   return {
-    schema: "color-palette-destructive-anchor-counterfactual.v1",
+    schema: "color-palette-destructive-anchor-counterfactual.v2",
     authority: "diagnostic",
     ...producerIdentity,
     experiment: {

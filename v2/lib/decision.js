@@ -50,10 +50,64 @@ function compareRanking(first, second) {
   return 0;
 }
 
-export class NoCandidateError extends Error {}
+export const NO_CANDIDATE_CODE = "NO_CANDIDATE";
+export const NO_CANDIDATE_STAGES = Object.freeze({
+  CANDIDATE_SELECTION: "candidate-selection",
+});
+
+export class NoCandidateError extends Error {
+  constructor(
+    message,
+    {
+      decisionId = null,
+      mode = null,
+      role = null,
+      stage = NO_CANDIDATE_STAGES.CANDIDATE_SELECTION,
+    } = {},
+  ) {
+    super(message);
+    this.name = "NoCandidateError";
+    this.code = NO_CANDIDATE_CODE;
+    this.decisionId = decisionId;
+    this.mode = mode;
+    this.role = role;
+    this.stage = stage;
+  }
+}
+
+export function noCandidateFailure(error) {
+  const decisionMode =
+    error?.decisionId?.match(/^(light|dark)\./u)?.[1] ?? null;
+  if (
+    !(error instanceof NoCandidateError) ||
+    error.code !== NO_CANDIDATE_CODE ||
+    typeof error.decisionId !== "string" ||
+    error.decisionId.length === 0 ||
+    typeof error.role !== "string" ||
+    error.role.length === 0 ||
+    typeof error.message !== "string" ||
+    error.message.length === 0 ||
+    error.stage !== NO_CANDIDATE_STAGES.CANDIDATE_SELECTION ||
+    !(error.mode === null || error.mode === "light" || error.mode === "dark") ||
+    error.mode !== decisionMode
+  ) {
+    throw new TypeError(
+      "NoCandidateError must contain structured decision failure provenance.",
+    );
+  }
+  return {
+    code: error.code,
+    decisionId: error.decisionId,
+    mode: error.mode,
+    role: error.role,
+    stage: error.stage,
+    message: error.message,
+  };
+}
 
 export function selectCandidate({
   id,
+  mode = null,
   role,
   intent,
   candidates,
@@ -117,6 +171,11 @@ export function selectCandidate({
   if (!passing.length) {
     throw new NoCandidateError(
       `${id} has no candidate satisfying its constraints.`,
+      {
+        decisionId: id,
+        mode,
+        role,
+      },
     );
   }
   const selected = passing[0];
