@@ -11,6 +11,8 @@ this document owns component and runtime boundaries.
 [Color decision flow](v2-decisions/color-decision-flow.md)의 Mermaid 다이어그램으로
 관리한다. 역할 단계, pair 선택 권위 또는 production/diagnostic 경계가 바뀌면 해당
 다이어그램도 같은 변경 단위에서 갱신한다.
+상위 개념에서 stable rule ID와 acceptance surface까지의 연결은
+[Ontology and executable rules](v2-decisions/ontology.md)가 관리한다.
 
 - `v2/` is the default primary-only light/dark palette application. `app.js`
   connects DOM state and events, `lib/view.js` owns pure markup, and

@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { V2_POLICY } from "../v2/lib/policy.js";
+import { EVIDENCE_AUTHORITIES } from "../v2/lib/evidence-authority.js";
+import { V2_SEMANTIC_MODEL } from "../v2/lib/semantic-model.js";
 
 const root = new URL("../", import.meta.url);
 
@@ -63,4 +65,50 @@ test("canonical navigation surfaces link to the managed flow", async () => {
   assert.match(architecture, /v2-decisions\/color-decision-flow\.md/);
   assert.match(readme, /docs\/v2-decisions\/color-decision-flow\.md/);
   assert.match(decisions, /\(color-decision-flow\.md\)/);
+  assert.match(architecture, /v2-decisions\/ontology\.md/);
+  assert.match(readme, /docs\/v2-decisions\/ontology\.md/);
+  assert.match(decisions, /\(ontology\.md\)/);
+});
+
+test("the ontology map stays bound to executable IDs and authorities", async () => {
+  const [ontology, evidence] = await Promise.all([
+    readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
+    readFile(new URL("docs/v2-decisions/evidence.md", root), "utf8"),
+  ]);
+
+  assert.match(ontology, new RegExp(V2_POLICY.version));
+  assert.match(ontology, new RegExp(V2_POLICY.crossMode.pairRankingStrategy));
+  for (const checkId of V2_POLICY.crossMode.eligibilityCheckIds) {
+    assert.ok(ontology.includes(`\`${checkId}\``));
+  }
+  for (const declaration of V2_SEMANTIC_MODEL.declarations) {
+    for (const id of [
+      declaration.id,
+      declaration.evaluator,
+      ...declaration.evidence,
+    ]) {
+      assert.ok(ontology.includes(`\`${id}\``), `missing ontology ID: ${id}`);
+    }
+  }
+  for (const [decisionId, decision] of Object.entries(V2_POLICY.decisions)) {
+    for (const id of [
+      decisionId,
+      ...decision.constraints,
+      ...decision.objectives,
+      ...decision.tieBreakers,
+    ]) {
+      assert.ok(ontology.includes(`\`${id}\``), `missing policy ID: ${id}`);
+    }
+  }
+  for (const authority of Object.values(EVIDENCE_AUTHORITIES)) {
+    for (const [document, content] of [
+      ["ontology", ontology],
+      ["evidence", evidence],
+    ]) {
+      assert.ok(
+        content.includes(`\`${authority}\``),
+        `missing ${document} authority: ${authority}`,
+      );
+    }
+  }
 });

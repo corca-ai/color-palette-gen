@@ -41,6 +41,9 @@ Each section owns one reader question defined in `interaction-design.md`.
 Every color decision follows the evidence and counterfactual model in
 [`v2-decisions/`](v2-decisions/README.md). A passing color
 without rule provenance and a nearest-alternative explanation is incomplete.
+The [ontology and executable rules map](v2-decisions/ontology.md) connects the
+concept vocabulary to semantic declarations, decision IDs, authorities,
+producers, tests, and explicit nonclaims.
 
 The v1 and v2 engines, UI state, semantic roles, and tests stay separate. Only
 low-level color conversion is shared because sRGB/OKLCH conversion has the same

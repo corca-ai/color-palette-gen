@@ -1,15 +1,38 @@
 # Evidence and provenance
 
-Every rule receives one provenance class. The class describes what can honestly
-be claimed about the rule; it does not measure how important the rule is.
+Color Lab separates rule/declaration authority from external source provenance.
+Neither vocabulary measures importance, and aggregate verdict authority is a
+third, separate concept described in [Ontology](ontology.md).
 
-| Class            | Meaning                                                        | Example                                                   |
-| ---------------- | -------------------------------------------------------------- | --------------------------------------------------------- |
-| `normative`      | Published accessibility requirement used in its actual scope   | Required input boundary has `>= 3:1` adjacent contrast    |
-| `reference`      | Observable precedent from a public design system               | Carbon uses a smaller hover step and stronger active step |
-| `product-policy` | Deliberate definition chosen for Color Lab v2                  | One brand hue and neutral-dominant foundations            |
-| `empirical`      | Supported by a documented experiment or external dataset       | A threshold calibrated from a published study             |
-| `heuristic`      | Provisional and replaceable value without empirical validation | Current interaction-state Delta E threshold               |
+## Rule and declaration authority
+
+Every executable decision rule and semantic declaration uses one value from the
+closed vocabulary owned by `v2/lib/evidence-authority.js`.
+
+| Authority | Meaning | Example |
+| --- | --- | --- |
+| `normative` | Published requirement used only in its actual scope | Required input boundary has `>= 3:1` adjacent contrast |
+| `product-policy` | Deliberate selection rule owned by current v2 policy | Primary pair eligibility membership |
+| `provisional` | Review or selection evidence with an unvalidated numeric boundary | Current cross-mode chroma-difference band |
+| `technical` | Structural implementation truth rather than design validation | Exported state colors must be distinct |
+| `heuristic` | Replaceable design approximation without empirical validation | Current interaction-state Oklab separation |
+| `research-policy` | Explicit relation chosen for this research prototype | Active continues beyond hover in one direction |
+
+Unknown authority values fail policy or semantic trace validation.
+
+## External evidence source class
+
+`policy.js` separately labels cited source material. Current source classes are:
+
+| Source class | Meaning |
+| --- | --- |
+| `normative` | Published requirement cited in its real scope |
+| `reference` | Observable precedent from a public design system |
+| `heuristic` | Prototype rationale that does not supply normative or empirical authority |
+
+Source class does not automatically determine a rule's authority. A public
+reference may motivate a `product-policy` or `heuristic` rule without proving
+its exact threshold.
 
 ## External sources and their limits
 

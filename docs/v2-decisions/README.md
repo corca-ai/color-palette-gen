@@ -26,6 +26,8 @@ must fail the decision-record test.
 
 ## Reading order
 
+- To start from the concept system and trace it into executable rule IDs, read
+  [Ontology and executable rules](ontology.md).
 - To inspect the complete production stage and dependency map, read the
   [Color decision flow](color-decision-flow.md).
 - To understand a source label such as `heuristic`, read [Evidence](evidence.md).
