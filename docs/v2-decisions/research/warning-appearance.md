@@ -9,7 +9,7 @@
 - **Problem:** Light Warning converges on a mustard-like resting color and feels
   muddy across representative Primary inputs.
 - **Correct behavior:** show a small set of complete, contract-checked Warning
-  families that isolate lightness and chroma so a human can judge the resting
+  families that isolate lightness and hue so a human can judge the resting
   state first and then inspect Hover/Pressed.
 - **Fixed decisions:** production remains `v2-policy-model-18`; Primary,
   Destructive, Foundation, pair selection, and Dark mode are frozen inputs to
@@ -18,6 +18,14 @@
   specimens; each exposes actual rendered OKLCH, label contrast, semantic
   distances, and complete state colors; unsupported recipes fail closed.
 - **Deferred decision:** which arm, if any, should become a policy migration.
+
+### Retired diagnostic claims
+
+- The four-arm lightness/chroma set is no longer the active review UI.
+- A higher requested C is no longer treated as evidence of a more chromatic
+  rendered Warning.
+- No production rule, test expectation, export, or Dark-mode behavior is
+  retired by this diagnostic revision.
 
 ## Smallest reproduction and root cause
 
@@ -34,14 +42,12 @@ it ranks passing candidates by distance from requested `L 0.65`, `C 0.14`, hue
 missing surface was a way to judge whether that arbitrary anchor still serves
 the intended visual character.
 
-## Preregistered arms
+## First comparison and human disposition
 
-| Arm                    | Changed request                 | What it isolates                       |
-| ---------------------- | ------------------------------- | -------------------------------------- |
-| Current                | none                            | production baseline                    |
-| Brighter               | Light preferred L `0.65 → 0.70` | lightness only                         |
-| More chroma            | requested C `0.14 → 0.18`       | chroma request plus real gamut mapping |
-| Brighter + more chroma | both changes                    | whether the two one-axis moves compose |
+The first comparison isolated Light preferred L `0.65 → 0.70`, requested C
+`0.14 → 0.18`, and their combination. Human review found the combined arm least
+bad, but all four arms still muddy. That disposition retires the first four-arm
+UI as an active review set; the measured result remains evidence below.
 
 All arms keep the `[70°, 85°, 100°]` hue inventory, Light range `[0.52, 0.72]`,
 current constraints, state-distance rules, and black/white text search. Requested
@@ -63,8 +69,29 @@ distance from both frozen semantic siblings.
 The chroma-only request renders exactly the current family. At the current
 lightness and hue, requesting `C 0.18` does not produce more rendered chroma;
 gamut mapping reduces it to the same sRGB result. Raising L is the only isolated
-arm here that visibly moves the result. This narrows the visual question but does
-not choose the production value.
+arm here that visibly moves the result. A follow-up sweep also confirmed that
+requests from `C 0.18` through `C 0.24` converge to the same rendered color at a
+fixed L/hue. More requested chroma is therefore not a viable next control.
+
+## Second comparison: brightness and hue
+
+The active v2 review keeps the production baseline and the first comparison's
+least-bad arm, then moves only axes that produced different rendered colors.
+All diagnostic arms request `C 0.18`; the page displays requested C beside
+rendered C so gamut clipping is visible rather than implied.
+
+| Arm                | Requested anchor         | Rendered Default |
+| ------------------ | ------------------------ | ---------------- |
+| Production         | current policy           | `#B48700`        |
+| Previous least-bad | `L .70 · C .18 · h 85°`  | `#C79600`        |
+| Higher lightness   | `L .78 · C .18 · h 85°`  | `#E6AD00`        |
+| Orangeward         | `L .78 · C .18 · h 70°`  | `#FBA100`        |
+| Yellowward         | `L .78 · C .18 · h 100°` | `#D0B800`        |
+
+The second comparison widens only the diagnostic Light range to `[.52, .82]`
+and uses one hue candidate per arm. This prevents the ranking objective from
+silently choosing a different hue than the arm being judged. Production keeps
+its original range and three-hue inventory.
 
 ## Judgment order
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Light Warning의 밝기와 chroma 원인을 분리해 실제 상태 family로 비교하는 진단 화면입니다."
+      content="Light Warning의 밝기와 hue 원인을 분리해 실제 상태 family로 비교하는 진단 화면입니다."
     />
     <title>Light Warning review — Color Lab v2</title>
     <link rel="stylesheet" href="./styles/base.css" />
@@ -27,9 +27,10 @@
         <h1>탁한 이유를<br />한 축씩<br />분리해 보기.</h1>
         <p class="lede">
           현재 Light Warning은 대비 부족 때문에 어두워진 것이 아니다. 통과
-          후보가 충분한데도 잠정 anchor <code>L 0.65</code>에 가장 가까운 색을
-          고른다. 아래 네 결과는 밝기와 chroma 요청만 분리해 바꾼 완전한 상태
-          묶음이다.
+          후보가 충분한데도 잠정 anchor <code>L 0.65 · h 85°</code>에 가장
+          가까운 색을 고른다. 첫 비교에서 chroma 요청만 높이는 방법은 실제
+          색을 바꾸지 못했다. 아래 결과는 실제로 움직이는 밝기와 hue를 분리한
+          완전한 상태 묶음이다.
         </p>
         <ol>
           <li><b>1</b> Hover하지 말고 Default부터 비교한다.</li>
@@ -44,7 +45,7 @@
           <h2 id="input-heading">Primary가 달라도 결과가 유지되는가?</h2>
           <p>
             여섯 탭은 Warning이 다른 semantic 색과 가까워질 때 후보가
-            달라지는지도 확인한다. 탭마다 네 arm의 조건을 처음부터 다시
+            달라지는지도 확인한다. 탭마다 다섯 arm의 조건을 처음부터 다시
             계산한다.
           </p>
         </div>
@@ -59,11 +60,12 @@
 
       <section class="warning-results" aria-labelledby="results-heading">
         <header>
-          <p class="eyebrow">Four bounded arms</p>
+          <p class="eyebrow">Five bounded arms</p>
           <h2 id="results-heading">어느 Default가 가장 자연스러운가?</h2>
           <p>
             수치는 탈락 조건과 실제 변환 결과를 설명할 뿐 미적 순위를 정하지
             않는다. 버튼에 마우스를 올리고 누르면 각 arm의 실제 상태가 보인다.
+            요청 C와 실제 C가 같은지도 함께 확인할 수 있다.
           </p>
         </header>
         <div id="warning-comparison" class="warning-comparison"></div>

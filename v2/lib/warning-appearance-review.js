@@ -37,7 +37,7 @@ export function buildWarningAppearanceReviewCase(primary) {
         JSON.stringify(arms[0].inspection.family);
   }
   return {
-    schema: "light-warning-appearance-review-case.v1",
+    schema: "light-warning-appearance-review-case.v2",
     authority: "diagnostic",
     experiment: WARNING_APPEARANCE_EXPERIMENT,
     input: primary,
@@ -61,7 +61,7 @@ export function buildWarningAppearanceReviewCase(primary) {
 export function buildWarningAppearanceReviewReport() {
   const cases = WARNING_APPEARANCE_INPUTS.map(buildWarningAppearanceReviewCase);
   return {
-    schema: "light-warning-appearance-review-report.v1",
+    schema: "light-warning-appearance-review-report.v2",
     authority: "diagnostic",
     experiment: WARNING_APPEARANCE_EXPERIMENT,
     inputCount: cases.length,

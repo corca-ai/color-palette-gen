@@ -138,9 +138,11 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   toggle, certify accessibility, or score visual quality.
 - Open `/warning-review.html` for the diagnostic-only Light Warning appearance
   comparison. It freezes the production Primary, Destructive, Foundation, Dark
-  mode, and export result, then recomputes only the Light Warning family for the
-  current recipe, a lightness-only arm, a chroma-only arm, and their combination.
-  The six inputs and four arms are a human review surface, not a production
+  mode, and export result, then recomputes only the Light Warning family. The
+  active comparison retains production and the previous least-bad arm, then
+  isolates higher lightness, orangeward hue, and yellowward hue. Requested and
+  rendered chroma are shown separately because a `C .18–.24` request sweep
+  converged at the same sRGB gamut boundary. The six inputs and five arms are a human review surface, not a production
   policy, aesthetic score, or accessibility certification. The experiment contract
   lives in
   [Light Warning appearance diagnostic](v2-decisions/research/warning-appearance.md).

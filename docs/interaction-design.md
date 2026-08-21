@@ -197,10 +197,10 @@ Question:
 > move—and which resting color looks most natural?
 
 `/warning-review.html` starts from six representative Primary inputs and shows
-four side-by-side Light Warning families: production, lightness-only,
-chroma-only, and the combined request. Default must be judged before Hover and
-Pressed. The page exposes actual rendered OKLCH and contract metrics, identifies
-when a different request gamut-maps to the same family, and stores no vote. It
+five side-by-side Light Warning families: production, the previous least-bad
+arm, higher lightness, orangeward hue, and yellowward hue. Default must be judged
+before Hover and Pressed. The page exposes actual rendered OKLCH, requested
+versus rendered chroma, and contract metrics, and stores no vote. It
 must label every non-production arm diagnostic and link the prior Destructive
 decision history separately.
 It places up to five named metric extremes first and explains why each deserves

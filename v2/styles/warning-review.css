@@ -163,6 +163,10 @@
   padding: 22px;
 }
 
+.warning-arm[data-arm="current"] {
+  grid-column: 1 / -1;
+}
+
 .warning-arm > header {
   align-items: start;
   display: flex;
@@ -336,6 +340,10 @@
 
   .warning-comparison {
     grid-template-columns: 1fr;
+  }
+
+  .warning-arm[data-arm="current"] {
+    grid-column: auto;
   }
 }
 

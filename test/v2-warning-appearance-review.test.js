@@ -11,11 +11,11 @@ import {
 } from "../v2/lib/warning-appearance-review.js";
 import { WARNING_APPEARANCE_INPUTS } from "../v2/lib/warning-appearance-experiment.js";
 
-test("Warning appearance review reproduces production and isolates two axes", () => {
+test("Warning appearance review reproduces production and isolates lightness and hue", () => {
   const review = buildWarningAppearanceReviewCase("#507096");
-  assert.equal(review.schema, "light-warning-appearance-review-case.v1");
+  assert.equal(review.schema, "light-warning-appearance-review-case.v2");
   assert.equal(review.authority, "diagnostic");
-  assert.equal(review.arms.length, 4);
+  assert.equal(review.arms.length, 5);
 
   const byId = Object.fromEntries(review.arms.map((arm) => [arm.id, arm]));
   assert.deepEqual(byId.current.inspection.family, {
@@ -25,12 +25,10 @@ test("Warning appearance review reproduces production and isolates two axes", ()
     text: "#000000",
   });
   assert.equal(byId.current.matchesCurrentRenderedFamily, false);
-  assert.equal(byId["more-chroma"].matchesCurrentRenderedFamily, true);
-  assert.equal(byId.brighter.inspection.family.default, "#C69612");
-  assert.equal(
-    byId["brighter-more-chroma"].inspection.family.default,
-    "#C79600",
-  );
+  assert.equal(byId["prior-best"].inspection.family.default, "#C79600");
+  assert.equal(byId["higher-lightness"].inspection.family.default, "#E6AD00");
+  assert.equal(byId.orangeward.inspection.family.default, "#FBA100");
+  assert.equal(byId.yellowward.inspection.family.default, "#D0B800");
 
   for (const arm of review.arms) {
     assert.ok(arm.inspection.candidates.passing > 0);
@@ -52,7 +50,7 @@ test("Warning appearance report keeps six inputs and production immutable", () =
   assert.equal(report.cases.length, 6);
   assert.equal(report.summary.current.uniqueDefaultCount, 1);
   assert.equal(report.summary.current.minimumPassingCandidates, 123);
-  assert.equal(report.summary["more-chroma"].uniqueDefaultCount, 1);
+  assert.equal(report.summary["higher-lightness"].uniqueDefaultCount, 1);
   assert.deepEqual(before, beforeSnapshot);
   assert.strictEqual(after, before);
   assert.equal(before.diagnosticOverride, undefined);

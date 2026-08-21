@@ -37,6 +37,7 @@ function armCard(arm, context) {
     ${familyStrip(family)}
     <dl class="warning-metrics">
       <div><dt>실제 OKLCH</dt><dd>L ${number(rendered.oklch.l)} · C ${number(rendered.oklch.c)} · h ${number(rendered.oklch.h, 1)}°</dd></div>
+      <div><dt>요청 C → 실제 C</dt><dd>${number(arm.recipe?.chroma ?? 0.14)} → ${number(rendered.oklch.c)}</dd></div>
       <div><dt>가장 약한 글자 대비</dt><dd>${number(rendered.minimumTextContrast, 2)}:1</dd></div>
       <div><dt>Primary / Destructive 거리</dt><dd>${number(rendered.primaryDistance)} / ${number(rendered.destructiveDistance)}</dd></div>
       <div><dt>통과 default 후보</dt><dd>${candidates.passing} / ${candidates.total}</dd></div>
