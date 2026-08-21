@@ -251,7 +251,9 @@ Primary text compares black and white, rejects any foreground that misses WCAG
 weakest APCA diagnostic score. Destructive text aliases that mode-level
 filled-action foreground; Destructive candidate and state constraints must pass
 with it. Warning and Selection retain independent black-or-white searches
-because they are different interaction families. Final checks declare the
-actual public-specimen typography context; APCA `Lc 75/60` remains diagnostic,
-not eligibility authority. See
+because they are different interaction families. Every Warning stage—Default,
+Hover, Active, and final shared Text—reads the Warning-owned
+`compact-warning-label.v1` APCA diagnostic minimum, never Primary's action-label
+setting. Final checks declare the actual public-specimen typography context;
+APCA `Lc 75/60` remains diagnostic, not eligibility authority. See
 [ADR-0005](../adr/0005-wcag-normal-text-generation-authority.md).

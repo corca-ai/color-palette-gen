@@ -435,6 +435,11 @@ Production v19는 mode별 recipe를 명시한다. Light는 시각 비교에서 �
 `feedback.semantic-anchor`로 고른다. Destructive와 마찬가지로 default·hover·active가
 하나의 text를 공유하는 family를 만든다.
 
+이 family의 Default 후보 검사, 초기 text 선택, Hover/Active 검사, 최종 shared
+text 검색은 모두 `text.typographyContexts.warningLabel.apcaDiagnosticMinimum`을
+읽는다. Primary의 `apcaDiagnosticLc`는 Warning의 설정이 아니다. 현재 두 값이
+우연히 `60`으로 같더라도 서로 독립된 owner를 유지한다.
+
 이 때문에 Warning은 Primary뿐 아니라 앞 단계의 Destructive 선택에도 의존한다.
 
 ## 6. Selection과 Text를 고른다

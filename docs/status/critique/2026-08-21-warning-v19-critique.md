@@ -102,7 +102,18 @@ packet was consumed because no critique adapter declared packet sections.
 - Consumers: Generator/export, selected-result review, semantic verdicts,
   Warning decision UI, tests, and normative/explanatory documents.
 - Verdict: owned-correctly after synchronizing stale consumer projections; the
-  deferred APCA-key cleanup remains a real but behavior-neutral ownership seam.
+  Warning APCA seam was subsequently moved to its role owner without changing
+  generated output.
+
+## Follow-up Resolution
+
+F6 was implemented in the next local slice. `warningSearch` and the complete
+Warning family now resolve their APCA diagnostic minimum from
+`text.typographyContexts.warningLabel`. A focused test temporarily separates the
+Primary and Warning values (`91` versus `41`) and verifies Default, Hover,
+Active, and final Text traces all record `41`. The exhaustive 216-input check
+also pins the pre-refactor complete Light/Dark token digest, so this ownership
+move must remain output-neutral.
 
 ## Deliberately Not Doing
 

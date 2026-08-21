@@ -18,6 +18,7 @@ test("v2 contracts hold across an RGB input grid", () => {
     lightnessRange: [0.52, 0.82],
   };
   const darkWarningFamilies = [];
+  const paletteValues = [];
   let minimumWarningTextContrast = Infinity;
   let minimumWarningPrimaryDistance = Infinity;
   let minimumWarningDestructiveDistance = Infinity;
@@ -52,6 +53,11 @@ test("v2 contracts hold across an RGB input grid", () => {
         result.modes.dark.values["warning hover"],
         result.modes.dark.values["warning active"],
         result.modes.dark.values["warning text"],
+      ]);
+      paletteValues.push([
+        primary,
+        result.modes.light.values,
+        result.modes.dark.values,
       ]);
       assert.equal(result.passed, true, primary);
       for (const mode of ["light", "dark"]) {
@@ -120,6 +126,10 @@ test("v2 contracts hold across an RGB input grid", () => {
       .update(JSON.stringify(darkWarningFamilies))
       .digest("hex"),
     "7caa7e95797a22de3e7f9c3206459d8b1f5845cf804166cfec3cda3f29f05970",
+  );
+  assert.equal(
+    createHash("sha256").update(JSON.stringify(paletteValues)).digest("hex"),
+    "6e944b5309801317a0614bde7c4f1ab550ad9e6ce507eb513befad6c658911da",
   );
   assert.equal(report.summary.signaledInputCount, 148);
   assert.equal(report.sourceFidelity.shiftedInputCount, 115);

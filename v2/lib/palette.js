@@ -6,7 +6,12 @@ import {
   noCandidateFailure,
   selectCandidate,
 } from "./decision.js";
-import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
+import {
+  V2_POLICY,
+  decisionPolicy,
+  evidence,
+  warningLabelApcaDiagnosticMinimum,
+} from "./policy.js";
 import { PAIR_RANKING_STRATEGIES, selectModePair } from "./pair-selection.js";
 import { MODE_RECIPE, ROLE_CLASSIFICATION, TOKEN_ORDER } from "./roles.js";
 import {
@@ -590,6 +595,7 @@ function warningFamilySelection({
   retainPlot = false,
   textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
 }) {
+  const labelApcaMinimum = warningLabelApcaDiagnosticMinimum();
   const warningDecision = warningSearch({
     mode,
     primary,
@@ -600,7 +606,7 @@ function warningFamilySelection({
   });
   const warningLabel = chooseTextContrastForeground({
     backgrounds: [warningDecision.value.hex],
-    apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+    apcaMinimum: labelApcaMinimum,
     strategy: textContrastStrategy,
   }).foreground;
   const hover = stateSearch({
@@ -609,7 +615,7 @@ function warningFamilySelection({
     role: "warning hover",
     target: V2_POLICY.state.separation.hoverFromDefault,
     labelText: warningLabel,
-    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    labelLc: labelApcaMinimum,
     textContrastStrategy,
   });
   const active = stateSearch({
@@ -618,7 +624,7 @@ function warningFamilySelection({
     role: "warning active",
     target: V2_POLICY.state.separation.activeFromDefault,
     labelText: warningLabel,
-    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    labelLc: labelApcaMinimum,
     textContrastStrategy,
   });
   const values = {
@@ -630,7 +636,7 @@ function warningFamilySelection({
     mode,
     role: "warning text",
     backgrounds: Object.values(values),
-    target: V2_POLICY.primary.apcaDiagnosticLc,
+    target: labelApcaMinimum,
     textContrastStrategy,
   });
   values["warning text"] = text.value.hex;

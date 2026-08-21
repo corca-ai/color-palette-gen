@@ -147,8 +147,9 @@ For palette-policy changes, broad UI changes, or release confidence, also run
 - Run `npm run test:warning-policy-migration` to reproduce ADR-0007's fixed
   216-input comparison. The exhaustive test asserts production versus fixed-85°
   Light-family equality, the published minimum contrast/separation metrics, and
-  the unchanged Dark-family digest. These are contract and regression facts,
-  not perceptual-quality scores.
+  the unchanged Dark-family and complete Light/Dark token digests. The complete
+  digest proves behavior-neutral ownership refactors stay output-neutral. These
+  are contract and regression facts, not perceptual-quality scores.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

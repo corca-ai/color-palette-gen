@@ -1,5 +1,10 @@
 import { selectCandidate } from "./decision.js";
-import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
+import {
+  V2_POLICY,
+  decisionPolicy,
+  evidence,
+  warningLabelApcaDiagnosticMinimum,
+} from "./policy.js";
 import {
   chooseTextContrastForeground,
   TEXT_CONTRAST_STRATEGIES,
@@ -393,6 +398,7 @@ export function warningSearch({
   recipe = null,
 }) {
   const policy = decisionPolicy("warning");
+  const labelApcaMinimum = warningLabelApcaDiagnosticMinimum();
   const configured = resolvedWarningRecipe(mode, recipe);
   const preferredLightness = configured.preferredLightness;
   const anchor = candidate(
@@ -430,7 +436,7 @@ export function warningSearch({
       bindRule(policy, "constraints", "feedback.label-contrast", (item) => {
         const choice = chooseTextContrastForeground({
           backgrounds: [item.hex],
-          apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+          apcaMinimum: labelApcaMinimum,
           strategy: textContrastStrategy,
         });
         const text = choice.foreground;
@@ -456,7 +462,7 @@ export function warningSearch({
           ],
           metrics: {
             lc,
-            target: V2_POLICY.primary.apcaDiagnosticLc,
+            target: labelApcaMinimum,
             text,
           },
         };

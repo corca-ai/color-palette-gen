@@ -277,6 +277,17 @@ export const V2_POLICY = {
   },
 };
 
+export function warningLabelApcaDiagnosticMinimum(policy = V2_POLICY) {
+  const minimum =
+    policy?.text?.typographyContexts?.warningLabel?.apcaDiagnosticMinimum;
+  if (!Number.isFinite(minimum) || minimum <= 0) {
+    throw new TypeError(
+      "Warning label typography context must declare a positive APCA diagnostic minimum.",
+    );
+  }
+  return minimum;
+}
+
 export const RULE_CATALOG = {
   "state.minimum-separation": {
     label: "Required state separation",

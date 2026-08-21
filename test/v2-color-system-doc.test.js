@@ -156,6 +156,12 @@ test("Light Warning v19 decision stays synchronized across its named truth surfa
   for (const document of [spec, ontology, rules, roles, evidence, adr]) {
     assert.match(document, /ADR-0007|0007-light-warning-vivid-amber/);
   }
+  assert.match(roles, /compact-warning-label\.v1/);
+  assert.match(
+    rules,
+    /typographyContexts\.warningLabel\.apcaDiagnosticMinimum/,
+  );
+  assert.match(rules, /Primary의 `apcaDiagnosticLc`는 Warning의 설정이 아니다/);
   assert.match(adr, /Dark.*unchanged|Dark.*retains/s);
   assert.match(adr, /test:warning-policy-migration/);
   assert.match(status, /Dark Primary for all 14 inputs/);
