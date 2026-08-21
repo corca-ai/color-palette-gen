@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { EVIDENCE, V2_POLICY } from "../v2/lib/policy.js";
 import { EVIDENCE_AUTHORITIES } from "../v2/lib/evidence-authority.js";
+import { generatePaletteV2 } from "../v2/lib/palette.js";
 import { V2_SEMANTIC_MODEL } from "../v2/lib/semantic-model.js";
 
 const root = new URL("../", import.meta.url);
@@ -559,6 +560,16 @@ test("the public About page teaches ontology, flow, rules, and numeric authority
     readFile(new URL("v2/about.js", root), "utf8"),
     readFile(new URL("v2/reference.html", root), "utf8"),
   ]);
+  const redResult = generatePaletteV2({ primary: "#FF0000" });
+  const lightTokens = Object.fromEntries(
+    redResult.modes.light.tokens.map(([value, role]) => [role, value]),
+  );
+  const darkTokens = Object.fromEntries(
+    redResult.modes.dark.tokens.map(([value, role]) => [role, value]),
+  );
+  const selectedPair = redResult.pairDecision.selected;
+  const withoutLeadingZero = (value, digits) =>
+    value.toFixed(digits).replace(/^0/, "");
 
   assert.match(index, /href="\.\/about\.html">About/);
   assert.match(about, /id="concepts"/);
@@ -640,10 +651,79 @@ test("the public About page teaches ontology, flow, rules, and numeric authority
       `missing explanation: ${readerQuestion}`,
     );
   }
-  assert.match(about, /#B54437/);
-  assert.match(about, /#D05C4E/);
-  assert.match(about, /#99000D/);
-  assert.match(about, /#CD9C1F/);
+  for (const expectedColor of [
+    lightTokens.primary,
+    lightTokens["primary hover"],
+    lightTokens["primary active"],
+    darkTokens.primary,
+    darkTokens["primary hover"],
+    darkTokens["primary active"],
+    lightTokens.destructive,
+    darkTokens.destructive,
+    lightTokens.warning,
+    darkTokens.warning,
+    lightTokens.selection,
+    darkTokens.selection,
+    lightTokens["focus ring"],
+    darkTokens["focus ring"],
+  ]) {
+    assert.ok(
+      about.includes(expectedColor),
+      `missing current result: ${expectedColor}`,
+    );
+  }
+  assert.ok(
+    about.includes(`${selectedPair.light} ↔ ${selectedPair.dark}`),
+    "About pair should match the selected engine pair",
+  );
+  for (const expectedMetric of [
+    `${withoutLeadingZero(selectedPair.hueDrift, 2)}°`,
+    withoutLeadingZero(selectedPair.chromaDifference, 5),
+    withoutLeadingZero(selectedPair.lightnessGap, 4),
+  ]) {
+    assert.ok(
+      about.includes(expectedMetric),
+      `missing current pair metric: ${expectedMetric}`,
+    );
+  }
+  for (const expectedReferenceMetric of [
+    `${withoutLeadingZero(selectedPair.hueDrift, 3)}°`,
+    withoutLeadingZero(selectedPair.chromaDifference, 5),
+    withoutLeadingZero(selectedPair.lightnessGap, 4),
+  ]) {
+    assert.ok(
+      reference.includes(expectedReferenceMetric),
+      `missing current reference pair metric: ${expectedReferenceMetric}`,
+    );
+  }
+  for (const mode of ["light", "dark"]) {
+    const stateQuality = redResult.quality.states[mode];
+    const label = mode === "light" ? "Light" : "Dark";
+    assert.match(
+      reference,
+      new RegExp(`${label} ratio <b>${stateQuality.ratio.toFixed(3)}</b>`),
+      `${label} state ratio should stay attached to its mode`,
+    );
+    assert.equal(
+      stateQuality.checks.find((check) =>
+        check.id.endsWith("state.monotonic-lightness"),
+      ).pass,
+      true,
+      `${mode} state monotonic example should still pass`,
+    );
+  }
+  assert.match(reference, /Light\/Dark monotonic <b>둘 다 통과<\/b>/);
+  for (const retiredResult of [
+    "#D05C4E",
+    "#DD6859",
+    "#EB7465",
+    "#FB6157",
+    "#BA6F64",
+  ])
+    assert.ok(
+      !about.includes(retiredResult),
+      `stale walkthrough result: ${retiredResult}`,
+    );
   assert.match(about, /reference\.html#state-separation/);
   assert.match(about, /reference\.html#pair-bands/);
   assert.match(about, /contracts · pass/);

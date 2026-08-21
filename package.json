@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-site.mjs && node scripts/check-public-artifact.mjs",
-    "check": "node --check v1/app.js && node --check v2/app.js && npm run lint && npm run format:check && npm run test:fast",
+    "check": "node --check v1/app.js && node --check v2/app.js && npm run check:docs && npm run lint && npm run format:check && npm run test:fast",
+    "check:docs": "node scripts/check-doc-links.mjs",
     "check:full": "npm run check && npm run test:coverage && npm run test:exhaustive && npm run check:e2e:full",
     "check:e2e": "npm run check:e2e:smoke",
     "check:e2e:smoke": "playwright test --grep @smoke",

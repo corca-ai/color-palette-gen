@@ -73,6 +73,7 @@ cannot promote a diagnostic threshold or counterfactual into production.
 - [ADR-0001: source-red collision-aware filled-action direction](adr/0001-source-red-collision-aware-filled-action-direction.md)
   — superseded before adoption
 - [ADR-0002: red-band role collision presentation](adr/0002-red-band-role-collision-presentation.md)
+  — superseded after operator review
 - [ADR-0003: single-filled action hierarchy](adr/0003-single-filled-action-hierarchy.md)
   — accepted for component presentation
 - [ADR-0004: mode-relative filled actions and contextual separation](adr/0004-mode-relative-filled-actions-and-contextual-separation.md)

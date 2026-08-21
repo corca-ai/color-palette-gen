@@ -29,6 +29,6 @@ history. A document's status controls how it may be used:
   independence boundaries.
 - [`archive/`](archive/README.md) contains v1 and early exploration documents.
 
-The repository [README](../README.md) remains the first-touch product page. This
+The repository [README](../readme.md) remains the first-touch product page. This
 index owns documentation navigation; individual decision and research documents
 should not be promoted into the README unless they are a common starting point.

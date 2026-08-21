@@ -48,7 +48,14 @@ judgment.
 
 ## Skill Routing
 
-At session start, a pickup follows docs/handoff.md `## Workflow Trigger`; otherwise choose the durable workflow directly from installed skill metadata and model judgment. If hidden support/integration availability is unclear, run the read-only `charness-hak catalog list --repo-root <repo> --summary` inventory. Treat its facts only as inventory; if the command returns nonzero, report the command failure. When a request names an external URL or source, use `gather` before deciding; validation closeout or operator-reading tests go through `quality`.
+At session start, when `docs/handoff.md` exists and contains a `## Workflow
+Trigger`, a pickup follows it; otherwise choose the durable workflow directly
+from installed skill metadata and model judgment. If hidden support/integration
+availability is unclear, run the read-only
+`charness-hak catalog list --repo-root <repo> --summary` inventory. Treat its
+facts only as inventory; if the command returns nonzero, report the command
+failure. When a request names an external URL or source, use `gather` before
+deciding; validation closeout or operator-reading tests go through `quality`.
 
 The SessionStart hook may inject this context when installed; this block is the fallback when it is absent.
 
