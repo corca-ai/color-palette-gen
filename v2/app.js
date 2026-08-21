@@ -88,6 +88,61 @@ function renderPalettes() {
     .join("");
 }
 
+function bindInspectionActionState(root) {
+  for (const button of root.querySelectorAll(".inspection-action")) {
+    const specimen = button.closest(".inspection-action-specimen");
+    const fillOutput = specimen.querySelector("[data-fill-state]");
+    const focusOutput = specimen.querySelector("[data-focus-state]");
+    const state = { focused: false, pointerInside: false, pressed: false };
+    const renderState = () => {
+      fillOutput.value = state.pressed
+        ? "Pressed"
+        : state.pointerInside
+          ? "Hover"
+          : "Default";
+      focusOutput.value = state.focused ? "On" : "Off";
+    };
+    button.addEventListener("pointerenter", () => {
+      state.pointerInside = true;
+      renderState();
+    });
+    button.addEventListener("pointerleave", () => {
+      state.pointerInside = false;
+      state.pressed = false;
+      renderState();
+    });
+    button.addEventListener("pointerdown", () => {
+      state.pressed = true;
+      renderState();
+    });
+    button.addEventListener("pointerup", () => {
+      state.pressed = false;
+      renderState();
+    });
+    button.addEventListener("focus", () => {
+      state.focused = true;
+      renderState();
+    });
+    button.addEventListener("blur", () => {
+      state.focused = false;
+      state.pressed = false;
+      renderState();
+    });
+    button.addEventListener("keydown", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        state.pressed = true;
+        renderState();
+      }
+    });
+    button.addEventListener("keyup", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        state.pressed = false;
+        renderState();
+      }
+    });
+  }
+}
+
 function renderExamples() {
   const actionPresentation = actionPresentationForResult(currentResult, {
     ordinaryPrimaryPresent: sampleScenario === "routine-actions",
@@ -186,6 +241,7 @@ function renderExamples() {
       button.textContent = moved ? "Undo move" : "Move to Trash";
     });
   }
+  bindInspectionActionState(examples);
 }
 
 function renderRelationships() {

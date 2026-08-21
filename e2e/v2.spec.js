@@ -5,6 +5,7 @@ import {
   rgbToHex,
   rgbToOklch,
 } from "../lib/color-math.js";
+import { SAMPLE_INSPECTION_OBLIGATIONS } from "../v2/lib/sample-inspection.js";
 
 function renderedColorToHex(value) {
   const channels = value.match(/[\d.]+/g)?.map(Number) ?? [];
@@ -344,7 +345,7 @@ test("@smoke applied samples switch between complete component situations", asyn
 }) => {
   await page.goto("/");
   const tabs = page.getByRole("tablist", { name: "Sample situation" });
-  await expect(tabs.getByRole("tab")).toHaveCount(5);
+  await expect(tabs.getByRole("tab")).toHaveCount(6);
   await expect(tabs.getByRole("tab", { name: "Workspace" })).toHaveAttribute(
     "aria-selected",
     "true",
@@ -437,6 +438,123 @@ test("@smoke applied samples switch between complete component situations", asyn
     "aria-selected",
     "true",
   );
+});
+
+test("Edge matrix binds the bounded inventory to real interactive contexts", async ({
+  page,
+}) => {
+  const tabs = page.getByRole("tablist", { name: "Sample situation" });
+  for (const obligation of SAMPLE_INSPECTION_OBLIGATIONS) {
+    const label = {
+      workspace: "Workspace",
+      "routine-actions": "Routine actions",
+      "destructive-confirmation": "Destructive confirmation",
+      "feedback-selection": "Feedback & selection",
+      "form-focus": "Form & focus",
+      "edge-matrix": "Edge matrix",
+    }[obligation.scenarioId];
+    await tabs.getByRole("tab", { name: label, exact: true }).click();
+    const marker = page
+      .locator(
+        `.example.light [data-inspection-obligation~="${obligation.id}"]`,
+      )
+      .first();
+    await expect(marker).toBeVisible();
+    for (const { selector } of [
+      ...obligation.roleBindings,
+      ...obligation.derivedBindings,
+    ]) {
+      expect(
+        await marker.evaluate(
+          (element, target) =>
+            element.matches(target) || Boolean(element.querySelector(target)),
+          selector,
+        ),
+        `${obligation.id} must bind ${selector}`,
+      ).toBe(true);
+    }
+  }
+
+  await page.getByRole("button", { name: "Compare", exact: true }).click();
+  await tabs.getByRole("tab", { name: "Edge matrix", exact: true }).click();
+  await expect(page.locator(".inspection-board")).toHaveCount(2);
+  await expect(page.locator(".inspection-board").first()).toContainText(
+    "records no score, vote, or automatic pass/fail result",
+  );
+
+  for (const mode of ["light", "dark"]) {
+    const board = page.locator(`.example.${mode} .inspection-board`);
+    for (const family of [
+      "primary",
+      "destructive-outline",
+      "secondary",
+      "destructive-filled",
+      "warning",
+    ]) {
+      const button = board.locator(`[data-inspection-family="${family}"]`);
+      const specimen = button.locator("xpath=..");
+      const fill = specimen.locator("[data-fill-state]");
+      const focus = specimen.locator("[data-focus-state]");
+      await expect(fill).toHaveText("Default");
+      await button.hover();
+      await expect(fill).toHaveText("Hover");
+      await page.mouse.down();
+      await expect(fill).toHaveText("Pressed");
+      await page.mouse.up();
+      await page.mouse.move(0, 0);
+      await button.evaluate((element) => element.blur());
+      await button.focus();
+      await button.press("Tab");
+      await page.keyboard.press("Shift+Tab");
+      await expect(fill).toHaveText("Default");
+      await expect(focus).toHaveText("On");
+      await expect(button).toHaveCSS("outline-style", "solid");
+      await button.evaluate((element) => element.blur());
+      await expect(focus).toHaveText("Off");
+    }
+
+    const primaryText = await board
+      .locator('[data-inspection-family="primary"]')
+      .evaluate((element) => getComputedStyle(element).color);
+    const destructiveText = await board
+      .locator('[data-inspection-family="destructive-filled"]')
+      .evaluate((element) => getComputedStyle(element).color);
+    expect(destructiveText).toBe(primaryText);
+
+    for (const [context, role] of [
+      ["background", "background"],
+      ["surface", "surface"],
+      ["muted-surface", "muted-surface"],
+    ]) {
+      const host = board.locator(`[data-focus-context="${context}"]`);
+      const target = host.locator(".inspection-focus-target");
+      await target.focus();
+      await target.press("Tab");
+      await page.keyboard.press("Shift+Tab");
+      const rendered = await host.evaluate((element, variableRole) => {
+        const example = element.closest(".example");
+        const expectedSurface = getComputedStyle(example)
+          .getPropertyValue(`--sample-${variableRole}`)
+          .trim();
+        const expectedFocus = getComputedStyle(example)
+          .getPropertyValue("--sample-focus-ring")
+          .trim();
+        const targetElement = element.querySelector(".inspection-focus-target");
+        return {
+          background: getComputedStyle(element).backgroundColor,
+          expectedSurface,
+          outline: getComputedStyle(targetElement).outlineColor,
+          expectedFocus,
+        };
+      }, role);
+      expect(renderedColorToHex(rendered.background)).toBe(
+        rendered.expectedSurface.toUpperCase(),
+      );
+      expect(renderedColorToHex(rendered.outline)).toBe(
+        rendered.expectedFocus.toUpperCase(),
+      );
+    }
+  }
 });
 
 test("confirmation actions share the mode direction while Secondary labels retain contrast", async ({
@@ -808,6 +926,27 @@ test("core palette and reference specimen retain their visual structure", async 
   });
   await expect(page.locator("#quality")).toHaveScreenshot(
     "independent-review.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
+
+  await page.locator(".topbar").evaluate((element) => {
+    element.style.display = "";
+  });
+  await page.getByRole("tab", { name: "Edge matrix", exact: true }).click();
+  await page.getByRole("button", { name: "Light", exact: true }).click();
+  await expect(page.locator(".examples")).toHaveScreenshot(
+    "edge-matrix-light.png",
+    {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.12,
+    },
+  );
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
+  await expect(page.locator(".examples")).toHaveScreenshot(
+    "edge-matrix-dark.png",
     {
       animations: "disabled",
       maxDiffPixelRatio: 0.12,

@@ -3,7 +3,20 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { generatePaletteV2 } from "../v2/lib/palette.js";
-import { SAMPLE_ROLE_COVERAGE } from "../v2/lib/view.js";
+import {
+  ACTION_PRESENTATION_POLICY,
+  SECONDARY_ACTION_STATE_POLICY,
+  actionPresentationForResult,
+} from "../v2/lib/action-presentation.js";
+import { RULE_CATALOG } from "../v2/lib/policy.js";
+import {
+  SAMPLE_INSPECTION_OBLIGATIONS,
+  SAMPLE_PROVENANCE_ONLY_ROLES,
+  SAMPLE_SCENARIOS,
+  sampleInspectionRoles,
+} from "../v2/lib/sample-inspection.js";
+import { appliedExampleView } from "../v2/lib/view.js";
+import { V2_SEMANTIC_MODEL } from "../v2/lib/semantic-model.js";
 
 test("Generator exposes accepted component situations instead of diagnostic controls", async () => {
   const [html, app, view, css] = await Promise.all([
@@ -13,13 +26,7 @@ test("Generator exposes accepted component situations instead of diagnostic cont
     readFile(new URL("../v2/styles/specimens.css", import.meta.url), "utf8"),
   ]);
 
-  for (const scenario of [
-    "workspace",
-    "routine-actions",
-    "destructive-confirmation",
-    "feedback-selection",
-    "form-focus",
-  ]) {
+  for (const { id: scenario } of SAMPLE_SCENARIOS) {
     assert.match(html, new RegExp(`data-sample-scenario="${scenario}"`));
   }
   assert.doesNotMatch(html, /data-palette-variant|destructive-calibration/);
@@ -36,6 +43,10 @@ test("Generator exposes accepted component situations instead of diagnostic cont
   assert.match(view, /reference-warning-demo/);
   assert.match(view, /reference-form-scenario/);
   assert.match(view, /reference-popover/);
+  assert.match(view, /inspection-board/);
+  assert.match(view, /data-inspection-family/);
+  assert.match(view, /data-fill-state/);
+  assert.match(view, /data-focus-state/);
   assert.match(view, /disabled/);
   assert.match(view, /secondaryActionPresentationForMode/);
   assert.match(view, /--sample-secondary-action-hover/);
@@ -46,15 +57,73 @@ test("Generator exposes accepted component situations instead of diagnostic cont
   const generatedRoles = generatePaletteV2({ primary: "#507096" })
     .modes.light.tokens.map(([, role]) => role)
     .sort();
-  const appliedRoles = Object.values(SAMPLE_ROLE_COVERAGE.scenarios).flat();
   const classifiedRoles = [
-    ...appliedRoles,
-    ...SAMPLE_ROLE_COVERAGE.provenanceOnly,
+    ...sampleInspectionRoles(),
+    ...SAMPLE_PROVENANCE_ONLY_ROLES,
   ].sort();
   assert.deepEqual(classifiedRoles, generatedRoles);
-  assert.deepEqual(SAMPLE_ROLE_COVERAGE.provenanceOnly, ["brand source"]);
-  for (const role of appliedRoles) {
+  assert.deepEqual(SAMPLE_PROVENANCE_ONLY_ROLES, ["brand source"]);
+  for (const role of sampleInspectionRoles()) {
     const variable = `var(--sample-${role.replaceAll(" ", "-")})`;
     assert.ok(css.includes(variable), `${role} lacks an applied CSS consumer`);
+  }
+});
+
+test("the bounded inspection inventory binds sources, contexts, and rendered scenarios", async () => {
+  const result = generatePaletteV2({ primary: "#507096" });
+  const presentation = actionPresentationForResult(result, {
+    ordinaryPrimaryPresent: true,
+  });
+  const scenarioIds = new Set(SAMPLE_SCENARIOS.map(({ id }) => id));
+  const obligationIds = new Set();
+  const semanticSourceIds = new Set(
+    SAMPLE_INSPECTION_OBLIGATIONS.filter(
+      ({ sourceKind }) => sourceKind === "semantic-declaration",
+    ).map(({ sourceId }) => sourceId),
+  );
+  assert.deepEqual(
+    semanticSourceIds,
+    new Set(V2_SEMANTIC_MODEL.declarations.map(({ id }) => id)),
+  );
+
+  for (const obligation of SAMPLE_INSPECTION_OBLIGATIONS) {
+    assert.ok(!obligationIds.has(obligation.id), `duplicate ${obligation.id}`);
+    obligationIds.add(obligation.id);
+    assert.ok(scenarioIds.has(obligation.scenarioId));
+    assert.ok(obligation.sourceKind.length > 0);
+    assert.ok(obligation.sourceId.length > 0);
+    if (obligation.sourceKind === "policy-rule") {
+      assert.ok(RULE_CATALOG[obligation.sourceId]);
+    }
+    if (obligation.sourceKind === "presentation-policy") {
+      assert.equal(obligation.sourceId, ACTION_PRESENTATION_POLICY.id);
+    }
+    if (obligation.sourceKind === "owner-document") {
+      const document = await readFile(
+        new URL(`../${obligation.sourceId}`, import.meta.url),
+        "utf8",
+      );
+      assert.ok(document.length > 0);
+    }
+    assert.deepEqual(obligation.modes, ["light", "dark"]);
+    assert.ok(obligation.contexts.length > 0);
+    assert.ok(obligation.fillStates.length > 0);
+    assert.ok(obligation.roleBindings.length > 0);
+    for (const { role, selector } of obligation.roleBindings) {
+      assert.ok(role.length > 0);
+      assert.ok(selector.length > 0);
+    }
+    for (const { sourceId } of obligation.derivedBindings) {
+      assert.equal(sourceId, SECONDARY_ACTION_STATE_POLICY.id);
+    }
+    const markup = appliedExampleView(
+      result.modes.light,
+      presentation,
+      obligation.scenarioId,
+    );
+    assert.match(
+      markup,
+      new RegExp(`data-inspection-obligation="[^"]*${obligation.id}[^"]*"`),
+    );
   }
 });

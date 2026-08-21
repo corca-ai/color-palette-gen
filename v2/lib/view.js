@@ -1,5 +1,6 @@
 import { hexToRgb, rgbToOklch } from "../../lib/color-math.js";
 import { secondaryActionPresentationForMode } from "./action-presentation.js";
+import { SAMPLE_SCENARIOS } from "./sample-inspection.js";
 
 const GROUPS = [
   {
@@ -161,61 +162,12 @@ function exampleStyle(modeResult) {
   ].join(";");
 }
 
-const SAMPLE_SCENARIO_LABELS = Object.freeze({
-  workspace: "Workspace",
-  "routine-actions": "Routine actions",
-  "destructive-confirmation": "Destructive confirmation",
-  "feedback-selection": "Feedback & selection",
-  "form-focus": "Form & focus",
-});
-
-export const SAMPLE_ROLE_COVERAGE = Object.freeze({
-  provenanceOnly: Object.freeze(["brand source"]),
-  scenarios: Object.freeze({
-    workspace: Object.freeze([
-      "background",
-      "surface",
-      "raised surface",
-      "muted surface",
-      "foreground",
-      "muted text",
-      "border",
-      "input border",
-    ]),
-    "routine-actions": Object.freeze([
-      "primary",
-      "primary hover",
-      "primary active",
-      "primary text",
-      "primary border",
-    ]),
-    "destructive-confirmation": Object.freeze([
-      "destructive",
-      "destructive hover",
-      "destructive active",
-      "destructive text",
-    ]),
-    "feedback-selection": Object.freeze([
-      "warning",
-      "warning hover",
-      "warning active",
-      "warning text",
-      "selection",
-      "selection text",
-    ]),
-    "form-focus": Object.freeze([
-      "focus ring",
-      "disabled background",
-      "disabled text",
-      "disabled border",
-      "popover",
-      "popover text",
-    ]),
-  }),
-});
+const SAMPLE_SCENARIO_LABELS = Object.freeze(
+  Object.fromEntries(SAMPLE_SCENARIOS.map(({ id, label }) => [id, label])),
+);
 
 function workspaceScenario() {
-  return `<section class="reference-shell">
+  return `<section class="reference-shell" data-inspection-obligation="foundation-hierarchy foundation-text">
     <aside class="reference-sidebar">
       <div class="reference-workspace"><i>C</i><span><strong>Color Lab</strong><small>Example workspace</small></span></div>
       <nav aria-label="reference specimen navigation">
@@ -237,7 +189,7 @@ function workspaceScenario() {
 }
 
 function routineActionsScenario(actionPresentation) {
-  return `<section class="reference-scenario-card reference-actions-card" data-action-presentation="${actionPresentation.strategy}">
+  return `<section class="reference-scenario-card reference-actions-card" data-action-presentation="${actionPresentation.strategy}" data-inspection-obligation="primary-family primary-shared-label primary-distinct-states primary-state-progression">
     <div><p class="reference-kicker">Project settings</p><h3>Save general settings?</h3><p>Your ordinary action remains the only filled button. Destructive stays visually distinct and lower-emphasis.</p></div>
     <div class="reference-action-example">
       <div class="reference-primary-playground"><button type="button" class="reference-primary-demo">Save changes</button><p><span>Primary state</span><output>Default</output></p></div>
@@ -249,7 +201,7 @@ function routineActionsScenario(actionPresentation) {
 function destructiveConfirmationScenario(actionPresentation) {
   const presentationCopy =
     "Delete is the sole filled action in this confirmation group; Cancel stays secondary.";
-  return `<section class="reference-scenario-card reference-confirmation-card">
+  return `<section class="reference-scenario-card reference-confirmation-card" data-inspection-obligation="destructive-family destructive-label">
     <div class="reference-danger-mark">!</div>
     <div><p class="reference-kicker">Permanent action</p><h3>Move this project to Trash?</h3><p>This removes the project for everyone. You can restore it from Trash for 30 days.</p></div>
     <footer class="reference-feedback" data-action-presentation="${actionPresentation.strategy}" data-secondary-state-policy="confirmation-secondary-state-family-v1" data-presentation-copy="${presentationCopy}"><span><strong>Confirmation required</strong><small>${presentationCopy}</small></span><div class="reference-feedback-actions"><button type="button" class="reference-cancel-demo">Cancel</button><button type="button" class="reference-destructive-demo">Move to Trash</button></div></footer>
@@ -257,7 +209,7 @@ function destructiveConfirmationScenario(actionPresentation) {
 }
 
 function feedbackSelectionScenario() {
-  return `<section class="reference-scenario-card">
+  return `<section class="reference-scenario-card" data-inspection-obligation="warning-family warning-label selection-pair selection-surface-separation">
     <p class="reference-kicker">System feedback and selected content</p>
     <aside class="reference-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
     <div class="reference-warning-playground"><button type="button" class="reference-warning-demo">Review warning</button><p><span>Interactive Warning family</span><b class="default">Default</b><b class="hover">Hover</b><b class="active">Pressed</b></p></div>
@@ -269,7 +221,7 @@ function feedbackSelectionScenario() {
 }
 
 function formFocusScenario() {
-  return `<section class="reference-scenario-card reference-form-scenario">
+  return `<section class="reference-scenario-card reference-form-scenario" data-inspection-obligation="input-boundary utility-semantics">
     <div><p class="reference-kicker">Form boundaries and focus</p><h3>Create a review request</h3><p>Tab through the controls to inspect input borders, text contrast, and the shared focus ring.</p></div>
     <form>
       <label><span>Title</span><input value="Palette review" aria-label="Review title"></label>
@@ -278,6 +230,36 @@ function formFocusScenario() {
       <aside class="reference-popover" role="note"><strong>Focus tip</strong><span>Use Tab to inspect the generated focus ring.</span><button type="button">Got it</button></aside>
       <div><button type="button" class="reference-secondary">Cancel</button><button type="button" class="reference-primary">Create request</button></div>
     </form>
+  </section>`;
+}
+
+function inspectionStateReadout() {
+  return `<p class="inspection-state-readout"><span>Fill <output data-fill-state>Default</output></span><span>Focus <output data-focus-state>Off</output></span></p>`;
+}
+
+function inspectionAction({ family, label, className }) {
+  return `<div class="inspection-action-specimen"><button type="button" class="inspection-action ${className}" data-inspection-family="${family}">${label}</button>${inspectionStateReadout()}</div>`;
+}
+
+function edgeMatrixScenario() {
+  return `<section class="reference-scenario-card inspection-board" data-inspection-board="edge-matrix" data-inspection-obligation="focus-control-separation">
+    <header class="inspection-board-header"><div><p class="reference-kicker">Inspection board · not a product screen</p><h3>Compare relationships the ontology alone cannot show.</h3></div><p>Valid contexts are aligned for visual comparison. This board records no score, vote, or automatic pass/fail result.</p></header>
+    <section class="inspection-action-board" data-inspection-obligation="action-family-consistency feedback-separation action-default-emphasis">
+      <header><strong>Action families</strong><span>Fill state and focus are independent.</span></header>
+      <div class="inspection-context-grid">
+        <article data-native-context="ordinary-actions"><small>Ordinary actions</small><strong>Primary leads; Destructive stays outline.</strong>${inspectionAction({ family: "primary", label: "Save changes", className: "inspection-primary" })}${inspectionAction({ family: "destructive-outline", label: "Delete project", className: "inspection-destructive-outline" })}</article>
+        <article data-native-context="destructive-confirmation"><small>Destructive confirmation</small><strong>Secondary sits beside filled Destructive.</strong>${inspectionAction({ family: "secondary", label: "Cancel", className: "inspection-secondary" })}${inspectionAction({ family: "destructive-filled", label: "Move to Trash", className: "inspection-destructive" })}</article>
+        <article data-native-context="warning-feedback"><small>Warning feedback</small><strong>Warning owns an independent label envelope.</strong>${inspectionAction({ family: "warning", label: "Review warning", className: "inspection-warning" })}</article>
+      </div>
+    </section>
+    <section class="inspection-focus-board" data-inspection-obligation="focus-adjacency">
+      <header><strong>Focus across surfaces</strong><span>Tab through the same target on all required foundation contexts.</span></header>
+      <div>
+        <article data-focus-context="background"><small>Background</small><button type="button" class="inspection-focus-target">Focus target</button></article>
+        <article data-focus-context="surface"><small>Surface</small><button type="button" class="inspection-focus-target">Focus target</button></article>
+        <article data-focus-context="muted-surface"><small>Muted Surface</small><button type="button" class="inspection-focus-target">Focus target</button></article>
+      </div>
+    </section>
   </section>`;
 }
 
@@ -290,6 +272,7 @@ function sampleScenarioView(scenario, actionPresentation) {
   }
   if (scenario === "feedback-selection") return feedbackSelectionScenario();
   if (scenario === "form-focus") return formFocusScenario();
+  if (scenario === "edge-matrix") return edgeMatrixScenario();
   return workspaceScenario();
 }
 

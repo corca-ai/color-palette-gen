@@ -26,11 +26,16 @@ review와 semantic declaration의 실행 설명은
   `lib/palette-runtime.js` owns worker execution and caching.
 - The Generator's applied-sample surface is a presentation-only tab set over
   one generated result. `app.js` owns tab state and keyboard behavior;
-  `view.js` owns the five situation templates. Switching a sample never starts
-  palette generation or changes semantic token ownership. Research previews
-  remain report/test surfaces rather than parallel controls in Generator.
-  `SAMPLE_ROLE_COVERAGE` keeps every generated role bound to at least one
-  applied specimen; `brand source` is the sole explicit provenance-only role.
+  `view.js` owns five situation templates plus one deliberate Edge matrix.
+  Switching a sample never starts palette generation or changes semantic token
+  ownership. Research previews remain report/test surfaces rather than parallel
+  controls in Generator. `sample-inspection.js` owns a bounded, static inventory
+  from source declaration or rule through role, mode, context, state, and actual
+  rendered selector. It permits roles to appear in several contexts and adds
+  authored presentation co-occurrence probes without turning them into ontology
+  edges, generation policy, automatic verdicts, or a generic component DSL.
+  Every generated role has at least one applied consumer; `brand source` is the
+  sole explicit provenance-only role.
 - `v2/lib/palette.js` orchestrates generation. Role-family producers own their
   candidate searches: `feedback-search.js` owns Destructive and Warning,
   `pair-selection.js` owns cross-mode pair ranking, and `quality.js` owns

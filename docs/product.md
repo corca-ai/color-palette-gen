@@ -108,6 +108,12 @@ on public evidence and must not expose or imply private consumer relationships.
   a diagnostic rather than a presentation switch. The operator-reviewed rule
   is recorded by
   [ADR-0003](v2-decisions/adr/0003-single-filled-action-hierarchy.md).
+- The applied sample includes five realistic situations and one Edge matrix.
+  The matrix aligns valid but separately owned action and focus contexts so a
+  person can spot cross-context inconsistencies that are not ontology edges.
+  It is an inspection aid only: it records no score or verdict and does not
+  change palette generation. See
+  [Interaction design](interaction-design.md#ontology-driven-edge-case-inspection).
 - Destructive confirmation derives a lower-amplitude Secondary Cancel family
   from its actual Muted Surface context. It follows the same Light-darker /
   Dark-lighter direction as the filled Destructive sibling while preserving

@@ -77,11 +77,12 @@
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">Applied palette</p>
-            <h2 id="example-title">Inspect one real situation at a time.</h2>
+            <h2 id="example-title">Inspect situations and deliberate edge comparisons.</h2>
           </div>
           <p>
-            Switch situations without regenerating the palette. Each tab makes
-            the role hierarchy explicit in a focused component context.
+            Five tabs preserve realistic component contexts; Edge matrix aligns
+            those contexts to expose cross-role inconsistencies without changing
+            the palette.
           </p>
         </div>
         <div class="example-tabs" role="tablist" aria-label="Sample situation">
@@ -129,6 +130,16 @@
             data-sample-scenario="form-focus"
           >
             Form &amp; focus
+          </button>
+          <button
+            id="sample-tab-edge-matrix"
+            class="inspection-tab"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="edge-matrix"
+          >
+            Edge matrix
           </button>
         </div>
         <div id="examples" class="examples" role="tabpanel" tabindex="0"></div>

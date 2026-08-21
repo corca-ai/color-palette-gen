@@ -116,6 +116,120 @@ generic: no actual-consumer claim or runtime dependency is implied.
 The authoring UI stays neutral so generated colors do not change the measurement
 frame around the specimen.
 
+### Ontology-driven edge-case inspection
+
+The applied sample is also a human inspection instrument. Its coverage model
+must distinguish two kinds of relationship:
+
+1. **Ontology relation** — a declared dependency or obligation such as one
+   Primary foreground spanning Default/Hover/Active, Focus remaining visible on
+   Background/Surface/Muted Surface, or Selection Text remaining readable on
+   Selection.
+2. **Presentation co-occurrence** — roles with no generation dependency that a
+   person can compare across aligned native contexts, such as ordinary actions,
+   destructive confirmation, and warning feedback. Differences in foreground,
+   resting emphasis, border treatment, or state direction can be visually
+   inconsistent even when every role passes its own contract.
+
+The second kind is deliberately not promoted into palette policy. Co-location
+creates an inspection obligation and possible human finding, not a new candidate
+constraint or semantic dependency.
+
+#### Presentation/context migration
+
+- Primary kind: **presentation/context**.
+- Before law: sample coverage is complete when every generated role has at least
+  one CSS consumer in one of five situations.
+- After law: sample coverage is complete for the checked-in bounded inspection
+  inventory only when every obligation names its source, roles, both modes,
+  actual context, relevant states, and rendered scenario; generated roles may
+  intentionally appear in more than one situation.
+- Retired claims: one appearance proves a role's applied coverage; scenario role
+  lists must partition generated roles exactly once; ontology edges alone identify
+  every useful human comparison.
+
+This migration changes neither generated output nor eligibility, ranking, pair
+selection, result verdicts, or schema versions. `sample-inspection.js` owns the
+presentation-only obligation inventory; policy and ontology remain upstream
+authority.
+
+The bounded inventory contains every renderable semantic declaration, every
+generated interactive family and its label/boundary duties, every assembly alias
+used by the specimen, and a small authored set of presentation co-occurrence
+questions grounded in the native scenarios. It does not claim exhaustive
+coverage of all role combinations, components, primary inputs, layouts, or
+aesthetic defects.
+
+#### Role × Mode × Context × State review
+
+| Inspection obligation | Source kind / ID | Token roles | Modes | Context | Fill states / focus | Screen owner |
+| --- | --- | --- | --- | --- | --- | --- |
+| Foundation hierarchy | semantic declaration / `foundation-hierarchy-ordered` | Background, Surface, Raised, Muted, Foreground, Muted Text, Border | Light, Dark | nested workspace surfaces | default / off | Workspace |
+| Foundation text | semantic declaration / `foundation-text-targets-pass` | Background, Surface, Foreground, Muted Text | Light, Dark | body, surface, and muted content | default / off | Workspace |
+| Input boundary | rule / `foundation.boundary-contrast` | Surface, Input Border, Foreground | Light, Dark | editable controls on Surface | default / off, on | Form & focus |
+| Primary family | rule / `primary.generated-family` | Primary Default/Hover/Active, Primary Text, Primary Border | Light, Dark | ordinary filled action | default, hover, active / off, on | Routine actions |
+| Primary shared label | semantic declaration / `shared-label-readable` | Primary Default/Hover/Active, Primary Text | Light, Dark | ordinary filled action | default, hover, active / off | Routine actions |
+| Primary distinct states | semantic declaration / `states-distinct` | Primary Default/Hover/Active | Light, Dark | ordinary filled action | default, hover, active / off | Routine actions |
+| Primary progression | semantic declaration / `active-continues-beyond-hover` | Primary Default/Hover/Active | Light, Dark | ordinary filled action | default, hover, active / off | Routine actions |
+| Destructive family | rule / `state.minimum-separation` | Destructive Default/Hover/Active, Destructive Text | Light, Dark | confirmation filled action | default, hover, active / off, on | Destructive confirmation |
+| Destructive label | semantic declaration / `feedback-destructive-label-targets-pass` | Destructive Default/Hover/Active, Destructive Text | Light, Dark | confirmation filled action | default, hover, active / off | Destructive confirmation |
+| Warning family | rule / `state.shared-label` | Warning Default/Hover/Active, Warning Text | Light, Dark | status and warning action | default, hover, active / off, on | Feedback & selection |
+| Warning label | semantic declaration / `feedback-warning-label-targets-pass` | Warning Default/Hover/Active, Warning Text | Light, Dark | status and warning action | default, hover, active / off | Feedback & selection |
+| Selection pair | semantic declaration / `selection-text-target-passes` | Selection, Selection Text | Light, Dark | selected row beside unselected content | default / off | Feedback & selection |
+| Selection separation | semantic declaration / `selection-surface-oklab-separation-passes` | Surface, Selection | Light, Dark | selected beside unselected content | default / off | Feedback & selection |
+| Focus adjacency | semantic declaration / `focus-adjacent-contrast-passes` | Focus Ring, Background, Surface, Muted Surface | Light, Dark | three live foundation targets | default / on | Edge matrix |
+| Focus/control separation | semantic declaration / `focus-control-oklab-separation-passes` | Focus Ring, Primary, Destructive | Light, Dark | ordinary and destructive controls | default / on | Edge matrix |
+| Utility semantics | owner document / `docs/v2-decisions/policy/utility-role-aliases.md` | Disabled aliases, Popover aliases | Light, Dark | blocked control and overlay | default / off, on | Form & focus |
+| Action-family consistency | presentation / `single-filled-action-hierarchy-v2` | Primary, Destructive, Warning plus derived Secondary | Light, Dark | aligned native action contexts | default, hover, active / off, on | Edge matrix |
+| Feedback separation | semantic declaration / `feedback-oklab-separation-passes` | Primary, Destructive, Warning | Light, Dark | aligned action families | default / off | Edge matrix |
+| Default emphasis hierarchy | presentation / `action-default-emphasis-v1` | Surface plus all action defaults | Light, Dark | equal geometry across native contexts | default / off | Edge matrix |
+
+Intentional differences keep explicit owners. Warning owns an independent label
+envelope; Secondary is derived from Muted Surface and Foreground in confirmation
+context; outline Destructive belongs to ordinary coexistence while filled
+Destructive belongs to confirmation. The Edge matrix must label these differences
+instead of making visual consistency look like an automated pass/fail result.
+
+#### Edge matrix screen plan
+
+Add a sixth `Edge matrix` tab alongside the five realistic situations. It is a
+deliberate inspection board, not a simulated product screen.
+
+- **Action families** aligns three separately labelled native contexts rather
+  than inventing one action group: ordinary Primary + outline Destructive,
+  confirmation Secondary + filled Destructive, and Warning feedback. Equal
+  geometry makes cross-context comparison easy while preserving the actual
+  hierarchy. Every control is genuinely focusable and interactive. A local
+  readout exposes fill state (`Default`, `Hover`, `Pressed`) and focus indicator
+  (`Off`, `On`) as independent axes.
+- **Focus across surfaces** places the same Focus Ring around equivalent controls
+  on Background, Surface, and Muted Surface. Keyboard focus must reach every case.
+- Explanatory labels distinguish ontology-owned sameness from intentionally
+  independent behavior. The screen records no vote and converts no visual finding
+  into generation authority.
+
+`SAMPLE_INSPECTION_OBLIGATIONS` is the executable presentation contract. Each
+static record contains `id`, `sourceKind`, exact `sourceId`, `scenarioId`,
+`modes`, `contexts`, `fillStates`, `focus`, and `roleBindings` of token role to
+actual selector; derived Secondary bindings are marked separately. The inventory
+does not generate components, expand arbitrary families, evaluate color policy,
+or drive palette production.
+
+Unit tests must prove generated-role coverage without requiring roles to be
+unique to one scenario, validate the record shape, and bind every obligation's
+selectors inside its rendered `data-inspection-obligation` marker. Playwright
+must inspect both modes; exercise Default/Hover/Pressed and independent focus;
+compare computed fills and labels; verify shared Primary/Destructive foreground
+identity; and check the Focus Ring plus actual Background/Surface/Muted Surface
+host colors. One complete Light and one complete Dark Edge matrix snapshot are
+the bounded human comparison surface. The UI exposes no score, vote, saved
+judgment, or automatic pass/fail result.
+
+Multi-input matrices are deferred until a finding proves input-dependent on this
+single-palette board. Finding persistence is deferred until an operator workflow
+names its disposition owner and authority. Generated pairwise co-occurrence is
+deferred unless curated probes repeatedly miss a documented defect class.
+
 ### Generated palette
 
 The compact palette follows the applied result. It answers:

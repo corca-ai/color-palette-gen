@@ -2,11 +2,15 @@
 
 Current policy version: `v2-policy-model-20`.
 
-> The five applied-sample tabs exercise every generated component role:
+> Five realistic applied-sample tabs and one deliberate Edge matrix exercise
+> every generated component role:
 > Primary, Destructive, and Warning state families are interactive; Form & focus
 > renders Focus, Disabled, and Popover roles. `brand source` remains the sole
 > provenance-only role and is shown in the palette inspector rather than applied
-> as a component color.
+> as a component color. The static inspection inventory binds each bounded
+> obligation to its source, mode, context, state axes, role, and actual selector;
+> presentation co-occurrence remains human inspection rather than a palette
+> policy or automatic verdict.
 
 > Accepted interaction disposition: Primary and Destructive use one shared
 > foreground per mode. Light states get progressively darker and Dark states
@@ -106,7 +110,9 @@ and the per-candidate result of each rule.
   red-band is diagnostic only and does not change this hierarchy;
 - Generator presents the accepted result through five situation tabs—Workspace,
   Routine actions, Destructive confirmation, Feedback & selection, and Form &
-  focus—without exposing superseded counterfactual controls;
+  focus—plus an Edge matrix that aligns separately owned native contexts for
+  human comparison without exposing superseded counterfactual controls or
+  creating a quality verdict;
 - provisional quality objectives remain distinct from accessibility pass/fail;
 - source fidelity, semantic hue separation, and non-eligibility pacing signals
   remain independent post-selection review; only the seven named eligibility

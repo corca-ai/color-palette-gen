@@ -86,6 +86,7 @@
 .reference-secondary:focus-visible,
 .reference-channel button:focus-visible,
 .reference-destructive-outline:focus-visible,
+.reference-warning-demo:focus-visible,
 .reference-form-scenario :is(input, textarea):focus-visible {
   outline: 3px solid var(--sample-focus-ring);
   outline-offset: 2px;
@@ -598,6 +599,200 @@
   background: var(--sample-muted-surface);
   border: 1px solid var(--sample-border);
   color: var(--sample-foreground);
+}
+.inspection-board {
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+}
+.inspection-board-header {
+  align-items: end;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.8fr);
+}
+.inspection-board-header h3 {
+  margin-bottom: 0;
+}
+.inspection-board-header > p {
+  color: var(--sample-muted-text);
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 0;
+}
+.inspection-action-board,
+.inspection-focus-board {
+  border: 1px solid var(--sample-border);
+  border-radius: 7px;
+  padding: 12px;
+}
+.inspection-action-board > header,
+.inspection-focus-board > header {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.inspection-action-board > header strong,
+.inspection-focus-board > header strong {
+  font-size: 11px;
+}
+.inspection-action-board > header span,
+.inspection-focus-board > header span {
+  color: var(--sample-muted-text);
+  font-size: 9px;
+}
+.inspection-context-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.inspection-context-grid > article {
+  background: var(--sample-background);
+  border: 1px solid var(--sample-border);
+  border-radius: 6px;
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+.inspection-context-grid > article > small {
+  color: var(--sample-muted-text);
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+.inspection-context-grid > article > strong {
+  font-size: 9px;
+  line-height: 1.35;
+  min-height: 25px;
+}
+.inspection-action-specimen {
+  display: grid;
+  gap: 5px;
+}
+.inspection-action {
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 650;
+  min-height: 34px;
+  padding: 0 9px;
+  width: 100%;
+}
+.inspection-primary {
+  background: var(--sample-primary);
+  border: 1px solid var(--sample-primary-border);
+  color: var(--sample-primary-text);
+}
+.inspection-primary:hover {
+  background: var(--sample-primary-hover);
+}
+.inspection-primary:active {
+  background: var(--sample-primary-active);
+}
+.inspection-destructive-outline {
+  background: transparent;
+  border: 1px solid var(--sample-destructive);
+  color: var(--sample-destructive);
+}
+.inspection-destructive-outline:hover {
+  background: color-mix(in srgb, var(--sample-destructive) 12%, transparent);
+}
+.inspection-destructive-outline:active {
+  background: color-mix(in srgb, var(--sample-destructive) 20%, transparent);
+}
+.inspection-secondary {
+  background: var(--sample-secondary-action);
+  border: 1px solid var(--sample-secondary-action-border);
+  color: var(--sample-secondary-action-text);
+}
+.inspection-secondary:hover {
+  background: var(--sample-secondary-action-hover);
+}
+.inspection-secondary:active {
+  background: var(--sample-secondary-action-active);
+}
+.inspection-destructive {
+  background: var(--sample-destructive);
+  border: 1px solid transparent;
+  color: var(--sample-destructive-text);
+}
+.inspection-destructive:hover {
+  background: var(--sample-destructive-hover);
+}
+.inspection-destructive:active {
+  background: var(--sample-destructive-active);
+}
+.inspection-warning {
+  background: var(--sample-warning);
+  border: 1px solid var(--sample-border);
+  color: var(--sample-warning-text);
+}
+.inspection-warning:hover {
+  background: var(--sample-warning-hover);
+}
+.inspection-warning:active {
+  background: var(--sample-warning-active);
+}
+.inspection-action:active {
+  transform: translateY(1px);
+}
+.inspection-action:focus-visible,
+.inspection-focus-target:focus-visible {
+  outline: 3px solid var(--sample-focus-ring);
+  outline-offset: 2px;
+}
+.inspection-state-readout {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin: 0;
+}
+.inspection-state-readout span,
+.inspection-state-readout output {
+  color: var(--sample-muted-text);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+.inspection-state-readout output {
+  color: var(--sample-foreground);
+  font-weight: 650;
+}
+.inspection-focus-board > div {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.inspection-focus-board article {
+  border: 1px solid var(--sample-border);
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  min-height: 88px;
+  padding: 10px;
+}
+.inspection-focus-board article[data-focus-context="background"] {
+  background: var(--sample-background);
+}
+.inspection-focus-board article[data-focus-context="surface"] {
+  background: var(--sample-surface);
+}
+.inspection-focus-board article[data-focus-context="muted-surface"] {
+  background: var(--sample-muted-surface);
+}
+.inspection-focus-board small {
+  color: var(--sample-muted-text);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+.inspection-focus-target {
+  align-self: end;
+  background: var(--sample-background);
+  border: 1px solid var(--sample-input-border);
+  border-radius: 4px;
+  color: var(--sample-foreground);
+  font-size: 9px;
+  min-height: 30px;
 }
 .relationship-section {
   margin-top: 64px;
