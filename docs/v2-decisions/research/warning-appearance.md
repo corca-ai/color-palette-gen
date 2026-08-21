@@ -104,10 +104,11 @@ retained inventory and a fixed-`85°` inventory selected the same `#E6AD00` in a
 216 cases. Minimum family label contrast was `10.34:1`, minimum Primary distance
 `.244`, and minimum Destructive distance `.294`.
 
-The live review surface now shows accepted production v19 first, followed by
-four historical cards: superseded v18, the previous least-bad arm, Orangeward,
-and Yellowward. The six-input page is a decision record, not the original
-four-arm diagnostic. In v19, Dark keeps numeric values identical to the v18
+The live review surface now shows current production v20 first and identifies
+its appearance recipe as the one accepted in v19. It is followed by four historical cards:
+superseded v18, the previous least-bad arm, Orangeward, and Yellowward.
+The six-input page is a decision record, not the original four-arm diagnostic.
+The v19 decision kept Dark numeric values identical to the v18
 appearance recipe because this comparison did not present or disposition Dark.
 
 The fixed-grid evidence is executable as

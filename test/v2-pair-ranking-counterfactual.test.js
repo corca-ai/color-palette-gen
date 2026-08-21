@@ -112,7 +112,7 @@ test("pair-ranking report preserves previous/current ordering evidence", () => {
   assert.match(first.interpretation, /does not establish perceived/);
   assert.deepEqual(first.strategies.previous.provenance, {
     originPolicyVersion: "v2-policy-model-11",
-    evaluationPolicyVersion: "v2-policy-model-19",
+    evaluationPolicyVersion: "v2-policy-model-20",
     scope: "ranking-order-only-on-current-candidates",
   });
   assert.equal(first.summaries["previous-v11-source-first"].inputCount, 1);

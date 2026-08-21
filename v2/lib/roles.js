@@ -65,12 +65,12 @@ export const ROLE_CLASSIFICATION = {
     "warning",
     "warning hover",
     "warning active",
-    "warning text",
     "destructive hover",
     "destructive active",
     "selection",
     "selection text",
   ],
+  fixedValidation: ["warning text"],
   aliases: {
     "disabled background": "muted surface",
     "disabled text": "muted text",

@@ -18,7 +18,7 @@ export const WARNING_APPEARANCE_ARMS = Object.freeze([
   Object.freeze({
     id: "current",
     label: "채택된 Amber",
-    shortLabel: "Production v19",
+    shortLabel: "Current v20 · recipe from v19",
     question: "기본 상태를 우선해 선택한 현재 Light Warning family다.",
     badge: "Accepted",
     recipe: null,

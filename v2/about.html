@@ -431,6 +431,14 @@
                   Light <code>#E6AD00</code>, Dark <code>#CD9C1F</code>이
                   선택됐다.
                 </p>
+                <p class="meaning-boundary">
+                  <strong>Warning 글자는 언제 정하는가?</strong> Default 후보를
+                  고를 때 검정과 흰색을 비교해 하나를 선택하고 그 결과를 decision
+                  evidence에 기록한다. Hover와 Active는 그 같은 글자를 읽을 수 있는
+                  색만 통과한다. 마지막 <code>warning text</code> 단계는 검정과
+                  흰색을 다시 고르지 않고, 이미 정한 한 글자가 세 상태 모두에서
+                  유효한지만 검증해 그대로 export한다.
+                </p>
                 <div class="rule-links">
                   <a href="./reference.html#semantic-separation"
                     >세 역할 사이의 최소 거리 계산</a
@@ -843,14 +851,14 @@
                 <rect x="375" y="410" width="250" height="80"></rect>
                 <text x="500" y="442">⑤ Warning</text>
                 <text class="node-detail" x="500" y="467">
-                  읽는 값: Primary + Destructive
+                  Default + 공통 label 선택
                 </text>
               </g>
               <g class="svg-dag-node">
                 <rect x="375" y="550" width="250" height="80"></rect>
                 <text x="500" y="582">⑥ Warning states</text>
                 <text class="node-detail" x="500" y="607">
-                  Default · Hover · Active · Text
+                  같은 label로 Hover · Active · Text 검증
                 </text>
               </g>
               <g class="svg-dag-node">

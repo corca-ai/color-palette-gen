@@ -115,7 +115,7 @@ test("v2 contracts hold across an RGB input grid", () => {
     },
   });
 
-  assert.equal(report.policyVersion, "v2-policy-model-19");
+  assert.equal(report.policyVersion, "v2-policy-model-20");
   assert.equal(report.schema, "color-palette-adversarial-diagnostics.v3");
   assert.equal(report.summary.inputCount, 216);
   assert.equal(minimumWarningTextContrast, 10.342026895706102);

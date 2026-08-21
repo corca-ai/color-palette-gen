@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-19`.
+Current policy version: `v2-policy-model-20`.
 
 > The five applied-sample tabs exercise every generated component role:
 > Primary, Destructive, and Warning state families are interactive; Form & focus
@@ -234,8 +234,8 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Latest migration
 
-Production v19 adopts the operator-selected higher-lightness Light Warning
-family `#E6AD00 / #F3B924 / #FFC640 / #000000`. Light now requests
+Production v20 retains the operator-selected higher-lightness Light Warning
+family adopted in v19, `#E6AD00 / #F3B924 / #FFC640 / #000000`. Light requests
 `L .78/C .18` in `[.52,.82]`; Dark remains on the v18 recipe. The historical
 comparison and bounded evidence remain in
 [ADR-0007](../adr/0007-light-warning-vivid-amber.md) and the
@@ -243,6 +243,13 @@ comparison and bounded evidence remain in
 The fixed adversarial counts remain unchanged at 148 signaled inputs, zero
 generated-contract failures, 59 hue-review inputs, and 120 hue-check
 occurrences; this migration changes Light Warning tone, not its semantic hue.
+
+Policy v20 removes the duplicated final Warning label authority. The selected
+Default decision records one label, Hover and Active are conditioned on it, and
+the final Warning Text decision validates/reuses that value with one candidate.
+The 216-input role-value digest is unchanged from v19; policy identity and the
+Warning Text trace intentionally change. See
+[ADR-0008](../adr/0008-warning-shared-label-transaction.md).
 
 1. Preserve the completed operator disposition for all 22 separation misses and
    nine new Dark source-fidelity findings under ADR-0004. Production v16 keeps

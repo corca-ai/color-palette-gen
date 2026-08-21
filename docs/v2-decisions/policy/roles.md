@@ -227,8 +227,9 @@ both primary and destructive. Semantic closeness to the configured amber anchor
 ranks the passing set. Warning still requires an icon or label; color is not its
 only signal.
 
-Light and Dark own separate appearance recipes. Production v19 gives Light the
-operator-selected vivid amber anchor `L .78/C .18` over range `[.52,.82]`; Dark
+Light and Dark own separate appearance recipes. Current v20 retains the vivid
+amber recipe accepted in v19: Light uses the operator-selected anchor
+`L .78/C .18` over range `[.52,.82]`; Dark
 retains `L .72/C .14` over `[.62,.80]`. Both keep the same bounded hue inventory.
 This is an explicit mode distinction, not a claim that one numeric recipe should
 look equivalent on both backgrounds. See [ADR-0007](../adr/0007-light-warning-vivid-amber.md).
@@ -250,10 +251,13 @@ Primary text compares black and white, rejects any foreground that misses WCAG
 `4.5:1` on a default/hover/active fill, then ranks the eligible set by its
 weakest APCA diagnostic score. Destructive text aliases that mode-level
 filled-action foreground; Destructive candidate and state constraints must pass
-with it. Warning and Selection retain independent black-or-white searches
-because they are different interaction families. Every Warning stage—Default,
-Hover, Active, and final shared Text—reads the Warning-owned
+with it. Selection retains its own black-or-white search because it is a
+different interaction family. Warning Default selects and records one
+black-or-white family label; Hover and Active must support it, and final Warning
+Text validates and reuses that exact value without selecting again. Every
+Warning stage reads the Warning-owned
 `compact-warning-label.v1` APCA diagnostic minimum, never Primary's action-label
 setting. Final checks declare the actual public-specimen typography context;
 APCA `Lc 75/60` remains diagnostic, not eligibility authority. See
-[ADR-0005](../adr/0005-wcag-normal-text-generation-authority.md).
+[ADR-0005](../adr/0005-wcag-normal-text-generation-authority.md) and
+[ADR-0008](../adr/0008-warning-shared-label-transaction.md).

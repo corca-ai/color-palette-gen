@@ -10,7 +10,7 @@ loop를 복사하지 않고 사람이 검토할 수 있는 개념과 소유 경�
 현재 production identity는 다음과 같다.
 
 - result schema: `3`;
-- policy: `v2-policy-model-19`;
+- policy: `v2-policy-model-20`;
 - semantic model: `v2-declarative-design@5`;
 - pair strategy: `zero-primary-pair-quality-miss-gated-source-first`.
 
@@ -84,8 +84,8 @@ flowchart TD
   actionText["③ Filled-action foreground<br/>Primary family에서 black/white 선택"]
   destructive["④ Destructive family transaction<br/>Primary + action foreground + mode direction에 의존"]
   destructiveStates["⑤ Default · Hover · Active<br/>같은 foreground, Light↓ / Dark↑"]
-  warning["⑥ Warning default<br/>Primary와 Destructive에 의존"]
-  warningStates["⑦ Warning states와 공통 Text"]
+  warning["⑥ Warning Default + label<br/>Primary와 Destructive에 의존<br/>선택 evidence의 black/white를 family label로 고정"]
+  warningStates["⑦ Warning Hover · Active · Text<br/>같은 label로 states 생성 후 최종 검증"]
   selection["⑧ Selection과 Text"]
   focus["⑨ Focus ring<br/>Background · Surface · Muted Surface<br/>Primary · Destructive에 의존"]
   typography["선언된 typography context<br/>normal text · size · weight"]
@@ -163,6 +163,12 @@ Light Warning의 appearance는 이 경계를 실제로 통과한 사례다. v18 
 Default-first disposition 후 [ADR-0007](adr/0007-light-warning-vivid-amber.md)이
 Light recipe만 production v19로 승격했다. Dark는 별도 mode sibling이므로 같은 숫자를
 자동 상속하지 않는다.
+
+현재 policy v20은 그 recipe를 바꾸지 않고 Warning label의 소유 경계를 고쳤다.
+Default 선택 evidence가 기록한 label을 family producer가 한 번 채택하고,
+Hover·Active·최종 Text가 같은 값을 사용한다. 최종 Text는 다시 고르는 역할이 아니라
+완성된 세 fill에 대한 `fixedTextValidation`이다. 이 변경은
+[ADR-0008](adr/0008-warning-shared-label-transaction.md)이 소유한다.
 
 ## Action group hierarchy와 role collision
 

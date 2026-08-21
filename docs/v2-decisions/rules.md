@@ -9,7 +9,7 @@
 보고 싶다면 먼저 [Ontology](ontology.md)를 읽어도 되지만, 이 문서만 순서대로 읽어도
 전체 생성 과정을 따라갈 수 있다.
 
-현재 설명은 result schema `3`, policy `v2-policy-model-19`, semantic model
+현재 설명은 result schema `3`, policy `v2-policy-model-20`, semantic model
 `v2-declarative-design@5`, pair strategy
 `zero-primary-pair-quality-miss-gated-source-first`에 맞춰져 있다.
 [ADR-0005](adr/0005-wcag-normal-text-generation-authority.md)는 text 권위 변경을
@@ -420,7 +420,7 @@ Warning의 hue ladder와 chroma·lightness·separation 수치의 authority 역�
 [Feedback and semantic review](policy/evidence.md#feedback-and-semantic-review)에
 명시되어 있다.
 
-Production v19는 mode별 recipe를 명시한다. Light는 시각 비교에서 채택한
+현재 v20은 v19에서 채택한 mode별 recipe를 유지한다. Light는 시각 비교에서 채택한
 `L .78 / C .18 / range [.52,.82]`, Dark는 아직 별도 disposition되지 않은
 `L .72 / C .14 / range [.62,.80]`이다. 두 mode 모두 anchor `85°`와
 `[70°,85°,100°]` 후보를 유지한다. 이 비대칭의 결정 경계와 216-input 근거는
@@ -435,10 +435,18 @@ Production v19는 mode별 recipe를 명시한다. Light는 시각 비교에서 �
 `feedback.semantic-anchor`로 고른다. Destructive와 마찬가지로 default·hover·active가
 하나의 text를 공유하는 family를 만든다.
 
-이 family의 Default 후보 검사, 초기 text 선택, Hover/Active 검사, 최종 shared
-text 검색은 모두 `text.typographyContexts.warningLabel.apcaDiagnosticMinimum`을
-읽는다. Primary의 `apcaDiagnosticLc`는 Warning의 설정이 아니다. 현재 두 값이
-우연히 `60`으로 같더라도 서로 독립된 owner를 유지한다.
+이 family의 선택된 Default evidence가 검정/흰색 중 고른 text를 기록한다.
+`warningFamilySelection()`은 이를 다시 계산하지 않고 family label로 채택한다.
+Hover/Active는 같은 label의 contrast를 검사하고, 최종 Warning Text 단계는 후보를
+다시 고르지 않고 그 한 값이 세 fill 모두에서 유효한지만 검증한다. 네 단계 모두
+`text.typographyContexts.warningLabel.apcaDiagnosticMinimum`을 읽는다.
+Primary의 `apcaDiagnosticLc`는 Warning의 설정이 아니다. 현재 두 값이 우연히 `60`으로
+같더라도 서로 독립된 owner를 유지한다. 이 one-label contract와 실패 경계는
+[ADR-0008](adr/0008-warning-shared-label-transaction.md)이 소유한다.
+
+최종 Text decision은 policy `fixedTextValidation`을 사용한다. 여기에는
+`text.required-contrast` constraint만 있고 objective와 tie-breaker는 없다. 후보가 한
+개이므로 “가장 좋은 text를 다시 선택했다”는 순위 주장을 만들지 않는다.
 
 이 때문에 Warning은 Primary뿐 아니라 앞 단계의 Destructive 선택에도 의존한다.
 

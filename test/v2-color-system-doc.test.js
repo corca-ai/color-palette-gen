@@ -103,7 +103,7 @@ test("the managed ontology and flow stay bound to current production policy", as
   assert.doesNotMatch(rules, /Restrict ranking pool/);
 });
 
-test("Light Warning v19 decision stays synchronized across its named truth surfaces", async () => {
+test("Warning recipe history and v20 label ownership stay synchronized", async () => {
   const [
     spec,
     ontology,
@@ -111,6 +111,7 @@ test("Light Warning v19 decision stays synchronized across its named truth surfa
     roles,
     evidence,
     adr,
+    labelAdr,
     status,
     research,
     interaction,
@@ -125,6 +126,13 @@ test("Light Warning v19 decision stays synchronized across its named truth surfa
     readFile(new URL("docs/v2-decisions/policy/evidence.md", root), "utf8"),
     readFile(
       new URL("docs/v2-decisions/adr/0007-light-warning-vivid-amber.md", root),
+      "utf8",
+    ),
+    readFile(
+      new URL(
+        "docs/v2-decisions/adr/0008-warning-shared-label-transaction.md",
+        root,
+      ),
       "utf8",
     ),
     readFile(
@@ -164,6 +172,12 @@ test("Light Warning v19 decision stays synchronized across its named truth surfa
   assert.match(rules, /Primary의 `apcaDiagnosticLc`는 Warning의 설정이 아니다/);
   assert.match(adr, /Dark.*unchanged|Dark.*retains/s);
   assert.match(adr, /test:warning-policy-migration/);
+  assert.match(
+    labelAdr,
+    /fixed foreground validation|fixed-candidate validation/,
+  );
+  assert.match(labelAdr, /v2-policy-model-20/);
+  assert.match(rules, /`fixedTextValidation`/);
   assert.match(status, /Dark Primary for all 14 inputs/);
   assert.doesNotMatch(
     status,

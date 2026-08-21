@@ -162,7 +162,7 @@ test("feedback availability inspects failed checks without mutating production o
     availability.objectiveBestRoleLocalAlternative !== null,
     availability.roleLocalAlternativeAvailable,
   );
-  assert.match(availability.candidateSetIdentity, /v2-policy-model-19/);
+  assert.match(availability.candidateSetIdentity, /v2-policy-model-20/);
   assert.ok(
     expandedAvailability.candidateCounts.inventory >=
       availability.candidateCounts.inventory,
@@ -373,7 +373,7 @@ test("feedback report rejects stale or malformed upstream census evidence", () =
   const base = {
     schema: "color-palette-adversarial-diagnostics.v3",
     resultVersion: 2,
-    policyVersion: "v2-policy-model-19",
+    policyVersion: "v2-policy-model-20",
     semanticModel: { id: "v2-declarative-design", version: 3 },
     semanticHueReview: {
       flaggedInputCount: 1,

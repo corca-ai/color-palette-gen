@@ -103,13 +103,18 @@ Primary–Destructive Oklab separation is retained as selected-result review
 evidence rather than a generation contract.
 
 Warning remains semantic amber and is selected only after Primary and
-Destructive. Production v19 uses a mode-scoped appearance recipe: Light searches
+Destructive. Current policy v20 retains the mode-scoped appearance recipe
+adopted in v19: Light searches
 `L [.52,.82]` around preferred `L .78` with requested `C .18`; Dark retains
 `L [.62,.80]`, preferred `L .72`, and requested `C .14`. Both modes keep anchor
 `85°` and candidates `[70°,85°,100°]`, require one readable family label, and
 remain at least Oklab `ΔE .08` from Primary and Destructive. The Light-only
 human disposition and Dark non-change are recorded in
 [ADR-0007](v2-decisions/adr/0007-light-warning-vivid-amber.md).
+The selected Warning Default decision records that label; Hover and Active must
+support the same value, and final Warning Text validates and reuses it without
+reopening black/white selection. This v20 ownership rule is recorded in
+[ADR-0008](v2-decisions/adr/0008-warning-shared-label-transaction.md).
 
 Palette tokens and visual families remain distinct in every component context.
 Under `single-filled-action-hierarchy-v2`, an action group containing ordinary

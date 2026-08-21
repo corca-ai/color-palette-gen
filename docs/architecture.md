@@ -37,6 +37,9 @@ review와 semantic declaration의 실행 설명은
   selected-result review and state-progression evidence. This keeps role-specific
   recipes explicit without accumulating every search implementation in the
   orchestrator.
+  Within the Warning family, the selected Default evidence records one label;
+  the orchestrator conditions Hover/Active on it and owns the final fixed-label
+  validation. The final Warning Text decision is not a second binary search.
 - `v2/lib/destructive-anchor.js` owns the production source-red-band
   classification and preferred-lightness strategy. Diagnostic reports may
   select its fixed default strategy, but do not own or rewrite the production

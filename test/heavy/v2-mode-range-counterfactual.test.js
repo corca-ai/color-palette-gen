@@ -7,7 +7,7 @@ test("reviewed mode-range counterfactual counts remain reproducible", () => {
   const report = buildModeRangeCounterfactualReport();
 
   assert.equal(report.schema, "color-palette-mode-range-counterfactual.v3");
-  assert.equal(report.policyVersion, "v2-policy-model-19");
+  assert.equal(report.policyVersion, "v2-policy-model-20");
   assert.equal(report.resultVersion, 3);
   assert.deepEqual(report.semanticModel, {
     id: "v2-declarative-design",

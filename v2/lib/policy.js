@@ -62,7 +62,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-19",
+  version: "v2-policy-model-20",
   text: {
     strategy: "wcag-eligible-apca-ranked",
     wcagNormalTextMinimum: 4.5,
@@ -249,6 +249,11 @@ export const V2_POLICY = {
       constraints: ["text.required-contrast"],
       objectives: ["text.maximize-weakest-contrast"],
       tieBreakers: ["stable.hex-order"],
+    },
+    fixedTextValidation: {
+      constraints: ["text.required-contrast"],
+      objectives: [],
+      tieBreakers: [],
     },
     focus: {
       constraints: [

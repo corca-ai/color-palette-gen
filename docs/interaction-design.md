@@ -197,7 +197,8 @@ Question:
 > and what changed in the actual rendered states?
 
 `/warning-review.html` starts from six representative Primary inputs and shows
-five side-by-side Light Warning families: accepted production v19, superseded
+five side-by-side Light Warning families: current v20 using the recipe accepted
+in v19, superseded
 v18, the previous least-bad arm, orangeward hue, and yellowward hue. The page
 exposes actual rendered OKLCH, requested versus rendered chroma, and contract
 metrics, and stores no vote. It must distinguish accepted, superseded, and

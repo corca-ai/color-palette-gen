@@ -138,6 +138,58 @@ function sharedTextSearch({
   });
 }
 
+function warningTextValidation({
+  mode,
+  backgrounds,
+  text,
+  target,
+  textContrastStrategy,
+}) {
+  const policy = decisionPolicy("fixedTextValidation");
+  const contrastEvidence = textContrastEvidence({
+    foreground: text,
+    backgrounds,
+    apcaMinimum: target,
+    strategy: textContrastStrategy,
+  });
+  return selectCandidate({
+    id: `${mode}.warning.text`,
+    mode,
+    role: "warning text",
+    intent:
+      "Validate and reuse the one label already selected for the complete Warning family.",
+    candidates: [candidate(text)],
+    policy,
+    constraints: [
+      bindRule(policy, "constraints", "text.required-contrast", () => ({
+        passed: contrastEvidence.passed,
+        reasons: [
+          contrastEvidence.passed
+            ? `The fixed Warning label passes ${textContrastStrategy} across every state.`
+            : `The fixed Warning label fails ${textContrastStrategy} across at least one state.`,
+        ],
+        metrics: { ...contrastEvidence, backgrounds },
+      })),
+    ],
+    objectives: [],
+    tieBreakers: [],
+    evidence: evidence("wcagText", "apcaText"),
+    strategy: "fixed foreground validation",
+  });
+}
+
+function selectedWarningLabel(warningDecision) {
+  const label = warningDecision.trace.selected.constraintResults.find(
+    ({ id }) => id === "feedback.label-contrast",
+  )?.metrics?.text;
+  if (label !== "#000000" && label !== "#FFFFFF") {
+    throw new TypeError(
+      "Selected Warning evidence must record its black-or-white family label.",
+    );
+  }
+  return label;
+}
+
 function ratioCheck({ role, foreground, background, target = 3 }) {
   const value = contrastRatio(foreground, background);
   return {
@@ -604,11 +656,7 @@ function warningFamilySelection({
     textContrastStrategy,
     retainPlot,
   });
-  const warningLabel = chooseTextContrastForeground({
-    backgrounds: [warningDecision.value.hex],
-    apcaMinimum: labelApcaMinimum,
-    strategy: textContrastStrategy,
-  }).foreground;
+  const warningLabel = selectedWarningLabel(warningDecision);
   const hover = stateSearch({
     mode,
     base: warningDecision.value,
@@ -632,10 +680,10 @@ function warningFamilySelection({
     "warning hover": hover.value.hex,
     "warning active": active.value.hex,
   };
-  const text = sharedTextSearch({
+  const text = warningTextValidation({
     mode,
-    role: "warning text",
     backgrounds: Object.values(values),
+    text: warningLabel,
     target: labelApcaMinimum,
     textContrastStrategy,
   });

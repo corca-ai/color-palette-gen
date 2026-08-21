@@ -83,6 +83,8 @@ cannot promote a diagnostic threshold or counterfactual into production.
   — accepted for production policy v18
 - [ADR-0007: Light Warning vivid amber](adr/0007-light-warning-vivid-amber.md)
   — accepted for production policy v19
+- [ADR-0008: Warning shared-label transaction](adr/0008-warning-shared-label-transaction.md)
+  — accepted for production policy v20
 
 `Proposed` ADR은 검토할 정책 후보를 고정하지만 current production truth가 아니다.
 사람의 disposition과 production policy/version/test 동기화가 끝나기 전에는 ontology의

@@ -84,6 +84,10 @@ on public evidence and must not expose or imply private consumer relationships.
 
 ## Completed decisions
 
+- Policy v20 makes Warning one label-identity family: the label recorded by
+  Default is reused by Hover, Active, final evidence, and export without a
+  second black/white choice. The reviewed 216-input role values remain the v19
+  baseline. See [ADR-0008](v2-decisions/adr/0008-warning-shared-label-transaction.md).
 - Policy v19 adopts the operator-selected higher-lightness Light Warning amber:
   preferred `L .78`, requested `C .18`, and range `[.52,.82]`. Dark retains its
   v18 recipe because the visual disposition covered Light only. See

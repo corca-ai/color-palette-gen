@@ -16,7 +16,7 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   const comparison = report.comparisonToCurrent;
 
   assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v3");
-  assert.equal(report.policyVersion, "v2-policy-model-19");
+  assert.equal(report.policyVersion, "v2-policy-model-20");
   assert.deepEqual(
     {
       inputCount: current.inputCount,

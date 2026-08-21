@@ -87,7 +87,7 @@ test("v2 retains destructive separation evidence when the primary is red", () =>
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-19");
+  assert.equal(result.policyVersion, "v2-policy-model-20");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -471,6 +471,15 @@ test("application utility roles are explicit searches or documented aliases", ()
     for (const role of ROLE_CLASSIFICATION.searched) {
       assert.ok(decisions[role], `${mode}/${role} decision`);
       assert.ok(decisions[role].candidateCount >= 2, `${mode}/${role} search`);
+    }
+    for (const role of ROLE_CLASSIFICATION.fixedValidation) {
+      assert.ok(decisions[role], `${mode}/${role} decision`);
+      assert.equal(decisions[role].candidateCount, 1, `${mode}/${role}`);
+      assert.equal(
+        decisions[role].strategy,
+        "fixed foreground validation",
+        `${mode}/${role}`,
+      );
     }
     for (const [role, source] of Object.entries(ROLE_CLASSIFICATION.aliases)) {
       assert.equal(values[role], values[source], `${mode}/${role} value`);

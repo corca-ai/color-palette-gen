@@ -62,7 +62,8 @@ npm run diagnose:text-contrast > text-contrast.json
 | WCAG-only    |     14/14 |                    14/14 |                14/14 |              0 |
 | Intersection |      0/14 |                        — |                    — |              — |
 
-Under production v19, the strict intersection stops at `dark.primary` for all
+Under current production v20, with the same role values first measured under
+v19, the strict intersection stops at `dark.primary` for all
 14 inputs. Before the Light Warning migration, one input reached and stopped at
 `light.warning`; the brighter eligible Light family now lets that path continue
 until the same downstream Dark Primary boundary. Total generation remains

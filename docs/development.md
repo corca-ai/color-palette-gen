@@ -137,8 +137,9 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   contract; strict intersection exhausts at 0/14. The command does not add a UI
   toggle, certify accessibility, or score visual quality.
 - Open `/warning-review.html` for the accepted Light Warning appearance record.
-  It shows production v19 beside the superseded v18 family and three rejected
-  arms over six representative inputs. Historical arms recompute only Light
+  It shows the current v20 family, whose recipe was adopted in v19, beside the
+  superseded v18 family and three rejected arms over six representative inputs.
+  Historical arms recompute only Light
   Warning and never enter exports. Requested and rendered chroma remain separate
   because a `C .18–.24` request sweep converged at the same sRGB gamut boundary.
   The comparison explains a bounded human disposition; it is not an aesthetic
@@ -148,7 +149,8 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   216-input comparison. The exhaustive test asserts production versus fixed-85°
   Light-family equality, the published minimum contrast/separation metrics, and
   the unchanged Dark-family and complete Light/Dark token digests. The complete
-  digest proves behavior-neutral ownership refactors stay output-neutral. These
+  digest proves ADR-0008's v20 Warning label-ownership migration stays
+  role-value neutral while its policy identity and decision trace change. These
   are contract and regression facts, not perceptual-quality scores.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
