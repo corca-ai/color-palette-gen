@@ -103,6 +103,44 @@ test("the managed ontology and flow stay bound to current production policy", as
   assert.doesNotMatch(rules, /Restrict ranking pool/);
 });
 
+test("Light Warning v19 decision stays synchronized across policy and docs", async () => {
+  const [spec, ontology, rules, roles, evidence, adr, about] =
+    await Promise.all([
+      readFile(new URL("docs/v2-spec.md", root), "utf8"),
+      readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
+      readFile(new URL("docs/v2-decisions/rules.md", root), "utf8"),
+      readFile(new URL("docs/v2-decisions/policy/roles.md", root), "utf8"),
+      readFile(new URL("docs/v2-decisions/policy/evidence.md", root), "utf8"),
+      readFile(
+        new URL(
+          "docs/v2-decisions/adr/0007-light-warning-vivid-amber.md",
+          root,
+        ),
+        "utf8",
+      ),
+      readFile(new URL("v2/about.html", root), "utf8"),
+    ]);
+
+  assert.deepEqual(V2_POLICY.feedback.warningChroma, {
+    light: 0.18,
+    dark: 0.14,
+  });
+  assert.deepEqual(V2_POLICY.feedback.warningLightness, {
+    light: 0.78,
+    dark: 0.72,
+  });
+  assert.deepEqual(V2_POLICY.feedback.warningRange, {
+    light: [0.52, 0.82],
+    dark: [0.62, 0.8],
+  });
+  for (const document of [spec, ontology, rules, roles, evidence, adr]) {
+    assert.match(document, /ADR-0007|0007-light-warning-vivid-amber/);
+  }
+  assert.match(adr, /Dark.*unchanged|Dark.*retains/s);
+  assert.match(about, /#E6AD00/);
+  assert.match(about, /#CD9C1F/);
+});
+
 test("Destructive separation links semantic intent to its bounded mechanism", async () => {
   const [ontology, rules, semanticModel, about, reference] = await Promise.all([
     readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
@@ -215,7 +253,8 @@ test("text contrast research remains linked without becoming production policy",
 
   assert.match(research, /strict intersection requires both/);
   assert.match(research, /Intersection\s+\|\s+0\/14/);
-  assert.match(research, /`dark\.primary` for 13 inputs/);
+  assert.match(research, /`dark\.primary` for all\s+14 inputs/);
+  assert.match(research, /pipeline-exit reattribution/);
   assert.match(development, /does not add a UI\s+toggle/);
   assert.match(rules, /text-contrast-policy\.md/);
   assert.match(development, /diagnose:text-contrast/);
@@ -550,7 +589,7 @@ test("the public About page teaches ontology, flow, rules, and numeric authority
   assert.match(about, /#B54437/);
   assert.match(about, /#D05C4E/);
   assert.match(about, /#99000D/);
-  assert.match(about, /#D8A730/);
+  assert.match(about, /#CD9C1F/);
   assert.match(about, /reference\.html#state-separation/);
   assert.match(about, /reference\.html#pair-bands/);
   assert.match(about, /contracts · pass/);

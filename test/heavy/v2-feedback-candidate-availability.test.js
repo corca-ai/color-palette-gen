@@ -30,7 +30,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     report.schema,
     "color-palette-feedback-default-candidate-availability.v3",
   );
-  assert.equal(report.policyVersion, "v2-policy-model-18");
+  assert.equal(report.policyVersion, "v2-policy-model-19");
   assert.deepEqual(report.upstream, {
     schema: "color-palette-adversarial-diagnostics.v3",
     flaggedInputCount: 59,

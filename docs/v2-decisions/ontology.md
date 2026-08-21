@@ -10,7 +10,7 @@ loop를 복사하지 않고 사람이 검토할 수 있는 개념과 소유 경�
 현재 production identity는 다음과 같다.
 
 - result schema: `3`;
-- policy: `v2-policy-model-18`;
+- policy: `v2-policy-model-19`;
 - semantic model: `v2-declarative-design@5`;
 - pair strategy: `zero-primary-pair-quality-miss-gated-source-first`.
 
@@ -157,6 +157,12 @@ flowchart TD
 - selected-result review는 retained pair evidence와 선택 후 signal을 보존한다.
 - semantic model은 선언된 관계만 평가하며 candidate를 다시 선택하지 않는다.
 - diagnostic은 fixed corpus 관찰이며 production policy가 아니다.
+
+Light Warning의 appearance는 이 경계를 실제로 통과한 사례다. v18 diagnostic은
+후보 부족이 아니라 anchor 선택이 탁한 결과를 만든다는 사실을 분리했고, 사람의
+Default-first disposition 후 [ADR-0007](adr/0007-light-warning-vivid-amber.md)이
+Light recipe만 production v19로 승격했다. Dark는 별도 mode sibling이므로 같은 숫자를
+자동 상속하지 않는다.
 
 ## Action group hierarchy와 role collision
 

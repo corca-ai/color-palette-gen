@@ -81,13 +81,13 @@ on public evidence and must not expose or imply private consumer relationships.
 3. Test one narrowly stated heuristic hypothesis at a time. Exit only when the
    evidence can support retaining, revising, or rejecting it without treating an
    unrelated metric as a proxy for perception.
-4. Use the Light Warning appearance review to disposition the frozen
-   `L 0.65/C 0.14` anchor before proposing another Warning policy. Chroma-only
-   currently gamut-maps to the production result; the unresolved judgment is
-   primarily the resting lightness and its coupled higher-chroma variant.
 
 ## Completed decisions
 
+- Policy v19 adopts the operator-selected higher-lightness Light Warning amber:
+  preferred `L .78`, requested `C .18`, and range `[.52,.82]`. Dark retains its
+  v18 recipe because the visual disposition covered Light only. See
+  [ADR-0007](v2-decisions/adr/0007-light-warning-vivid-amber.md).
 - Popover and disabled roles remain documented semantic aliases. Independent
   search is deferred until a reproducible public component case demonstrates a
   distinct duty that the source role cannot meet. See

@@ -1,8 +1,8 @@
 # Light Warning appearance diagnostic
 
-> Status: **Diagnostic comparison awaiting human disposition.** This document
-> does not change production policy, candidate eligibility, exports, or result
-> verdicts.
+> Status: **Completed diagnostic with accepted disposition.** The experiment ran
+> against production v18; [ADR-0007](../adr/0007-light-warning-vivid-amber.md)
+> promotes the higher-lightness amber to production v19.
 
 ## Current slice contract
 
@@ -11,21 +11,22 @@
 - **Correct behavior:** show a small set of complete, contract-checked Warning
   families that isolate lightness and hue so a human can judge the resting
   state first and then inspect Hover/Pressed.
-- **Fixed decisions:** production remains `v2-policy-model-18`; Primary,
+- **Fixed experiment inputs:** production was `v2-policy-model-18`; Primary,
   Destructive, Foundation, pair selection, and Dark mode are frozen inputs to
   this diagnostic; no arm is automatically promoted.
 - **Acceptance:** current plus three factorized arms render as live Light-mode
   specimens; each exposes actual rendered OKLCH, label contrast, semantic
   distances, and complete state colors; unsupported recipes fail closed.
-- **Deferred decision:** which arm, if any, should become a policy migration.
+- **Disposition:** accept higher-lightness amber; reject orangeward and
+  yellowward; keep Dark unchanged.
 
 ### Retired diagnostic claims
 
 - The four-arm lightness/chroma set is no longer the active review UI.
 - A higher requested C is no longer treated as evidence of a more chromatic
   rendered Warning.
-- No production rule, test expectation, export, or Dark-mode behavior is
-  retired by this diagnostic revision.
+- At the diagnostic stage no production rule changed. ADR-0007 subsequently
+  retires only the v18 Light Warning recipe and keeps Dark unchanged.
 
 ## Smallest reproduction and root cause
 
@@ -75,23 +76,37 @@ fixed L/hue. More requested chroma is therefore not a viable next control.
 
 ## Second comparison: brightness and hue
 
-The active v2 review keeps the production baseline and the first comparison's
+The second review kept the v18 production baseline and the first comparison's
 least-bad arm, then moves only axes that produced different rendered colors.
 All diagnostic arms request `C 0.18`; the page displays requested C beside
 rendered C so gamut clipping is visible rather than implied.
 
 | Arm                | Requested anchor         | Rendered Default |
 | ------------------ | ------------------------ | ---------------- |
-| Production         | current policy           | `#B48700`        |
+| v18 Production     | then-current policy      | `#B48700`        |
 | Previous least-bad | `L .70 · C .18 · h 85°`  | `#C79600`        |
 | Higher lightness   | `L .78 · C .18 · h 85°`  | `#E6AD00`        |
 | Orangeward         | `L .78 · C .18 · h 70°`  | `#FBA100`        |
 | Yellowward         | `L .78 · C .18 · h 100°` | `#D0B800`        |
 
-The second comparison widens only the diagnostic Light range to `[.52, .82]`
+The second comparison widened only the diagnostic Light range to `[.52, .82]`
 and uses one hue candidate per arm. This prevents the ranking objective from
 silently choosing a different hue than the arm being judged. Production keeps
-its original range and three-hue inventory.
+its original range and three-hue inventory during review.
+
+## Final disposition and production migration
+
+The operator selected Higher lightness and rejected Orangeward and Yellowward.
+Production v19 therefore adopts Light preferred `L .78`, requested `C .18`, and
+range `[.52,.82]` while retaining the existing `[70°,85°,100°]` inventory. A
+fixed 216-input scan generated every Light family with no exhaustion; the
+retained inventory and a fixed-`85°` inventory selected the same `#E6AD00` in all
+216 cases. Minimum family label contrast was `10.34:1`, minimum Primary distance
+`.244`, and minimum Destructive distance `.294`.
+
+The live review surface now shows accepted production v19 first, followed by the
+superseded and rejected arms. Dark remains on its v18 appearance recipe because
+this comparison did not present or disposition Dark.
 
 ## Judgment order
 
@@ -107,4 +122,4 @@ The live review surface is `/warning-review.html`.
 - More L or C is not automatically more beautiful.
 - Passing contrast and semantic distance do not prove Warning recognition.
 - Six representative inputs do not establish population frequency.
-- This diagnostic does not authorize a production recipe change.
+- The human disposition authorizes only the Light recipe recorded in ADR-0007.

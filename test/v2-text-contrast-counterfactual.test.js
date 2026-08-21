@@ -130,16 +130,13 @@ test("the fixed contrast-policy probe remains deterministic and falsifiable", ()
       semanticModelSatisfiedInputCount: 0,
       changedInputCount: 0,
       failureCountsByDecision: {
-        "dark.primary": 13,
-        "light.warning": 1,
+        "dark.primary": 14,
       },
       failedConstraintIdOccurrenceCounts: {
-        "feedback.label-contrast": 91,
-        "feedback.semantic-separation": 56,
-        "primary.calm-chroma": 5,
+        "primary.calm-chroma": 6,
         "primary.generated-family": 2,
-        "primary.mode-range": 13,
-        "primary.shared-label": 232,
+        "primary.mode-range": 14,
+        "primary.shared-label": 249,
       },
     },
   });

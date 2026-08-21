@@ -21,3 +21,5 @@ ADR은 현재 production 규칙과 검토 중인 정책 후보를 구분한다.
   — **Accepted for production v17**; WCAG 4.5 is text eligibility and APCA ranks eligible candidates diagnostically.
 - [ADR-0006: context-derived Secondary action states](0006-context-derived-secondary-action-states.md)
   — **Accepted for production v18**; Confirmation Cancel follows the shared mode direction with checked label contrast, and Focus covers Muted Surface.
+- [ADR-0007: Light Warning vivid amber](0007-light-warning-vivid-amber.md)
+  — **Accepted for production v19**; Light adopts the reviewed higher-lightness amber while Dark retains its previous recipe.

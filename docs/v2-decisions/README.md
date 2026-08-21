@@ -81,6 +81,8 @@ cannot promote a diagnostic threshold or counterfactual into production.
   — accepted for production policy v17
 - [ADR-0006: context-derived Secondary action states](adr/0006-context-derived-secondary-action-states.md)
   — accepted for production policy v18
+- [ADR-0007: Light Warning vivid amber](adr/0007-light-warning-vivid-amber.md)
+  — accepted for production policy v19
 
 `Proposed` ADR은 검토할 정책 후보를 고정하지만 current production truth가 아니다.
 사람의 disposition과 production policy/version/test 동기화가 끝나기 전에는 ontology의

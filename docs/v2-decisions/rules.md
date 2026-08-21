@@ -9,7 +9,7 @@
 보고 싶다면 먼저 [Ontology](ontology.md)를 읽어도 되지만, 이 문서만 순서대로 읽어도
 전체 생성 과정을 따라갈 수 있다.
 
-현재 설명은 result schema `3`, policy `v2-policy-model-18`, semantic model
+현재 설명은 result schema `3`, policy `v2-policy-model-19`, semantic model
 `v2-declarative-design@5`, pair strategy
 `zero-primary-pair-quality-miss-gated-source-first`에 맞춰져 있다.
 [ADR-0005](adr/0005-wcag-normal-text-generation-authority.md)는 text 권위 변경을
@@ -419,6 +419,12 @@ Warning은 bounded amber inventory에서 선택한다. 이 시점에는 Primary�
 Warning의 hue ladder와 chroma·lightness·separation 수치의 authority 역시
 [Feedback and semantic review](policy/evidence.md#feedback-and-semantic-review)에
 명시되어 있다.
+
+Production v19는 mode별 recipe를 명시한다. Light는 시각 비교에서 채택한
+`L .78 / C .18 / range [.52,.82]`, Dark는 아직 별도 disposition되지 않은
+`L .72 / C .14 / range [.62,.80]`이다. 두 mode 모두 anchor `85°`와
+`[70°,85°,100°]` 후보를 유지한다. 이 비대칭의 결정 경계와 216-input 근거는
+[ADR-0007](adr/0007-light-warning-vivid-amber.md)이 소유한다.
 
 | 검사                           | 질문                                              |
 | ------------------------------ | ------------------------------------------------- |

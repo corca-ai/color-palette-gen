@@ -136,15 +136,13 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   and WCAG-only generate 14/14; APCA-only generates but fails the current WCAG
   contract; strict intersection exhausts at 0/14. The command does not add a UI
   toggle, certify accessibility, or score visual quality.
-- Open `/warning-review.html` for the diagnostic-only Light Warning appearance
-  comparison. It freezes the production Primary, Destructive, Foundation, Dark
-  mode, and export result, then recomputes only the Light Warning family. The
-  active comparison retains production and the previous least-bad arm, then
-  isolates higher lightness, orangeward hue, and yellowward hue. Requested and
-  rendered chroma are shown separately because a `C .18–.24` request sweep
-  converged at the same sRGB gamut boundary. The six inputs and five arms are a human review surface, not a production
-  policy, aesthetic score, or accessibility certification. The experiment contract
-  lives in
+- Open `/warning-review.html` for the accepted Light Warning appearance record.
+  It shows production v19 beside the superseded v18 family and three rejected
+  arms over six representative inputs. Historical arms recompute only Light
+  Warning and never enter exports. Requested and rendered chroma remain separate
+  because a `C .18–.24` request sweep converged at the same sRGB gamut boundary.
+  The comparison explains a bounded human disposition; it is not an aesthetic
+  score or accessibility certification. The evidence contract lives in
   [Light Warning appearance diagnostic](v2-decisions/research/warning-appearance.md).
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.

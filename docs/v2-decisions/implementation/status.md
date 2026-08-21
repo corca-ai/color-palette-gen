@@ -1,6 +1,6 @@
 # Implementation status
 
-Current policy version: `v2-policy-model-18`.
+Current policy version: `v2-policy-model-19`.
 
 > The five applied-sample tabs exercise every generated component role:
 > Primary, Destructive, and Warning state families are interactive; Form & focus
@@ -231,15 +231,17 @@ promotion contract. No semantic output role remains a policy anchor.
   This compliance is constructed by the guard and is not a production or
   perceptual verdict.
 
-## Next migration
+## Latest migration
 
-The diagnostic-only `/warning-review.html` now isolates Light Warning appearance
-over six representative Primary inputs. The first comparison established that
-requested chroma alone does not move the rendered sRGB result; human review
-found even its combined arm muddy. The active comparison retains that least-bad
-arm and isolates higher lightness plus orangeward and yellowward hue. No arm is
-production authority until the operator records a visual disposition and a
-later policy migration.
+Production v19 adopts the operator-selected higher-lightness Light Warning
+family `#E6AD00 / #F3B924 / #FFC640 / #000000`. Light now requests
+`L .78/C .18` in `[.52,.82]`; Dark remains on the v18 recipe. The historical
+comparison and bounded evidence remain in
+[ADR-0007](../adr/0007-light-warning-vivid-amber.md) and the
+[Warning appearance record](../research/warning-appearance.md).
+The fixed adversarial counts remain unchanged at 148 signaled inputs, zero
+generated-contract failures, 59 hue-review inputs, and 120 hue-check
+occurrences; this migration changes Light Warning tone, not its semantic hue.
 
 1. Preserve the completed operator disposition for all 22 separation misses and
    nine new Dark source-fidelity findings under ADR-0004. Production v16 keeps

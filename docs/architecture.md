@@ -86,8 +86,9 @@ review와 semantic declaration의 실행 설명은
   Destructive objective target with the normal mode target while reusing the
   same Feedback search and complete downstream engine.
   `warning-appearance-review.js` freezes one production result and recomputes
-  only its Light Warning family against four bounded recipes. Its review page is
-  diagnostic presentation, not a Generator control, palette result, or export.
+  only its Light Warning family against four historical recipes. Its review page
+  presents the accepted production family beside rejected evidence; historical
+  arms are not Generator controls, palette results, or exports.
   Full-result counterfactual overrides bypass the production palette cache and
   are not exposed as Generator controls.
 - `v2/lib/diagnostic-corpus.js` owns the shared deterministic RGB sampling

@@ -28,7 +28,7 @@ function familyStrip(family) {
 function armCard(arm, context) {
   const { family, rendered, candidates } = arm.inspection;
   return `<article class="warning-arm" data-arm="${arm.id}" style="--mode-background:${context.background};--mode-surface:${context.surface};--mode-muted:${context.mutedSurface};--mode-text:${context.foreground};--warning-default:${family.default};--warning-hover:${family.hover};--warning-active:${family.active};--warning-label:${family.text}">
-    <header><div><small>${arm.shortLabel}</small><h3>${arm.label}</h3></div>${arm.id === "current" ? "<em>Production</em>" : arm.matchesCurrentRenderedFamily ? "<em>Same rendered result</em>" : "<em>Diagnostic</em>"}</header>
+    <header><div><small>${arm.shortLabel}</small><h3>${arm.label}</h3></div><em>${arm.badge}</em></header>
     <p class="arm-question">${arm.question}</p>
     <div class="warning-specimen">
       <div class="warning-copy"><i>!</i><span><strong>결제 정보를 확인해 주세요</strong><small>계속하기 전에 누락된 항목이 있습니다.</small></span></div>
@@ -37,7 +37,7 @@ function armCard(arm, context) {
     ${familyStrip(family)}
     <dl class="warning-metrics">
       <div><dt>실제 OKLCH</dt><dd>L ${number(rendered.oklch.l)} · C ${number(rendered.oklch.c)} · h ${number(rendered.oklch.h, 1)}°</dd></div>
-      <div><dt>요청 C → 실제 C</dt><dd>${number(arm.recipe?.chroma ?? 0.14)} → ${number(rendered.oklch.c)}</dd></div>
+      <div><dt>요청 C → 실제 C</dt><dd>${number(arm.recipe?.chroma ?? 0.18)} → ${number(rendered.oklch.c)}</dd></div>
       <div><dt>가장 약한 글자 대비</dt><dd>${number(rendered.minimumTextContrast, 2)}:1</dd></div>
       <div><dt>Primary / Destructive 거리</dt><dd>${number(rendered.primaryDistance)} / ${number(rendered.destructiveDistance)}</dd></div>
       <div><dt>통과 default 후보</dt><dd>${candidates.passing} / ${candidates.total}</dd></div>

@@ -1166,13 +1166,13 @@
             </p>
             <div class="hue-samples" aria-label="Warning hue 후보">
               <span
-                ><i style="--sample: oklch(0.68 0.14 70)"></i
+                ><i style="--sample: oklch(0.78 0.18 70)"></i
                 ><code>70°</code></span
               ><span
-                ><i style="--sample: oklch(0.68 0.14 85)"></i
+                ><i style="--sample: oklch(0.78 0.18 85)"></i
                 ><code>85°</code></span
               ><span
-                ><i style="--sample: oklch(0.68 0.14 100)"></i
+                ><i style="--sample: oklch(0.78 0.18 100)"></i
                 ><code>100°</code></span
               >
             </div>
@@ -1182,12 +1182,12 @@
                 <dd>amber 주변을 세 지점으로 제한해 탐색한다.</dd>
               </div>
               <div>
-                <dt><code>C .14</code></dt>
-                <dd>각 hue 후보에 요청하는 chroma다.</dd>
+                <dt><code>Light C .18 · Dark C .14</code></dt>
+                <dd>mode별 hue 후보에 요청하는 chroma다.</dd>
               </div>
               <div>
-                <dt><code>Light L .52–.72</code></dt>
-                <dd>범위 안에서 <code>.65</code>를 우선 목표로 삼는다.</dd>
+                <dt><code>Light L .52–.82</code></dt>
+                <dd>범위 안에서 채택된 <code>.78</code>을 우선 목표로 삼는다.</dd>
               </div>
               <div>
                 <dt><code>Dark L .62–.80</code></dt>
@@ -1200,8 +1200,9 @@
               amber anchor에 가까운 후보 선택
             </p>
             <aside class="inventory-caveat">
-              70°·85°·100°와 C .14는 bounded product recipe다. 사람이
-              Warning으로 인식하는 범위를 실험으로 확정한 값은 아니다.
+              70°·85°·100°는 bounded product recipe다. Light의 C .18/L .78은
+              시각 비교로 채택했지만 보편적인 Warning 지각 표준은 아니다. Dark는
+              별도로 검토하지 않아 기존 C .14/L .72를 유지한다.
             </aside>
             <div class="inventory-links">
               <a href="#semantic-separation">Feedback 분리 규칙</a

@@ -15,7 +15,7 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
     report.schema,
     "color-palette-destructive-anchor-counterfactual.v2",
   );
-  assert.equal(report.policyVersion, "v2-policy-model-18");
+  assert.equal(report.policyVersion, "v2-policy-model-19");
   assert.equal(report.resultVersion, 3);
   assert.equal(report.experiment.redHue, 27);
   assert.equal(report.experiment.conflictRadiusDegrees, 38);

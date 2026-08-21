@@ -227,6 +227,12 @@ both primary and destructive. Semantic closeness to the configured amber anchor
 ranks the passing set. Warning still requires an icon or label; color is not its
 only signal.
 
+Light and Dark own separate appearance recipes. Production v19 gives Light the
+operator-selected vivid amber anchor `L .78/C .18` over range `[.52,.82]`; Dark
+retains `L .72/C .14` over `[.62,.80]`. Both keep the same bounded hue inventory.
+This is an explicit mode distinction, not a claim that one numeric recipe should
+look equivalent on both backgrounds. See [ADR-0007](../adr/0007-light-warning-vivid-amber.md).
+
 Selection searches low-chroma, source-hue tints. It selects the least emphasized
 candidate that remains distinguishable from its surface and supports selected
 content text. Position, shape, or selected-state semantics remains required as a

@@ -193,16 +193,15 @@ compares hover diagnostics across the complete set.
 
 Question:
 
-> Is the muddy Light Warning caused by lightness, requested chroma, or a coupled
-> move—and which resting color looks most natural?
+> Which Light Warning family was accepted, which alternatives were rejected,
+> and what changed in the actual rendered states?
 
 `/warning-review.html` starts from six representative Primary inputs and shows
-five side-by-side Light Warning families: production, the previous least-bad
-arm, higher lightness, orangeward hue, and yellowward hue. Default must be judged
-before Hover and Pressed. The page exposes actual rendered OKLCH, requested
-versus rendered chroma, and contract metrics, and stores no vote. It
-must label every non-production arm diagnostic and link the prior Destructive
-decision history separately.
+five side-by-side Light Warning families: accepted production v19, superseded
+v18, the previous least-bad arm, orangeward hue, and yellowward hue. The page
+exposes actual rendered OKLCH, requested versus rendered chroma, and contract
+metrics, and stores no vote. It must distinguish accepted, superseded, and
+rejected arms and link the prior Destructive decision history separately.
 It places up to five named metric extremes first and explains why each deserves
 direct inspection. This order is not presented as a calibrated risk score; all 14
 inputs remain available below it.

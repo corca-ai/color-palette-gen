@@ -23,7 +23,7 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
   const report = buildPairRankingCounterfactualReport();
 
   assert.equal(report.schema, "color-palette-pair-ranking-counterfactual.v2");
-  assert.equal(report.policyVersion, "v2-policy-model-18");
+  assert.equal(report.policyVersion, "v2-policy-model-19");
   assert.equal(report.resultVersion, 3);
   assert.deepEqual(report.semanticModel, {
     id: "v2-declarative-design",

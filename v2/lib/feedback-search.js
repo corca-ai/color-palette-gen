@@ -351,7 +351,7 @@ export function inspectDestructiveCandidateConstraints({
 function resolvedWarningRecipe(mode, recipe) {
   const configured = {
     preferredLightness: V2_POLICY.feedback.warningLightness[mode],
-    chroma: V2_POLICY.feedback.warningChroma,
+    chroma: V2_POLICY.feedback.warningChroma[mode],
     anchorHue: V2_POLICY.feedback.warningHue,
     hueCandidates: V2_POLICY.feedback.warningHueCandidates,
     lightnessRange: V2_POLICY.feedback.warningRange[mode],

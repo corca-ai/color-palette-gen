@@ -62,8 +62,12 @@ npm run diagnose:text-contrast > text-contrast.json
 | WCAG-only    |     14/14 |                    14/14 |                14/14 |              0 |
 | Intersection |      0/14 |                        — |                    — |              — |
 
-The strict intersection stops at `dark.primary` for 13 inputs and
-`light.warning` for one. Candidate-occurrence counts in the JSON report are
+Under production v19, the strict intersection stops at `dark.primary` for all
+14 inputs. Before the Light Warning migration, one input reached and stopped at
+`light.warning`; the brighter eligible Light family now lets that path continue
+until the same downstream Dark Primary boundary. Total generation remains
+`0/14`, so this is pipeline-exit reattribution rather than an added failure.
+Candidate-occurrence counts in the JSON report are
 repeated evaluations inside a bounded search, not unique colors, population
 frequencies, or causal weights.
 

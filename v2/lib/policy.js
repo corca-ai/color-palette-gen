@@ -62,7 +62,7 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-18",
+  version: "v2-policy-model-19",
   text: {
     strategy: "wcag-eligible-apca-ranked",
     wcagNormalTextMinimum: 4.5,
@@ -175,9 +175,9 @@ export const V2_POLICY = {
   feedback: {
     warningHue: 85,
     warningHueCandidates: [70, 85, 100],
-    warningChroma: 0.14,
-    warningLightness: { light: 0.65, dark: 0.72 },
-    warningRange: { light: [0.52, 0.72], dark: [0.62, 0.8] },
+    warningChroma: { light: 0.18, dark: 0.14 },
+    warningLightness: { light: 0.78, dark: 0.72 },
+    warningRange: { light: [0.52, 0.82], dark: [0.62, 0.8] },
     semanticSeparation: 0.08,
   },
   selection: {

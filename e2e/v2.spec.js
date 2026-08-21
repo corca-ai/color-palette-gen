@@ -132,11 +132,16 @@ test("@smoke Warning review isolates Light appearance arms as live families", as
 }) => {
   await page.goto("/warning-review.html");
   await expect(
-    page.getByRole("heading", { name: /탁한 이유를.*분리해 보기/ }),
+    page.getByRole("heading", {
+      name: /탁한 Warning을.*더 밝은 Amber로.*교체했다/,
+    }),
   ).toBeVisible();
   await expect(page.locator("#warning-input-tabs button")).toHaveCount(6);
   await expect(page.locator(".warning-arm")).toHaveCount(5);
-  await expect(page.locator('[data-arm="current"]')).toContainText("#B48700");
+  await expect(page.locator('[data-arm="current"]')).toContainText("#E6AD00");
+  await expect(page.locator('[data-arm="old-production"]')).toContainText(
+    "#B48700",
+  );
   await expect(page.locator('[data-arm="prior-best"]')).toContainText(
     "#C79600",
   );
@@ -146,7 +151,7 @@ test("@smoke Warning review isolates Light appearance arms as live families", as
   await expect(page.locator('[data-arm="yellowward"]')).toContainText(
     "#D0B800",
   );
-  const combined = page.locator('[data-arm="higher-lightness"] button');
+  const combined = page.locator('[data-arm="current"] button');
   const defaultColor = await combined.evaluate(
     (element) => getComputedStyle(element).backgroundColor,
   );
