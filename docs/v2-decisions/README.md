@@ -63,6 +63,7 @@ are implemented. They do not define new policy independently.
 - [Filled-action state direction experiment](research/filled-action-state-direction.md)
 - [Contextual Destructive separation](research/contextual-destructive-separation.md)
 - [Text contrast policy counterfactual](research/text-contrast-policy.md)
+- [Light Warning appearance diagnostic](research/warning-appearance.md)
 
 Research documents contain bounded observations and explicit nonclaims. They
 cannot promote a diagnostic threshold or counterfactual into production.

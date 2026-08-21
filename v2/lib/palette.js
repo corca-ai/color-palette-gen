@@ -582,6 +582,61 @@ function stateSearch({
   });
 }
 
+function warningFamilySelection({
+  mode,
+  primary,
+  destructive,
+  recipe = null,
+  retainPlot = false,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+}) {
+  const warningDecision = warningSearch({
+    mode,
+    primary,
+    destructive,
+    recipe,
+    textContrastStrategy,
+    retainPlot,
+  });
+  const warningLabel = chooseTextContrastForeground({
+    backgrounds: [warningDecision.value.hex],
+    apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+    strategy: textContrastStrategy,
+  }).foreground;
+  const hover = stateSearch({
+    mode,
+    base: warningDecision.value,
+    role: "warning hover",
+    target: V2_POLICY.state.separation.hoverFromDefault,
+    labelText: warningLabel,
+    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
+  });
+  const active = stateSearch({
+    mode,
+    base: warningDecision.value,
+    role: "warning active",
+    target: V2_POLICY.state.separation.activeFromDefault,
+    labelText: warningLabel,
+    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
+  });
+  const values = {
+    warning: warningDecision.value.hex,
+    "warning hover": hover.value.hex,
+    "warning active": active.value.hex,
+  };
+  const text = sharedTextSearch({
+    mode,
+    role: "warning text",
+    backgrounds: Object.values(values),
+    target: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
+  });
+  values["warning text"] = text.value.hex;
+  return { values, warning: warningDecision, hover, active, text };
+}
+
 export function inspectDestructiveGrammar({
   mode,
   lightness,
@@ -1639,7 +1694,7 @@ function modePalette(input, mode, options = {}) {
   const destructiveHover = destructiveHoverDecision.value.hex;
   const destructiveActive = destructiveActiveDecision.value.hex;
   const destructiveText = actionForeground;
-  const warningDecision = warningSearch({
+  const warningFamily = warningFamilySelection({
     mode,
     primary: brandFamily.primary,
     destructive: destructiveDecision.value,
@@ -1650,40 +1705,14 @@ function modePalette(input, mode, options = {}) {
         ? false
         : "detailed",
   });
-  const warningLabel = chooseTextContrastForeground({
-    backgrounds: [warningDecision.value.hex],
-    apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
-    strategy: textContrastStrategy,
-  }).foreground;
-  const warningHoverDecision = stateSearch({
-    mode,
-    base: warningDecision.value,
-    role: "warning hover",
-    target: V2_POLICY.state.separation.hoverFromDefault,
-    labelText: warningLabel,
-    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
-    textContrastStrategy,
-  });
-  const warningActiveDecision = stateSearch({
-    mode,
-    base: warningDecision.value,
-    role: "warning active",
-    target: V2_POLICY.state.separation.activeFromDefault,
-    labelText: warningLabel,
-    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
-    textContrastStrategy,
-  });
-  const warning = warningDecision.value.hex;
-  const warningHover = warningHoverDecision.value.hex;
-  const warningActive = warningActiveDecision.value.hex;
-  const warningTextDecision = sharedTextSearch({
-    mode,
-    role: "warning text",
-    backgrounds: [warning, warningHover, warningActive],
-    target: V2_POLICY.primary.apcaDiagnosticLc,
-    textContrastStrategy,
-  });
-  const warningText = warningTextDecision.value.hex;
+  const warningDecision = warningFamily.warning;
+  const warningHoverDecision = warningFamily.hover;
+  const warningActiveDecision = warningFamily.active;
+  const warningTextDecision = warningFamily.text;
+  const warning = warningFamily.values.warning;
+  const warningHover = warningFamily.values["warning hover"];
+  const warningActive = warningFamily.values["warning active"];
+  const warningText = warningFamily.values["warning text"];
   const selectionDecision = selectionSearch({
     input,
     mode,
@@ -2575,6 +2604,78 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
 
 export function generatePaletteV2({ primary }) {
   return generatePalette(primary, V2_POLICY.primary.lightnessRange);
+}
+
+export function inspectLightWarningAppearance({ result, recipe = null }) {
+  if (
+    result?.version !== 3 ||
+    result.policyVersion !== V2_POLICY.version ||
+    result.modes?.light?.mode !== "light"
+  ) {
+    throw new TypeError(
+      "Warning appearance inspection requires a current generated v2 result.",
+    );
+  }
+  const modeResult = result.modes.light;
+  const primary = candidate(modeResult.values.primary);
+  const destructive = candidate(modeResult.values.destructive);
+  const family = warningFamilySelection({
+    mode: "light",
+    primary,
+    destructive,
+    recipe,
+    retainPlot: "detailed",
+  });
+  const defaultColor = candidate(family.values.warning);
+  const label = family.values["warning text"];
+  const semanticMetrics =
+    family.warning.trace.selected.metrics["feedback.semantic-separation"];
+  return {
+    schema: "light-warning-appearance-inspection.v1",
+    authority: "diagnostic",
+    policyVersion: result.policyVersion,
+    input: result.input.primary,
+    conditioning: {
+      primary: primary.hex,
+      destructive: destructive.hex,
+      darkModeChanged: false,
+      productionResultChanged: false,
+    },
+    requestedRecipe: recipe,
+    family: {
+      default: family.values.warning,
+      hover: family.values["warning hover"],
+      active: family.values["warning active"],
+      text: label,
+    },
+    rendered: {
+      oklch: defaultColor.oklch,
+      minimumTextContrast: Math.min(
+        ...[
+          family.values.warning,
+          family.values["warning hover"],
+          family.values["warning active"],
+        ].map((background) => contrastRatio(label, background)),
+      ),
+      primaryDistance: semanticMetrics.brandDistance,
+      destructiveDistance: semanticMetrics.destructiveDistance,
+      hoverDeltaE:
+        family.hover.trace.selected.metrics["state.minimum-separation"].deltaE,
+      activeDeltaE:
+        family.active.trace.selected.metrics["state.minimum-separation"].deltaE,
+    },
+    candidates: {
+      total: family.warning.trace.candidateCount,
+      passing: family.warning.trace.searchPlot.filter(({ passed }) => passed)
+        .length,
+    },
+    decisions: {
+      warning: family.warning.trace,
+      hover: family.hover.trace,
+      active: family.active.trace,
+      text: family.text.trace,
+    },
+  };
 }
 
 export function generatePaletteV2BothDarkerLegacyCounterfactual({ primary }) {

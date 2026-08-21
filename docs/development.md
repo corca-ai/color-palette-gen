@@ -136,6 +136,14 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   and WCAG-only generate 14/14; APCA-only generates but fails the current WCAG
   contract; strict intersection exhausts at 0/14. The command does not add a UI
   toggle, certify accessibility, or score visual quality.
+- Open `/warning-review.html` for the diagnostic-only Light Warning appearance
+  comparison. It freezes the production Primary, Destructive, Foundation, Dark
+  mode, and export result, then recomputes only the Light Warning family for the
+  current recipe, a lightness-only arm, a chroma-only arm, and their combination.
+  The six inputs and four arms are a human review surface, not a production
+  policy, aesthetic score, or accessibility certification. The experiment contract
+  lives in
+  [Light Warning appearance diagnostic](v2-decisions/research/warning-appearance.md).
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.

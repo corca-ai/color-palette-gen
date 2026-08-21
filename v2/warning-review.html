@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Light Warning의 밝기와 chroma 원인을 분리해 실제 상태 family로 비교하는 진단 화면입니다."
+    />
+    <title>Light Warning review — Color Lab v2</title>
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/warning-review.css" />
+  </head>
+  <body class="warning-review-page">
+    <header class="topbar">
+      <a class="brand" href="./">Color Lab</a>
+      <nav class="product-nav" aria-label="페이지">
+        <a href="./">Generator</a><a href="./about.html">About</a
+        ><a href="./reference.html">Reference</a
+        ><a href="./warning-review.html" aria-current="page">Review</a
+        ><a href="../v1/">v1</a>
+      </nav>
+    </header>
+    <main>
+      <section class="warning-hero">
+        <p class="eyebrow">Diagnostic · production unchanged</p>
+        <h1>탁한 이유를<br />한 축씩<br />분리해 보기.</h1>
+        <p class="lede">
+          현재 Light Warning은 대비 부족 때문에 어두워진 것이 아니다. 통과
+          후보가 충분한데도 잠정 anchor <code>L 0.65</code>에 가장 가까운 색을
+          고른다. 아래 네 결과는 밝기와 chroma 요청만 분리해 바꾼 완전한 상태
+          묶음이다.
+        </p>
+        <ol>
+          <li><b>1</b> Hover하지 말고 Default부터 비교한다.</li>
+          <li><b>2</b> Warning으로 자연스럽게 읽히는 안만 남긴다.</li>
+          <li><b>3</b> 그다음 Hover·Pressed를 확인한다.</li>
+        </ol>
+      </section>
+
+      <section class="warning-inputs" aria-labelledby="input-heading">
+        <div>
+          <p class="eyebrow">Representative inputs</p>
+          <h2 id="input-heading">Primary가 달라도 결과가 유지되는가?</h2>
+          <p>
+            여섯 탭은 Warning이 다른 semantic 색과 가까워질 때 후보가
+            달라지는지도 확인한다. 탭마다 네 arm의 조건을 처음부터 다시
+            계산한다.
+          </p>
+        </div>
+        <div
+          id="warning-input-tabs"
+          class="warning-input-tabs"
+          role="tablist"
+          aria-label="Primary 입력 선택"
+        ></div>
+        <div id="warning-input-title" class="warning-input-title"></div>
+      </section>
+
+      <section class="warning-results" aria-labelledby="results-heading">
+        <header>
+          <p class="eyebrow">Four bounded arms</p>
+          <h2 id="results-heading">어느 Default가 가장 자연스러운가?</h2>
+          <p>
+            수치는 탈락 조건과 실제 변환 결과를 설명할 뿐 미적 순위를 정하지
+            않는다. 버튼에 마우스를 올리고 누르면 각 arm의 실제 상태가 보인다.
+          </p>
+        </header>
+        <div id="warning-comparison" class="warning-comparison"></div>
+      </section>
+
+      <aside class="warning-boundary">
+        <strong>아직 바뀌지 않은 것</strong>
+        <p>
+          이 화면은 diagnostic이다. Generator, export token, Dark Warning,
+          production eligibility와 verdict는 바꾸지 않는다. 선택 결과가 생기면
+          그때 별도의 policy migration과 ADR이 필요하다.
+        </p>
+        <a href="./contextual-review.html">이전 Destructive 결정 기록 보기</a>
+      </aside>
+    </main>
+    <script type="module" src="./warning-review.js"></script>
+  </body>
+</html>

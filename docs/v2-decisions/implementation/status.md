@@ -233,6 +233,12 @@ promotion contract. No semantic output role remains a policy anchor.
 
 ## Next migration
 
+The diagnostic-only `/warning-review.html` now isolates Light Warning appearance
+over six representative Primary inputs. Production, `L 0.70`, `C 0.18`, and
+combined `L 0.70/C 0.18` arms all complete their state families. The chroma-only
+arm gamut-maps to the exact production family; no arm is production authority
+until the operator records a visual disposition and a later policy migration.
+
 1. Preserve the completed operator disposition for all 22 separation misses and
    nine new Dark source-fidelity findings under ADR-0004. Production v16 keeps
    each automated warning truthful; future evidence may reopen the decision.

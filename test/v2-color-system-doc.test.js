@@ -193,6 +193,7 @@ test("canonical navigation surfaces link to the managed color system", async () 
     "research/adversarial-audit.md",
     "research/filled-action-state-direction.md",
     "research/text-contrast-policy.md",
+    "research/warning-appearance.md",
     "reference/public-specimen.md",
   ]) {
     assert.ok(

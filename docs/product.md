@@ -81,6 +81,10 @@ on public evidence and must not expose or imply private consumer relationships.
 3. Test one narrowly stated heuristic hypothesis at a time. Exit only when the
    evidence can support retaining, revising, or rejecting it without treating an
    unrelated metric as a proxy for perception.
+4. Use the Light Warning appearance review to disposition the frozen
+   `L 0.65/C 0.14` anchor before proposing another Warning policy. Chroma-only
+   currently gamut-maps to the production result; the unresolved judgment is
+   primarily the resting lightness and its coupled higher-chroma variant.
 
 ## Completed decisions
 

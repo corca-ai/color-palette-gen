@@ -127,6 +127,35 @@ test("contextual review compares bounded warnings as interactive buttons", async
   await expectNoHorizontalOverflow(page);
 });
 
+test("@smoke Warning review isolates Light appearance arms as live families", async ({
+  page,
+}) => {
+  await page.goto("/warning-review.html");
+  await expect(
+    page.getByRole("heading", { name: /탁한 이유를.*분리해 보기/ }),
+  ).toBeVisible();
+  await expect(page.locator("#warning-input-tabs button")).toHaveCount(6);
+  await expect(page.locator(".warning-arm")).toHaveCount(4);
+  await expect(page.locator('[data-arm="current"]')).toContainText("#B48700");
+  await expect(page.locator('[data-arm="brighter"]')).toContainText("#C69612");
+  await expect(page.locator('[data-arm="more-chroma"]')).toContainText(
+    "Same rendered result",
+  );
+  const combined = page.locator('[data-arm="brighter-more-chroma"] button');
+  const defaultColor = await combined.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  await combined.hover();
+  const hoverColor = await combined.evaluate(
+    (element) => getComputedStyle(element).backgroundColor,
+  );
+  expect(hoverColor).not.toBe(defaultColor);
+
+  await page.getByRole("tab", { name: /#FF0000/ }).click();
+  await expect(page.locator("#warning-input-title")).toContainText("#FF0000");
+  await expectNoHorizontalOverflow(page);
+});
+
 test("@smoke About and Reference form one readable explanation path", async ({
   page,
 }) => {
@@ -209,6 +238,9 @@ test("@smoke About and Reference remain readable on a narrow viewport", async ({
   await expect(page.locator(".apca-overview")).toBeVisible();
   await expect(page.locator("#oklab-delta-e")).toBeVisible();
   await expect(page.locator(".delta-e-example")).toBeVisible();
+  await page.goto("/warning-review.html");
+  await expect(page.locator(".warning-comparison")).toBeVisible();
+  await expectNoHorizontalOverflow(page);
 });
 
 test("@smoke generates both modes from one primary and exposes new semantic roles", async ({

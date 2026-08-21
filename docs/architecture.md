@@ -85,8 +85,11 @@ review와 semantic declaration의 실행 설명은
   `destructive-anchor-counterfactual.js` compares the production source-red-band
   Destructive objective target with the normal mode target while reusing the
   same Feedback search and complete downstream engine.
-  Counterfactual overrides bypass the production palette cache and are not
-  exposed through the site UI.
+  `warning-appearance-review.js` freezes one production result and recomputes
+  only its Light Warning family against four bounded recipes. Its review page is
+  diagnostic presentation, not a Generator control, palette result, or export.
+  Full-result counterfactual overrides bypass the production palette cache and
+  are not exposed as Generator controls.
 - `v2/lib/diagnostic-corpus.js` owns the shared deterministic RGB sampling
   corpus used by diagnostics. `result-evidence.js` owns the shared fail-closed
   diagnostic precondition check and intentionally reconciles the current

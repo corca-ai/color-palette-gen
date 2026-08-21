@@ -188,6 +188,21 @@ The gallery is optional and collapsed by default. It supports comparison,
 interactive Light/Dark specimens, and loading one case into the inspector. It
 does not collect scores, notes, or observations. The expanded section first
 compares hover diagnostics across the complete set.
+
+### Light Warning appearance review
+
+Question:
+
+> Is the muddy Light Warning caused by lightness, requested chroma, or a coupled
+> move—and which resting color looks most natural?
+
+`/warning-review.html` starts from six representative Primary inputs and shows
+four side-by-side Light Warning families: production, lightness-only,
+chroma-only, and the combined request. Default must be judged before Hover and
+Pressed. The page exposes actual rendered OKLCH and contract metrics, identifies
+when a different request gamut-maps to the same family, and stores no vote. It
+must label every non-production arm diagnostic and link the prior Destructive
+decision history separately.
 It places up to five named metric extremes first and explains why each deserves
 direct inspection. This order is not presented as a calibrated risk score; all 14
 inputs remain available below it.

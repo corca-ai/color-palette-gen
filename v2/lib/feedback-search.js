@@ -348,31 +348,69 @@ export function inspectDestructiveCandidateConstraints({
     .sort((first, second) => first.hex.localeCompare(second.hex));
 }
 
+function resolvedWarningRecipe(mode, recipe) {
+  const configured = {
+    preferredLightness: V2_POLICY.feedback.warningLightness[mode],
+    chroma: V2_POLICY.feedback.warningChroma,
+    anchorHue: V2_POLICY.feedback.warningHue,
+    hueCandidates: V2_POLICY.feedback.warningHueCandidates,
+    lightnessRange: V2_POLICY.feedback.warningRange[mode],
+    ...recipe,
+  };
+  const validRange =
+    Array.isArray(configured.lightnessRange) &&
+    configured.lightnessRange.length === 2 &&
+    configured.lightnessRange.every(
+      (value) => Number.isFinite(value) && value > 0 && value < 1,
+    ) &&
+    configured.lightnessRange[0] <= configured.lightnessRange[1];
+  const validHues =
+    Number.isFinite(configured.anchorHue) &&
+    Array.isArray(configured.hueCandidates) &&
+    configured.hueCandidates.length > 0 &&
+    configured.hueCandidates.every(Number.isFinite);
+  const validCoordinates =
+    Number.isFinite(configured.preferredLightness) &&
+    configured.preferredLightness >= configured.lightnessRange?.[0] &&
+    configured.preferredLightness <= configured.lightnessRange?.[1] &&
+    Number.isFinite(configured.chroma) &&
+    configured.chroma > 0 &&
+    configured.chroma <= 0.24;
+  if (!validRange || !validHues || !validCoordinates) {
+    throw new TypeError(
+      "Warning appearance recipe is outside its bounded diagnostic envelope.",
+    );
+  }
+  return configured;
+}
+
 export function warningSearch({
   mode,
   primary,
   destructive,
   retainPlot = false,
   textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+  recipe = null,
 }) {
   const policy = decisionPolicy("warning");
-  const preferredLightness = V2_POLICY.feedback.warningLightness[mode];
+  const configured = resolvedWarningRecipe(mode, recipe);
+  const preferredLightness = configured.preferredLightness;
   const anchor = candidate(
     tone({
       l: preferredLightness,
-      c: V2_POLICY.feedback.warningChroma,
-      h: V2_POLICY.feedback.warningHue,
+      c: configured.chroma,
+      h: configured.anchorHue,
     }),
   );
-  const [start, end] = V2_POLICY.feedback.warningRange[mode];
+  const [start, end] = configured.lightnessRange;
   const candidates = [];
   for (let lightness = start; lightness <= end + 0.0025; lightness += 0.005) {
-    for (const hue of V2_POLICY.feedback.warningHueCandidates) {
+    for (const hue of configured.hueCandidates) {
       candidates.push(
         candidate(
           tone({
             l: lightness,
-            c: V2_POLICY.feedback.warningChroma,
+            c: configured.chroma,
             h: hue,
           }),
           { lightness, hue },
@@ -461,7 +499,11 @@ export function warningSearch({
       "destructiveSeparation",
       "calmMinimal",
     ),
-    searchConstants: ["bounded amber hue candidates", "warning chroma"],
+    searchConstants: [
+      "bounded amber hue candidates",
+      "warning chroma",
+      ...(recipe ? ["diagnostic warning appearance recipe"] : []),
+    ],
     retainPlot: retainPlot === "detailed" ? "detailed" : true,
   });
 }

@@ -105,6 +105,19 @@ await writeFile(
   rootContextualReview,
 );
 
+const v2WarningReview = await readFile(
+  join(projectRoot, "v2", "warning-review.html"),
+  "utf8",
+);
+const rootWarningReview = v2WarningReview
+  .replaceAll('href="./styles/', 'href="./v2/styles/')
+  .replace('href="../v1/">v1</a>', 'href="./v1/">v1</a>')
+  .replace('src="./warning-review.js"', 'src="./v2/warning-review.js"');
+await writeFile(
+  join(outputDirectory, "warning-review.html"),
+  rootWarningReview,
+);
+
 await writeFile(join(outputDirectory, ".nojekyll"), "");
 
 console.log(
