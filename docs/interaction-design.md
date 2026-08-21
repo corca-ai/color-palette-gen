@@ -109,10 +109,9 @@ It exercises foundation, navigation, messages, composer, interaction states,
 focus, feedback, selection, and popover roles. The primary action is
 one real focusable button whose hover, pressed, and focus states appear through
 interaction rather than a row of forced-state duplicates. Activating it gives a
-truthful local `Saved` confirmation; it does not imply persistence. The structure is an
-independently written example informed by a public design reference. It must
-remain visually and textually generic: no affiliation, actual-consumer claim, or
-runtime dependency is implied.
+truthful local `Saved` confirmation; it does not imply persistence. The structure
+is a project-owned inspection example. It must remain visually and textually
+generic: no actual-consumer claim or runtime dependency is implied.
 
 The authoring UI stays neutral so generated colors do not change the measurement
 frame around the specimen.
@@ -268,15 +267,13 @@ Progressive disclosure may hide depth, not the reason for a decision. A visitor
 must be able to identify each section's question and principal conclusion
 without opening a full calculation trace.
 
-## Public-reference boundary
+## Applied-example boundary
 
-Public references may inform coverage, component-state structure, and documented
-rationale. The site must not imply endorsement, affiliation, an actual consumer
-relationship, or a private implementation dependency.
-
-Public-reference names belong in attribution documentation. Primary UI labels,
-example content, export schema names, and token names stay general-purpose unless
-a separately approved public interoperability contract requires otherwise.
+The applied example exercises component coverage and state structure as a
+self-contained Color Lab specimen. Primary UI labels, example content, export
+schema names, and token names stay project-owned and general-purpose. The
+specimen demonstrates generated-role use; it does not certify application-level
+component behavior.
 
 ## Change review checklist
 

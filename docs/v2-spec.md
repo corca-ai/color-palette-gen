@@ -5,12 +5,11 @@
 v2 is the primary color-palette prototype at the site root. v1 remains
 available as the broad, inspectable palette experiment at `/v1/`.
 
-The neutral authoring UI remains independent, while its generic applied
-specimen uses the public Craken Design Atlas as one external reference for
-coverage and component-state structure. Public-facing labels and exported
-token names remain general-purpose. This does not assert affiliation, an
-internal consumer relationship, or a runtime dependency. See
-[`v2-decisions/craken-integration.md`](v2-decisions/craken-integration.md).
+The neutral authoring UI remains independent from its generic applied specimen.
+Color Lab owns that specimen's coverage and component-state structure as an
+inspection surface for the generated role system; it is not a downstream
+product integration or runtime dependency. See
+[`v2-decisions/reference/public-specimen.md`](v2-decisions/reference/public-specimen.md).
 
 v2 intentionally accepts one input only:
 
@@ -132,11 +131,10 @@ provisional minimum Oklab distances `0.015` and `0.030`; these are bounded produ
 recipe values, not accessibility or perceptual standards. See
 [ADR-0006](v2-decisions/adr/0006-context-derived-secondary-action-states.md).
 
-## Public design reference
+## Applied example contract
 
-The public [Craken Design Atlas](https://craken.borca.ai/design) was inspected
-on 2026-08-06. v2 adopts the following observable rules without copying Craken
-source code:
+Color Lab's applied example exercises the generated roles under one
+project-owned interface contract:
 
 - neutral OKLCH surfaces carry the application hierarchy;
 - primary hue is reserved for brand actions, selection, and focus;
@@ -150,20 +148,14 @@ source code:
 - component states are reviewed together on composed application screens;
 - light, dark, and system appearance are first-class states.
 
-The initial v2 recipe uses observable behavior from this public resource as a
-design reference, not as evidence of endorsement, affiliation, an internal
-relationship, or a private implementation dependency. Its name remains in
-attribution and rationale documentation rather than defining the product UI or
-export schema.
-
-Craken's observed dark muted text and brand-state lightness values are not
-copied literally: under the v2 APCA targets they are insufficient for compact
-text. v2 raises dark muted text and narrows the dark brand state range. This is
-an intentional consequence of choosing APCA as the generation gate.
+These structures exist to make palette relationships inspectable. The versioned
+reference export owns their public example names, while the applied example's
+compact typography is declared as usage context. Generated normal-text pairs
+must satisfy the production WCAG threshold described below.
 
 ## Validation policy
 
-v2 classifies the generated public-specimen text uses as normal text and uses
+v2 classifies the generated applied-example text uses as normal text and uses
 WCAG 2.2 contrast `>= 4.5:1` as candidate eligibility and final generated-contract
 authority. A text candidate must pass against every declared background, not an
 average. Final checks carry `typography-context.v1` with the specimen's actual

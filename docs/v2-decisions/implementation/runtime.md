@@ -28,4 +28,4 @@ Fast Node tests cover named edge inputs on every pull request. A weekly and
 manually triggered full check adds the 216-color RGB grid. Pull requests run a
 small Playwright smoke tier; the full browser tier covers worker generation,
 lazy static gallery loading, result-mode persistence, graph/card synchronization, and fixed
-screenshots of the paired palettes and public-reference specimen.
+screenshots of the paired palettes and applied specimen.

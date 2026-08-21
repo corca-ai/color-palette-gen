@@ -18,7 +18,7 @@ score as a diagnostic ranking objective. APCA is no longer generated-contract
 authority and its legacy `75/60` targets are not conformance claims.
 
 Each final text check carries a versioned typography context. The current
-contexts mirror the public specimen rather than assuming larger type: body
+contexts mirror the applied specimen rather than assuming larger type: body
 `11px/400`, muted UI `9px/400`, action labels `11px/650`, warning labels
 `10px/650`, and selection text `10px/400`. All remain WCAG normal text. A
 consumer using different typography must declare that context in its own
@@ -28,7 +28,7 @@ contract; the color token does not silently own typography.
 
 The previous system could generate a palette that passed its APCA heuristic but
 failed the project's declared compact normal-text use at WCAG `4.5:1`. That
-made generated-contract success and the public reference interface disagree.
+made generated-contract success and the applied example disagree.
 The new boundary makes the minimum public requirement authoritative while
 retaining APCA's polarity-sensitive score as useful, explicitly non-authoritative
 ranking evidence.

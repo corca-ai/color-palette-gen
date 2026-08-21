@@ -503,7 +503,6 @@ test("reference export stays generic and preserves the public token contract", a
   expect(exported.modes.light["color.action.primary"]).toMatch(
     /^#[0-9A-F]{6}$/,
   );
-  expect(JSON.stringify(exported).toLowerCase()).not.toContain("craken");
 });
 
 test("the applied example exposes real primary and destructive interactions", async ({

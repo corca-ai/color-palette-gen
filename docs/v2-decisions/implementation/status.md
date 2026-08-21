@@ -170,7 +170,7 @@ promotion contract. No semantic output role remains a policy anchor.
   invalid input handling. The full weekly/manual tier verifies semantic
   specimens, graph-to-card synchronization, lazy diagnostic gallery rendering,
   interactive state trials, and visual snapshots in a real browser.
-- fixed screenshots guard the paired palettes and public-reference specimen
+- fixed screenshots guard the paired palettes and applied specimen
   against broad visual regression.
 - `npm run diagnose:adversarial` emits a deterministic 216-input diagnostic map
   grouped by named signals and convergent generated action families; it does

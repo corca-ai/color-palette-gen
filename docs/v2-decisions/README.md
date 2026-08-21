@@ -86,6 +86,8 @@ cannot promote a diagnostic threshold or counterfactual into production.
   — accepted for production policy v19
 - [ADR-0008: Warning shared-label transaction](adr/0008-warning-shared-label-transaction.md)
   — accepted for production policy v20
+- [ADR-0009: public reference export boundary](adr/0009-public-reference-export-boundary.md)
+  — accepted schema/version boundary
 
 `Proposed` ADR은 검토할 정책 후보를 고정하지만 current production truth가 아니다.
 사람의 disposition과 production policy/version/test 동기화가 끝나기 전에는 ontology의
@@ -93,7 +95,7 @@ normative edge로 읽지 않는다.
 
 ### Reference
 
-- [Public reference specimen](reference/public-specimen.md)
+- [Public applied specimen](reference/public-specimen.md)
 
 Reference documents explain the applied inspection surface and export boundary;
 they are not upstream policy authority.

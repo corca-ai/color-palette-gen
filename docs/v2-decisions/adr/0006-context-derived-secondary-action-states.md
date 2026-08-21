@@ -18,7 +18,7 @@
 - Foundation aliases alone do not complete an interactive Secondary state family.
 - `transparent → Surface → Raised Surface` is no longer the Confirmation Cancel state recipe.
 - A visibility-only browser test is not sufficient proof of the two confirmation buttons' interaction grammar.
-- Focus contrast on Background and Surface is not enough when the public specimen also places the same Focus Ring on Muted Surface.
+- Focus contrast on Background and Surface is not enough when the applied specimen also places the same Focus Ring on Muted Surface.
 
 ## Context and problem
 

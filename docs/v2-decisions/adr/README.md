@@ -25,3 +25,5 @@ ADR은 현재 production 규칙과 검토 중인 정책 후보를 구분한다.
   — **Accepted for production v19**; Light adopts the reviewed higher-lightness amber while Dark retains its previous recipe.
 - [ADR-0008: Warning shared-label transaction](0008-warning-shared-label-transaction.md)
   — **Accepted for production v20**; the selected Default label is reused and validated across the complete Warning family.
+- [ADR-0009: public reference export boundary](0009-public-reference-export-boundary.md)
+  — **Accepted schema/version removal**; the public build now ships only product-neutral export contracts.
