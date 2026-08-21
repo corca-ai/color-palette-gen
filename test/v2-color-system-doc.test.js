@@ -103,23 +103,43 @@ test("the managed ontology and flow stay bound to current production policy", as
   assert.doesNotMatch(rules, /Restrict ranking pool/);
 });
 
-test("Light Warning v19 decision stays synchronized across policy and docs", async () => {
-  const [spec, ontology, rules, roles, evidence, adr, about] =
-    await Promise.all([
-      readFile(new URL("docs/v2-spec.md", root), "utf8"),
-      readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
-      readFile(new URL("docs/v2-decisions/rules.md", root), "utf8"),
-      readFile(new URL("docs/v2-decisions/policy/roles.md", root), "utf8"),
-      readFile(new URL("docs/v2-decisions/policy/evidence.md", root), "utf8"),
-      readFile(
-        new URL(
-          "docs/v2-decisions/adr/0007-light-warning-vivid-amber.md",
-          root,
-        ),
-        "utf8",
-      ),
-      readFile(new URL("v2/about.html", root), "utf8"),
-    ]);
+test("Light Warning v19 decision stays synchronized across its named truth surfaces", async () => {
+  const [
+    spec,
+    ontology,
+    rules,
+    roles,
+    evidence,
+    adr,
+    status,
+    research,
+    interaction,
+    development,
+    about,
+    warningReview,
+  ] = await Promise.all([
+    readFile(new URL("docs/v2-spec.md", root), "utf8"),
+    readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
+    readFile(new URL("docs/v2-decisions/rules.md", root), "utf8"),
+    readFile(new URL("docs/v2-decisions/policy/roles.md", root), "utf8"),
+    readFile(new URL("docs/v2-decisions/policy/evidence.md", root), "utf8"),
+    readFile(
+      new URL("docs/v2-decisions/adr/0007-light-warning-vivid-amber.md", root),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/v2-decisions/implementation/status.md", root),
+      "utf8",
+    ),
+    readFile(
+      new URL("docs/v2-decisions/research/warning-appearance.md", root),
+      "utf8",
+    ),
+    readFile(new URL("docs/interaction-design.md", root), "utf8"),
+    readFile(new URL("docs/development.md", root), "utf8"),
+    readFile(new URL("v2/about.html", root), "utf8"),
+    readFile(new URL("v2/warning-review.html", root), "utf8"),
+  ]);
 
   assert.deepEqual(V2_POLICY.feedback.warningChroma, {
     light: 0.18,
@@ -137,8 +157,22 @@ test("Light Warning v19 decision stays synchronized across policy and docs", asy
     assert.match(document, /ADR-0007|0007-light-warning-vivid-amber/);
   }
   assert.match(adr, /Dark.*unchanged|Dark.*retains/s);
+  assert.match(adr, /test:warning-policy-migration/);
+  assert.match(status, /Dark Primary for all 14 inputs/);
+  assert.doesNotMatch(
+    status,
+    /Dark Primary for 13 inputs and Light Warning for one/,
+  );
+  assert.match(research, /Historical v18 diagnostic contract/);
+  assert.match(research, /four historical cards/);
+  assert.match(interaction, /six fixed tabs/);
+  assert.doesNotMatch(interaction, /five named metric extremes/);
+  assert.match(development, /test:warning-policy-migration/);
   assert.match(about, /#E6AD00/);
   assert.match(about, /#CD9C1F/);
+  assert.match(about, /왜 더 밝은 Amber를 선택했는지/);
+  assert.match(warningReview, /기존 계약을 통과한 생성 결과/);
+  assert.match(warningReview, /v18 recipe와 동일하게 유지/);
 });
 
 test("Destructive separation links semantic intent to its bounded mechanism", async () => {

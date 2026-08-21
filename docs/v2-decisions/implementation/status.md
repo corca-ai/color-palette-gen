@@ -179,9 +179,10 @@ promotion contract. No semantic output role remains a policy anchor.
   APCA ranking, historical APCA-only, WCAG-only, and strict APCA∩WCAG candidate
   eligibility over the fixed 14 inputs. Production and WCAG-only both generate
   14/14; the strict intersection generates 0/14 under the current
-  inventory, stopping at Dark Primary for 13 inputs and Light Warning for one.
-  The failed viability gate prevents the planned 216-input expansion and does
-  does not expose a Generator toggle.
+  inventory, stopping at Dark Primary for all 14 inputs. The v19 Light Warning
+  recipe changed only where the strict counterfactual first reports exhaustion;
+  it did not add a generated result. The failed viability gate prevents the
+  planned 216-input expansion and does not expose a Generator toggle.
 - the same report decomposes large source shifts by descriptive source-OKLCH
   cohorts, affected mode, actual L/C movement, and the existing constraint IDs
   recorded on the producer's best-ranked rejected Primary candidate.

@@ -3,7 +3,7 @@
 - Status: **Accepted**
 - Date: 2026-08-21
 - Primary migration kind: generation/eligibility
-- Coupled migration kind: policy schema/version
+- Coupled migration kinds: ranking and policy schema/version
 - Production identity: result schema `3`, policy `v2-policy-model-19`, semantic model `v2-declarative-design@5`
 - Decision evidence: [Light Warning appearance diagnostic](../research/warning-appearance.md)
 
@@ -29,9 +29,10 @@ muddy.
 
 The second comparison therefore moved only axes that changed rendered output:
 more lightness and bounded hue alternatives. The operator accepted the higher
-lightness amber and rejected the orangeward and yellowward variants. Default was
-judged first; the accepted arm's Hover, Pressed, and black Text were then retained
-as one complete family.
+lightness Default direction and rejected the orangeward and yellowward variants.
+The recipe's Hover, Pressed, and black Text are generated consequences retained
+because the complete family passes the existing contracts; they were not
+separately accepted as aesthetic decisions.
 
 ## Decision
 
@@ -56,12 +57,21 @@ Pressed, and `#000000` Text after deterministic sRGB gamut mapping.
 
 | Role / family | Mode  | Context                         | States                       | Owner and disposition                                      |
 | ------------- | ----- | ------------------------------- | ---------------------------- | ---------------------------------------------------------- |
-| Warning       | Light | feedback alert and warning action | Default/Hover/Active/Text     | v19 producer recipe; accepted vivid amber                  |
+| Warning       | Light | feedback alert and warning action | Default/Hover/Active/Text     | Default direction accepted; producer generates contract-passing states/text |
 | Warning       | Dark  | feedback alert and warning action | Default/Hover/Active/Text     | intentionally unchanged; no Light-only judgment propagated |
 | Primary       | both  | filled brand actions              | complete family              | frozen input to Warning separation                         |
 | Destructive   | both  | destructive feedback/actions      | complete family              | frozen input to Warning separation                         |
 | Feedback      | Light | Warning specimen                   | icon, label, fill, states     | color remains insufficient without icon or label           |
 | Pair selection | both | Light × Dark bundles               | selected pair and evidence   | Warning is not a Primary pair-eligibility objective         |
+
+The producer is `V2_POLICY.feedback` plus `warningFamilySelection`. Generated
+contracts decide candidate eligibility; the selected-result review and semantic
+verdicts continue to report their own scopes without becoming generation gates.
+Generator and export consume only the current production family. The Warning
+review page owns presentation of the accepted Default direction and historical
+arms, while About and Reference explain the algorithm and notation. The v2 spec,
+ontology, rules, role policy, this ADR, and executable tests own the normative
+and regression projections of the migration.
 
 ## Bounded evidence
 
@@ -71,6 +81,10 @@ family label contrast `10.34:1`, minimum Primary distance `.244`, and minimum
 Destructive distance `.294`. This establishes feasibility inside the fixed
 corpus. It does not establish universal availability, Warning recognition, or
 aesthetic optimality.
+
+Run `npm run test:warning-policy-migration` to reproduce the 216-input inventory
+equivalence, the three published minima, and the full Dark-family baseline
+digest used by this decision.
 
 The complete adversarial report kept its v18 population counts exactly:
 `148/216` signaled inputs, zero generated-contract failures, `59` hue-review
@@ -91,8 +105,10 @@ continues to `dark.primary`, reattributing the exit without adding a failure.
 
 ## Acceptance
 
-- Representative and fixed-grid Light results use the accepted complete family.
-- Dark Warning values remain byte-for-byte unchanged for representative inputs.
+- Representative and fixed-grid Light results use the family generated from the
+  accepted Default recipe direction.
+- Dark Warning values remain byte-for-byte unchanged across the fixed 216-input
+  corpus.
 - All 216 fixed inputs complete generated contracts with no candidate exhaustion.
 - Changed adversarial counts are interpreted as Warning-result consequences, not
   perceptual quality scores.

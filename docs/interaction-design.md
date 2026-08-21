@@ -202,9 +202,10 @@ v18, the previous least-bad arm, orangeward hue, and yellowward hue. The page
 exposes actual rendered OKLCH, requested versus rendered chroma, and contract
 metrics, and stores no vote. It must distinguish accepted, superseded, and
 rejected arms and link the prior Destructive decision history separately.
-It places up to five named metric extremes first and explains why each deserves
-direct inspection. This order is not presented as a calibrated risk score; all 14
-inputs remain available below it.
+Its six fixed tabs are the complete review input set for this page; it does not
+claim metric-extreme prioritization or expose the separate 14-input diagnostic
+gallery. The cards link back to the Warning walkthrough and the explanations for
+candidate inventory, gamut mapping, and Oklab distance.
 
 ### Color relationships
 

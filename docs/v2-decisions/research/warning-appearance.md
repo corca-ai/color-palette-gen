@@ -4,7 +4,7 @@
 > against production v18; [ADR-0007](../adr/0007-light-warning-vivid-amber.md)
 > promotes the higher-lightness amber to production v19.
 
-## Current slice contract
+## Historical v18 diagnostic contract
 
 - **Problem:** Light Warning converges on a mustard-like resting color and feels
   muddy across representative Primary inputs.
@@ -14,9 +14,9 @@
 - **Fixed experiment inputs:** production was `v2-policy-model-18`; Primary,
   Destructive, Foundation, pair selection, and Dark mode are frozen inputs to
   this diagnostic; no arm is automatically promoted.
-- **Acceptance:** current plus three factorized arms render as live Light-mode
-  specimens; each exposes actual rendered OKLCH, label contrast, semantic
-  distances, and complete state colors; unsupported recipes fail closed.
+- **Acceptance:** the then-current v18 arm plus three factorized arms render as
+  live Light-mode specimens; each exposes actual rendered OKLCH, label contrast,
+  semantic distances, and complete state colors; unsupported recipes fail closed.
 - **Disposition:** accept higher-lightness amber; reject orangeward and
   yellowward; keep Dark unchanged.
 
@@ -31,7 +31,7 @@
 ## Smallest reproduction and root cause
 
 For `#507096`, `#FF0000`, `#00A86B`, `#6C3FD1`, `#00AACC`, and `#777777`, the
-production Light Warning is the same `#B48700` (`L 0.6493`, `C 0.1331`, hue
+v18 production Light Warning was the same `#B48700` (`L 0.6493`, `C 0.1331`, hue
 `84.88°`) with black label contrast `6.41:1`. Every case has 123 default
 candidates passing current label and semantic-separation constraints. The
 inventory reaches approximately `L 0.72`, so neither WCAG label contrast nor
@@ -54,15 +54,15 @@ All arms keep the `[70°, 85°, 100°]` hue inventory, Light range `[0.52, 0.72]
 current constraints, state-distance rules, and black/white text search. Requested
 chroma is not claimed as realized chroma after gamut mapping.
 
-## Implemented six-input result
+## First four-arm six-input result
 
-All six representative inputs currently converge to one rendered family per arm;
-none exhausts and every family keeps at least `4.5:1` label contrast and `0.08`
-distance from both frozen semantic siblings.
+All six representative inputs in that first comparison converged to one rendered
+family per arm; none exhausts and every family keeps at least `4.5:1` label
+contrast and `0.08` distance from both frozen semantic siblings.
 
 | Arm                    | Default   | Rendered L / C / hue  | Weakest family label contrast |
 | ---------------------- | --------- | --------------------- | ----------------------------- |
-| Current                | `#B48700` | `.649 / .133 / 84.9°` | `6.41:1`                      |
+| v18 Production         | `#B48700` | `.649 / .133 / 84.9°` | `6.41:1`                      |
 | Brighter               | `#C69612` | `.700 / .140 / 84.9°` | `7.77:1`                      |
 | More chroma            | `#B48700` | `.649 / .133 / 84.9°` | `6.41:1`                      |
 | Brighter + more chroma | `#C79600` | `.701 / .144 / 85.1°` | `7.79:1`                      |
@@ -104,9 +104,15 @@ retained inventory and a fixed-`85°` inventory selected the same `#E6AD00` in a
 216 cases. Minimum family label contrast was `10.34:1`, minimum Primary distance
 `.244`, and minimum Destructive distance `.294`.
 
-The live review surface now shows accepted production v19 first, followed by the
-superseded and rejected arms. Dark remains on its v18 appearance recipe because
-this comparison did not present or disposition Dark.
+The live review surface now shows accepted production v19 first, followed by
+four historical cards: superseded v18, the previous least-bad arm, Orangeward,
+and Yellowward. The six-input page is a decision record, not the original
+four-arm diagnostic. In v19, Dark keeps numeric values identical to the v18
+appearance recipe because this comparison did not present or disposition Dark.
+
+The fixed-grid evidence is executable as
+`npm run test:warning-policy-migration`; it also pins the 216-input Dark-family
+baseline rather than relying on this prose as regression evidence.
 
 ## Judgment order
 

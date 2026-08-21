@@ -51,7 +51,7 @@ export function buildWarningAppearanceReviewCase(primary) {
     },
     arms,
     nonclaims: [
-      "No arm changes production generation or exports.",
+      "Historical arms do not enter production generation or exports.",
       "Passing contracts do not establish aesthetic preference.",
       "Requested chroma is not necessarily rendered chroma after gamut mapping.",
     ],

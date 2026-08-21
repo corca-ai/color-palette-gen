@@ -33,6 +33,7 @@
     "test:filled-action-direction-counterfactual": "node --test test/heavy/v2-filled-action-direction-counterfactual.test.js",
     "test:filled-action-hybrid-counterfactual": "node --test test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
     "test:contextual-destructive-separation-counterfactual": "node --test test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+    "test:warning-policy-migration": "node --test test/exhaustive/v2-grid.test.js",
     "test:fast": "node --test test/*.test.js",
     "test:exhaustive": "node --test test/exhaustive/*.test.js"
   },

@@ -4,12 +4,55 @@ import test from "node:test";
 
 import { buildAdversarialDiagnosticReport } from "../../v2/lib/adversarial-diagnostics.js";
 import { secondaryActionPresentationForMode } from "../../v2/lib/action-presentation.js";
-import { generatePaletteV2 } from "../../v2/lib/palette.js";
+import {
+  generatePaletteV2,
+  inspectLightWarningAppearance,
+} from "../../v2/lib/palette.js";
 
 test("v2 contracts hold across an RGB input grid", () => {
+  const fixedWarningRecipe = {
+    preferredLightness: 0.78,
+    chroma: 0.18,
+    anchorHue: 85,
+    hueCandidates: [85],
+    lightnessRange: [0.52, 0.82],
+  };
+  const darkWarningFamilies = [];
+  let minimumWarningTextContrast = Infinity;
+  let minimumWarningPrimaryDistance = Infinity;
+  let minimumWarningDestructiveDistance = Infinity;
   const report = buildAdversarialDiagnosticReport({
     generate: ({ primary }) => {
       const result = generatePaletteV2({ primary });
+      const productionWarning = inspectLightWarningAppearance({ result });
+      const fixedHueWarning = inspectLightWarningAppearance({
+        result,
+        recipe: fixedWarningRecipe,
+      });
+      assert.deepEqual(
+        productionWarning.family,
+        fixedHueWarning.family,
+        `${primary} retained Warning inventory must match fixed 85 degree output`,
+      );
+      minimumWarningTextContrast = Math.min(
+        minimumWarningTextContrast,
+        productionWarning.rendered.minimumTextContrast,
+      );
+      minimumWarningPrimaryDistance = Math.min(
+        minimumWarningPrimaryDistance,
+        productionWarning.rendered.primaryDistance,
+      );
+      minimumWarningDestructiveDistance = Math.min(
+        minimumWarningDestructiveDistance,
+        productionWarning.rendered.destructiveDistance,
+      );
+      darkWarningFamilies.push([
+        primary,
+        result.modes.dark.values.warning,
+        result.modes.dark.values["warning hover"],
+        result.modes.dark.values["warning active"],
+        result.modes.dark.values["warning text"],
+      ]);
       assert.equal(result.passed, true, primary);
       for (const mode of ["light", "dark"]) {
         const modeResult = result.modes[mode];
@@ -69,6 +112,15 @@ test("v2 contracts hold across an RGB input grid", () => {
   assert.equal(report.policyVersion, "v2-policy-model-19");
   assert.equal(report.schema, "color-palette-adversarial-diagnostics.v3");
   assert.equal(report.summary.inputCount, 216);
+  assert.equal(minimumWarningTextContrast, 10.342026895706102);
+  assert.equal(minimumWarningPrimaryDistance, 0.24442492770530586);
+  assert.equal(minimumWarningDestructiveDistance, 0.2939343808512764);
+  assert.equal(
+    createHash("sha256")
+      .update(JSON.stringify(darkWarningFamilies))
+      .digest("hex"),
+    "7caa7e95797a22de3e7f9c3206459d8b1f5845cf804166cfec3cda3f29f05970",
+  );
   assert.equal(report.summary.signaledInputCount, 148);
   assert.equal(report.sourceFidelity.shiftedInputCount, 115);
   assert.deepEqual(report.sourceFidelity.byInputLightness, {

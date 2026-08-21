@@ -144,6 +144,11 @@ For palette-policy changes, broad UI changes, or release confidence, also run
   The comparison explains a bounded human disposition; it is not an aesthetic
   score or accessibility certification. The evidence contract lives in
   [Light Warning appearance diagnostic](v2-decisions/research/warning-appearance.md).
+- Run `npm run test:warning-policy-migration` to reproduce ADR-0007's fixed
+  216-input comparison. The exhaustive test asserts production versus fixed-85°
+  Light-family equality, the published minimum contrast/separation metrics, and
+  the unchanged Dark-family digest. These are contract and regression facts,
+  not perceptual-quality scores.
 - Install the Playwright browser once with `npx playwright install chromium`;
   CI/Linux provisioning uses `npx playwright install --with-deps chromium`.
 - GitHub Actions are pinned to commit SHAs and updated through Dependabot.
