@@ -29,6 +29,10 @@ test("v2 CSS serialization remains mode-scoped", () => {
     serializeModeCss(result.modes.dark),
     /--palette-primary-active: #[0-9A-F]{6}/,
   );
+  assert.match(
+    serializeModeCss(result.modes.dark),
+    /@supports \(color: oklch\(0\.5 0 0\)\)[\s\S]+--palette-primary-active: oklch\([0-9.]+ [0-9.]+ [0-9.]+\)/,
+  );
 });
 
 test("v2 preserves input character without collapsing light and dark achromatics", () => {
@@ -53,20 +57,37 @@ test("v2 applies restrained hue tint only to chromatic foundations", () => {
   assert.equal(achromatic.modes.light.adaptations.neutralTintChroma, 0);
 });
 
-test("v2 separates destructive feedback when the primary is red", () => {
+test("v2 retains destructive separation evidence when the primary is red", () => {
   const result = generatePaletteV2({ primary: "#FF0000" });
   for (const mode of ["light", "dark"]) {
     assert.equal(result.modes[mode].adaptations.redConflict, true);
-    const check = result.modes[mode].nonTextChecks.find(
-      ({ role }) => role === "Brand → destructive",
+    const check = [
+      ...result.modes[mode].nonTextChecks,
+      ...(result.modes[mode].reviewOnlyChecks ?? []),
+    ].find(({ role }) => role === "Brand → destructive");
+    assert.ok(check);
+    assert.equal(check.role, "Brand → destructive");
+    assert.ok(
+      result.quality.semanticChecks.find(
+        ({ id }) => id === `review.${mode}.primary-destructive-hue`,
+      ),
     );
-    assert.equal(check.pass, true);
+    assert.equal(
+      result.modes[mode].adaptations.destructiveSeparationAuthority,
+      "selected-result-review",
+    );
+    assert.equal(
+      result.modes[mode].decisions.destructive.policy.constraints.some(
+        ({ id }) => id === "destructive.brand-separation",
+      ),
+      false,
+    );
   }
 });
 
 test("every v2 role exposes provenance and a selected decision", () => {
   const result = generatePaletteV2({ primary: "#507096" });
-  assert.equal(result.policyVersion, "v2-policy-model-12");
+  assert.equal(result.policyVersion, "v2-policy-model-18");
   for (const mode of ["light", "dark"]) {
     for (const role of REQUIRED) {
       const decision = result.modes[mode].decisions[role];
@@ -192,6 +213,37 @@ test("state progression remains monotonic across representative colors", () => {
   }
 });
 
+test("Primary and Destructive filled buttons share mode-relative state progression", () => {
+  for (const primary of ["#FF0000", "#507096", "#F2C230", "#111111"]) {
+    const result = generatePaletteV2({ primary });
+    for (const mode of ["light", "dark"]) {
+      const { decisions, values } = result.modes[mode];
+      for (const family of ["primary", "destructive"]) {
+        const defaultL = decisions[family].selected.oklch.l;
+        const hoverL = decisions[`${family} hover`].selected.oklch.l;
+        const activeL = decisions[`${family} active`].selected.oklch.l;
+        const progressesInModeDirection =
+          mode === "light"
+            ? defaultL > hoverL && hoverL > activeL
+            : defaultL < hoverL && hoverL < activeL;
+        assert.ok(
+          progressesInModeDirection,
+          `${primary}/${mode}/${family} must follow the mode-relative direction`,
+        );
+        const familyText = values[`${family} text`];
+        assert.ok(familyText === "#000000" || familyText === "#FFFFFF");
+        for (const state of [family, `${family} hover`, `${family} active`]) {
+          const textCheck = result.modes[mode].textChecks.find(
+            ({ foreground, background }) =>
+              foreground === familyText && background === values[state],
+          );
+          assert.ok(textCheck?.pass, `${primary}/${mode}/${state} shared text`);
+        }
+      }
+    }
+  }
+});
+
 test("sampled pair search reports its bounded alternatives honestly", () => {
   const result = generatePaletteV2({ primary: "#6633FF" });
   assert.equal(result.pairDecision.strategy, "sampled cross-mode pair search");
@@ -244,7 +296,7 @@ test("independent review can reject source fidelity after accessibility passes",
   );
 });
 
-test("semantic maps retain the searched feasible and rejected spaces", () => {
+test("semantic maps retain the searched candidate space", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   for (const mode of ["light", "dark"]) {
     for (const role of ["warning", "selection"]) {
@@ -254,12 +306,15 @@ test("semantic maps retain the searched feasible and rejected spaces", () => {
         plot.some(({ passed }) => passed),
         `${mode}/${role}/passing`,
       );
-      if (role === "warning") {
-        assert.ok(
-          plot.some(({ passed }) => !passed),
-          `${mode}/${role}/rejected`,
-        );
-      }
+      assert.ok(
+        plot.every(
+          ({ hex, oklch, passed }) =>
+            typeof hex === "string" &&
+            typeof oklch === "object" &&
+            typeof passed === "boolean",
+        ),
+        `${mode}/${role}/evidence`,
+      );
     }
   }
 });
@@ -341,18 +396,28 @@ test("foundation roles use inspectable candidate search instead of anchors", () 
   }
 });
 
-test("binary foreground decisions retain both black and white evidence", () => {
+test("filled actions share one foreground decision per mode", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   for (const mode of ["light", "dark"]) {
-    for (const role of ["primary text", "destructive text"]) {
-      const decision = result.modes[mode].decisions[role];
-      assert.equal(decision.strategy, "binary foreground search");
-      assert.equal(decision.candidateCount, 2);
-      assert.ok(
-        decision.alternatives.nearestRejected ||
-          decision.alternatives.nextPassing,
-      );
-    }
+    const primaryText = result.modes[mode].decisions["primary text"];
+    const destructiveText = result.modes[mode].decisions["destructive text"];
+    assert.equal(primaryText.strategy, "binary foreground search");
+    assert.equal(primaryText.candidateCount, 2);
+    assert.equal(destructiveText.strategy, "semantic alias");
+    assert.deepEqual(destructiveText.aliases, ["primary text"]);
+    assert.equal(
+      result.modes[mode].values["primary text"],
+      result.modes[mode].values["destructive text"],
+    );
+    const selectedDestructive =
+      result.modes[mode].decisions.destructive.selected;
+    const labelConstraint = selectedDestructive.constraintResults.find(
+      ({ id }) => id === "destructive.label-contrast",
+    );
+    assert.equal(
+      labelConstraint.metrics.text,
+      result.modes[mode].values["primary text"],
+    );
   }
 });
 
@@ -367,6 +432,20 @@ test("focus ring is independently searched rather than aliased to primary", () =
     );
     assert.equal(
       decision.selected.constraintResults.every(({ passed }) => passed),
+      true,
+    );
+    const adjacentContrast = decision.selected.constraintResults.find(
+      ({ id }) => id === "focus.adjacent-contrast",
+    );
+    assert.deepEqual(Object.keys(adjacentContrast.metrics.ratios), [
+      "background",
+      "surface",
+      "muted surface",
+    ]);
+    assert.equal(
+      result.modes[mode].nonTextChecks.find(
+        ({ role }) => role === "Focus on muted surface",
+      ).pass,
       true,
     );
   }

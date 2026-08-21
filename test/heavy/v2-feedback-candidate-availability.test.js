@@ -30,7 +30,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     report.schema,
     "color-palette-feedback-default-candidate-availability.v3",
   );
-  assert.equal(report.policyVersion, "v2-policy-model-12");
+  assert.equal(report.policyVersion, "v2-policy-model-18");
   assert.deepEqual(report.upstream, {
     schema: "color-palette-adversarial-diagnostics.v3",
     flaggedInputCount: 59,
@@ -47,7 +47,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     unavailableCaseCount: 77,
     candidateOccurrenceTotals: {
       inventory: 9156,
-      baseConstraintPassing: 4748,
+      baseConstraintPassing: 5609,
       semanticHuePassingAmongBase: 1079,
     },
     candidateOccurrenceFunnelsByRelationship: {
@@ -55,15 +55,13 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
         countingUnit: "candidate-occurrence-per-failed-check-case",
         failedCheckCaseCount: 66,
         inventoryOccurrenceCount: 2838,
-        baseConstraintRejectedOccurrenceCount: 1026,
-        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1798,
+        baseConstraintRejectedOccurrenceCount: 165,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 2659,
         availableOccurrenceCount: 14,
         baseConstraintFailedIdOccurrenceCounts: {
-          "destructive.brand-separation": 861,
           "destructive.label-contrast": 165,
         },
         baseConstraintFailedPatternOccurrenceCounts: {
-          "destructive.brand-separation": 861,
           "destructive.label-contrast": 165,
         },
         caseOutcomeCategoryCounts: {
@@ -129,8 +127,8 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
         "primary-destructive": {
           failedCheckCaseCount: 33,
           inventoryOccurrenceCount: 1749,
-          baseConstraintRejectedOccurrenceCount: 417,
-          baseConstraintPassedHueReviewRejectedOccurrenceCount: 1318,
+          baseConstraintRejectedOccurrenceCount: 0,
+          baseConstraintPassedHueReviewRejectedOccurrenceCount: 1735,
           availableOccurrenceCount: 14,
         },
         "primary-warning": {
@@ -145,8 +143,8 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
         "primary-destructive": {
           failedCheckCaseCount: 33,
           inventoryOccurrenceCount: 1089,
-          baseConstraintRejectedOccurrenceCount: 609,
-          baseConstraintPassedHueReviewRejectedOccurrenceCount: 480,
+          baseConstraintRejectedOccurrenceCount: 165,
+          baseConstraintPassedHueReviewRejectedOccurrenceCount: 924,
           availableOccurrenceCount: 0,
         },
         "primary-warning": {
@@ -177,15 +175,13 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     countingUnit: "candidate-occurrence-per-failed-check-case",
     failedCheckCaseCount: 66,
     inventoryOccurrenceCount: 2838,
-    baseConstraintRejectedOccurrenceCount: 1026,
-    baseConstraintPassedHueReviewRejectedOccurrenceCount: 1798,
+    baseConstraintRejectedOccurrenceCount: 165,
+    baseConstraintPassedHueReviewRejectedOccurrenceCount: 2659,
     availableOccurrenceCount: 14,
     baseConstraintFailedIdOccurrenceCounts: {
-      "destructive.brand-separation": 861,
       "destructive.label-contrast": 165,
     },
     baseConstraintFailedPatternOccurrenceCounts: {
-      "destructive.brand-separation": 861,
       "destructive.label-contrast": 165,
     },
     caseOutcomeCategoryCounts: {
@@ -197,15 +193,13 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     countingUnit: "candidate-occurrence-per-failed-check-case",
     failedCheckCaseCount: 66,
     inventoryOccurrenceCount: 8514,
-    baseConstraintRejectedOccurrenceCount: 2920,
-    baseConstraintPassedHueReviewRejectedOccurrenceCount: 4765,
+    baseConstraintRejectedOccurrenceCount: 462,
+    baseConstraintPassedHueReviewRejectedOccurrenceCount: 7223,
     availableOccurrenceCount: 829,
     baseConstraintFailedIdOccurrenceCounts: {
-      "destructive.brand-separation": 2458,
       "destructive.label-contrast": 462,
     },
     baseConstraintFailedPatternOccurrenceCounts: {
-      "destructive.brand-separation": 2458,
       "destructive.label-contrast": 462,
     },
     caseOutcomeCategoryCounts: {
@@ -234,20 +228,20 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
     {
       12: {
         requestedOccurrenceCount: 2838,
-        baseConstraintRejectedOccurrenceCount: 876,
-        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1552,
+        baseConstraintRejectedOccurrenceCount: 132,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 2296,
         availableOccurrenceCount: 410,
       },
       27: {
         requestedOccurrenceCount: 2838,
-        baseConstraintRejectedOccurrenceCount: 1026,
-        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1798,
+        baseConstraintRejectedOccurrenceCount: 165,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 2659,
         availableOccurrenceCount: 14,
       },
       42: {
         requestedOccurrenceCount: 2838,
-        baseConstraintRejectedOccurrenceCount: 1018,
-        baseConstraintPassedHueReviewRejectedOccurrenceCount: 1415,
+        baseConstraintRejectedOccurrenceCount: 165,
+        baseConstraintPassedHueReviewRejectedOccurrenceCount: 2268,
         availableOccurrenceCount: 405,
       },
     },
@@ -271,7 +265,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
   );
   assert.equal(
     report.destructiveHueInventoryProbe.candidateEvidenceDigest,
-    "f4d4316f68b3f9ca3d9ae294607d52918c1d2737ec9bd3cbf56a59bd646c1ba6",
+    "f2ac53c7403fd6efca90c26edf9b42058ca171c47a50d39ff9e8059719b55ebc",
   );
   assert.deepEqual(
     destructiveAvailable.map(
@@ -317,7 +311,7 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
   );
   assert.equal(
     digest(report.cases.map(({ candidateSetDigest }) => candidateSetDigest)),
-    "c57e7d7c6e33a13ddc9b7c631aaa8ae6dbf6ec3c0096b4d94d45a4adc002e9cb",
+    "43950292e6526d0f4e0dd4edbd8dfe9dc4b895a0af0898425d2c0280353ad7da",
   );
   assert.equal(
     digest(
@@ -325,11 +319,11 @@ test("reviewed feedback default-candidate census remains reproducible", () => {
         ({ candidateEvidenceDigest }) => candidateEvidenceDigest,
       ),
     ),
-    "594004904d1dde8ac5e7d74da0066fc33b49258776dcb4c5c492963c82026d13",
+    "e178e4c57973775522dfc6412d5772cbaf16c7fccc5983793f1b6f774051d994",
   );
   assert.deepEqual(totals, {
     inventory: 9156,
-    baseConstraintPassing: 4748,
+    baseConstraintPassing: 5609,
     semanticHuePassingAmongBase: 1079,
   });
   assert.ok(totals.inventory > totals.baseConstraintPassing);

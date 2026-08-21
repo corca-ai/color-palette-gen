@@ -1,13 +1,30 @@
-import { generatePaletteV2 } from "./palette.js";
+import {
+  generatePaletteV2,
+  generatePaletteV2DestructiveGrammarCounterfactual,
+  generatePaletteV2FilledActionDirectionCounterfactual,
+} from "./palette.js";
+
+function generateVariant({ primary, variant, grammar }) {
+  if (variant === "destructive-grammar")
+    return generatePaletteV2DestructiveGrammarCounterfactual({
+      primary,
+      grammar,
+    });
+  if (variant === "mode-relative")
+    return generatePaletteV2FilledActionDirectionCounterfactual({ primary });
+  return generatePaletteV2({ primary });
+}
 
 export function createPaletteRuntime({
   WorkerClass = globalThis.Worker,
-  generate = generatePaletteV2,
+  generate = generateVariant,
   now = () => performance.now(),
 } = {}) {
   let sequence = 0;
   const pending = new Map();
   const cache = new Map();
+  const cacheKey = (primary, variant, grammar) =>
+    `${variant}/${primary}/${grammar ? JSON.stringify(grammar) : ""}`;
   const worker =
     typeof WorkerClass === "undefined"
       ? null
@@ -25,12 +42,13 @@ export function createPaletteRuntime({
 
   return {
     remember(result) {
-      cache.set(result.input.primary, result);
+      cache.set(cacheKey(result.input.primary, "current"), result);
     },
-    calculate(primary) {
-      if (cache.has(primary)) {
+    calculate(primary, { variant = "current", grammar } = {}) {
+      const key = cacheKey(primary, variant, grammar);
+      if (cache.has(key)) {
         return Promise.resolve({
-          result: cache.get(primary),
+          result: cache.get(key),
           duration: 0,
           cached: true,
         });
@@ -38,7 +56,7 @@ export function createPaletteRuntime({
       if (!worker) {
         const startedAt = now();
         return Promise.resolve({
-          result: generate({ primary }),
+          result: generate({ primary, variant, grammar }),
           duration: now() - startedAt,
           cached: false,
         });
@@ -46,8 +64,11 @@ export function createPaletteRuntime({
       const id = ++sequence;
       return new Promise((resolve, reject) => {
         pending.set(id, { resolve, reject });
-        worker.postMessage({ id, primary });
+        worker.postMessage({ id, primary, variant, grammar });
       });
+    },
+    rememberVariant(result, variant = "current", grammar) {
+      cache.set(cacheKey(result.input.primary, variant, grammar), result);
     },
   };
 }

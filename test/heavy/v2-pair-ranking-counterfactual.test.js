@@ -23,14 +23,14 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
   const report = buildPairRankingCounterfactualReport();
 
   assert.equal(report.schema, "color-palette-pair-ranking-counterfactual.v2");
-  assert.equal(report.policyVersion, "v2-policy-model-12");
-  assert.equal(report.resultVersion, 2);
+  assert.equal(report.policyVersion, "v2-policy-model-18");
+  assert.equal(report.resultVersion, 3);
   assert.deepEqual(report.semanticModel, {
     id: "v2-declarative-design",
-    version: 3,
+    version: 5,
     components: [
       { id: "primary-action-state-family", version: 1 },
-      { id: "foundation-focus-family", version: 1 },
+      { id: "foundation-focus-family", version: 2 },
       { id: "feedback-family", version: 1 },
       { id: "selection-family", version: 1 },
     ],
@@ -61,10 +61,10 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
         avoidablePairMissInputs: 4,
         contractFailures: 0,
         downstreamQualityFindings: 148,
-        semanticFindings: 0,
+        semanticFindings: 11,
         shiftedInputs: 115,
-        shiftedModes: 186,
-        droppedSamples: 433,
+        shiftedModes: 177,
+        droppedSamples: 215,
       },
       "current-v12-zero-miss-gated": {
         inputCount: 216,
@@ -73,10 +73,10 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
         avoidablePairMissInputs: 0,
         contractFailures: 0,
         downstreamQualityFindings: 148,
-        semanticFindings: 0,
+        semanticFindings: 11,
         shiftedInputs: 115,
-        shiftedModes: 186,
-        droppedSamples: 433,
+        shiftedModes: 177,
+        droppedSamples: 215,
       },
     },
   );
@@ -117,7 +117,12 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
     "review.light.primary-warning-hue": { introduced: [], resolved: [] },
     "review.light.source-fidelity": { introduced: [], resolved: [] },
   });
-  assert.deepEqual(report.comparisonToPrevious.semanticTransitions, {});
+  assert.deepEqual(report.comparisonToPrevious.semanticTransitions, {
+    "feedback-oklab-separation-passes:unsatisfied": {
+      introduced: [],
+      resolved: [],
+    },
+  });
   assert.equal(
     report.summaries["previous-v11-source-first"].maximumSourceDistance,
     report.summaries["current-v12-zero-miss-gated"].maximumSourceDistance,
@@ -141,13 +146,13 @@ test("reviewed pair-ranking counterfactual remains reproducible", () => {
   assert.ok(
     Math.abs(
       report.summaries["previous-v11-source-first"].meanTotalSourceDistance -
-        0.3604809,
+        0.3494265,
     ) < 0.0000001,
   );
   assert.ok(
     Math.abs(
       report.summaries["current-v12-zero-miss-gated"].meanTotalSourceDistance -
-        0.3608402,
+        0.3497857,
     ) < 0.0000001,
   );
 

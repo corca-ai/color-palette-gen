@@ -1,13 +1,10 @@
 import { V2_POLICY } from "./policy.js";
 import { EVIDENCE_AUTHORITIES } from "./evidence-authority.js";
 import {
-  apcaContrast,
-  candidate,
-  chooseSharedText,
-  contrastRatio,
-  distance,
-  hueDistance,
-} from "./runtime.js";
+  chooseTextContrastForeground,
+  TEXT_CONTRAST_STRATEGIES,
+} from "./text-contrast-strategy.js";
+import { candidate, contrastRatio, distance, hueDistance } from "./runtime.js";
 
 function rangeQualityCheck({ id, label, value, range, unit = "" }) {
   const pass = value >= range[0] && value <= range[1];
@@ -80,10 +77,11 @@ function stateProgression(modeResult, family = "primary") {
   const defaultToHover = distance(primary, hover);
   const hoverToActive = distance(hover, active);
   const ratio = hoverToActive / defaultToHover;
-  const direction =
-    family === "primary"
-      ? V2_POLICY.state.direction[modeResult.mode]
-      : Math.sign(hover.oklch.l - primary.oklch.l);
+  const direction = ["primary", "destructive"].includes(family)
+    ? (modeResult.adaptations.diagnosticFilledActionDirection ??
+      modeResult.adaptations.filledActionDirection ??
+      V2_POLICY.state.filledActionDirections[modeResult.mode])
+    : Math.sign(hover.oklch.l - primary.oklch.l);
   const monotonic =
     direction < 0
       ? primary.oklch.l > hover.oklch.l && hover.oklch.l > active.oklch.l
@@ -238,8 +236,14 @@ export function sourceUsageAlternatives(input, modes) {
   }
   const byMode = Object.fromEntries(
     Object.entries(modes).map(([mode, result]) => {
-      const sourceText = chooseSharedText([input.hex]);
-      const sourceLabelLc = Math.abs(apcaContrast(sourceText, input.hex));
+      const sourceChoice = chooseTextContrastForeground({
+        backgrounds: [input.hex],
+        apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+        strategy: TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+      });
+      const sourceText = sourceChoice.foreground;
+      const sourceLabelLc = sourceChoice.evidence.apca.minimum;
+      const sourceLabelRatio = sourceChoice.evidence.wcag.minimum;
       const outlineContrast = Math.min(
         contrastRatio(input.hex, result.values.background),
         contrastRatio(input.hex, result.values.surface),
@@ -272,11 +276,11 @@ export function sourceUsageAlternatives(input, modes) {
             text: sourceText,
             border: result.values["primary border"],
             lc: sourceLabelLc,
-            safe: sourceLabelLc >= V2_POLICY.primary.labelLc,
-            note:
-              sourceLabelLc >= V2_POLICY.primary.labelLc
-                ? "Source fill supports the selected black-or-white label."
-                : "Source fill does not support the current label target.",
+            ratio: sourceLabelRatio,
+            safe: sourceChoice.evidence.passed,
+            note: sourceChoice.evidence.passed
+              ? "Source fill supports the WCAG-eligible black-or-white label."
+              : "Source fill does not support the normal-text WCAG target.",
           },
         },
       ];

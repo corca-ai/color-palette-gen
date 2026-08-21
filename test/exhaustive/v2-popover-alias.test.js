@@ -17,7 +17,7 @@ test("popover text retains the body-text target on its aliased surface", () => {
           const values = result.modes[mode].values;
           assert.ok(
             Math.abs(apcaContrast(values["popover text"], values.popover)) >=
-              V2_POLICY.foundation.bodyTextLc,
+              V2_POLICY.foundation.bodyTextApcaDiagnosticLc,
             `${primary}/${mode} popover text`,
           );
         }

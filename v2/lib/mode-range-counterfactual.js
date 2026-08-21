@@ -7,6 +7,7 @@ import {
   generatePaletteV2Counterfactual,
 } from "./palette.js";
 import { V2_POLICY } from "./policy.js";
+import { NoCandidateError, noCandidateFailure } from "./decision.js";
 
 const WIDENING = 0.04;
 
@@ -204,7 +205,16 @@ function shiftChangedInputs(current, candidate, introduced) {
 }
 
 function comparison(current, candidate) {
-  const currentSummary = summarize(current);
+  const currentByInput = new Map(current.map((item) => [item.input, item]));
+  const alignedCurrent = candidate.map((item) =>
+    currentByInput.get(item.input),
+  );
+  if (alignedCurrent.some((item) => !item)) {
+    throw new TypeError(
+      "counterfactual comparison inputs must exist in baseline.",
+    );
+  }
+  const currentSummary = summarize(alignedCurrent);
   const candidateSummary = summarize(candidate);
   const delta = Object.fromEntries(
     Object.keys(currentSummary)
@@ -213,6 +223,10 @@ function comparison(current, candidate) {
   );
   delete delta.inputCount;
   return {
+    commonSupportInputCount: candidate.length,
+    excludedBaselineInputs: current
+      .filter(({ input }) => !candidate.some((item) => item.input === input))
+      .map(({ input }) => input),
     delta,
     namedSignalCountDelta: Object.fromEntries(
       [
@@ -228,48 +242,56 @@ function comparison(current, candidate) {
             (currentSummary.signalCounts[id] ?? 0),
         ]),
     ),
-    sourceShiftResolvedInputs: shiftChangedInputs(current, candidate, false),
-    sourceShiftIntroducedInputs: shiftChangedInputs(current, candidate, true),
+    sourceShiftResolvedInputs: shiftChangedInputs(
+      alignedCurrent,
+      candidate,
+      false,
+    ),
+    sourceShiftIntroducedInputs: shiftChangedInputs(
+      alignedCurrent,
+      candidate,
+      true,
+    ),
     contractFailureIntroducedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "contractFailure",
     ),
     contractFailureResolvedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "contractFailure",
       false,
     ),
     qualityFindingIntroducedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "qualityFinding",
     ),
     qualityFindingResolvedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "qualityFinding",
       false,
     ),
     semanticFindingIntroducedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "semanticFinding",
     ),
     semanticFindingResolvedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "semanticFinding",
       false,
     ),
     pairQualityMissIntroducedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "pairQualityMiss",
     ),
     pairQualityMissResolvedInputs: changedInputs(
-      current,
+      alignedCurrent,
       candidate,
       "pairQualityMiss",
       false,
@@ -301,6 +323,11 @@ export function buildModeRangeCounterfactualReport({
     "gap-preserving-outward": [],
     "source-inclusive": [],
   };
+  const infeasible = {
+    widened: [],
+    "gap-preserving-outward": [],
+    "source-inclusive": [],
+  };
   let baselineIdentity;
 
   for (const input of inputs) {
@@ -312,37 +339,32 @@ export function buildModeRangeCounterfactualReport({
     const wideRanges = widenedRanges();
     const outwardRanges = gapPreservingOutwardRanges();
     const inclusiveRanges = sourceInclusiveRanges(currentResult.source.oklch.l);
-    const widenedResult = generatePaletteV2Counterfactual({
-      primary: input,
-      primaryLightnessRanges: wideRanges,
-    });
-    const sourceInclusiveResult = generatePaletteV2Counterfactual({
-      primary: input,
-      primaryLightnessRanges: inclusiveRanges,
-    });
-    const outwardResult = generatePaletteV2Counterfactual({
-      primary: input,
-      primaryLightnessRanges: outwardRanges,
-    });
-    assertIdentity(widenedResult, baselineIdentity);
-    assertIdentity(outwardResult, baselineIdentity);
-    assertIdentity(sourceInclusiveResult, baselineIdentity);
     variants.current.push(observation(input, currentResult, currentRanges));
-    variants.widened.push(observation(input, widenedResult, wideRanges));
-    variants["gap-preserving-outward"].push(
-      observation(input, outwardResult, outwardRanges),
-    );
-    variants["source-inclusive"].push(
-      observation(input, sourceInclusiveResult, inclusiveRanges),
-    );
+    for (const [id, ranges] of [
+      ["widened", wideRanges],
+      ["gap-preserving-outward", outwardRanges],
+      ["source-inclusive", inclusiveRanges],
+    ]) {
+      try {
+        const result = generatePaletteV2Counterfactual({
+          primary: input,
+          primaryLightnessRanges: ranges,
+        });
+        assertIdentity(result, baselineIdentity);
+        variants[id].push(observation(input, result, ranges));
+      } catch (error) {
+        if (!(error instanceof NoCandidateError)) throw error;
+        infeasible[id].push({ input, failure: noCandidateFailure(error) });
+      }
+    }
   }
 
   return {
-    schema: "color-palette-mode-range-counterfactual.v2",
+    schema: "color-palette-mode-range-counterfactual.v3",
     authority: "diagnostic",
     ...baselineIdentity,
     interpretation:
-      "Compares fixed counterfactual Primary lightness ranges. Deltas expose tradeoffs; they do not identify an optimal range or establish perceived quality.",
+      "Compares fixed counterfactual Primary lightness ranges on successful common support and keeps structured generation infeasibility separate. Deltas expose tradeoffs; they do not identify an optimal range or establish perceived quality.",
     corpus: {
       kind: "rgb-channel-grid",
       channels: [...new Set(channels)].sort((a, b) => a - b),
@@ -368,6 +390,7 @@ export function buildModeRangeCounterfactualReport({
         rule: "Extend each current mode range only far enough to include the source OKLCH lightness.",
       },
     },
+    generationInfeasibleByVariant: infeasible,
     summaries: Object.fromEntries(
       Object.entries(variants).map(([id, items]) => [id, summarize(items)]),
     ),

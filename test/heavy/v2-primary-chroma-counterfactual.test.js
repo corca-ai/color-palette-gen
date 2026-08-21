@@ -16,7 +16,7 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   const comparison = report.comparisonToCurrent;
 
   assert.equal(report.schema, "color-palette-primary-chroma-counterfactual.v3");
-  assert.equal(report.policyVersion, "v2-policy-model-12");
+  assert.equal(report.policyVersion, "v2-policy-model-18");
   assert.deepEqual(
     {
       inputCount: current.inputCount,
@@ -37,57 +37,53 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
   );
   assert.deepEqual(adaptive, {
     inputCount: 216,
-    selectedFromDiagnosticLadderInputCount: 215,
-    generationInfeasibleInputCount: 1,
-    evaluatedInputCount: 215,
+    selectedFromDiagnosticLadderInputCount: 216,
+    generationInfeasibleInputCount: 0,
+    evaluatedInputCount: 216,
     contractFailureInputCount: 0,
     pairEligibilityMissInputCount: 1,
     pairQualityMissInputCount: 1,
-    qualityFindingInputCount: 142,
-    semanticFindingInputCount: 0,
+    qualityFindingInputCount: 143,
+    semanticFindingInputCount: 22,
     largeSourceShiftInputCount: 108,
     largeSourceShiftModeCount: 177,
-    evaluatedModeCount: 430,
-    meanModeSourceDistance: 0.16609579039445568,
+    evaluatedModeCount: 432,
+    meanModeSourceDistance: 0.16590742211414422,
     maximumModeSourceDistance: 0.5795099175924082,
-    meanSelectedRealizedChroma: 0.14725894457823618,
-    requestedCandidateOccurrenceCount: 36684,
-    uniqueRenderedLadderCandidateCount: 27899,
-    renderedConvergenceCount: 8785,
+    meanSelectedRealizedChroma: 0.147444906449093,
+    requestedCandidateOccurrenceCount: 36884,
+    uniqueRenderedLadderCandidateCount: 28098,
+    renderedConvergenceCount: 8786,
   });
   assert.deepEqual(report.summaries.commonSupport.current, {
     ...current,
-    inputCount: 215,
-    evaluatedInputCount: 215,
-    qualityFindingInputCount: 147,
-    evaluatedModeCount: 430,
-    meanModeSourceDistance: 0.18065310479437283,
-    meanSelectedRealizedChroma: 0.1247080377078258,
+    inputCount: 216,
+    evaluatedInputCount: 216,
   });
   assert.deepEqual(report.summaries.commonSupport.adaptive, {
     ...adaptive,
-    inputCount: 215,
+    inputCount: 216,
     generationInfeasibleInputCount: 0,
   });
   assert.deepEqual(guarded, {
     inputCount: 216,
-    selectedFromDiagnosticLadderInputCount: 122,
+    selectedFromDiagnosticLadderInputCount: 123,
     generationInfeasibleInputCount: 0,
     evaluatedInputCount: 216,
     contractFailureInputCount: 0,
     pairEligibilityMissInputCount: 0,
     pairQualityMissInputCount: 0,
     qualityFindingInputCount: 143,
-    semanticFindingInputCount: 0,
+    semanticFindingInputCount: 22,
     largeSourceShiftInputCount: 109,
     largeSourceShiftModeCount: 178,
     evaluatedModeCount: 432,
-    meanModeSourceDistance: 0.16653808678119425,
+    meanModeSourceDistance: 0.1665153301117414,
     maximumModeSourceDistance: 0.5795099175924082,
-    meanSelectedRealizedChroma: 0.14864182796309183,
-    requestedCandidateOccurrenceCount: 22928,
-    uniqueRenderedLadderCandidateCount: 16171,
-    renderedConvergenceCount: 6757,
+    meanSelectedRealizedChroma: 0.14881294348003243,
+    requestedCandidateOccurrenceCount: 23128,
+    uniqueRenderedLadderCandidateCount: 16370,
+    renderedConvergenceCount: 6758,
   });
   assert.deepEqual(
     {
@@ -99,8 +95,8 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
     {
       outOfScopeInputCount: 92,
       consideredInputCount: 124,
-      adoptedInputCount: 122,
-      rejectedInputCount: 2,
+      adoptedInputCount: 123,
+      rejectedInputCount: 1,
     },
   );
   assert.deepEqual(
@@ -117,54 +113,27 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
           introducedEligibilityIds: ["pair.primary-chroma-difference"],
         },
       },
-      {
-        input: "#FF6666",
-        state: "considered-rejected",
-        reasonKind: "generation-infeasible",
-        evidence: {
-          code: "NO_CANDIDATE",
-          decisionId: "dark.destructive",
-          mode: "dark",
-          role: "destructive",
-          stage: "candidate-selection",
-          message:
-            "dark.destructive has no candidate satisfying its constraints.",
-        },
-      },
     ],
   );
   assert.equal(
     digest(report.guardedSelection.decisions),
-    "ce58f61dbcbc65b29de1b664386909fb3c143e74b17af322d066e85cbbc30994",
+    "4939ccd3a3985208457728a3e55342b7442c8b8ea0d882597214b0315c7d5f3a",
   );
   assert.equal(
     report.guardedOutputDigest,
-    "c91fd3746a7de4f8a0054914aef9e3b359793f128a9fa7437f6bc1eb6aa4598f",
+    "feab974e88bf1e016c939e4c69487853324a0ad998a7bc42e7c123ca8ea2aad0",
   );
-  assert.equal(report.comparisonToCurrent.commonSupportInputCount, 215);
+  assert.equal(report.comparisonToCurrent.commonSupportInputCount, 216);
   assert.equal(
     report.candidateEvidence.adaptiveModeCandidateSetDigest,
-    "5d86abefe166f888d9067103672ea59d1caa03fd3bb6228f850ecac1cd9c8f6f",
+    "815ad8c6c78165115105ec7d0946f04e6264a139e26fbcabc99b6e3caa0c8df0",
   );
   assert.equal(comparison.changedInputCount, 160);
-  assert.equal(comparison.changedModeCount, 265);
-  assert.deepEqual(comparison.generationInfeasibleInputs, [
-    {
-      input: "#FF6666",
-      failure: {
-        code: "NO_CANDIDATE",
-        decisionId: "dark.destructive",
-        mode: "dark",
-        role: "destructive",
-        stage: "candidate-selection",
-        message:
-          "dark.destructive has no candidate satisfying its constraints.",
-      },
-    },
-  ]);
+  assert.equal(comparison.changedModeCount, 267);
+  assert.deepEqual(comparison.generationInfeasibleInputs, []);
   assert.equal(
     digest(comparison.changedCases),
-    "5b5becc085505f0c65f574b1554048fc5e69055758ed18786f914605530c1ebc",
+    "5d932be504f6138374064cf58fbce9df48e27cfafb73f80bb85132e65dec6fe8",
   );
   assert.equal(
     digest({
@@ -173,7 +142,7 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
       semantic: comparison.semanticTransitions,
       shift: comparison.sourceShiftModeTransitions,
     }),
-    "b2d1efe08aa66cd0651087a2d16354bc5451c5148a0560bde668db3dd936ca55",
+    "8cbae817f13bce7e6c71e3871a0937cfef806dc40529438ceee26299adaa8b3e",
   );
   assert.deepEqual(comparison.qualityTransitions, {
     "pair.primary-chroma-difference": {
@@ -194,7 +163,12 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
     },
   });
   assert.deepEqual(comparison.contractTransitions, {});
-  assert.deepEqual(comparison.semanticTransitions, {});
+  assert.deepEqual(comparison.semanticTransitions, {
+    "feedback-oklab-separation-passes:unsatisfied": {
+      introduced: ["#CC3366"],
+      resolved: ["#FF0066"],
+    },
+  });
   assert.deepEqual(comparison.sourceShiftModeTransitions, {
     dark: {
       introduced: [],
@@ -208,15 +182,20 @@ test("reviewed Primary chroma counterfactual remains reproducible", () => {
 
   const guardedComparison = report.guardedComparisonToCurrent;
   assert.equal(guardedComparison.commonSupportInputCount, 216);
-  assert.equal(guardedComparison.changedInputCount, 107);
-  assert.equal(guardedComparison.changedModeCount, 196);
+  assert.equal(guardedComparison.changedInputCount, 108);
+  assert.equal(guardedComparison.changedModeCount, 198);
   assert.deepEqual(guardedComparison.generationInfeasibleInputs, []);
   assert.equal(
     digest(guardedComparison.changedCases),
-    "7b15f44eb9e57d8788da149e19ee08985568afd08098e263fdb53d77334a4bf7",
+    "019fd61ce311ffbe71847592511363980fb0d130fa6b3c362107e823992e3dff",
   );
   assert.deepEqual(guardedComparison.contractTransitions, {});
-  assert.deepEqual(guardedComparison.semanticTransitions, {});
+  assert.deepEqual(guardedComparison.semanticTransitions, {
+    "feedback-oklab-separation-passes:unsatisfied": {
+      introduced: ["#CC3366"],
+      resolved: ["#FF0066"],
+    },
+  });
   assert.deepEqual(guardedComparison.qualityTransitions, {
     "review.dark.primary-destructive-hue": { introduced: [], resolved: [] },
     "review.dark.primary-warning-hue": { introduced: [], resolved: [] },

@@ -24,8 +24,11 @@
           <button type="button" data-result-mode="dark">Dark</button>
           <button type="button" data-result-mode="compare">Compare</button>
         </div>
-        <nav aria-label="Version">
-          <a href="../v1/">v1</a><a href="./" aria-current="page">v2</a>
+        <nav class="product-nav" aria-label="페이지">
+          <a href="./" aria-current="page">Generator</a
+          ><a href="./about.html">About</a
+          ><a href="./reference.html">Reference</a
+          ><a href="./contextual-review.html">Review</a><a href="../v1/">v1</a>
         </nav>
       </div>
     </header>
@@ -67,10 +70,6 @@
           >
             Ready · repeated inputs reuse the in-memory result
           </p>
-          <p class="fixed-policy">
-            Fixed direction: calm and minimal. No vibe or supporting-color
-            inputs.
-          </p>
         </form>
       </section>
 
@@ -78,16 +77,61 @@
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">Applied palette</p>
-            <h2 id="example-title">See the palette work in an interface.</h2>
+            <h2 id="example-title">Inspect one real situation at a time.</h2>
           </div>
           <p>
-            Foundation, navigation, messages, composer, and component states
-            show the generated roles together. Coverage is informed by a
-            publicly documented design reference; the specimen is independent
-            and does not imply affiliation.
+            Switch situations without regenerating the palette. Each tab makes
+            the role hierarchy explicit in a focused component context.
           </p>
         </div>
-        <div id="examples" class="examples"></div>
+        <div class="example-tabs" role="tablist" aria-label="Sample situation">
+          <button
+            id="sample-tab-workspace"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="workspace"
+          >
+            Workspace
+          </button>
+          <button
+            id="sample-tab-routine-actions"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="routine-actions"
+          >
+            Routine actions
+          </button>
+          <button
+            id="sample-tab-destructive-confirmation"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="destructive-confirmation"
+          >
+            Destructive confirmation
+          </button>
+          <button
+            id="sample-tab-feedback-selection"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="feedback-selection"
+          >
+            Feedback &amp; selection
+          </button>
+          <button
+            id="sample-tab-form-focus"
+            type="button"
+            role="tab"
+            aria-controls="examples"
+            data-sample-scenario="form-focus"
+          >
+            Form &amp; focus
+          </button>
+        </div>
+        <div id="examples" class="examples" role="tabpanel" tabindex="0"></div>
       </section>
 
       <section class="palette-section" aria-labelledby="palette-title">
@@ -205,9 +249,10 @@
         </summary>
         <div id="checks" class="checks"></div>
         <p class="policy-note">
-          APCA validates text pairs. WCAG contrast and perceptual separation
-          validate interactive boundaries and state colors. These checks guide
-          this experimental palette; they are not a conformance claim.
+          WCAG 4.5:1 validates declared normal-text pairs. APCA helps rank
+          eligible text candidates; WCAG non-text contrast and perceptual
+          separation validate other named relations. This is not accessibility
+          certification.
         </p>
       </details>
     </main>

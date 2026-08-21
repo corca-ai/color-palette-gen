@@ -76,6 +76,35 @@ const rootIndex = v2Index
 
 await writeFile(join(outputDirectory, "index.html"), rootIndex);
 
+const v2About = await readFile(join(projectRoot, "v2", "about.html"), "utf8");
+const rootAbout = v2About
+  .replaceAll('href="./styles/', 'href="./v2/styles/')
+  .replace('href="../v1/">v1</a>', 'href="./v1/">v1</a>')
+  .replace('src="./about.js"', 'src="./v2/about.js"');
+await writeFile(join(outputDirectory, "about.html"), rootAbout);
+
+const v2Reference = await readFile(
+  join(projectRoot, "v2", "reference.html"),
+  "utf8",
+);
+const rootReference = v2Reference
+  .replaceAll('href="./styles/', 'href="./v2/styles/')
+  .replace('href="../v1/">v1</a>', 'href="./v1/">v1</a>');
+await writeFile(join(outputDirectory, "reference.html"), rootReference);
+
+const v2ContextualReview = await readFile(
+  join(projectRoot, "v2", "contextual-review.html"),
+  "utf8",
+);
+const rootContextualReview = v2ContextualReview
+  .replaceAll('href="./styles/', 'href="./v2/styles/')
+  .replace('href="../v1/">v1</a>', 'href="./v1/">v1</a>')
+  .replace('src="./contextual-review.js"', 'src="./v2/contextual-review.js"');
+await writeFile(
+  join(outputDirectory, "contextual-review.html"),
+  rootContextualReview,
+);
+
 await writeFile(join(outputDirectory, ".nojekyll"), "");
 
 console.log(

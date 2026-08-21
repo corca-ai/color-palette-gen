@@ -1,9 +1,19 @@
-import { generatePaletteV2 } from "./lib/palette.js";
+import {
+  generatePaletteV2,
+  generatePaletteV2DestructiveGrammarCounterfactual,
+  generatePaletteV2FilledActionDirectionCounterfactual,
+} from "./lib/palette.js";
 
 self.addEventListener("message", ({ data }) => {
   const startedAt = performance.now();
   try {
-    const result = generatePaletteV2({ primary: data.primary });
+    const generate =
+      data.variant === "mode-relative"
+        ? generatePaletteV2FilledActionDirectionCounterfactual
+        : data.variant === "destructive-grammar"
+          ? generatePaletteV2DestructiveGrammarCounterfactual
+          : generatePaletteV2;
+    const result = generate({ primary: data.primary, grammar: data.grammar });
     self.postMessage({
       id: data.id,
       result,

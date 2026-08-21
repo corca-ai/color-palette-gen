@@ -15,7 +15,7 @@ const definition = (id, kind, direction) => ({
   ...(direction ? { direction } : {}),
 });
 
-function choose(candidates) {
+function choose(candidates, retainPlot = false) {
   const policy = {
     id: "test",
     constraints: [definition("must-pass", "hard-constraint")],
@@ -52,6 +52,7 @@ function choose(candidates) {
       },
     ],
     evidence: [],
+    retainPlot,
   });
 }
 
@@ -77,6 +78,12 @@ test("tie-breakers run only after objective scores are equal", () => {
 
 test("the declared v2 policy schema is internally valid", () => {
   assert.equal(validatePolicy(), true);
+  assert.deepEqual(V2_POLICY.foundation.modeZone, {
+    lightMinimum: 0.96,
+    darkMaximum: 0.185,
+  });
+  assert.equal(V2_POLICY.text.wcagNormalTextMinimum, 4.5);
+  assert.equal(V2_POLICY.text.typographyContexts.actionLabel.fontSizePx, 11);
   assert.equal(
     V2_POLICY.crossMode.pairRankingStrategy,
     "zero-primary-pair-quality-miss-gated-source-first",
@@ -102,7 +109,11 @@ test("invalid objective values fail instead of silently changing rank order", ()
 
 test("candidate exhaustion exposes structured failure provenance", () => {
   assert.throws(
-    () => choose([{ hex: "#000000", oklch: {}, allowed: false, cost: 0 }]),
+    () =>
+      choose(
+        [{ hex: "#000000", oklch: {}, allowed: false, cost: 0 }],
+        "detailed",
+      ),
     (error) => {
       assert.ok(error instanceof NoCandidateError);
       assert.deepEqual(noCandidateFailure(error), {
@@ -113,6 +124,61 @@ test("candidate exhaustion exposes structured failure provenance", () => {
         stage: "candidate-selection",
         message: "test.choice has no candidate satisfying its constraints.",
       });
+      assert.equal(
+        Object.hasOwn(noCandidateFailure(error), "diagnosticSearchPlot"),
+        false,
+      );
+      assert.deepEqual(error.diagnosticSearchPlot, [
+        {
+          hex: "#000000",
+          oklch: {},
+          objectiveCost: 0,
+          constraintResults: [
+            {
+              id: "must-pass",
+              kind: "hard-constraint",
+              label: "must-pass",
+              passed: false,
+              reasons: ["Rejected."],
+              metrics: {},
+            },
+          ],
+          objectiveResults: [
+            {
+              id: "quality",
+              kind: "product-objective",
+              label: "quality",
+              direction: "minimize",
+              value: 0,
+            },
+          ],
+          tieBreakerResults: [
+            {
+              id: "stable",
+              kind: "tie-breaker",
+              label: "stable",
+              direction: "ascending",
+              value: "#000000",
+            },
+          ],
+          passed: false,
+          reasons: ["Rejected."],
+          metrics: { "must-pass": {} },
+          parameters: undefined,
+          stateFamily: null,
+        },
+      ]);
+      return true;
+    },
+  );
+});
+
+test("ordinary candidate exhaustion does not retain a diagnostic search plot", () => {
+  assert.throws(
+    () => choose([{ hex: "#000000", oklch: {}, allowed: false, cost: 0 }]),
+    (error) => {
+      assert.ok(error instanceof NoCandidateError);
+      assert.equal(Object.hasOwn(error, "diagnosticSearchPlot"), false);
       return true;
     },
   );

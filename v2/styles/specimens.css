@@ -72,19 +72,149 @@
   min-height: 38px;
   width: 100%;
 }
-.reference-primary-demo:hover {
+.reference-primary-demo:hover,
+.reference-primary:not([aria-disabled="true"]):hover {
   background: var(--sample-primary-hover);
 }
-.reference-primary-demo:active {
+.reference-primary-demo:active,
+.reference-primary:not([aria-disabled="true"]):active {
   background: var(--sample-primary-active);
   transform: translateY(1px);
 }
 .reference-primary-demo:focus-visible,
 .reference-primary:focus-visible,
 .reference-secondary:focus-visible,
-.reference-channel button:focus-visible {
+.reference-channel button:focus-visible,
+.reference-destructive-outline:focus-visible,
+.reference-form-scenario :is(input, textarea):focus-visible {
   outline: 3px solid var(--sample-focus-ring);
   outline-offset: 2px;
+}
+.reference-scenario-card {
+  background: var(--sample-surface);
+  border: 1px solid var(--sample-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 24px;
+  min-height: 330px;
+  padding: clamp(22px, 4vw, 38px);
+}
+.reference-scenario-card h3 {
+  font-size: clamp(18px, 3vw, 28px);
+  letter-spacing: -0.025em;
+  margin: 5px 0 10px;
+}
+.reference-scenario-card > div > p:last-child {
+  color: var(--sample-muted-text);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 540px;
+}
+.reference-kicker {
+  color: var(--sample-muted-text);
+  font-family: var(--mono);
+  font-size: 9px;
+  margin: 0;
+  text-transform: uppercase;
+}
+.reference-actions-card {
+  align-content: center;
+  grid-template-columns: minmax(220px, 1fr) minmax(250px, 0.9fr);
+}
+.reference-action-example {
+  align-content: center;
+  display: grid;
+  gap: 10px;
+}
+.reference-action-example .reference-primary-playground {
+  grid-template-columns: minmax(140px, 1fr) minmax(90px, 0.7fr);
+}
+.reference-destructive-outline {
+  background: transparent;
+  border: 1px solid var(--sample-destructive);
+  border-radius: 4px;
+  color: var(--sample-destructive);
+  font-size: 11px;
+  font-weight: 650;
+  min-height: 40px;
+}
+.reference-destructive-outline:hover {
+  background: color-mix(in srgb, var(--sample-destructive) 12%, transparent);
+}
+.reference-destructive-outline:active {
+  background: color-mix(in srgb, var(--sample-destructive) 20%, transparent);
+}
+.reference-confirmation-card {
+  align-content: center;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.reference-confirmation-card .reference-feedback {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+.reference-danger-mark {
+  align-items: center;
+  background: var(--sample-destructive);
+  border-radius: 999px;
+  color: var(--sample-destructive-text);
+  display: flex;
+  font-weight: 800;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+.reference-selection-list {
+  background: var(--sample-background);
+  border: 1px solid var(--sample-border);
+  border-radius: 6px;
+  padding: 12px;
+}
+.reference-form-scenario {
+  align-items: start;
+  grid-template-columns: minmax(200px, 0.8fr) minmax(260px, 1.2fr);
+}
+.reference-form-scenario form {
+  display: grid;
+  gap: 12px;
+}
+.reference-form-scenario label,
+.reference-form-scenario label span {
+  display: grid;
+  gap: 5px;
+}
+.reference-form-scenario label span {
+  color: var(--sample-muted-text);
+  font-size: 9px;
+}
+.reference-form-scenario :is(input, textarea) {
+  background: var(--sample-background);
+  border: 1px solid var(--sample-input-border);
+  border-radius: 4px;
+  color: var(--sample-foreground);
+  font-size: 11px;
+  padding: 10px;
+  resize: vertical;
+}
+.reference-form-scenario :is(input, textarea):disabled,
+.reference-scenario-card button:disabled,
+.reference-scenario-card button[aria-disabled="true"] {
+  background: var(--sample-disabled-background);
+  border-color: var(--sample-disabled-border);
+  color: var(--sample-disabled-text);
+  cursor: not-allowed;
+}
+.reference-form-scenario form > div {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.reference-form-scenario form button {
+  min-height: 36px;
+  width: auto;
+}
+.reference-form-scenario .reference-primary {
+  padding-inline: 14px;
 }
 .reference-shell {
   background: var(--sample-background);
@@ -223,6 +353,62 @@
 .reference-warning strong {
   font-size: 10px;
 }
+.reference-warning-playground {
+  align-items: center;
+  border: 1px solid var(--sample-border);
+  border-radius: 6px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  margin: 0 12px;
+  padding: 12px;
+}
+.reference-warning-demo {
+  background: var(--sample-warning);
+  border: 1px solid var(--sample-border);
+  border-radius: 4px;
+  color: var(--sample-warning-text);
+  font-size: 10px;
+  font-weight: 650;
+  min-height: 36px;
+}
+.reference-warning-demo:hover {
+  background: var(--sample-warning-hover);
+}
+.reference-warning-demo:active {
+  background: var(--sample-warning-active);
+  transform: translateY(1px);
+}
+.reference-warning-playground p,
+.reference-warning-playground span,
+.reference-warning-playground b {
+  display: block;
+  margin: 0;
+}
+.reference-warning-playground span {
+  color: var(--sample-muted-text);
+  font-size: 9px;
+}
+.reference-warning-playground b {
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-top: 3px;
+}
+.reference-warning-playground b:not(.default) {
+  display: none;
+}
+.reference-warning-playground:has(button:hover) .default {
+  display: none;
+}
+.reference-warning-playground:has(button:hover) .hover {
+  display: block;
+}
+.reference-warning-playground:has(button:active) :is(.default, .hover) {
+  display: none;
+}
+.reference-warning-playground:has(button:active) .active {
+  display: block;
+}
 .reference-messages .selected-message {
   background: var(--sample-selection);
   border-radius: 5px;
@@ -330,9 +516,14 @@
   color: var(--sample-popover-text);
   display: flex;
   gap: 6px;
+  max-width: 100%;
   margin: 10px 0 0 auto;
   padding: 8px;
   width: max-content;
+}
+.reference-popover span {
+  align-self: center;
+  font-size: 9px;
 }
 .reference-popover strong {
   align-self: center;
@@ -360,12 +551,17 @@
   font-size: 9px;
   margin-top: 2px;
 }
+.reference-feedback-actions {
+  display: flex;
+  gap: 6px;
+}
 .reference-feedback button {
   background: var(--sample-destructive);
   border: 0;
   border-radius: 4px;
   color: var(--sample-destructive-text);
-  font-size: 9px;
+  font-size: 11px;
+  font-weight: 650;
   min-height: 28px;
   padding: 0 10px;
 }
@@ -375,6 +571,17 @@
 .reference-feedback button:active {
   background: var(--sample-destructive-active);
   transform: translateY(1px);
+}
+.reference-feedback .reference-cancel-demo {
+  background: var(--sample-secondary-action);
+  border: 1px solid var(--sample-secondary-action-border);
+  color: var(--sample-secondary-action-text);
+}
+.reference-feedback .reference-cancel-demo:hover {
+  background: var(--sample-secondary-action-hover);
+}
+.reference-feedback .reference-cancel-demo:active {
+  background: var(--sample-secondary-action-active);
 }
 .reference-feedback button:focus-visible {
   outline: 3px solid var(--sample-focus-ring);

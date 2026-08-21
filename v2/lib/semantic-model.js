@@ -1,10 +1,16 @@
 import { assertEvidenceAuthority } from "./evidence-authority.js";
 
 export const SEMANTIC_EVIDENCE_CONTRACTS = {
-  "evidence.primary-label-apca.v1": {
+  "evidence.primary-label-wcag.v1": {
     producer: "automated-check",
     scope: "primary-action-state-family",
-    requires: ["light-and-dark", "default-hover-active", "actual-label-fill"],
+    requires: [
+      "light-and-dark",
+      "default-hover-active",
+      "actual-label-fill",
+      "normal-text-typography-context",
+      "wcag-4.5",
+    ],
     cannotEstablish: ["hover-discoverability", "accessibility-conformance"],
   },
   "evidence.primary-exported-states.v1": {
@@ -25,20 +31,26 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
     requires: ["light-and-dark", "surface-raised-muted", "hierarchy-rule"],
     cannotEstablish: ["universal-depth-perception"],
   },
-  "evidence.foundation-text-apca.v1": {
+  "evidence.foundation-text-wcag.v1": {
     producer: "automated-check",
     scope: "foundation-text-family",
     requires: [
       "light-and-dark",
       "body-surface-muted-text",
       "actual-text-pairs",
+      "normal-text-typography-context",
+      "wcag-4.5",
     ],
     cannotEstablish: ["accessibility-conformance"],
   },
-  "evidence.focus-foundation-contrast.v1": {
+  "evidence.focus-foundation-contrast.v2": {
     producer: "automated-check",
     scope: "focus-foundation-pairs",
-    requires: ["light-and-dark", "background-and-surface", "final-srgb"],
+    requires: [
+      "light-and-dark",
+      "background-surface-and-muted-surface",
+      "final-srgb",
+    ],
     cannotEstablish: [
       "universal-focus-discoverability",
       "accessibility-conformance",
@@ -53,23 +65,27 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
       "perceived-semantic-distinctness",
     ],
   },
-  "evidence.destructive-label-apca.v1": {
+  "evidence.destructive-label-wcag.v1": {
     producer: "automated-check",
     scope: "destructive-state-family",
     requires: [
       "light-and-dark",
       "destructive-default-hover-active",
       "actual-label-fill",
+      "normal-text-typography-context",
+      "wcag-4.5",
     ],
     cannotEstablish: ["feedback-meaning", "accessibility-conformance"],
   },
-  "evidence.warning-label-apca.v1": {
+  "evidence.warning-label-wcag.v1": {
     producer: "automated-check",
     scope: "warning-state-family",
     requires: [
       "light-and-dark",
       "warning-default-hover-active",
       "actual-label-fill",
+      "normal-text-typography-context",
+      "wcag-4.5",
     ],
     cannotEstablish: ["feedback-meaning", "accessibility-conformance"],
   },
@@ -79,10 +95,16 @@ export const SEMANTIC_EVIDENCE_CONTRACTS = {
     requires: ["light-and-dark", "all-three-pairs", "final-srgb"],
     cannotEstablish: ["perceived-feedback-meaning"],
   },
-  "evidence.selection-text-apca.v1": {
+  "evidence.selection-text-wcag.v1": {
     producer: "automated-check",
     scope: "selection-family",
-    requires: ["light-and-dark", "selected-content-pair", "actual-text-pair"],
+    requires: [
+      "light-and-dark",
+      "selected-content-pair",
+      "actual-text-pair",
+      "normal-text-typography-context",
+      "wcag-4.5",
+    ],
     cannotEstablish: ["selection-discoverability", "accessibility-conformance"],
   },
   "evidence.selection-surface-separation.v1": {
@@ -107,9 +129,9 @@ export const PRIMARY_ACTION_SEMANTIC_MODEL = {
     {
       id: "shared-label-readable",
       kind: "constraint",
-      authority: "heuristic",
+      authority: "normative",
       statement: "One label remains readable on every primary action state.",
-      evidence: ["evidence.primary-label-apca.v1"],
+      evidence: ["evidence.primary-label-wcag.v1"],
       evaluator: "evaluator.primary-label-readable.v1",
     },
     {
@@ -135,14 +157,14 @@ export const PRIMARY_ACTION_SEMANTIC_MODEL = {
       id: "lightness-search",
       kind: "heuristic",
       statement:
-        "Search mode-directed lightness candidates while holding requested hue and chroma.",
+        "Search progressively darker Light-mode and lighter Dark-mode action-state candidates while holding requested hue and chroma.",
     },
   ],
 };
 
 export const FOUNDATION_FOCUS_SEMANTIC_MODEL = {
   id: "foundation-focus-family",
-  version: 1,
+  version: 2,
   roles: {
     foundation: ["background", "surface", "raised surface", "muted surface"],
     text: ["foreground", "muted text"],
@@ -162,10 +184,10 @@ export const FOUNDATION_FOCUS_SEMANTIC_MODEL = {
     {
       id: "foundation-text-targets-pass",
       kind: "constraint",
-      authority: "heuristic",
+      authority: "normative",
       statement:
         "Foundation body, surface, and muted text pass their declared readability targets.",
-      evidence: ["evidence.foundation-text-apca.v1"],
+      evidence: ["evidence.foundation-text-wcag.v1"],
       evaluator: "evaluator.foundation-text-targets.v1",
     },
     {
@@ -173,9 +195,9 @@ export const FOUNDATION_FOCUS_SEMANTIC_MODEL = {
       kind: "constraint",
       authority: "normative",
       statement:
-        "The focus indicator passes its declared adjacent-contrast target on background and surface.",
-      evidence: ["evidence.focus-foundation-contrast.v1"],
-      evaluator: "evaluator.focus-adjacent-contrast.v1",
+        "The focus indicator passes its declared adjacent-contrast target on background, surface, and muted surface.",
+      evidence: ["evidence.focus-foundation-contrast.v2"],
+      evaluator: "evaluator.focus-adjacent-contrast.v2",
     },
     {
       id: "focus-control-oklab-separation-passes",
@@ -203,19 +225,19 @@ export const FEEDBACK_SEMANTIC_MODEL = {
     {
       id: "feedback-destructive-label-targets-pass",
       kind: "constraint",
-      authority: "heuristic",
+      authority: "normative",
       statement:
-        "Destructive labels pass their declared APCA targets across default, hover, and active.",
-      evidence: ["evidence.destructive-label-apca.v1"],
+        "Destructive labels pass WCAG normal-text contrast across default, hover, and active.",
+      evidence: ["evidence.destructive-label-wcag.v1"],
       evaluator: "evaluator.feedback-destructive-label-targets.v1",
     },
     {
       id: "feedback-warning-label-targets-pass",
       kind: "constraint",
-      authority: "heuristic",
+      authority: "normative",
       statement:
-        "Warning labels pass their declared APCA targets across default, hover, and active.",
-      evidence: ["evidence.warning-label-apca.v1"],
+        "Warning labels pass WCAG normal-text contrast across default, hover, and active.",
+      evidence: ["evidence.warning-label-wcag.v1"],
       evaluator: "evaluator.feedback-warning-label-targets.v1",
     },
     {
@@ -241,9 +263,9 @@ export const SELECTION_SEMANTIC_MODEL = {
     {
       id: "selection-text-target-passes",
       kind: "constraint",
-      authority: "heuristic",
-      statement: "Selected content passes its declared APCA target.",
-      evidence: ["evidence.selection-text-apca.v1"],
+      authority: "normative",
+      statement: "Selected content passes WCAG normal-text contrast.",
+      evidence: ["evidence.selection-text-wcag.v1"],
       evaluator: "evaluator.selection-text-target.v1",
     },
     {
@@ -261,7 +283,7 @@ export const SELECTION_SEMANTIC_MODEL = {
 
 export const V2_SEMANTIC_MODEL = {
   id: "v2-declarative-design",
-  version: 3,
+  version: 5,
   components: [
     {
       id: PRIMARY_ACTION_SEMANTIC_MODEL.id,
@@ -329,8 +351,8 @@ function evaluateSharedLabel({ modes }) {
     !complete
       ? "Expected one primary label check for every state in Light and Dark."
       : passed
-        ? "Every mode and state passes its declared label APCA target."
-        : "At least one state misses its declared label APCA target.",
+        ? "Every mode and state passes WCAG normal-text contrast."
+        : "At least one state misses WCAG normal-text contrast.",
   );
 }
 
@@ -428,6 +450,24 @@ function checkEvidence(modes, collection, roles) {
   );
 }
 
+function checkEvidenceAcrossCollections(modes, collections, roles) {
+  return EXPECTED_MODES.flatMap((mode) =>
+    roles.map((role) => {
+      const matches = collections.flatMap((collection) =>
+        (modes[mode]?.[collection] ?? []).filter(
+          (check) => check.role === role,
+        ),
+      );
+      return {
+        mode,
+        role,
+        matches,
+        complete: matches.length === 1 && explicitVerdict(matches[0]) !== null,
+      };
+    }),
+  );
+}
+
 function evaluateRecordedChecks(
   observed,
   completeReason,
@@ -464,8 +504,8 @@ function evaluateFoundationText({ modes }) {
       "Muted text",
     ]),
     "Expected one Foundation text check for every declared pair in Light and Dark.",
-    "Every Foundation text pair passes its declared APCA target.",
-    "At least one Foundation text pair misses its declared APCA target.",
+    "Every Foundation text pair passes WCAG normal-text contrast.",
+    "At least one Foundation text pair misses WCAG normal-text contrast.",
   );
 }
 
@@ -474,10 +514,11 @@ function evaluateFocusContrast({ modes }) {
     checkEvidence(modes, "nonTextChecks", [
       "Focus on background",
       "Focus on surface",
+      "Focus on muted surface",
     ]),
-    "Expected focus contrast checks on both foundations in Light and Dark.",
-    "Focus passes its declared adjacent-contrast target on both foundations.",
-    "Focus misses its declared adjacent-contrast target on at least one foundation.",
+    "Expected focus contrast checks on every applied foundation context in Light and Dark.",
+    "Focus passes its declared adjacent-contrast target on every applied foundation context.",
+    "Focus misses its declared adjacent-contrast target on at least one applied foundation context.",
   );
 }
 
@@ -497,18 +538,18 @@ function evaluateFeedbackLabels(modes, family) {
   return evaluateRecordedChecks(
     checkEvidence(modes, "textChecks", roles),
     `Expected one ${family} label check for every state in Light and Dark.`,
-    `Every ${family} label passes its declared APCA target.`,
-    `At least one ${family} label misses its declared APCA target.`,
+    `Every ${family} label passes WCAG normal-text contrast.`,
+    `At least one ${family} label misses WCAG normal-text contrast.`,
   );
 }
 
 function evaluateFeedbackSeparation({ modes }) {
   return evaluateRecordedChecks(
-    checkEvidence(modes, "nonTextChecks", [
-      "Brand → destructive",
-      "Brand → warning",
-      "Destructive → warning",
-    ]),
+    checkEvidenceAcrossCollections(
+      modes,
+      ["nonTextChecks", "reviewOnlyChecks"],
+      ["Brand → destructive", "Brand → warning", "Destructive → warning"],
+    ),
     "Expected all three Feedback separation checks in Light and Dark.",
     "Every Feedback pair passes its declared Oklab separation heuristic.",
     "At least one Feedback pair misses its declared Oklab separation heuristic.",
@@ -519,8 +560,8 @@ function evaluateSelectionText({ modes }) {
   return evaluateRecordedChecks(
     checkEvidence(modes, "textChecks", ["Selected content"]),
     "Expected one selected-content text check in Light and Dark.",
-    "Selected content passes its declared APCA target in both modes.",
-    "Selected content misses its declared APCA target in at least one mode.",
+    "Selected content passes WCAG normal-text contrast in both modes.",
+    "Selected content misses WCAG normal-text contrast in at least one mode.",
   );
 }
 
@@ -536,7 +577,7 @@ function evaluateSelectionSeparation({ modes }) {
 export const SEMANTIC_EVALUATORS = {
   "evaluator.primary-label-readable.v1": {
     declaration: "shared-label-readable",
-    consumes: ["evidence.primary-label-apca.v1"],
+    consumes: ["evidence.primary-label-wcag.v1"],
     evaluate: evaluateSharedLabel,
   },
   "evaluator.primary-states-distinct.v1": {
@@ -556,12 +597,12 @@ export const SEMANTIC_EVALUATORS = {
   },
   "evaluator.foundation-text-targets.v1": {
     declaration: "foundation-text-targets-pass",
-    consumes: ["evidence.foundation-text-apca.v1"],
+    consumes: ["evidence.foundation-text-wcag.v1"],
     evaluate: evaluateFoundationText,
   },
-  "evaluator.focus-adjacent-contrast.v1": {
+  "evaluator.focus-adjacent-contrast.v2": {
     declaration: "focus-adjacent-contrast-passes",
-    consumes: ["evidence.focus-foundation-contrast.v1"],
+    consumes: ["evidence.focus-foundation-contrast.v2"],
     evaluate: evaluateFocusContrast,
   },
   "evaluator.focus-control-oklab-separation.v1": {
@@ -571,12 +612,12 @@ export const SEMANTIC_EVALUATORS = {
   },
   "evaluator.feedback-destructive-label-targets.v1": {
     declaration: "feedback-destructive-label-targets-pass",
-    consumes: ["evidence.destructive-label-apca.v1"],
+    consumes: ["evidence.destructive-label-wcag.v1"],
     evaluate: ({ modes }) => evaluateFeedbackLabels(modes, "destructive"),
   },
   "evaluator.feedback-warning-label-targets.v1": {
     declaration: "feedback-warning-label-targets-pass",
-    consumes: ["evidence.warning-label-apca.v1"],
+    consumes: ["evidence.warning-label-wcag.v1"],
     evaluate: ({ modes }) => evaluateFeedbackLabels(modes, "warning"),
   },
   "evaluator.feedback-oklab-separation.v1": {
@@ -586,7 +627,7 @@ export const SEMANTIC_EVALUATORS = {
   },
   "evaluator.selection-text-target.v1": {
     declaration: "selection-text-target-passes",
-    consumes: ["evidence.selection-text-apca.v1"],
+    consumes: ["evidence.selection-text-wcag.v1"],
     evaluate: evaluateSelectionText,
   },
   "evaluator.selection-surface-oklab-separation.v1": {

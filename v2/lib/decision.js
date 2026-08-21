@@ -169,7 +169,7 @@ export function selectCandidate({
     .sort((first, second) => compareRanking(first.ranking, second.ranking));
   const passing = evaluated.filter(({ evaluation }) => evaluation.passed);
   if (!passing.length) {
-    throw new NoCandidateError(
+    const error = new NoCandidateError(
       `${id} has no candidate satisfying its constraints.`,
       {
         decisionId: id,
@@ -177,6 +177,21 @@ export function selectCandidate({
         role,
       },
     );
+    if (retainPlot === "detailed") {
+      error.diagnosticSearchPlot = evaluated.map(
+        ({ candidate, evaluation, ranking }) => ({
+          ...compactCandidate(candidate, evaluation, ranking),
+          parameters: candidate.parameters,
+          stateFamily: candidate.family
+            ? {
+                hover: candidate.family.hover.value.hex,
+                active: candidate.family.active.value.hex,
+              }
+            : null,
+        }),
+      );
+    }
+    throw error;
   }
   const selected = passing[0];
   const nearestRejected = evaluated.find(

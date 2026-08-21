@@ -59,10 +59,13 @@ function modeObservation(result, mode) {
   const separation = selected.constraintResults.find(
     ({ id }) => id === "destructive.brand-separation",
   );
+  const retainedSeparation = modeResult.reviewOnlyChecks?.find(
+    ({ role }) => role === "Brand → destructive",
+  );
   const label = selected.constraintResults.find(
     ({ id }) => id === "destructive.label-contrast",
   );
-  if (!separation || !label) {
+  if ((!separation && !retainedSeparation) || !label) {
     throw new TypeError(
       "destructive selection must expose label and Primary-separation evidence.",
     );
@@ -78,6 +81,7 @@ function modeObservation(result, mode) {
         ? modeResult.recipe.conflictingDestructive
         : modeResult.recipe.destructive),
     primary: modeResult.values.primary,
+    actionForeground: modeResult.values["primary text"],
     destructive: modeResult.values.destructive,
     destructiveHover: modeResult.values["destructive hover"],
     destructiveActive: modeResult.values["destructive active"],
@@ -85,9 +89,11 @@ function modeObservation(result, mode) {
     warningHover: modeResult.values["warning hover"],
     warningActive: modeResult.values["warning active"],
     destructiveLightness: selected.oklch.l,
-    primaryDestructiveDistance: separation.metrics.value,
+    primaryDestructiveDistance:
+      separation?.metrics.value ?? retainedSeparation.value,
     primaryDestructiveMargin:
-      separation.metrics.value - separation.metrics.target,
+      (separation?.metrics.value ?? retainedSeparation.value) -
+      (separation?.metrics.target ?? retainedSeparation.target),
     destructiveLabelLc: label.metrics.value,
   };
 }
@@ -269,11 +275,13 @@ export function buildDestructiveAnchorCounterfactualReport({
         const currentEvidence = inspectDestructiveCandidateConstraints({
           mode,
           primary: candidate(before.modes[mode].primary),
+          actionForeground: before.modes[mode].actionForeground,
           preferredLightness: before.modes[mode].appliedAnchor,
         });
         const fixedEvidence = inspectDestructiveCandidateConstraints({
           mode,
           primary: candidate(after.modes[mode].primary),
+          actionForeground: after.modes[mode].actionForeground,
           preferredLightness: after.modes[mode].appliedAnchor,
         });
         const currentDigest = digest(currentEvidence);

@@ -54,6 +54,7 @@ test("palette runtime correlates worker success and failure responses", async ()
 
   const runtime = createPaletteRuntime({ WorkerClass: FakeWorker });
   const success = runtime.calculate("#507096");
+  assert.equal(FakeWorker.instance.message.variant, "current");
   FakeWorker.instance.respond({ result: resultFor("#507096"), duration: 2 });
   assert.equal((await success).result.input.primary, "#507096");
   assert.equal(FakeWorker.instance.options.type, "module");
@@ -61,4 +62,11 @@ test("palette runtime correlates worker success and failure responses", async ()
   const failure = runtime.calculate("#FF0000");
   FakeWorker.instance.respond({ error: "worker failed" });
   await assert.rejects(failure, /worker failed/);
+
+  const preview = runtime.calculate("#663300", {
+    variant: "mode-relative",
+  });
+  assert.equal(FakeWorker.instance.message.variant, "mode-relative");
+  FakeWorker.instance.respond({ result: resultFor("#663300"), duration: 3 });
+  assert.equal((await preview).duration, 3);
 });

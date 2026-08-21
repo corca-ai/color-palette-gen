@@ -41,13 +41,34 @@ Each section owns one reader question defined in `interaction-design.md`.
 Every color decision follows the evidence and counterfactual model in
 [`v2-decisions/`](v2-decisions/README.md). A passing color
 without rule provenance and a nearest-alternative explanation is incomplete.
-The [ontology and executable rules map](v2-decisions/ontology.md) connects the
-concept vocabulary to semantic declarations, decision IDs, authorities,
+The [ontology](v2-decisions/ontology.md) connects the concept vocabulary and
+role dependencies. The [decision rules guide](v2-decisions/rules.md) connects
+constraints, ranking, pair eligibility, verdict scopes, semantic declarations,
 producers, tests, and explicit nonclaims.
 
 The v1 and v2 engines, UI state, semantic roles, and tests stay separate. Only
 low-level color conversion is shared because sRGB/OKLCH conversion has the same
 meaning in both products.
+
+When a requested OKLCH coordinate is outside sRGB, the shared converter keeps
+requested lightness and hue fixed and uses 24 binary-search iterations to find
+the largest in-gamut chroma before 8-bit hex export. This deterministic
+technical strategy is not a perceptual-nearest-color claim; clipping,
+local-MINDE, cusp-aware, and wider-gamut strategies can produce different
+results. The public [gamut-mapping reference](../v2/reference.html#gamut-mapping)
+shows the algorithm and a concrete clipping comparison.
+
+The CSS serializer progressively enhances each final token with two declarations:
+the canonical six-digit sRGB value first, followed by `oklch()` measured from
+that same final color. Modern browsers use the latter; a browser without OKLCH
+syntax support keeps the first declaration. Browser support does not replace the
+engine's sRGB boundary: APCA, WCAG contrast, gamut acceptance, rendered-candidate
+deduplication, stable ordering, and reproducible evidence still require one
+deterministic rendered sRGB identity. Requested out-of-gamut OKLCH is therefore
+never handed to the browser as an unevaluated policy decision. The browser smoke
+renders every Light/Dark token in both forms to an sRGB canvas and permits at
+most one 8-bit channel of serialization/conversion difference; contract evidence
+continues to use the canonical hex side of that boundary.
 
 ## Generation policy
 
@@ -63,18 +84,39 @@ Inputs are classified before generation:
 - `subdued`, `0.015 <= C < 0.06`: retain the restrained character without
   artificially saturating it;
 - `chromatic`, `C >= 0.06`: retain hue and scale chroma into the calm palette
-  range, capped at `C 0.15`.
+  range, capped at [`C 0.15`](v2-decisions/policy/roles.md#why-primary-chroma-is-capped-at-c-015).
 
 This prevents black and white inputs from collapsing into the same result while
 also avoiding an invented hue for achromatic colors. Chromatic inputs apply a
 very small source-hue tint to neutral foundations; achromatic inputs do not.
 
-Primary state colors use mode-specific lightness movement: hover and active get
-darker in light mode and lighter in dark mode. Source lightness has bounded
+Primary and Destructive state colors use one mode-relative filled-action
+movement: Light gets progressively darker and Dark gets progressively lighter.
+After the
+Primary family is selected, one black-or-white action foreground is selected;
+Destructive default and state candidates must support that same foreground.
+Source lightness has bounded
 influence so it cannot push the full state family outside its text contract.
 Destructive feedback remains semantic red. If the input hue is near red, its
-lightness is moved away from the brand family and the resulting perceptual
-separation is verified.
+preferred lightness anchor may move away from the brand family. The final
+Primary–Destructive Oklab separation is retained as selected-result review
+evidence rather than a generation contract.
+
+Palette tokens and visual families remain distinct in every component context.
+Under `single-filled-action-hierarchy-v2`, an action group containing ordinary
+Primary and Destructive actions renders Primary filled and Destructive outline.
+A destructive-confirmation group contains no ordinary Primary; it renders the
+dedicated Destructive family filled beside a secondary Cancel. The source-red
+predicate remains diagnostic evidence and never switches either strategy.
+
+Confirmation Cancel is a context-derived presentation family rather than an
+exported palette role. Its opaque Default equals the actual Muted Surface;
+Light Hover/Active move darker and Dark Hover/Active move lighter. Final sRGB
+state candidates must preserve the Foundation Foreground at WCAG `4.5:1` in the
+declared `11px/650` normal-text action-label context. Hover and Active use the
+provisional minimum Oklab distances `0.015` and `0.030`; these are bounded product
+recipe values, not accessibility or perceptual standards. See
+[ADR-0006](v2-decisions/adr/0006-context-derived-secondary-action-states.md).
 
 ## Public design reference
 
@@ -85,7 +127,10 @@ source code:
 - neutral OKLCH surfaces carry the application hierarchy;
 - primary hue is reserved for brand actions, selection, and focus;
 - light and dark modes use different primary lightness values;
-- hover and active states move lightness in opposite directions by mode;
+- Primary and Destructive hover/active states get darker in Light and lighter
+  in Dark; Warning retains its separate shared-label-envelope direction;
+- destructive-confirmation Secondary follows the same per-mode direction with
+  a smaller neutral response and checked label contrast;
 - background, card, muted, border, input, foreground, on-fill, and ring are
   separate semantic roles;
 - component states are reviewed together on composed application screens;
@@ -104,19 +149,18 @@ an intentional consequence of choosing APCA as the generation gate.
 
 ## Validation policy
 
-v2 uses APCA (Accessible Perceptual Contrast Algorithm) as the generation gate
-for text. It preserves polarity and assigns targets by assumed typography:
+v2 classifies the generated public-specimen text uses as normal text and uses
+WCAG 2.2 contrast `>= 4.5:1` as candidate eligibility and final generated-contract
+authority. A text candidate must pass against every declared background, not an
+average. Final checks carry `typography-context.v1` with the specimen's actual
+size and weight. Changing the consumer typography requires a new or updated
+consumer context rather than an implicit token claim.
 
-- body text, 16px regular: `|Lc| >= 75`;
-- compact UI labels, 14px medium: `|Lc| >= 60`;
-- large display text, 24px medium: `|Lc| >= 45`.
-
-This is an experimental design policy, not a WCAG conformance claim. WCAG 2.2
-is a W3C Recommendation dated 2024-12-12 and remains the appropriate normative
-reference for WCAG conformance. WCAG 3.0 is a Working Draft dated 2026-03-03.
-APCA is selected here because v2 assumes concrete application typography and
-needs polarity- and use-sensitive contrast scoring. The page must state this
-limitation.
+Among eligible black/white candidates the engine ranks the weakest APCA score.
+The legacy role targets (`Lc 75` for body, `Lc 60` for compact roles) remain
+diagnostic heuristics only. They do not reject production candidates and are not
+WCAG conformance values. See
+[ADR-0005](v2-decisions/adr/0005-wcag-normal-text-generation-authority.md).
 
 The runtime follows the public APCA-W3 0.1.9 constants and formula in an
 independently written small module. The official
@@ -127,10 +171,10 @@ development dependency and the complete 216-color grid is cross-compared over
 documentation, and discussion reference. It is not treated as the canonical
 development implementation.
 
-APCA does not establish the rest of the palette. v2 separately validates:
+Text-pair success does not establish the rest of the palette. v2 separately validates:
 
 - input border against its surface at WCAG contrast `>= 3:1`;
-- focus ring against background and surface at `>= 3:1`;
+- focus ring against background, surface, and muted surface at `>= 3:1`;
 - adjacent primary states at Oklab `Delta E >= 0.035`;
 - primary and destructive colors at Oklab `Delta E >= 0.08`.
 
@@ -153,10 +197,23 @@ Each mode produces a list of `(color, function)` tuples for:
 - destructive and warning state families;
 - selection, disabled, and popover roles.
 
+Context-derived Secondary states are deliberately absent from this exported role
+list. Their values depend on the destructive-confirmation presentation context
+and are recomputed from that mode's Muted Surface and Foreground.
+
 Every contract records the colors, metric, target, and pass/fail result. Every
 mode also exposes source classification, adaptation decisions, text checks, and
 non-text checks. Light/dark results are siblings, not one mode calculated by
 inverting the other.
+
+Primary and Destructive filled action families use progressively darker Light
+hover/active fills and progressively lighter Dark fills. Within a mode, both families share the foreground selected
+from the Primary family; Destructive selection is constrained by that decision.
+This is a product interaction rule rather than an accessibility or perceptual
+standard. It is the executable v16 rule; its diagnostic history, retained
+warnings, and operator disposition are preserved in the
+[filled-action state direction experiment](v2-decisions/research/filled-action-state-direction.md)
+and [ADR-0004](v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md).
 
 The result keeps three verdict authorities separate under `result.verdicts`:
 
@@ -192,7 +249,7 @@ final sRGB output: Oklab Delta E, CIEDE2000, contrast trajectories against the
 declared surface and background, duplicate detection, and surface-trajectory
 reversal. These diagnostics may prioritize inspection but cannot establish
 hover discoverability or change the deterministic palette verdict. See
-[`v2-decisions/hover-diagnostics.md`](v2-decisions/hover-diagnostics.md).
+[`v2-decisions/research/hover-diagnostics.md`](v2-decisions/research/hover-diagnostics.md).
 
 Each `result.semanticEvaluation.evaluations` entry carries a `trace` containing
 the stable declaration ID, registered evaluator ID, and versioned evidence trace
@@ -210,7 +267,8 @@ roles may intentionally alias one color when documented, but `primary` and
 `focus ring` are independently searched because their component duties differ;
 an alias is never presented as a new color. Disabled and popover aliases remain
 intentional until a reproducible public component case demonstrates a distinct
-duty under the [utility-role promotion contract](v2-decisions/utility-role-aliases.md).
+duty under the
+[utility-role promotion contract](v2-decisions/policy/utility-role-aliases.md).
 
 ## Deployment and navigation
 

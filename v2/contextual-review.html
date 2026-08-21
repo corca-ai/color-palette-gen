@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="이전 v15 규칙과 채택된 v16 규칙을 실제 버튼으로 비교하는 결정 기록 화면입니다."
+    />
+    <title>Contextual separation review — Color Lab v2</title>
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/contextual-review.css" />
+  </head>
+  <body class="contextual-review-page">
+    <header class="topbar">
+      <a class="brand" href="./">Color Lab</a>
+      <nav class="product-nav" aria-label="페이지">
+        <a href="./">Generator</a><a href="./about.html">About</a
+        ><a href="./reference.html">Reference</a
+        ><a href="./contextual-review.html" aria-current="page">Review</a
+        ><a href="../v1/">v1</a>
+      </nav>
+    </header>
+    <main>
+      <section class="review-hero">
+        <p class="eyebrow">Decision record · production v16 adopted</p>
+        <h1>두 결과를<br />실제 버튼으로<br />비교하기.</h1>
+        <p class="lede">
+          자동 검사는 색의 관계와 계약을 측정할 수 있지만, 어느 resting 상태가
+          더 자연스러운지는 결정하지 못한다. 이 페이지는 경고가 발생한 고정
+          입력만 이전 v15 결과와 채택된 v16 결과로 나란히 보여준다.
+        </p>
+        <ol class="review-steps" aria-label="검토 순서">
+          <li><b>1</b><span>경고 종류를 고른다.</span></li>
+          <li><b>2</b><span>입력색 하나를 고른다.</span></li>
+          <li>
+            <b>3</b
+            ><span>Dark Default를 먼저 보고 Hover·Pressed를 확인한다.</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="review-controls" aria-labelledby="queue-title">
+        <div>
+          <p class="eyebrow">Step 1 · review queue</p>
+          <h2 id="queue-title">무엇을 확인할까?</h2>
+        </div>
+        <div id="cohort-tabs" class="cohort-tabs" role="tablist"></div>
+        <p id="cohort-description" class="cohort-description"></p>
+        <div id="case-picker" class="case-picker" role="listbox"></div>
+      </section>
+
+      <section class="case-heading" aria-labelledby="case-title">
+        <div>
+          <p class="eyebrow">Step 2 · selected input</p>
+          <h2 id="case-title">Loading…</h2>
+        </div>
+        <div id="source-chip" class="source-chip"></div>
+        <div class="case-navigation">
+          <button id="previous-case" type="button">← 이전</button>
+          <span id="case-position"></span>
+          <button id="next-case" type="button">다음 →</button>
+        </div>
+      </section>
+
+      <section aria-labelledby="comparison-title">
+        <div class="comparison-heading">
+          <div>
+            <p class="eyebrow">Step 3 · visual comparison</p>
+            <h2 id="comparison-title">Dark Default를 먼저 비교한다.</h2>
+          </div>
+          <p>
+            핵심 정책 변화와 9개 source-fidelity 회귀는 Dark에 있다. 각 버튼에
+            마우스를 올리고 눌러 실제 상태를 확인한다. Light는 실제로 새 분리
+            경고가 생긴 5개 입력에서만 아래 보조 검토로 나타난다.
+          </p>
+        </div>
+        <div id="comparison" class="comparison" aria-live="polite"></div>
+      </section>
+
+      <aside class="review-boundary">
+        <strong>채택 결정의 경계</strong>
+        <p>
+          오른쪽 v16은 project operator의 시각 검토를 거쳐 채택되었다. 그러나 Oklab
+          ΔE와 source fidelity 경고는 미적 품질 점수가 아니며, 채택도 경고를
+          pass로 바꾸지 않는다. 이 화면은 이전 규칙과 채택 규칙의 차이를 보존한다.
+        </p>
+        <a href="./reference.html#semantic-separation"
+          >Primary–Destructive 분리 규칙 설명 읽기</a
+        >
+      </aside>
+    </main>
+    <script type="module" src="./contextual-review.js"></script>
+  </body>
+</html>

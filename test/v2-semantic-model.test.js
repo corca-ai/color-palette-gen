@@ -154,12 +154,12 @@ const SEMANTIC_ACCEPTANCE_SCENARIOS = [
   acceptanceScenario(
     "focus-adjacent-contrast-passes",
     "positive",
-    "evaluator.focus-adjacent-contrast.v1",
+    "evaluator.focus-adjacent-contrast.v2",
   ),
   acceptanceScenario(
     "focus-adjacent-contrast-passes",
     "contradictory",
-    "evaluator.focus-adjacent-contrast.v1",
+    "evaluator.focus-adjacent-contrast.v2",
     ({ modes }) => {
       modes.light.nonTextChecks.find(
         ({ role }) => role === "Focus on surface",
@@ -169,7 +169,7 @@ const SEMANTIC_ACCEPTANCE_SCENARIOS = [
   acceptanceScenario(
     "focus-adjacent-contrast-passes",
     "missing-evidence",
-    "evaluator.focus-adjacent-contrast.v1",
+    "evaluator.focus-adjacent-contrast.v2",
     ({ modes }) => {
       modes.dark.nonTextChecks = modes.dark.nonTextChecks.filter(
         ({ role }) => role !== "Focus on background",
@@ -362,10 +362,10 @@ test("the aggregate result exposes the exact semantic model boundary", () => {
   const result = generatePaletteV2({ primary: "#507096" });
   assert.deepEqual(result.semanticEvaluation.model, {
     id: "v2-declarative-design",
-    version: 3,
+    version: 5,
     components: [
       { id: "primary-action-state-family", version: 1 },
-      { id: "foundation-focus-family", version: 1 },
+      { id: "foundation-focus-family", version: 2 },
       { id: "feedback-family", version: 1 },
       { id: "selection-family", version: 1 },
     ],

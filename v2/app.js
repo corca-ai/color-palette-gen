@@ -5,6 +5,7 @@ import { EVALUATION_INPUTS } from "./lib/evaluation-inputs.js";
 import { prioritizeHoverReview } from "./lib/hover-review-priority.js";
 import { createPaletteRuntime } from "./lib/palette-runtime.js";
 import { RESULT_VERDICT_AUTHORITIES } from "./lib/result-verdicts.js";
+import { actionPresentationForResult } from "./lib/action-presentation.js";
 import { formatSemanticCounts } from "./lib/semantic-model.js";
 import {
   appliedExampleView,
@@ -34,7 +35,11 @@ const toast = document.querySelector("#toast");
 const calculationStatus = document.querySelector("#calculation-status");
 const semanticMap = document.querySelector("#semantic-map");
 const modeButtons = [...document.querySelectorAll("[data-result-mode]")];
+const sampleScenarioButtons = [
+  ...document.querySelectorAll("[data-sample-scenario]"),
+];
 let currentResult;
+let sampleScenario = "workspace";
 const RESULT_MODE_STORAGE_KEY = "color-lab-v2-result-mode";
 let storedResultMode;
 try {
@@ -68,6 +73,15 @@ function syncResultMode() {
   }
 }
 
+function syncSampleScenario() {
+  examples.setAttribute("aria-labelledby", `sample-tab-${sampleScenario}`);
+  for (const button of sampleScenarioButtons) {
+    const selected = button.dataset.sampleScenario === sampleScenario;
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  }
+}
+
 function renderPalettes() {
   palettes.innerHTML = visibleModes()
     .map((mode) => paletteView(currentResult.modes[mode]))
@@ -75,8 +89,17 @@ function renderPalettes() {
 }
 
 function renderExamples() {
+  const actionPresentation = actionPresentationForResult(currentResult, {
+    ordinaryPrimaryPresent: sampleScenario === "routine-actions",
+  });
   examples.innerHTML = visibleModes()
-    .map((mode) => appliedExampleView(currentResult.modes[mode]))
+    .map((mode) =>
+      appliedExampleView(
+        currentResult.modes[mode],
+        actionPresentation,
+        sampleScenario,
+      ),
+    )
     .join("");
 
   for (const button of examples.querySelectorAll(".reference-primary-demo")) {
@@ -159,7 +182,7 @@ function renderExamples() {
       title.textContent = moved ? "Moved to Trash" : "Destructive action";
       description.textContent = moved
         ? "The local specimen changed state. Nothing was persisted."
-        : "Semantic red remains separate from brand action.";
+        : feedback.dataset.presentationCopy;
       button.textContent = moved ? "Undo move" : "Move to Trash";
     });
   }
@@ -239,7 +262,7 @@ function foundationMode(mode) {
     const decision = result.decisions[role];
     return `<div><span>${role}</span><i style="background:${decision.selected.hex}"></i><strong>${decision.selected.hex}</strong><small>${decision.selected.objectiveResults?.[0]?.value.toFixed(1) ?? "–"} Lc weakest</small></div>`;
   };
-  return `<article class="foundation-map-card"><header><span>${mode} mode</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} total candidates checked</strong></header><p class="foundation-reading-guide"><strong>Read each role independently.</strong> Every lightness axis is zoomed to that role's actual search range. Chroma always runs from neutral to the calm tint cap.</p><div class="foundation-rows">${rows}</div><div class="foundation-legend"><span><i class="target"></i>Recipe target</span><span><i class="selected"></i>Chosen</span><span><i class="rejected"></i>Closest failed</span><span><i class="passing"></i>Another passing option</span></div><div class="binary-heading"><strong>Text choice is separate</strong><span>Black and white are compared by their weakest APCA contrast.</span></div><div class="binary-text">${textDecision("primary text")}${textDecision("destructive text")}</div></article>`;
+  return `<article class="foundation-map-card"><header><span>${mode} mode</span><strong>${FOUNDATION_ROLES.reduce((count, role) => count + result.decisions[role].candidateCount, 0)} total candidates checked</strong></header><p class="foundation-reading-guide"><strong>Read each role independently.</strong> Every lightness axis is zoomed to that role's actual search range. Chroma always runs from neutral to the calm tint cap.</p><div class="foundation-rows">${rows}</div><div class="foundation-legend"><span><i class="target"></i>Recipe target</span><span><i class="selected"></i>Chosen</span><span><i class="rejected"></i>Closest failed</span><span><i class="passing"></i>Another passing option</span></div><div class="binary-heading"><strong>One filled-action foreground</strong><span>Black and white are compared across the Primary family first. Destructive candidates must support the selected result.</span></div><div class="binary-text">${textDecision("primary text")}</div></article>`;
 }
 
 function renderFoundationMap() {
@@ -454,9 +477,10 @@ function renderSemanticMaps() {
 
 function checkValue(check) {
   if (check.kind === "text") {
+    const apca = check.diagnostics?.apca;
     return {
-      value: `${check.lc.toFixed(1)} Lc`,
-      target: `target |${check.target}| · ${check.typography}`,
+      value: `${check.value.toFixed(2)}:1`,
+      target: `target ${check.target}:1 · ${check.typography}${apca ? ` · APCA diagnostic ${apca.value.toFixed(1)} Lc` : ""}`,
     };
   }
   if (check.metric === "WCAG contrast") {
@@ -502,6 +526,29 @@ function render(result) {
   renderChecks();
 }
 
+async function calculateAndRender(primary) {
+  form.setAttribute("aria-busy", "true");
+  calculationStatus.textContent =
+    "Calculating current v17 in a background worker…";
+  try {
+    const calculated = await paletteRuntime.calculate(primary, {
+      variant: "current",
+    });
+    paletteRuntime.rememberVariant(calculated.result, "current");
+    render(calculated.result);
+    calculationStatus.textContent = calculated.cached
+      ? "Ready · reused current cached result"
+      : `Ready · current calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
+    error.textContent = "";
+    return true;
+  } catch (calculationError) {
+    error.textContent = calculationError.message;
+    return false;
+  } finally {
+    form.removeAttribute("aria-busy");
+  }
+}
+
 picker.addEventListener("input", () => {
   primaryInput.value = picker.value.toUpperCase();
 });
@@ -524,21 +571,8 @@ form.addEventListener("submit", async (event) => {
   const primary = normalizeHex(primaryInput.value);
   const submit = form.querySelector('button[type="submit"]');
   submit.disabled = true;
-  form.setAttribute("aria-busy", "true");
-  calculationStatus.textContent = "Calculating in a background worker…";
-  try {
-    const calculated = await paletteRuntime.calculate(primary);
-    paletteRuntime.remember(calculated.result);
-    render(calculated.result);
-    calculationStatus.textContent = calculated.cached
-      ? "Ready · reused cached result"
-      : `Ready · calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
-  } catch (calculationError) {
-    error.textContent = calculationError.message;
-  } finally {
-    submit.disabled = false;
-    form.removeAttribute("aria-busy");
-  }
+  await calculateAndRender(primary);
+  submit.disabled = false;
 });
 
 document.querySelector("#copy-css").addEventListener("click", async () => {
@@ -578,12 +612,7 @@ gallery.addEventListener("click", async (event) => {
     picker.value = card.dataset.primary;
     calculationStatus.textContent =
       "Loading the full inspector in a background worker…";
-    const calculated = await paletteRuntime.calculate(card.dataset.primary);
-    paletteRuntime.remember(calculated.result);
-    render(calculated.result);
-    calculationStatus.textContent = calculated.cached
-      ? "Ready · reused cached result"
-      : `Ready · calculated in ${calculated.duration.toFixed(1)} ms off the UI thread`;
+    await calculateAndRender(card.dataset.primary);
   }
 });
 
@@ -650,7 +679,34 @@ for (const button of modeButtons) {
   });
 }
 
+for (const [index, button] of sampleScenarioButtons.entries()) {
+  button.addEventListener("click", () => {
+    sampleScenario = button.dataset.sampleScenario;
+    syncSampleScenario();
+    if (currentResult) renderExamples();
+  });
+  button.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const last = sampleScenarioButtons.length - 1;
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? last
+          : event.key === "ArrowRight"
+            ? (index + 1) % sampleScenarioButtons.length
+            : (index - 1 + sampleScenarioButtons.length) %
+              sampleScenarioButtons.length;
+    sampleScenarioButtons[nextIndex].focus();
+    sampleScenarioButtons[nextIndex].click();
+  });
+}
+
 syncResultMode();
+syncSampleScenario();
 const initialResult = generatePaletteV2({ primary: primaryInput.value });
-paletteRuntime.remember(initialResult);
+paletteRuntime.rememberVariant(initialResult, "current");
 render(initialResult);

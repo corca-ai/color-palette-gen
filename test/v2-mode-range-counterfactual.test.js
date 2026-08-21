@@ -66,25 +66,22 @@ test("mode-range counterfactuals expose gains and losses without a verdict", () 
     dark: [0.58, 0.66],
   });
   assert.equal(first.summaries.current.inputCount, 1);
-  assert.equal(first.resultVersion, 2);
+  assert.equal(first.resultVersion, 3);
   assert.equal(first.semanticModel.id, "v2-declarative-design");
-  assert.equal(
-    first.comparisonsToCurrent["source-inclusive"].sourceShiftResolvedInputs[0],
-    "#000000",
+  assert.deepEqual(
+    first.comparisonsToCurrent["source-inclusive"].excludedBaselineInputs,
+    ["#000000"],
   );
-  assert.ok(
-    first.summaries["source-inclusive"].signalCounts[
-      "diagnostic:infeasible-primary-state-candidate"
-    ] > 0,
-  );
-  assert.equal(
+  assert.equal(first.summaries["source-inclusive"].inputCount, 0);
+  assert.deepEqual(
     first.comparisonsToCurrent["source-inclusive"]
-      .contractFailureIntroducedInputs[0],
-    "#000000",
+      .contractFailureIntroducedInputs,
+    [],
   );
   for (const [id, comparison] of Object.entries(first.comparisonsToCurrent)) {
     const candidate = first.summaries[id];
     const current = first.summaries.current;
+    if (comparison.excludedBaselineInputs.length > 0) continue;
     assert.equal(
       candidate.largeSourceShiftInputCount - current.largeSourceShiftInputCount,
       comparison.sourceShiftIntroducedInputs.length -

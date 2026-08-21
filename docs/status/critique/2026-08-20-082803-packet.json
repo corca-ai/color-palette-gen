@@ -1,0 +1,1074 @@
+{
+  "kind": "charness.critique_prepare_packet",
+  "version": 1,
+  "repo": "color-palette-gen",
+  "generated_at": "2026-08-20T08:28:03Z",
+  "prepared_for": "v16-filled-action-consistency",
+  "changed_ref": null,
+  "adapter_path": null,
+  "sections": [],
+  "section_count": 0,
+  "ok": true,
+  "shape_ok": true,
+  "reviewer_tier_evidence": {
+    "requested_tier": "high-leverage",
+    "requested_spawn_fields": {},
+    "host_exposure_state": "pending-parent-spawn",
+    "application_state": "unverified-by-packet",
+    "instruction": "Review artifacts must record requested_fields_sent, metadata-hidden, host-defaulted, unsupported, or applied only when host-confirmed."
+  },
+  "reviewed_input_identity": {
+    "algorithm": "sha256-v2",
+    "status": "captured",
+    "mode": "working-tree",
+    "changed_ref": null,
+    "resolved_changed_ref": [],
+    "base_head": "5fc6e9217c80c3d489042e1741f8f327e093dc52",
+    "base_head_role": "provenance-only",
+    "reviewed_paths": [
+      ".agents/hitl-adapter.yaml",
+      "docs/README.md",
+      "docs/architecture.md",
+      "docs/archive/README.md",
+      "docs/archive/v1/README.md",
+      "docs/archive/v1/engine-testing-plan.md",
+      "docs/archive/v1/output-artifact-proposal.md",
+      "docs/archive/v1/prototype-domain-spec.md",
+      "docs/archive/v1/prototype-plan.md",
+      "docs/archive/v1/reference-insights.md",
+      "docs/collaboration.md",
+      "docs/development.md",
+      "docs/interaction-design.md",
+      "docs/operator-acceptance.md",
+      "docs/product-direction.md",
+      "docs/product.md",
+      "docs/retro/2026-08-18-session-retro.md",
+      "docs/roadmap.md",
+      "docs/technology-stack.md",
+      "docs/v2-decision-justification.md",
+      "docs/v2-decisions/README.md",
+      "docs/v2-decisions/adr/0001-source-red-collision-aware-filled-action-direction.md",
+      "docs/v2-decisions/adr/0002-red-band-role-collision-presentation.md",
+      "docs/v2-decisions/adr/0003-single-filled-action-hierarchy.md",
+      "docs/v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md",
+      "docs/v2-decisions/adr/README.md",
+      "docs/v2-decisions/color-decision-flow.md",
+      "docs/v2-decisions/evidence.md",
+      "docs/v2-decisions/implementation/candidate-search.md",
+      "docs/v2-decisions/implementation/runtime.md",
+      "docs/v2-decisions/implementation/status.md",
+      "docs/v2-decisions/ontology.md",
+      "docs/v2-decisions/policy/evidence.md",
+      "docs/v2-decisions/policy/roles.md",
+      "docs/v2-decisions/policy/semantic-model.md",
+      "docs/v2-decisions/policy/utility-role-aliases.md",
+      "docs/v2-decisions/reference/public-specimen.md",
+      "docs/v2-decisions/research/adversarial-audit.md",
+      "docs/v2-decisions/research/contextual-destructive-separation.md",
+      "docs/v2-decisions/research/destructive-grammar-calibration.md",
+      "docs/v2-decisions/research/filled-action-state-direction.md",
+      "docs/v2-decisions/research/hover-diagnostics.md",
+      "docs/v2-decisions/research/tonal-offset-sweep.md",
+      "docs/v2-decisions/rules.md",
+      "docs/v2-spec.md",
+      "e2e/v2.spec.js",
+      "e2e/v2.spec.js-snapshots/reference-specimens.png",
+      "package.json",
+      "playwright.config.js",
+      "readme.md",
+      "scripts/build-site.mjs",
+      "scripts/report-contextual-destructive-separation-counterfactual.mjs",
+      "scripts/report-filled-action-direction-counterfactual.mjs",
+      "scripts/report-filled-action-hybrid-counterfactual.mjs",
+      "test/exhaustive/v2-grid.test.js",
+      "test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/heavy/v2-destructive-anchor-counterfactual.test.js",
+      "test/heavy/v2-feedback-candidate-availability.test.js",
+      "test/heavy/v2-filled-action-direction-counterfactual.test.js",
+      "test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/heavy/v2-mode-range-counterfactual.test.js",
+      "test/heavy/v2-pair-ranking-counterfactual.test.js",
+      "test/heavy/v2-primary-chroma-counterfactual.test.js",
+      "test/v2-action-presentation.test.js",
+      "test/v2-applied-samples-ui.test.js",
+      "test/v2-color-decision-flow-doc.test.js",
+      "test/v2-color-system-doc.test.js",
+      "test/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/v2-contextual-destructive-separation-review.test.js",
+      "test/v2-decision.test.js",
+      "test/v2-destructive-grammar-calibration.test.js",
+      "test/v2-feedback-candidate-availability.test.js",
+      "test/v2-filled-action-direction-counterfactual.test.js",
+      "test/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/v2-filled-action-joint.test.js",
+      "test/v2-pair-ranking-counterfactual.test.js",
+      "test/v2-palette-runtime.test.js",
+      "test/v2-palette.test.js",
+      "test/v2-red-band-presentation.test.js",
+      "test/v2-tonal-offset.test.js",
+      "v2/about.html",
+      "v2/about.js",
+      "v2/app.js",
+      "v2/contextual-review.html",
+      "v2/contextual-review.js",
+      "v2/index.html",
+      "v2/lib/action-presentation.js",
+      "v2/lib/contextual-destructive-separation-counterfactual.js",
+      "v2/lib/contextual-destructive-separation-review.js",
+      "v2/lib/contextual-destructive-separation.js",
+      "v2/lib/decision.js",
+      "v2/lib/destructive-anchor-counterfactual.js",
+      "v2/lib/feedback-search.js",
+      "v2/lib/filled-action-direction-counterfactual.js",
+      "v2/lib/filled-action-direction.js",
+      "v2/lib/filled-action-hybrid-counterfactual.js",
+      "v2/lib/filled-action-joint.js",
+      "v2/lib/mode-range-counterfactual.js",
+      "v2/lib/pair-selection.js",
+      "v2/lib/palette-runtime.js",
+      "v2/lib/palette.js",
+      "v2/lib/policy.js",
+      "v2/lib/quality.js",
+      "v2/lib/red-band-presentation.js",
+      "v2/lib/semantic-model.js",
+      "v2/lib/tonal-offset.js",
+      "v2/lib/view.js",
+      "v2/palette-worker.js",
+      "v2/reference.html",
+      "v2/styles/about.css",
+      "v2/styles/base.css",
+      "v2/styles/contextual-review.css",
+      "v2/styles/decision-graphs.css",
+      "v2/styles/inspector.css",
+      "v2/styles/reference.css",
+      "v2/styles/responsive.css",
+      "v2/styles/specimens.css"
+    ],
+    "reviewed_content": [
+      {
+        "path": ".agents/hitl-adapter.yaml",
+        "content_sha256": "de21f4c5399a29cbf4a74d94224e3dd8eb58b6a3f92905476a0198e3f65d91a4"
+      },
+      {
+        "path": "docs/README.md",
+        "content_sha256": "e452b1b6fda5d9a6d8a4cf0b3d15c3eb396be7ad696218114059ec66bd9294fd"
+      },
+      {
+        "path": "docs/architecture.md",
+        "content_sha256": "5b7a3cd0102383db0d7fdd5886908a9493c5f3705b8a665e726184e9a9d53898"
+      },
+      {
+        "path": "docs/archive/README.md",
+        "content_sha256": "9fb35f66fce5ed803be16fa7027c9368f1673fbd8470e3a2877a379714f92fb8"
+      },
+      {
+        "path": "docs/archive/v1/README.md",
+        "content_sha256": "eb6e039ecf6dab80e3630f3017286b3be706621960f80daf6a48674bfade32ad"
+      },
+      {
+        "path": "docs/archive/v1/engine-testing-plan.md",
+        "content_sha256": "c32461f0be9b898a7ddf31680e76b7e92cbb56eb0787e13660ae6076ed47f02f"
+      },
+      {
+        "path": "docs/archive/v1/output-artifact-proposal.md",
+        "content_sha256": "23f84e63b42fb88c37721cf2ee927b7e903454a3c712de9c16c594b6f894e003"
+      },
+      {
+        "path": "docs/archive/v1/prototype-domain-spec.md",
+        "content_sha256": "4cad125ba05dd44a0359eb578bc1da49aa92cfa7adb04474b6005c3890851439"
+      },
+      {
+        "path": "docs/archive/v1/prototype-plan.md",
+        "content_sha256": "97bebe03c7cd31c8ac2d3411f30a75cdb8c28bbe4f8dd030ae8a3b34109a299d"
+      },
+      {
+        "path": "docs/archive/v1/reference-insights.md",
+        "content_sha256": "13998c83074eb902d771331537cf53f8de6f72380b2b9677aeadab6a5270dd65"
+      },
+      {
+        "path": "docs/collaboration.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/development.md",
+        "content_sha256": "6e146c0d9f38d5979b18eaeb22c15dd84401db3b1a9395625f181cf76350b0e2"
+      },
+      {
+        "path": "docs/interaction-design.md",
+        "content_sha256": "a8179b1e798cb6473ca24e2ecdf3f3b8df4a62434b44e1cdf23d97e44ddb2faa"
+      },
+      {
+        "path": "docs/operator-acceptance.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/product-direction.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/product.md",
+        "content_sha256": "ed38d4a5964a52d24560496e1e477398eac07fe68bfc0e03bb689e09f454f3de"
+      },
+      {
+        "path": "docs/retro/2026-08-18-session-retro.md",
+        "content_sha256": "7b6c5ef12cda8792352d477d4f5ffa3882f5d1c74daba8185f0ac6aa093dd462"
+      },
+      {
+        "path": "docs/roadmap.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/technology-stack.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/v2-decision-justification.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/v2-decisions/README.md",
+        "content_sha256": "23130e6989f442b8d3b9e930d7490c908a6a44f180e8007dd40f1796f4ad9ed1"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0001-source-red-collision-aware-filled-action-direction.md",
+        "content_sha256": "25130dafd34ded005e028892330ffcbf1e4df83b5b6247e8bdb55c8b29babd82"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0002-red-band-role-collision-presentation.md",
+        "content_sha256": "7558c599bf137ef8df342050537a626bc9343e8494638b45438f11a804436517"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0003-single-filled-action-hierarchy.md",
+        "content_sha256": "099852fe88536f2835101ce5a2d6a2ddcc82bcb587072e2da1a87cf03237d9c4"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md",
+        "content_sha256": "21ee2967c25d496aa35773a619e83c6f8517875d626c06f4f431aa5a065e38a9"
+      },
+      {
+        "path": "docs/v2-decisions/adr/README.md",
+        "content_sha256": "4f5277b5f74836ae184482e20970d036b46c5a19d0f332aee7779912ddf9cf89"
+      },
+      {
+        "path": "docs/v2-decisions/color-decision-flow.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/v2-decisions/evidence.md",
+        "content_sha256": null
+      },
+      {
+        "path": "docs/v2-decisions/implementation/candidate-search.md",
+        "content_sha256": "087937f357ed0723e0e80e71579c210fc6b0fc004f5682925fe8eff33c0fdc82"
+      },
+      {
+        "path": "docs/v2-decisions/implementation/runtime.md",
+        "content_sha256": "874ce73ea48d3aefb7c4c3c4fff12872ef0d2c3d2fb3451b2aa9df49ce0d7b77"
+      },
+      {
+        "path": "docs/v2-decisions/implementation/status.md",
+        "content_sha256": "7adddfbfe447c19cfef3fcc72aa091e418818d63d2c1dce0e987958e4098825b"
+      },
+      {
+        "path": "docs/v2-decisions/ontology.md",
+        "content_sha256": "7da27211eb2613d1853172efb4c7763f0ae5a575db3cfc5735824b3c76cbaaba"
+      },
+      {
+        "path": "docs/v2-decisions/policy/evidence.md",
+        "content_sha256": "097279e01ca224fc472cca2430f6952275f13ca88fc8242e28276b3525cf967d"
+      },
+      {
+        "path": "docs/v2-decisions/policy/roles.md",
+        "content_sha256": "642124857718246d87b60cdacc873e52e5ee7f75513e5c558643e63ac62170dc"
+      },
+      {
+        "path": "docs/v2-decisions/policy/semantic-model.md",
+        "content_sha256": "0a771e48a39ee93c0cd184ed5aa7635f45244c8029fe65405ec2a346871e6312"
+      },
+      {
+        "path": "docs/v2-decisions/policy/utility-role-aliases.md",
+        "content_sha256": "ce0d5d0d378709e32d946ad53d481116392f963dfd070dc28a2411515341c1e7"
+      },
+      {
+        "path": "docs/v2-decisions/reference/public-specimen.md",
+        "content_sha256": "fb14fbace979d27048a32f5cb87a8775c5864db02148b63237ee61914d272392"
+      },
+      {
+        "path": "docs/v2-decisions/research/adversarial-audit.md",
+        "content_sha256": "79ba94be267a92e91ee63384072ae5c4dc46c9b6b3831c180f07ae97a0ffa937"
+      },
+      {
+        "path": "docs/v2-decisions/research/contextual-destructive-separation.md",
+        "content_sha256": "4bf4d51c7189360060db667780a73b1533d6da155033e209479e88c731d47be7"
+      },
+      {
+        "path": "docs/v2-decisions/research/destructive-grammar-calibration.md",
+        "content_sha256": "e0af3fd4bcba37f5aef4cccfa43e38eaa95bd601645e285aeb0e13661f6071e6"
+      },
+      {
+        "path": "docs/v2-decisions/research/filled-action-state-direction.md",
+        "content_sha256": "81bff6e02eaf688d947b8a7d6601090ab468a9689348748036f51f31717d9475"
+      },
+      {
+        "path": "docs/v2-decisions/research/hover-diagnostics.md",
+        "content_sha256": "96ff24c2289b6ece0065b2896da16c4aa15e97e671832db1729450876b11f93c"
+      },
+      {
+        "path": "docs/v2-decisions/research/tonal-offset-sweep.md",
+        "content_sha256": "656543cf35689c37d23d366bcd5d087d4691f250b07ef79dd9ba63bce6be00d9"
+      },
+      {
+        "path": "docs/v2-decisions/rules.md",
+        "content_sha256": "1fba0632289cb9c5c3d4127a0bed28543ebf9b39e301c4d55b99b852646e68db"
+      },
+      {
+        "path": "docs/v2-spec.md",
+        "content_sha256": "f1ff0c80f26767076bcad1d68479d299586e74c117565f14f9c97a57293f9de1"
+      },
+      {
+        "path": "e2e/v2.spec.js",
+        "content_sha256": "993ebc1dd87ed4cb816355a7b5ffd8496bd900ef5e5ab2748a76504e263b1f02"
+      },
+      {
+        "path": "e2e/v2.spec.js-snapshots/reference-specimens.png",
+        "content_sha256": "52e71be90d19c84399d9b5debc61294bcc921822d7c591e4cc366c98705e20b5"
+      },
+      {
+        "path": "package.json",
+        "content_sha256": "3107dcba6a05a4b853ea426c60bc21dbd8c0c39beef4ac81559bfbccefb41aaf"
+      },
+      {
+        "path": "playwright.config.js",
+        "content_sha256": "4a765bf45300cfff97386f38708a1ff10a0157022d87410ef633e16ab3c694f1"
+      },
+      {
+        "path": "readme.md",
+        "content_sha256": "f86091772027f16514d0b5a819bbbe916c4afca6fb072bced6a2a9c41cc33965"
+      },
+      {
+        "path": "scripts/build-site.mjs",
+        "content_sha256": "808e90c141149111816aa6b191e413ac0c907a6d8d323083c09eca1cae5c9362"
+      },
+      {
+        "path": "scripts/report-contextual-destructive-separation-counterfactual.mjs",
+        "content_sha256": "19c0f842e86f3bb9d4362e78e39091a3d143b1c76667fe884368e04c2e447035"
+      },
+      {
+        "path": "scripts/report-filled-action-direction-counterfactual.mjs",
+        "content_sha256": "f8cac6aa945fcc7ba375a35a457bf08d7bea04904d515ea6a1ff434bc2252b26"
+      },
+      {
+        "path": "scripts/report-filled-action-hybrid-counterfactual.mjs",
+        "content_sha256": "99280e002836297323abf2dfe52fb97dc8d2159377097dae217b7e68450900ee"
+      },
+      {
+        "path": "test/exhaustive/v2-grid.test.js",
+        "content_sha256": "525f0e14cb622fffb4c713b4758452251cde6c57bc5f89f8f50cb372a99af787"
+      },
+      {
+        "path": "test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+        "content_sha256": "eb38bbc530a92d1e6d6ce7708782ccd148254208baae184ed4e09ba164dede9d"
+      },
+      {
+        "path": "test/heavy/v2-destructive-anchor-counterfactual.test.js",
+        "content_sha256": "cee15d4c4116dbaee51b536600e3485c6258e3cb6851d3bc0da4b3b653198222"
+      },
+      {
+        "path": "test/heavy/v2-feedback-candidate-availability.test.js",
+        "content_sha256": "be5bdd6cd8e8b9a5f7d1eede4ffac128c4890350a368034666a65b1d6ed693ad"
+      },
+      {
+        "path": "test/heavy/v2-filled-action-direction-counterfactual.test.js",
+        "content_sha256": "c6f46f24f4562cfa566e155988b36da08b89bbc15e37aa431235f3685d23bdb6"
+      },
+      {
+        "path": "test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
+        "content_sha256": "fdf268dde4f22f1a44e7e9e08878673f4d5d4ad01a292aaa628ad78eff9000c4"
+      },
+      {
+        "path": "test/heavy/v2-mode-range-counterfactual.test.js",
+        "content_sha256": "387fecdf482e13d92332a57c134295d9b11d861e60d13ba26b124939c7aae408"
+      },
+      {
+        "path": "test/heavy/v2-pair-ranking-counterfactual.test.js",
+        "content_sha256": "e7902381557a6a7ce69d0715e900fb446bbf6adc955d97258b289cb1a4d2cf1b"
+      },
+      {
+        "path": "test/heavy/v2-primary-chroma-counterfactual.test.js",
+        "content_sha256": "16e2f8a5bf014024c35df16c603268f49c3bd7e468582cf66b0c4c355c71fbd6"
+      },
+      {
+        "path": "test/v2-action-presentation.test.js",
+        "content_sha256": "6e0b4a198f2899b4c31fc2bad0d55c67fefbb2f581b7642fd46ee3bedcc1387c"
+      },
+      {
+        "path": "test/v2-applied-samples-ui.test.js",
+        "content_sha256": "9877bb2085a97a00ce0366e5adfbfb9b3e213a048889511806c120e04fc289fb"
+      },
+      {
+        "path": "test/v2-color-decision-flow-doc.test.js",
+        "content_sha256": null
+      },
+      {
+        "path": "test/v2-color-system-doc.test.js",
+        "content_sha256": "87fb9e4492c03d210093f19a7f2b9ecfd787bfd84d89d045d39ebb4c2935407a"
+      },
+      {
+        "path": "test/v2-contextual-destructive-separation-counterfactual.test.js",
+        "content_sha256": "b0b51e7f4d70e59fcd326a95d08e117a0ff7415b9a1e9a887ea28363b6d0ea6a"
+      },
+      {
+        "path": "test/v2-contextual-destructive-separation-review.test.js",
+        "content_sha256": "42ef444ab40c7328cab2b6fee9f1a4621b5a7639c2ff484c567e78e60e3527a4"
+      },
+      {
+        "path": "test/v2-decision.test.js",
+        "content_sha256": "32fd3643df4a2e9e21edcc4f03430a397ad991a4a052cd29bdd0e754113243a0"
+      },
+      {
+        "path": "test/v2-destructive-grammar-calibration.test.js",
+        "content_sha256": "8582b9320c7d214ab2fa76943f003d92a5583743fb9903407e3531731253418f"
+      },
+      {
+        "path": "test/v2-feedback-candidate-availability.test.js",
+        "content_sha256": "5031c951113e56d432057f7ca9e1269ec81fea1903dba5e43f7e6b35dac852b9"
+      },
+      {
+        "path": "test/v2-filled-action-direction-counterfactual.test.js",
+        "content_sha256": "ffd470de81dd800e93d21beefb8f0e473948714e438005f890e091802e5a87d7"
+      },
+      {
+        "path": "test/v2-filled-action-hybrid-counterfactual.test.js",
+        "content_sha256": "60899957f6a443ca4686c2b50e7398a603921768fe09beab1b8e028c53c4ed9e"
+      },
+      {
+        "path": "test/v2-filled-action-joint.test.js",
+        "content_sha256": "3fa8f491b58d697e7f56aeb5d7dad2d18ad265ecac290efcd4da65f5a4ee2374"
+      },
+      {
+        "path": "test/v2-pair-ranking-counterfactual.test.js",
+        "content_sha256": "49f1ceba184775b7463d105459eed99392435c244f7b4229569ee198dda3840a"
+      },
+      {
+        "path": "test/v2-palette-runtime.test.js",
+        "content_sha256": "81b8ca1e3f5ea24e0182da3462e89f2f7626b31e63ffe6664fbd391f0ba91f8a"
+      },
+      {
+        "path": "test/v2-palette.test.js",
+        "content_sha256": "fd312b2a79a05b893fa568e1f78a0a7a21096cd8c862e6f8b115d3944cec54cb"
+      },
+      {
+        "path": "test/v2-red-band-presentation.test.js",
+        "content_sha256": "233f53e450990f0345cb4fa9aa1f6d8e943c886cb911793a94a3e74366a6061d"
+      },
+      {
+        "path": "test/v2-tonal-offset.test.js",
+        "content_sha256": "1bbf61b7532ca45d787b88bd251ff7c6248f85d9b117405b1fc1484a139e8a13"
+      },
+      {
+        "path": "v2/about.html",
+        "content_sha256": "dd6e3697ffbeaf9713ea1759f9321bd9b19f4b9385c41d7676047d0e5e62d449"
+      },
+      {
+        "path": "v2/about.js",
+        "content_sha256": "0784ce6790e203b187119b977c0d7277d7fab4f2c9579bbaf13498f912d9ea56"
+      },
+      {
+        "path": "v2/app.js",
+        "content_sha256": "9727cde9a484eea071683cb5eb4d7d8ddb9057b3663707b0e9ef0e692a68f52c"
+      },
+      {
+        "path": "v2/contextual-review.html",
+        "content_sha256": "9f773ff21a07a6834149bdeb6aa0f06b62df6a933732776be36e102979232442"
+      },
+      {
+        "path": "v2/contextual-review.js",
+        "content_sha256": "0afaeef954f2be347a47ecd9c5ee6b3f51eb47de6ab54465fa6cbd327fe3f1d3"
+      },
+      {
+        "path": "v2/index.html",
+        "content_sha256": "d81ad552f72430d61526629dd814c10a4500441423feeb58fade24454a85014d"
+      },
+      {
+        "path": "v2/lib/action-presentation.js",
+        "content_sha256": "d7f4d2d43ca71792c826c552cafc8950cbf1babb7c5b41dec00cbcd6982a796f"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation-counterfactual.js",
+        "content_sha256": "8d24ad3557e055e567fea474bb18b11d4b0d6a2316f9e89150091247c0003b12"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation-review.js",
+        "content_sha256": "8ebca2efd1a918081274861aec9c8cc79eaf2b1fc9aa69975e6ba650218cff42"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation.js",
+        "content_sha256": "b54490ab0af3f6e84d5de3437baf41b15f71d34de1d8567550dbe1827faf1499"
+      },
+      {
+        "path": "v2/lib/decision.js",
+        "content_sha256": "3488832f79185a6286696d9a702968e48854a8227608d90d9b9821a38986ecfd"
+      },
+      {
+        "path": "v2/lib/destructive-anchor-counterfactual.js",
+        "content_sha256": "35efc7fe4f4f37c146b54bff02f17607b2cd6ae77d1c04d39fc117db8912133e"
+      },
+      {
+        "path": "v2/lib/feedback-search.js",
+        "content_sha256": "d65f533d694ab9ca6ddcb315dc2c1e9986ab686040d7cc9f62c7f4d3db312760"
+      },
+      {
+        "path": "v2/lib/filled-action-direction-counterfactual.js",
+        "content_sha256": "f1fa26a4c4c98959fd893f33b607410ff17ca36d7e380b1c017bcbeffa240993"
+      },
+      {
+        "path": "v2/lib/filled-action-direction.js",
+        "content_sha256": "e11e0df16ae3e75dfec5b384b88dbf22dfa2e0d03295f481b595123807fc1592"
+      },
+      {
+        "path": "v2/lib/filled-action-hybrid-counterfactual.js",
+        "content_sha256": "e3aabbf93f6d3f87e26a60befef00157c918b7e64aded853e8d2d3860fea6ab0"
+      },
+      {
+        "path": "v2/lib/filled-action-joint.js",
+        "content_sha256": "5835c011ad08227cfbcfe59bdd2e5dbee2521e8114ca7ed451b19fbee1b1fd0c"
+      },
+      {
+        "path": "v2/lib/mode-range-counterfactual.js",
+        "content_sha256": "57656173e1aa5e0df3ebfd130e2bf49df32d62766b95cba05c0421b175dadd25"
+      },
+      {
+        "path": "v2/lib/pair-selection.js",
+        "content_sha256": "8857559d661fb7feb08375c671fd248d3365e92a9ea970b726552c556f84dc4a"
+      },
+      {
+        "path": "v2/lib/palette-runtime.js",
+        "content_sha256": "5654b67741ea3ac0a1d62220b440f23c06ccd4532701fe418109e06dbde1b2cc"
+      },
+      {
+        "path": "v2/lib/palette.js",
+        "content_sha256": "049bd51f720c7e2d11227ad66969061804f6ede5d6207547aa2784eba1633ccd"
+      },
+      {
+        "path": "v2/lib/policy.js",
+        "content_sha256": "26e72be27c2a924e405b8d26d0b2a8082fcd4a4d2a197b7dfd5aaeb1db7ea591"
+      },
+      {
+        "path": "v2/lib/quality.js",
+        "content_sha256": "737c7e79c0222031fb8c186ef1e5f3bc49030589547b80a831fba0f906e1c05d"
+      },
+      {
+        "path": "v2/lib/red-band-presentation.js",
+        "content_sha256": "1368bd8af278719c1d824998aa4a4acbc9d5e93308da20bf3aa6a7084c0c3cce"
+      },
+      {
+        "path": "v2/lib/semantic-model.js",
+        "content_sha256": "5924b2b0b38fbe134180fa9119adb645cb803ee843461fb226431f0397cff23d"
+      },
+      {
+        "path": "v2/lib/tonal-offset.js",
+        "content_sha256": "01b4ef3a82043c3baa53ca37f445cf174ac417db620c20728347e5c3c8b6b154"
+      },
+      {
+        "path": "v2/lib/view.js",
+        "content_sha256": "bbc57f7a011593b868ccfb7d37a2f9a7abba88bc2369553bde63bfd65df0ee4e"
+      },
+      {
+        "path": "v2/palette-worker.js",
+        "content_sha256": "a343136d6465a7f0df81d88f3c6b4f244f7ee249e2424f4cf615b0c7cc15421d"
+      },
+      {
+        "path": "v2/reference.html",
+        "content_sha256": "8e4fcdee460cf4ddffa53633d9ee62fa2fa1143fcc3ed3a2b221e01452f0df82"
+      },
+      {
+        "path": "v2/styles/about.css",
+        "content_sha256": "5ef7372c27ecb4b3de29cef3830c6d8b7b7c033f332edbba4f3f3f78a3ca1019"
+      },
+      {
+        "path": "v2/styles/base.css",
+        "content_sha256": "02c0164d72306b697bc5dccccc7acbf7358afbd0c838c9f67b5273636aa58a26"
+      },
+      {
+        "path": "v2/styles/contextual-review.css",
+        "content_sha256": "02168bc5a8d031ebd2a40388a26a8977ba18197087c556f671680176ce778865"
+      },
+      {
+        "path": "v2/styles/decision-graphs.css",
+        "content_sha256": "7fae16c5c9ab8fc73b4a574d55e50f3fcb3f199f8524a87ad656bb024245d52d"
+      },
+      {
+        "path": "v2/styles/inspector.css",
+        "content_sha256": "c01b9bef3641b476b2aa02dfd62c1834b0d41f6c445f9d0150aff38bc9c4c7f4"
+      },
+      {
+        "path": "v2/styles/reference.css",
+        "content_sha256": "f68cd4bdba6e9273b8b0946f54422b2412e77a22386a0633490327d267c33de2"
+      },
+      {
+        "path": "v2/styles/responsive.css",
+        "content_sha256": "6398d9e123297cc93d4279a5665c4332579fd9c2535b7b6d655a04aeabd26bb1"
+      },
+      {
+        "path": "v2/styles/specimens.css",
+        "content_sha256": "fcf4bf6a3ed2f89fdb2294b2a540fe13f64e7d882586168242614c7e63102008"
+      }
+    ],
+    "reviewed_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "staged_patch_sha256": "f1ecee25c8dd46f6656a419b84ab9ddb9bf4b1bb142c509b2218d6960f3d712b",
+    "unstaged_patch_sha256": "ea4402f250767e89e49b3cad3b1e839c09545adc61e38e2a7a154d267ee6e823",
+    "declared_untracked": [
+      {
+        "path": ".agents/hitl-adapter.yaml",
+        "content_sha256": "de21f4c5399a29cbf4a74d94224e3dd8eb58b6a3f92905476a0198e3f65d91a4"
+      },
+      {
+        "path": "docs/README.md",
+        "content_sha256": "e452b1b6fda5d9a6d8a4cf0b3d15c3eb396be7ad696218114059ec66bd9294fd"
+      },
+      {
+        "path": "docs/archive/README.md",
+        "content_sha256": "9fb35f66fce5ed803be16fa7027c9368f1673fbd8470e3a2877a379714f92fb8"
+      },
+      {
+        "path": "docs/archive/v1/README.md",
+        "content_sha256": "eb6e039ecf6dab80e3630f3017286b3be706621960f80daf6a48674bfade32ad"
+      },
+      {
+        "path": "docs/product.md",
+        "content_sha256": "ed38d4a5964a52d24560496e1e477398eac07fe68bfc0e03bb689e09f454f3de"
+      },
+      {
+        "path": "docs/retro/2026-08-18-session-retro.md",
+        "content_sha256": "7b6c5ef12cda8792352d477d4f5ffa3882f5d1c74daba8185f0ac6aa093dd462"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0001-source-red-collision-aware-filled-action-direction.md",
+        "content_sha256": "25130dafd34ded005e028892330ffcbf1e4df83b5b6247e8bdb55c8b29babd82"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0002-red-band-role-collision-presentation.md",
+        "content_sha256": "7558c599bf137ef8df342050537a626bc9343e8494638b45438f11a804436517"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0003-single-filled-action-hierarchy.md",
+        "content_sha256": "099852fe88536f2835101ce5a2d6a2ddcc82bcb587072e2da1a87cf03237d9c4"
+      },
+      {
+        "path": "docs/v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md",
+        "content_sha256": "21ee2967c25d496aa35773a619e83c6f8517875d626c06f4f431aa5a065e38a9"
+      },
+      {
+        "path": "docs/v2-decisions/adr/README.md",
+        "content_sha256": "4f5277b5f74836ae184482e20970d036b46c5a19d0f332aee7779912ddf9cf89"
+      },
+      {
+        "path": "docs/v2-decisions/research/contextual-destructive-separation.md",
+        "content_sha256": "4bf4d51c7189360060db667780a73b1533d6da155033e209479e88c731d47be7"
+      },
+      {
+        "path": "docs/v2-decisions/research/destructive-grammar-calibration.md",
+        "content_sha256": "e0af3fd4bcba37f5aef4cccfa43e38eaa95bd601645e285aeb0e13661f6071e6"
+      },
+      {
+        "path": "docs/v2-decisions/research/filled-action-state-direction.md",
+        "content_sha256": "81bff6e02eaf688d947b8a7d6601090ab468a9689348748036f51f31717d9475"
+      },
+      {
+        "path": "docs/v2-decisions/research/tonal-offset-sweep.md",
+        "content_sha256": "656543cf35689c37d23d366bcd5d087d4691f250b07ef79dd9ba63bce6be00d9"
+      },
+      {
+        "path": "docs/v2-decisions/rules.md",
+        "content_sha256": "1fba0632289cb9c5c3d4127a0bed28543ebf9b39e301c4d55b99b852646e68db"
+      },
+      {
+        "path": "scripts/report-contextual-destructive-separation-counterfactual.mjs",
+        "content_sha256": "19c0f842e86f3bb9d4362e78e39091a3d143b1c76667fe884368e04c2e447035"
+      },
+      {
+        "path": "scripts/report-filled-action-direction-counterfactual.mjs",
+        "content_sha256": "f8cac6aa945fcc7ba375a35a457bf08d7bea04904d515ea6a1ff434bc2252b26"
+      },
+      {
+        "path": "scripts/report-filled-action-hybrid-counterfactual.mjs",
+        "content_sha256": "99280e002836297323abf2dfe52fb97dc8d2159377097dae217b7e68450900ee"
+      },
+      {
+        "path": "test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+        "content_sha256": "eb38bbc530a92d1e6d6ce7708782ccd148254208baae184ed4e09ba164dede9d"
+      },
+      {
+        "path": "test/heavy/v2-filled-action-direction-counterfactual.test.js",
+        "content_sha256": "c6f46f24f4562cfa566e155988b36da08b89bbc15e37aa431235f3685d23bdb6"
+      },
+      {
+        "path": "test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
+        "content_sha256": "fdf268dde4f22f1a44e7e9e08878673f4d5d4ad01a292aaa628ad78eff9000c4"
+      },
+      {
+        "path": "test/v2-action-presentation.test.js",
+        "content_sha256": "6e0b4a198f2899b4c31fc2bad0d55c67fefbb2f581b7642fd46ee3bedcc1387c"
+      },
+      {
+        "path": "test/v2-applied-samples-ui.test.js",
+        "content_sha256": "9877bb2085a97a00ce0366e5adfbfb9b3e213a048889511806c120e04fc289fb"
+      },
+      {
+        "path": "test/v2-contextual-destructive-separation-counterfactual.test.js",
+        "content_sha256": "b0b51e7f4d70e59fcd326a95d08e117a0ff7415b9a1e9a887ea28363b6d0ea6a"
+      },
+      {
+        "path": "test/v2-contextual-destructive-separation-review.test.js",
+        "content_sha256": "42ef444ab40c7328cab2b6fee9f1a4621b5a7639c2ff484c567e78e60e3527a4"
+      },
+      {
+        "path": "test/v2-destructive-grammar-calibration.test.js",
+        "content_sha256": "8582b9320c7d214ab2fa76943f003d92a5583743fb9903407e3531731253418f"
+      },
+      {
+        "path": "test/v2-filled-action-direction-counterfactual.test.js",
+        "content_sha256": "ffd470de81dd800e93d21beefb8f0e473948714e438005f890e091802e5a87d7"
+      },
+      {
+        "path": "test/v2-filled-action-hybrid-counterfactual.test.js",
+        "content_sha256": "60899957f6a443ca4686c2b50e7398a603921768fe09beab1b8e028c53c4ed9e"
+      },
+      {
+        "path": "test/v2-filled-action-joint.test.js",
+        "content_sha256": "3fa8f491b58d697e7f56aeb5d7dad2d18ad265ecac290efcd4da65f5a4ee2374"
+      },
+      {
+        "path": "test/v2-red-band-presentation.test.js",
+        "content_sha256": "233f53e450990f0345cb4fa9aa1f6d8e943c886cb911793a94a3e74366a6061d"
+      },
+      {
+        "path": "test/v2-tonal-offset.test.js",
+        "content_sha256": "1bbf61b7532ca45d787b88bd251ff7c6248f85d9b117405b1fc1484a139e8a13"
+      },
+      {
+        "path": "v2/about.html",
+        "content_sha256": "dd6e3697ffbeaf9713ea1759f9321bd9b19f4b9385c41d7676047d0e5e62d449"
+      },
+      {
+        "path": "v2/about.js",
+        "content_sha256": "0784ce6790e203b187119b977c0d7277d7fab4f2c9579bbaf13498f912d9ea56"
+      },
+      {
+        "path": "v2/contextual-review.html",
+        "content_sha256": "9f773ff21a07a6834149bdeb6aa0f06b62df6a933732776be36e102979232442"
+      },
+      {
+        "path": "v2/contextual-review.js",
+        "content_sha256": "0afaeef954f2be347a47ecd9c5ee6b3f51eb47de6ab54465fa6cbd327fe3f1d3"
+      },
+      {
+        "path": "v2/lib/action-presentation.js",
+        "content_sha256": "d7f4d2d43ca71792c826c552cafc8950cbf1babb7c5b41dec00cbcd6982a796f"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation-counterfactual.js",
+        "content_sha256": "8d24ad3557e055e567fea474bb18b11d4b0d6a2316f9e89150091247c0003b12"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation-review.js",
+        "content_sha256": "8ebca2efd1a918081274861aec9c8cc79eaf2b1fc9aa69975e6ba650218cff42"
+      },
+      {
+        "path": "v2/lib/contextual-destructive-separation.js",
+        "content_sha256": "b54490ab0af3f6e84d5de3437baf41b15f71d34de1d8567550dbe1827faf1499"
+      },
+      {
+        "path": "v2/lib/filled-action-direction-counterfactual.js",
+        "content_sha256": "f1fa26a4c4c98959fd893f33b607410ff17ca36d7e380b1c017bcbeffa240993"
+      },
+      {
+        "path": "v2/lib/filled-action-direction.js",
+        "content_sha256": "e11e0df16ae3e75dfec5b384b88dbf22dfa2e0d03295f481b595123807fc1592"
+      },
+      {
+        "path": "v2/lib/filled-action-hybrid-counterfactual.js",
+        "content_sha256": "e3aabbf93f6d3f87e26a60befef00157c918b7e64aded853e8d2d3860fea6ab0"
+      },
+      {
+        "path": "v2/lib/filled-action-joint.js",
+        "content_sha256": "5835c011ad08227cfbcfe59bdd2e5dbee2521e8114ca7ed451b19fbee1b1fd0c"
+      },
+      {
+        "path": "v2/lib/red-band-presentation.js",
+        "content_sha256": "1368bd8af278719c1d824998aa4a4acbc9d5e93308da20bf3aa6a7084c0c3cce"
+      },
+      {
+        "path": "v2/lib/tonal-offset.js",
+        "content_sha256": "01b4ef3a82043c3baa53ca37f445cf174ac417db620c20728347e5c3c8b6b154"
+      },
+      {
+        "path": "v2/reference.html",
+        "content_sha256": "8e4fcdee460cf4ddffa53633d9ee62fa2fa1143fcc3ed3a2b221e01452f0df82"
+      },
+      {
+        "path": "v2/styles/about.css",
+        "content_sha256": "5ef7372c27ecb4b3de29cef3830c6d8b7b7c033f332edbba4f3f3f78a3ca1019"
+      },
+      {
+        "path": "v2/styles/contextual-review.css",
+        "content_sha256": "02168bc5a8d031ebd2a40388a26a8977ba18197087c556f671680176ce778865"
+      },
+      {
+        "path": "v2/styles/reference.css",
+        "content_sha256": "f68cd4bdba6e9273b8b0946f54422b2412e77a22386a0633490327d267c33de2"
+      }
+    ],
+    "auto_excluded_paths": [
+      "docs/status/critique/2026-08-20-024930-packet.json",
+      "docs/status/critique/2026-08-20-024930-packet.md"
+    ],
+    "identity_sha256": "c3b68b1ba7679c649e0583a1a08d2ee639eae81dd8cf4a24b867db46eae110d6"
+  },
+  "review_scope": {
+    "kind": "changed-scope",
+    "requested_review_paths": [
+      ".agents/hitl-adapter.yaml",
+      "docs/README.md",
+      "docs/architecture.md",
+      "docs/archive/README.md",
+      "docs/archive/v1/README.md",
+      "docs/archive/v1/engine-testing-plan.md",
+      "docs/archive/v1/output-artifact-proposal.md",
+      "docs/archive/v1/prototype-domain-spec.md",
+      "docs/archive/v1/prototype-plan.md",
+      "docs/archive/v1/reference-insights.md",
+      "docs/collaboration.md",
+      "docs/development.md",
+      "docs/interaction-design.md",
+      "docs/operator-acceptance.md",
+      "docs/product-direction.md",
+      "docs/product.md",
+      "docs/retro/2026-08-18-session-retro.md",
+      "docs/roadmap.md",
+      "docs/technology-stack.md",
+      "docs/v2-decision-justification.md",
+      "docs/v2-decisions/README.md",
+      "docs/v2-decisions/adr/0001-source-red-collision-aware-filled-action-direction.md",
+      "docs/v2-decisions/adr/0002-red-band-role-collision-presentation.md",
+      "docs/v2-decisions/adr/0003-single-filled-action-hierarchy.md",
+      "docs/v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md",
+      "docs/v2-decisions/adr/README.md",
+      "docs/v2-decisions/color-decision-flow.md",
+      "docs/v2-decisions/evidence.md",
+      "docs/v2-decisions/implementation/candidate-search.md",
+      "docs/v2-decisions/implementation/runtime.md",
+      "docs/v2-decisions/implementation/status.md",
+      "docs/v2-decisions/ontology.md",
+      "docs/v2-decisions/policy/evidence.md",
+      "docs/v2-decisions/policy/roles.md",
+      "docs/v2-decisions/policy/semantic-model.md",
+      "docs/v2-decisions/policy/utility-role-aliases.md",
+      "docs/v2-decisions/reference/public-specimen.md",
+      "docs/v2-decisions/research/adversarial-audit.md",
+      "docs/v2-decisions/research/contextual-destructive-separation.md",
+      "docs/v2-decisions/research/destructive-grammar-calibration.md",
+      "docs/v2-decisions/research/filled-action-state-direction.md",
+      "docs/v2-decisions/research/hover-diagnostics.md",
+      "docs/v2-decisions/research/tonal-offset-sweep.md",
+      "docs/v2-decisions/rules.md",
+      "docs/v2-spec.md",
+      "e2e/v2.spec.js",
+      "e2e/v2.spec.js-snapshots/reference-specimens.png",
+      "package.json",
+      "playwright.config.js",
+      "readme.md",
+      "scripts/build-site.mjs",
+      "scripts/report-contextual-destructive-separation-counterfactual.mjs",
+      "scripts/report-filled-action-direction-counterfactual.mjs",
+      "scripts/report-filled-action-hybrid-counterfactual.mjs",
+      "test/exhaustive/v2-grid.test.js",
+      "test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/heavy/v2-destructive-anchor-counterfactual.test.js",
+      "test/heavy/v2-feedback-candidate-availability.test.js",
+      "test/heavy/v2-filled-action-direction-counterfactual.test.js",
+      "test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/heavy/v2-mode-range-counterfactual.test.js",
+      "test/heavy/v2-pair-ranking-counterfactual.test.js",
+      "test/heavy/v2-primary-chroma-counterfactual.test.js",
+      "test/v2-action-presentation.test.js",
+      "test/v2-applied-samples-ui.test.js",
+      "test/v2-color-decision-flow-doc.test.js",
+      "test/v2-color-system-doc.test.js",
+      "test/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/v2-contextual-destructive-separation-review.test.js",
+      "test/v2-decision.test.js",
+      "test/v2-destructive-grammar-calibration.test.js",
+      "test/v2-feedback-candidate-availability.test.js",
+      "test/v2-filled-action-direction-counterfactual.test.js",
+      "test/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/v2-filled-action-joint.test.js",
+      "test/v2-pair-ranking-counterfactual.test.js",
+      "test/v2-palette-runtime.test.js",
+      "test/v2-palette.test.js",
+      "test/v2-red-band-presentation.test.js",
+      "test/v2-tonal-offset.test.js",
+      "v2/about.html",
+      "v2/about.js",
+      "v2/app.js",
+      "v2/contextual-review.html",
+      "v2/contextual-review.js",
+      "v2/index.html",
+      "v2/lib/action-presentation.js",
+      "v2/lib/contextual-destructive-separation-counterfactual.js",
+      "v2/lib/contextual-destructive-separation-review.js",
+      "v2/lib/contextual-destructive-separation.js",
+      "v2/lib/decision.js",
+      "v2/lib/destructive-anchor-counterfactual.js",
+      "v2/lib/feedback-search.js",
+      "v2/lib/filled-action-direction-counterfactual.js",
+      "v2/lib/filled-action-direction.js",
+      "v2/lib/filled-action-hybrid-counterfactual.js",
+      "v2/lib/filled-action-joint.js",
+      "v2/lib/mode-range-counterfactual.js",
+      "v2/lib/pair-selection.js",
+      "v2/lib/palette-runtime.js",
+      "v2/lib/palette.js",
+      "v2/lib/policy.js",
+      "v2/lib/quality.js",
+      "v2/lib/red-band-presentation.js",
+      "v2/lib/semantic-model.js",
+      "v2/lib/tonal-offset.js",
+      "v2/lib/view.js",
+      "v2/palette-worker.js",
+      "v2/reference.html",
+      "v2/styles/about.css",
+      "v2/styles/base.css",
+      "v2/styles/contextual-review.css",
+      "v2/styles/decision-graphs.css",
+      "v2/styles/inspector.css",
+      "v2/styles/reference.css",
+      "v2/styles/responsive.css",
+      "v2/styles/specimens.css"
+    ],
+    "changed_scope_paths": [
+      ".agents/hitl-adapter.yaml",
+      "docs/README.md",
+      "docs/architecture.md",
+      "docs/archive/README.md",
+      "docs/archive/v1/README.md",
+      "docs/archive/v1/engine-testing-plan.md",
+      "docs/archive/v1/output-artifact-proposal.md",
+      "docs/archive/v1/prototype-domain-spec.md",
+      "docs/archive/v1/prototype-plan.md",
+      "docs/archive/v1/reference-insights.md",
+      "docs/collaboration.md",
+      "docs/development.md",
+      "docs/interaction-design.md",
+      "docs/operator-acceptance.md",
+      "docs/product-direction.md",
+      "docs/product.md",
+      "docs/retro/2026-08-18-session-retro.md",
+      "docs/roadmap.md",
+      "docs/technology-stack.md",
+      "docs/v2-decision-justification.md",
+      "docs/v2-decisions/README.md",
+      "docs/v2-decisions/adr/0001-source-red-collision-aware-filled-action-direction.md",
+      "docs/v2-decisions/adr/0002-red-band-role-collision-presentation.md",
+      "docs/v2-decisions/adr/0003-single-filled-action-hierarchy.md",
+      "docs/v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md",
+      "docs/v2-decisions/adr/README.md",
+      "docs/v2-decisions/color-decision-flow.md",
+      "docs/v2-decisions/evidence.md",
+      "docs/v2-decisions/implementation/candidate-search.md",
+      "docs/v2-decisions/implementation/runtime.md",
+      "docs/v2-decisions/implementation/status.md",
+      "docs/v2-decisions/ontology.md",
+      "docs/v2-decisions/policy/evidence.md",
+      "docs/v2-decisions/policy/roles.md",
+      "docs/v2-decisions/policy/semantic-model.md",
+      "docs/v2-decisions/policy/utility-role-aliases.md",
+      "docs/v2-decisions/reference/public-specimen.md",
+      "docs/v2-decisions/research/adversarial-audit.md",
+      "docs/v2-decisions/research/contextual-destructive-separation.md",
+      "docs/v2-decisions/research/destructive-grammar-calibration.md",
+      "docs/v2-decisions/research/filled-action-state-direction.md",
+      "docs/v2-decisions/research/hover-diagnostics.md",
+      "docs/v2-decisions/research/tonal-offset-sweep.md",
+      "docs/v2-decisions/rules.md",
+      "docs/v2-spec.md",
+      "e2e/v2.spec.js",
+      "e2e/v2.spec.js-snapshots/reference-specimens.png",
+      "package.json",
+      "playwright.config.js",
+      "readme.md",
+      "scripts/build-site.mjs",
+      "scripts/report-contextual-destructive-separation-counterfactual.mjs",
+      "scripts/report-filled-action-direction-counterfactual.mjs",
+      "scripts/report-filled-action-hybrid-counterfactual.mjs",
+      "test/exhaustive/v2-grid.test.js",
+      "test/heavy/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/heavy/v2-destructive-anchor-counterfactual.test.js",
+      "test/heavy/v2-feedback-candidate-availability.test.js",
+      "test/heavy/v2-filled-action-direction-counterfactual.test.js",
+      "test/heavy/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/heavy/v2-mode-range-counterfactual.test.js",
+      "test/heavy/v2-pair-ranking-counterfactual.test.js",
+      "test/heavy/v2-primary-chroma-counterfactual.test.js",
+      "test/v2-action-presentation.test.js",
+      "test/v2-applied-samples-ui.test.js",
+      "test/v2-color-decision-flow-doc.test.js",
+      "test/v2-color-system-doc.test.js",
+      "test/v2-contextual-destructive-separation-counterfactual.test.js",
+      "test/v2-contextual-destructive-separation-review.test.js",
+      "test/v2-decision.test.js",
+      "test/v2-destructive-grammar-calibration.test.js",
+      "test/v2-feedback-candidate-availability.test.js",
+      "test/v2-filled-action-direction-counterfactual.test.js",
+      "test/v2-filled-action-hybrid-counterfactual.test.js",
+      "test/v2-filled-action-joint.test.js",
+      "test/v2-pair-ranking-counterfactual.test.js",
+      "test/v2-palette-runtime.test.js",
+      "test/v2-palette.test.js",
+      "test/v2-red-band-presentation.test.js",
+      "test/v2-tonal-offset.test.js",
+      "v2/about.html",
+      "v2/about.js",
+      "v2/app.js",
+      "v2/contextual-review.html",
+      "v2/contextual-review.js",
+      "v2/index.html",
+      "v2/lib/action-presentation.js",
+      "v2/lib/contextual-destructive-separation-counterfactual.js",
+      "v2/lib/contextual-destructive-separation-review.js",
+      "v2/lib/contextual-destructive-separation.js",
+      "v2/lib/decision.js",
+      "v2/lib/destructive-anchor-counterfactual.js",
+      "v2/lib/feedback-search.js",
+      "v2/lib/filled-action-direction-counterfactual.js",
+      "v2/lib/filled-action-direction.js",
+      "v2/lib/filled-action-hybrid-counterfactual.js",
+      "v2/lib/filled-action-joint.js",
+      "v2/lib/mode-range-counterfactual.js",
+      "v2/lib/pair-selection.js",
+      "v2/lib/palette-runtime.js",
+      "v2/lib/palette.js",
+      "v2/lib/policy.js",
+      "v2/lib/quality.js",
+      "v2/lib/red-band-presentation.js",
+      "v2/lib/semantic-model.js",
+      "v2/lib/tonal-offset.js",
+      "v2/lib/view.js",
+      "v2/palette-worker.js",
+      "v2/reference.html",
+      "v2/styles/about.css",
+      "v2/styles/base.css",
+      "v2/styles/contextual-review.css",
+      "v2/styles/decision-graphs.css",
+      "v2/styles/inspector.css",
+      "v2/styles/reference.css",
+      "v2/styles/responsive.css",
+      "v2/styles/specimens.css"
+    ],
+    "identity_captured": true,
+    "has_reviewed_inputs": true,
+    "matches_changed_scope": true,
+    "disposition": null,
+    "ok": true
+  }
+}

@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "kind": "retro-lesson-selection-index",
+  "source": "docs/retro/*.md Context/Waste/Next Improvements",
+  "selection_policy": {
+    "advisory": true,
+    "recency_half_life_days": 45,
+    "alpha_base": 0.6,
+    "warmup_n": 5,
+    "recurrence_multiplier": "1 + alpha_t * max(0, independent_source_count - 1)",
+    "alpha_t": "alpha_base * min(1, independent_source_count / warmup_n)",
+    "independent_source_count": "human-authored sources count individually; all emissions sharing one generator count once"
+  },
+  "as_of_source_date": "2026-08-20",
+  "source_artifact_count": 2,
+  "candidate_count": 8,
+  "top_candidates": [
+    {
+      "candidate_id": "current_focus:c44177f94b6f",
+      "kind": "current_focus",
+      "lesson": "This review examined a reported Red-primary inconsistency: Dark Routine Primary became lighter through hover/pressed while Destructive confirmation became darker.",
+      "normalized_key": "this review examined a reported red primary inconsistency dark routine primary became lighter through",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Context",
+          "generator": null,
+          "kind": "current_focus",
+          "lesson": "This review examined a reported Red-primary inconsistency: Dark Routine Primary became lighter through hover/pressed while Destructive confirmation became darker."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:d630bdc3d971",
+      "kind": "next_improvement",
+      "lesson": "add a declarative policy matrix/manifest that cross-checks policy, producer, evaluator, acceptance test, and normative-document claims; automate IDs and direction/scope values only.",
+      "normalized_key": "add a declarative policy matrix manifest that cross checks policy producer evaluator acceptance test",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "add a declarative policy matrix/manifest that cross-checks policy, producer, evaluator, acceptance test, and normative-document claims; automate IDs and direction/scope values only."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:463d2ee7847b",
+      "kind": "next_improvement",
+      "lesson": "before approving a semantic-policy change, review a compact Role × Mode × Context × State matrix and name the owner of each differing axis.",
+      "normalized_key": "before approving a semantic policy change review a compact role mode context state matrix",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "before approving a semantic-policy change, review a compact Role × Mode × Context × State matrix and name the owner of each differing axis."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:e5b18816bd06",
+      "kind": "next_improvement",
+      "lesson": "retain this retro, the critique record, and the red-primary counterexample as the next policy-change review seed.",
+      "normalized_key": "retain this retro the critique record and the red primary counterexample as the next",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "retain this retro, the critique record, and the red-primary counterexample as the next policy-change review seed."
+        }
+      ]
+    },
+    {
+      "candidate_id": "current_focus:1fc3f377acbf",
+      "kind": "current_focus",
+      "lesson": "The public color-system documentation was repeatedly corrected by the user after first-touch reading exposed missing definitions, incomplete rule lists, and links whose destinations did not answer the question that triggered the link.",
+      "normalized_key": "the public color system documentation was repeatedly corrected by the user after first touch",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Context",
+          "generator": null,
+          "kind": "current_focus",
+          "lesson": "The public color-system documentation was repeatedly corrected by the user after first-touch reading exposed missing definitions, incomplete rule lists, and links whose destinations did not answer the question that triggered the link."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:ea772c79053f",
+      "kind": "next_improvement",
+      "lesson": "retain this retro and the FAQ as the next documentation review checklist.",
+      "normalized_key": "retain this retro and the faq as the next documentation review checklist",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "retain this retro and the FAQ as the next documentation review checklist."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:aa5a66be8f34",
+      "kind": "next_improvement",
+      "lesson": "run one novice input journey and FAQ extraction before calling a first-touch page complete.",
+      "normalized_key": "run one novice input journey and faq extraction before calling a first touch page",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "run one novice input journey and FAQ extraction before calling a first-touch page complete."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:468fe876d9fb",
+      "kind": "next_improvement",
+      "lesson": "test every public numeric/count claim against its complete stable-ID or formula destination.",
+      "normalized_key": "test every public numeric count claim against its complete stable id or formula destination",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "test every public numeric/count claim against its complete stable-ID or formula destination."
+        }
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "current_focus:c44177f94b6f",
+      "kind": "current_focus",
+      "lesson": "This review examined a reported Red-primary inconsistency: Dark Routine Primary became lighter through hover/pressed while Destructive confirmation became darker.",
+      "normalized_key": "this review examined a reported red primary inconsistency dark routine primary became lighter through",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Context",
+          "generator": null,
+          "kind": "current_focus",
+          "lesson": "This review examined a reported Red-primary inconsistency: Dark Routine Primary became lighter through hover/pressed while Destructive confirmation became darker."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:d630bdc3d971",
+      "kind": "next_improvement",
+      "lesson": "add a declarative policy matrix/manifest that cross-checks policy, producer, evaluator, acceptance test, and normative-document claims; automate IDs and direction/scope values only.",
+      "normalized_key": "add a declarative policy matrix manifest that cross checks policy producer evaluator acceptance test",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "add a declarative policy matrix/manifest that cross-checks policy, producer, evaluator, acceptance test, and normative-document claims; automate IDs and direction/scope values only."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:463d2ee7847b",
+      "kind": "next_improvement",
+      "lesson": "before approving a semantic-policy change, review a compact Role × Mode × Context × State matrix and name the owner of each differing axis.",
+      "normalized_key": "before approving a semantic policy change review a compact role mode context state matrix",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "before approving a semantic-policy change, review a compact Role × Mode × Context × State matrix and name the owner of each differing axis."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:e5b18816bd06",
+      "kind": "next_improvement",
+      "lesson": "retain this retro, the critique record, and the red-primary counterexample as the next policy-change review seed.",
+      "normalized_key": "retain this retro the critique record and the red primary counterexample as the next",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-20-session-retro.md",
+      "latest_source_date": "2026-08-20",
+      "age_days": 0,
+      "recency_weight": 1.0,
+      "alpha": 0.12,
+      "selection_weight": 1.0,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-20-session-retro.md",
+          "date": "2026-08-20",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "retain this retro, the critique record, and the red-primary counterexample as the next policy-change review seed."
+        }
+      ]
+    },
+    {
+      "candidate_id": "current_focus:1fc3f377acbf",
+      "kind": "current_focus",
+      "lesson": "The public color-system documentation was repeatedly corrected by the user after first-touch reading exposed missing definitions, incomplete rule lists, and links whose destinations did not answer the question that triggered the link.",
+      "normalized_key": "the public color system documentation was repeatedly corrected by the user after first touch",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Context",
+          "generator": null,
+          "kind": "current_focus",
+          "lesson": "The public color-system documentation was repeatedly corrected by the user after first-touch reading exposed missing definitions, incomplete rule lists, and links whose destinations did not answer the question that triggered the link."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:ea772c79053f",
+      "kind": "next_improvement",
+      "lesson": "retain this retro and the FAQ as the next documentation review checklist.",
+      "normalized_key": "retain this retro and the faq as the next documentation review checklist",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "retain this retro and the FAQ as the next documentation review checklist."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:aa5a66be8f34",
+      "kind": "next_improvement",
+      "lesson": "run one novice input journey and FAQ extraction before calling a first-touch page complete.",
+      "normalized_key": "run one novice input journey and faq extraction before calling a first touch page",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "run one novice input journey and FAQ extraction before calling a first-touch page complete."
+        }
+      ]
+    },
+    {
+      "candidate_id": "next_improvement:468fe876d9fb",
+      "kind": "next_improvement",
+      "lesson": "test every public numeric/count claim against its complete stable-ID or formula destination.",
+      "normalized_key": "test every public numeric count claim against its complete stable id or formula destination",
+      "recurrence_class": null,
+      "source_count": 1,
+      "independent_source_count": 1,
+      "generator_authored": 0,
+      "latest_source_path": "docs/retro/2026-08-18-session-retro.md",
+      "latest_source_date": "2026-08-18",
+      "age_days": 2,
+      "recency_weight": 0.9697,
+      "alpha": 0.12,
+      "selection_weight": 0.9697,
+      "sources": [
+        {
+          "artifact_path": "docs/retro/2026-08-18-session-retro.md",
+          "date": "2026-08-18",
+          "section": "Next Improvements",
+          "generator": null,
+          "kind": "next_improvement",
+          "lesson": "test every public numeric/count claim against its complete stable-ID or formula destination."
+        }
+      ]
+    }
+  ]
+}

@@ -203,15 +203,11 @@ h1 {
   line-height: 1.55;
   margin: -8px 0 16px;
 }
-.fixed-policy,
 .error,
 .calculation-status {
   font-size: 11px;
   line-height: 1.5;
   margin: 12px 0 0;
-}
-.fixed-policy {
-  color: var(--muted);
 }
 .calculation-status {
   color: var(--muted);
@@ -738,6 +734,33 @@ body:not([data-result-mode="compare"]) .relationship-row strong {
 
 .example-section {
   margin-top: 64px;
+}
+.example-tabs {
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 4px;
+  margin: 22px 0 18px;
+  overflow-x: auto;
+  padding-bottom: 0;
+}
+.example-tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 11px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+.example-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 700;
+}
+.example-tabs button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -4px;
 }
 .examples {
   display: grid;

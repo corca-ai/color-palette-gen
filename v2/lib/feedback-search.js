@@ -1,10 +1,13 @@
-import { apcaContrast } from "./apca.js";
 import { selectCandidate } from "./decision.js";
 import { V2_POLICY, decisionPolicy, evidence } from "./policy.js";
 import {
+  chooseTextContrastForeground,
+  TEXT_CONTRAST_STRATEGIES,
+  textContrastEvidence,
+} from "./text-contrast-strategy.js";
+import {
   bindRule,
   candidate,
-  chooseSharedText,
   destructiveTone,
   distance,
   stableTieBreaker,
@@ -13,6 +16,73 @@ import {
 
 function increment(counts, key) {
   counts[key] = (counts[key] ?? 0) + 1;
+}
+
+function destructiveLabelContrastResult({
+  actionForeground,
+  background,
+  textContrastStrategy,
+}) {
+  const result = textContrastEvidence({
+    foreground: actionForeground,
+    backgrounds: [background],
+    apcaMinimum: V2_POLICY.destructive.apcaDiagnosticLc,
+    strategy: textContrastStrategy,
+  });
+  const lc = result.apca.minimum;
+  if (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+    return {
+      passed: result.passed,
+      reasons: [
+        result.passed
+          ? `Shared filled-action foreground passes ${textContrastStrategy}.`
+          : `Shared filled-action foreground fails ${textContrastStrategy}.`,
+      ],
+      metrics: { ...result, text: actionForeground },
+    };
+  }
+  return {
+    passed: lc >= V2_POLICY.destructive.apcaDiagnosticLc,
+    reasons: [
+      lc >= V2_POLICY.destructive.apcaDiagnosticLc
+        ? `Shared filled-action foreground reaches ${lc.toFixed(1)} Lc.`
+        : `Shared filled-action foreground reaches only ${lc.toFixed(1)} Lc.`,
+    ],
+    metrics: {
+      value: lc,
+      target: V2_POLICY.destructive.apcaDiagnosticLc,
+      text: actionForeground,
+    },
+  };
+}
+
+function destructiveCandidates([start, end], diagnosticHueCandidates) {
+  const candidates = [];
+  const renderedCandidates = new Map();
+  for (
+    let lightness = start;
+    lightness <= end + V2_POLICY.destructive.candidateStep / 2;
+    lightness += V2_POLICY.destructive.candidateStep
+  ) {
+    if (diagnosticHueCandidates === undefined) {
+      candidates.push(candidate(destructiveTone(lightness), { lightness }));
+      continue;
+    }
+    for (const hue of diagnosticHueCandidates) {
+      const item = candidate(destructiveTone(lightness, hue), {
+        lightness,
+        requestedOrigins: [{ lightness, hue }],
+      });
+      const existing = renderedCandidates.get(item.hex);
+      if (existing) {
+        existing.parameters.requestedOrigins.push({ lightness, hue });
+      } else {
+        renderedCandidates.set(item.hex, item);
+        candidates.push(item);
+      }
+    }
+  }
+  return candidates;
 }
 
 function validatedCandidateEvidence(item, hueReview, expectedIds) {
@@ -142,36 +212,60 @@ export function summarizeFeedbackCandidateEvidence({
 export function destructiveSearch({
   mode,
   primary,
+  actionForeground,
   preferredLightness,
   retainPlot = false,
   diagnosticHueCandidates,
+  diagnosticEligibleHexes,
+  diagnosticLightnessRange,
+  diagnosticOmitBrandSeparation = false,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
 }) {
-  const policy = decisionPolicy("destructive");
-  const [start, end] = V2_POLICY.destructive.lightnessRange[mode];
-  const candidates = [];
-  const renderedCandidates = new Map();
-  for (
-    let lightness = start;
-    lightness <= end + V2_POLICY.destructive.candidateStep / 2;
-    lightness += V2_POLICY.destructive.candidateStep
-  ) {
-    if (diagnosticHueCandidates === undefined) {
-      candidates.push(candidate(destructiveTone(lightness), { lightness }));
-      continue;
-    }
-    for (const hue of diagnosticHueCandidates) {
-      const item = candidate(destructiveTone(lightness, hue), {
-        lightness,
-        requestedOrigins: [{ lightness, hue }],
-      });
-      const existing = renderedCandidates.get(item.hex);
-      if (existing) {
-        existing.parameters.requestedOrigins.push({ lightness, hue });
-      } else if (!existing) {
-        renderedCandidates.set(item.hex, item);
-        candidates.push(item);
+  if (!["#000000", "#FFFFFF"].includes(actionForeground)) {
+    throw new TypeError(
+      "destructive search requires the mode's shared filled-action foreground.",
+    );
+  }
+  if (typeof diagnosticOmitBrandSeparation !== "boolean") {
+    throw new TypeError(
+      "diagnosticOmitBrandSeparation must be a boolean diagnostic option.",
+    );
+  }
+  const declaredPolicy = decisionPolicy("destructive");
+  const policy = diagnosticOmitBrandSeparation
+    ? {
+        ...declaredPolicy,
+        constraints: declaredPolicy.constraints.filter(
+          ({ id }) => id !== "destructive.brand-separation",
+        ),
       }
+    : declaredPolicy;
+  const range =
+    diagnosticLightnessRange ?? V2_POLICY.destructive.lightnessRange[mode];
+  if (
+    !Array.isArray(range) ||
+    range.length !== 2 ||
+    range.some((value) => !Number.isFinite(value) || value < 0 || value > 1) ||
+    range[0] > range[1]
+  ) {
+    throw new TypeError("Destructive lightness range must be a bounded pair.");
+  }
+  const candidates = destructiveCandidates(range, diagnosticHueCandidates);
+  if (diagnosticEligibleHexes !== undefined) {
+    if (
+      !Array.isArray(diagnosticEligibleHexes) ||
+      diagnosticEligibleHexes.some((hex) => typeof hex !== "string")
+    ) {
+      throw new TypeError(
+        "diagnostic Destructive eligibility must be an array of rendered hexes.",
+      );
     }
+    const eligible = new Set(diagnosticEligibleHexes);
+    candidates.splice(
+      0,
+      candidates.length,
+      ...candidates.filter(({ hex }) => eligible.has(hex)),
+    );
   }
   return selectCandidate({
     id: `${mode}.destructive`,
@@ -183,39 +277,37 @@ export function destructiveSearch({
     policy,
     constraints: [
       bindRule(policy, "constraints", "destructive.label-contrast", (item) => {
-        const text = chooseSharedText([item.hex]);
-        const lc = Math.abs(apcaContrast(text, item.hex));
-        return {
-          passed: lc >= V2_POLICY.destructive.labelLc,
-          reasons: [
-            lc >= V2_POLICY.destructive.labelLc
-              ? `Best label reaches ${lc.toFixed(1)} Lc.`
-              : `Best label reaches only ${lc.toFixed(1)} Lc.`,
-          ],
-          metrics: { value: lc, target: V2_POLICY.destructive.labelLc, text },
-        };
+        return destructiveLabelContrastResult({
+          actionForeground,
+          background: item.hex,
+          textContrastStrategy,
+        });
       }),
-      bindRule(
-        policy,
-        "constraints",
-        "destructive.brand-separation",
-        (item) => {
-          const deltaE = distance(primary, item);
-          const passed = deltaE >= V2_POLICY.destructive.separation;
-          return {
-            passed,
-            reasons: [
-              passed
-                ? `Brand separation reaches ΔE ${deltaE.toFixed(3)}.`
-                : `Brand separation ΔE ${deltaE.toFixed(3)} is below ${V2_POLICY.destructive.separation.toFixed(3)}.`,
-            ],
-            metrics: {
-              value: deltaE,
-              target: V2_POLICY.destructive.separation,
-            },
-          };
-        },
-      ),
+      ...(!diagnosticOmitBrandSeparation
+        ? [
+            bindRule(
+              policy,
+              "constraints",
+              "destructive.brand-separation",
+              (item) => {
+                const deltaE = distance(primary, item);
+                const passed = deltaE >= V2_POLICY.destructive.separation;
+                return {
+                  passed,
+                  reasons: [
+                    passed
+                      ? `Brand separation reaches ΔE ${deltaE.toFixed(3)}.`
+                      : `Brand separation ΔE ${deltaE.toFixed(3)} is below ${V2_POLICY.destructive.separation.toFixed(3)}.`,
+                  ],
+                  metrics: {
+                    value: deltaE,
+                    target: V2_POLICY.destructive.separation,
+                  },
+                };
+              },
+            ),
+          ]
+        : []),
     ],
     objectives: [
       bindRule(policy, "objectives", "destructive.semantic-anchor", (item) =>
@@ -223,7 +315,12 @@ export function destructiveSearch({
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
+    evidence: evidence(
+      "wcagText",
+      "apcaText",
+      "destructiveSeparation",
+      "calmMinimal",
+    ),
     searchConstants: ["semantic red hue", "requested chroma"],
     retainPlot,
   });
@@ -232,11 +329,13 @@ export function destructiveSearch({
 export function inspectDestructiveCandidateConstraints({
   mode,
   primary,
+  actionForeground,
   preferredLightness,
 }) {
   return destructiveSearch({
     mode,
     primary,
+    actionForeground,
     preferredLightness,
     retainPlot: "detailed",
   })
@@ -254,6 +353,7 @@ export function warningSearch({
   primary,
   destructive,
   retainPlot = false,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
 }) {
   const policy = decisionPolicy("warning");
   const preferredLightness = V2_POLICY.feedback.warningLightness[mode];
@@ -290,9 +390,25 @@ export function warningSearch({
     policy,
     constraints: [
       bindRule(policy, "constraints", "feedback.label-contrast", (item) => {
-        const text = chooseSharedText([item.hex]);
-        const lc = Math.abs(apcaContrast(text, item.hex));
-        const passed = lc >= V2_POLICY.primary.labelLc;
+        const choice = chooseTextContrastForeground({
+          backgrounds: [item.hex],
+          apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+          strategy: textContrastStrategy,
+        });
+        const text = choice.foreground;
+        const lc = choice.evidence.apca.minimum;
+        const passed = choice.evidence.passed;
+        if (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Best warning label passes ${textContrastStrategy}.`
+                : `Best warning label fails ${textContrastStrategy}.`,
+            ],
+            metrics: { ...choice.evidence, text },
+          };
+        }
         return {
           passed,
           reasons: [
@@ -300,7 +416,11 @@ export function warningSearch({
               ? `Best warning label reaches ${lc.toFixed(1)} Lc.`
               : `Best warning label reaches only ${lc.toFixed(1)} Lc.`,
           ],
-          metrics: { lc, target: V2_POLICY.primary.labelLc, text },
+          metrics: {
+            lc,
+            target: V2_POLICY.primary.apcaDiagnosticLc,
+            text,
+          },
         };
       }),
       bindRule(
@@ -335,7 +455,12 @@ export function warningSearch({
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText", "destructiveSeparation", "calmMinimal"),
+    evidence: evidence(
+      "wcagText",
+      "apcaText",
+      "destructiveSeparation",
+      "calmMinimal",
+    ),
     searchConstants: ["bounded amber hue candidates", "warning chroma"],
     retainPlot: retainPlot === "detailed" ? "detailed" : true,
   });

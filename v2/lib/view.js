@@ -1,4 +1,5 @@
 import { hexToRgb, rgbToOklch } from "../../lib/color-math.js";
+import { secondaryActionPresentationForMode } from "./action-presentation.js";
 
 const GROUPS = [
   {
@@ -147,46 +148,160 @@ export function paletteView(modeResult) {
 }
 
 function exampleStyle(modeResult) {
-  return modeResult.tokens
-    .map(([color, role]) => `--sample-${role.replaceAll(" ", "-")}:${color}`)
-    .join(";");
+  const secondary = secondaryActionPresentationForMode(modeResult);
+  return [
+    ...modeResult.tokens.map(
+      ([color, role]) => `--sample-${role.replaceAll(" ", "-")}:${color}`,
+    ),
+    `--sample-secondary-action:${secondary.values.default}`,
+    `--sample-secondary-action-hover:${secondary.values.hover}`,
+    `--sample-secondary-action-active:${secondary.values.active}`,
+    `--sample-secondary-action-text:${secondary.values.text}`,
+    `--sample-secondary-action-border:${secondary.values.border}`,
+  ].join(";");
 }
 
-export function appliedExampleView(modeResult) {
-  return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}">
-    <header class="example-header"><strong>Example application · ${modeResult.mode}</strong><span>Semantic roles in context</span></header>
-    <div class="example-canvas">
-      <div class="reference-coverage"><span>Foundation</span><span>Navigation</span><span>Messages</span><span>Composer</span></div>
-      <section class="reference-state-specimen">
-        <header><strong>Try the primary action</strong><small>Hover, press, or focus the button</small></header>
-        <div class="reference-primary-playground">
-          <button type="button" class="reference-primary-demo">✓ Save changes</button>
-          <p><span>Current state</span><output>Default</output></p>
-        </div>
-      </section>
-      <section class="reference-shell">
-        <aside class="reference-sidebar">
-          <div class="reference-workspace"><i>C</i><span><strong>Color Lab</strong><small>Example workspace</small></span></div>
-          <nav aria-label="reference specimen navigation">
-            <a class="selected"><span>◫</span>General<b>3</b></a>
-            <a><span>◇</span>Design review</a>
-            <a><span>⌁</span>Files</a>
-          </nav>
-          <button class="reference-secondary" tabindex="-1" aria-disabled="true">＋ New conversation</button>
-        </aside>
-        <div class="reference-main">
-          <header class="reference-channel"><div><strong># design-review</strong><small>Palette application check</small></div><button tabindex="-1" aria-disabled="true">•••</button></header>
-          <aside class="reference-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
-          <div class="reference-messages">
-            <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the application hierarchy in both modes?</span></div></article>
-            <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, interaction states, focus, and feedback are rendered from the same semantic output.</span><em>Palette ready</em></div></article>
-            <article class="selected-message"><i>DS</i><div><p><strong>Design system</strong><small>10:28</small></p><span>Selected content uses a restrained brand tint with readable text.</span></div></article>
-          </div>
-          <form class="reference-composer"><label><span>Message #design-review</span><textarea rows="2" readonly tabindex="-1">Review the generated colors…</textarea></label><div><button type="button" class="reference-secondary" tabindex="-1" aria-disabled="true">Attach</button><button type="button" class="reference-primary" tabindex="-1" aria-disabled="true">Send</button></div></form>
-        </div>
-      </section>
-      <aside class="reference-popover"><strong>Palette actions</strong><button tabindex="-1" aria-disabled="true">Copy CSS</button><button tabindex="-1" aria-disabled="true">Export tokens</button></aside>
-      <footer class="reference-feedback"><span><strong>Destructive action</strong><small>Semantic red remains separate from brand action.</small></span><button type="button" class="reference-destructive-demo">Move to Trash</button></footer>
+const SAMPLE_SCENARIO_LABELS = Object.freeze({
+  workspace: "Workspace",
+  "routine-actions": "Routine actions",
+  "destructive-confirmation": "Destructive confirmation",
+  "feedback-selection": "Feedback & selection",
+  "form-focus": "Form & focus",
+});
+
+export const SAMPLE_ROLE_COVERAGE = Object.freeze({
+  provenanceOnly: Object.freeze(["brand source"]),
+  scenarios: Object.freeze({
+    workspace: Object.freeze([
+      "background",
+      "surface",
+      "raised surface",
+      "muted surface",
+      "foreground",
+      "muted text",
+      "border",
+      "input border",
+    ]),
+    "routine-actions": Object.freeze([
+      "primary",
+      "primary hover",
+      "primary active",
+      "primary text",
+      "primary border",
+    ]),
+    "destructive-confirmation": Object.freeze([
+      "destructive",
+      "destructive hover",
+      "destructive active",
+      "destructive text",
+    ]),
+    "feedback-selection": Object.freeze([
+      "warning",
+      "warning hover",
+      "warning active",
+      "warning text",
+      "selection",
+      "selection text",
+    ]),
+    "form-focus": Object.freeze([
+      "focus ring",
+      "disabled background",
+      "disabled text",
+      "disabled border",
+      "popover",
+      "popover text",
+    ]),
+  }),
+});
+
+function workspaceScenario() {
+  return `<section class="reference-shell">
+    <aside class="reference-sidebar">
+      <div class="reference-workspace"><i>C</i><span><strong>Color Lab</strong><small>Example workspace</small></span></div>
+      <nav aria-label="reference specimen navigation">
+        <a class="selected"><span>◫</span>General<b>3</b></a>
+        <a><span>◇</span>Design review</a>
+        <a><span>⌁</span>Files</a>
+      </nav>
+      <button class="reference-secondary" tabindex="-1" aria-disabled="true">＋ New conversation</button>
+    </aside>
+    <div class="reference-main">
+      <header class="reference-channel"><div><strong># design-review</strong><small>Palette application check</small></div><button tabindex="-1" aria-disabled="true">•••</button></header>
+      <div class="reference-messages">
+        <article><i>AK</i><div><p><strong>Alex Kim</strong><small>10:24</small></p><span>Does the generated palette preserve the application hierarchy in both modes?</span></div></article>
+        <article><i>CL</i><div><p><strong>Color Lab</strong><small>10:26</small></p><span>Foundation, content, and navigation roles share one generated palette.</span><em>Palette ready</em></div></article>
+      </div>
+      <form class="reference-composer"><label><span>Message #design-review</span><textarea rows="2" readonly tabindex="-1">Review the generated colors…</textarea></label><div><button type="button" class="reference-secondary" tabindex="-1" aria-disabled="true">Attach</button><button type="button" class="reference-primary" tabindex="-1" aria-disabled="true">Send</button></div></form>
     </div>
+  </section>`;
+}
+
+function routineActionsScenario(actionPresentation) {
+  return `<section class="reference-scenario-card reference-actions-card" data-action-presentation="${actionPresentation.strategy}">
+    <div><p class="reference-kicker">Project settings</p><h3>Save general settings?</h3><p>Your ordinary action remains the only filled button. Destructive stays visually distinct and lower-emphasis.</p></div>
+    <div class="reference-action-example">
+      <div class="reference-primary-playground"><button type="button" class="reference-primary-demo">Save changes</button><p><span>Primary state</span><output>Default</output></p></div>
+      <button type="button" class="reference-destructive-outline">Delete project</button>
+    </div>
+  </section>`;
+}
+
+function destructiveConfirmationScenario(actionPresentation) {
+  const presentationCopy =
+    "Delete is the sole filled action in this confirmation group; Cancel stays secondary.";
+  return `<section class="reference-scenario-card reference-confirmation-card">
+    <div class="reference-danger-mark">!</div>
+    <div><p class="reference-kicker">Permanent action</p><h3>Move this project to Trash?</h3><p>This removes the project for everyone. You can restore it from Trash for 30 days.</p></div>
+    <footer class="reference-feedback" data-action-presentation="${actionPresentation.strategy}" data-secondary-state-policy="confirmation-secondary-state-family-v1" data-presentation-copy="${presentationCopy}"><span><strong>Confirmation required</strong><small>${presentationCopy}</small></span><div class="reference-feedback-actions"><button type="button" class="reference-cancel-demo">Cancel</button><button type="button" class="reference-destructive-demo">Move to Trash</button></div></footer>
+  </section>`;
+}
+
+function feedbackSelectionScenario() {
+  return `<section class="reference-scenario-card">
+    <p class="reference-kicker">System feedback and selected content</p>
+    <aside class="reference-warning"><strong>Review required</strong><span>This palette has a pending accessibility decision.</span></aside>
+    <div class="reference-warning-playground"><button type="button" class="reference-warning-demo">Review warning</button><p><span>Interactive Warning family</span><b class="default">Default</b><b class="hover">Hover</b><b class="active">Pressed</b></p></div>
+    <div class="reference-messages reference-selection-list">
+      <article><i>AK</i><div><p><strong>Unselected result</strong><small>Default surface</small></p><span>Standard content remains on the application surface.</span></div></article>
+      <article class="selected-message"><i>DS</i><div><p><strong>Selected result</strong><small>Selection fill</small></p><span>Selected content uses the generated selection background and text pair.</span></div></article>
+    </div>
+  </section>`;
+}
+
+function formFocusScenario() {
+  return `<section class="reference-scenario-card reference-form-scenario">
+    <div><p class="reference-kicker">Form boundaries and focus</p><h3>Create a review request</h3><p>Tab through the controls to inspect input borders, text contrast, and the shared focus ring.</p></div>
+    <form>
+      <label><span>Title</span><input value="Palette review" aria-label="Review title"></label>
+      <label><span>Summary</span><textarea rows="3" aria-label="Review summary">Check Light and Dark component states.</textarea></label>
+      <label><span>Reviewer · assigned after creation</span><input value="Not assigned" aria-label="Assigned reviewer" disabled></label>
+      <aside class="reference-popover" role="note"><strong>Focus tip</strong><span>Use Tab to inspect the generated focus ring.</span><button type="button">Got it</button></aside>
+      <div><button type="button" class="reference-secondary">Cancel</button><button type="button" class="reference-primary">Create request</button></div>
+    </form>
+  </section>`;
+}
+
+function sampleScenarioView(scenario, actionPresentation) {
+  if (scenario === "routine-actions") {
+    return routineActionsScenario(actionPresentation);
+  }
+  if (scenario === "destructive-confirmation") {
+    return destructiveConfirmationScenario(actionPresentation);
+  }
+  if (scenario === "feedback-selection") return feedbackSelectionScenario();
+  if (scenario === "form-focus") return formFocusScenario();
+  return workspaceScenario();
+}
+
+export function appliedExampleView(
+  modeResult,
+  actionPresentation,
+  scenario = "workspace",
+) {
+  const label =
+    SAMPLE_SCENARIO_LABELS[scenario] ?? SAMPLE_SCENARIO_LABELS.workspace;
+  return `<article class="example ${modeResult.mode}" style="${exampleStyle(modeResult)}" data-sample-panel="${scenario}">
+    <header class="example-header"><strong>${label} · ${modeResult.mode}</strong><span>Generated semantic roles in context</span></header>
+    <div class="example-canvas">${sampleScenarioView(scenario, actionPresentation)}</div>
   </article>`;
 }

@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 
 import { buildAdversarialDiagnosticReport } from "../../v2/lib/adversarial-diagnostics.js";
+import { secondaryActionPresentationForMode } from "../../v2/lib/action-presentation.js";
 import { generatePaletteV2 } from "../../v2/lib/palette.js";
 
 test("v2 contracts hold across an RGB input grid", () => {
@@ -10,6 +11,52 @@ test("v2 contracts hold across an RGB input grid", () => {
     generate: ({ primary }) => {
       const result = generatePaletteV2({ primary });
       assert.equal(result.passed, true, primary);
+      for (const mode of ["light", "dark"]) {
+        const modeResult = result.modes[mode];
+        const secondary = secondaryActionPresentationForMode(modeResult);
+        assert.equal(
+          Math.min(
+            secondary.checks.defaultTextContrast,
+            secondary.checks.hoverTextContrast,
+            secondary.checks.activeTextContrast,
+          ) >= secondary.checks.minimumTextContrast,
+          true,
+          `${primary}/${mode} Secondary labels must remain readable`,
+        );
+        assert.equal(
+          modeResult.nonTextChecks.find(
+            ({ role }) => role === "Focus on muted surface",
+          ).pass,
+          true,
+          `${primary}/${mode} focus must remain visible on muted surface`,
+        );
+        assert.equal(
+          modeResult.values["primary text"],
+          modeResult.values["destructive text"],
+          `${primary}/${mode} must share one filled-action foreground`,
+        );
+        const destructiveLabelConstraint =
+          modeResult.decisions.destructive.selected.constraintResults.find(
+            ({ id }) => id === "destructive.label-contrast",
+          );
+        assert.equal(
+          destructiveLabelConstraint.metrics.text,
+          modeResult.values["primary text"],
+          `${primary}/${mode} destructive selection must use the shared foreground`,
+        );
+        for (const state of ["destructive hover", "destructive active"]) {
+          const sharedLabelConstraint = modeResult.decisions[
+            state
+          ].selected.constraintResults.find(
+            ({ id }) => id === "state.shared-label",
+          );
+          assert.equal(
+            sharedLabelConstraint.metrics.labelText,
+            modeResult.values["primary text"],
+            `${primary}/${mode}/${state} must use the shared foreground`,
+          );
+        }
+      }
       assert.equal(
         result.quality.checks.every(({ value }) => Number.isFinite(value)),
         true,
@@ -19,7 +66,7 @@ test("v2 contracts hold across an RGB input grid", () => {
     },
   });
 
-  assert.equal(report.policyVersion, "v2-policy-model-12");
+  assert.equal(report.policyVersion, "v2-policy-model-18");
   assert.equal(report.schema, "color-palette-adversarial-diagnostics.v3");
   assert.equal(report.summary.inputCount, 216);
   assert.equal(report.summary.signaledInputCount, 148);
@@ -38,8 +85,8 @@ test("v2 contracts hold across an RGB input grid", () => {
   });
   assert.deepEqual(report.sourceFidelity.byModePattern, {
     dark: 19,
-    light: 25,
-    "light+dark": 71,
+    light: 34,
+    "light+dark": 62,
   });
   assert.deepEqual(report.sourceFidelity.modes.light.lightnessDirectionCounts, {
     decrease: 89,
@@ -50,12 +97,12 @@ test("v2 contracts hold across an RGB input grid", () => {
     increase: 14,
   });
   assert.deepEqual(report.sourceFidelity.modes.dark.lightnessDirectionCounts, {
-    decrease: 64,
+    decrease: 55,
     increase: 26,
   });
   assert.deepEqual(report.sourceFidelity.modes.dark.chromaDirectionCounts, {
-    decrease: 72,
-    increase: 18,
+    decrease: 64,
+    increase: 17,
   });
   assert.deepEqual(
     report.sourceFidelity.modes.light.sourceLightnessRoleRangePositionCounts,
@@ -63,17 +110,15 @@ test("v2 contracts hold across an RGB input grid", () => {
   );
   assert.deepEqual(
     report.sourceFidelity.modes.dark.sourceLightnessRoleRangePositionCounts,
-    { above: 64, below: 26 },
+    { above: 55, below: 26 },
   );
   assert.deepEqual(
     report.sourceFidelity.modes.light
       .bestRankedRejectedConstraintCombinationCounts,
     {
-      "primary.calm-chroma+primary.mode-range": 31,
-      "primary.calm-chroma+primary.mode-range+primary.shared-label": 21,
+      "primary.calm-chroma+primary.mode-range": 52,
       "primary.generated-family+primary.mode-range+primary.shared-label": 1,
-      "primary.mode-range": 25,
-      "primary.mode-range+primary.shared-label": 18,
+      "primary.mode-range": 43,
     },
   );
   assert.deepEqual(
@@ -82,9 +127,8 @@ test("v2 contracts hold across an RGB input grid", () => {
     {
       "primary.calm-chroma+primary.generated-family+primary.mode-range+primary.shared-label": 11,
       "primary.calm-chroma+primary.mode-range": 32,
-      "primary.calm-chroma+primary.mode-range+primary.shared-label": 2,
       "primary.generated-family+primary.mode-range+primary.shared-label": 12,
-      "primary.mode-range": 33,
+      "primary.mode-range": 26,
     },
   );
   assert.equal(
@@ -97,7 +141,7 @@ test("v2 contracts hold across an RGB input grid", () => {
     report.sourceFidelity.modes.dark.bestRankedRejectedConstraintCounts[
       "primary.mode-range"
     ],
-    90,
+    81,
   );
   assert.equal(
     report.sourceFidelity.modes.light.bestRankedRejectedConstraintCounts[
@@ -109,12 +153,12 @@ test("v2 contracts hold across an RGB input grid", () => {
     report.sourceFidelity.modes.dark.bestRankedRejectedConstraintCounts[
       "primary.calm-chroma"
     ],
-    45,
+    43,
   );
   assert.equal(
     report.summary.signalCounts["quality:review.light.source-fidelity"] +
       report.summary.signalCounts["quality:review.dark.source-fidelity"],
-    186,
+    177,
   );
   assert.equal(
     report.cases.filter(({ signals }) =>

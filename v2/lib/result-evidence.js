@@ -17,6 +17,28 @@ function assertBooleanChecks(checks, path) {
   }
 }
 
+function assertTextContractChecks(checks, path) {
+  const textChecks = checks.filter(({ kind }) => kind === "text");
+  if (
+    textChecks.length === 0 ||
+    textChecks.some(
+      (check) =>
+        check.metric !== "WCAG contrast" ||
+        check.target !== V2_POLICY.text.wcagNormalTextMinimum ||
+        check.typographyContext?.schema !==
+          V2_POLICY.text.typographyContextSchema ||
+        check.typographyContext?.usage !== "normal-text" ||
+        !Number.isFinite(check.typographyContext?.fontSizePx) ||
+        !Number.isFinite(check.typographyContext?.fontWeight) ||
+        check.diagnostics?.apca?.authority !== "diagnostic-ranking",
+    )
+  ) {
+    throw new TypeError(
+      `${path} text checks must declare WCAG normal-text authority, typography context, and APCA diagnostic evidence.`,
+    );
+  }
+}
+
 function assertSemanticEvaluation(semanticEvaluation) {
   const validEvaluations =
     Array.isArray(semanticEvaluation?.evaluations) &&
@@ -155,6 +177,7 @@ export function assertDiagnosticResult(result) {
   }
   for (const mode of ["light", "dark"]) {
     assertBooleanChecks(result.modes?.[mode]?.checks, `modes.${mode}.checks`);
+    assertTextContractChecks(result.modes[mode].checks, `modes.${mode}.checks`);
     const values = result.modes[mode].values;
     const actionColors = [
       values?.primary,

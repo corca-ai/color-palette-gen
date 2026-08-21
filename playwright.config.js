@@ -11,6 +11,6 @@ export default defineConfig({
   webServer: {
     command: "npm run build && node scripts/serve-site.mjs 4187",
     port: 4187,
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
   },
 });

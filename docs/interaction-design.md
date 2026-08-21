@@ -4,6 +4,14 @@ This document defines the current v2 public-site story, section order, and
 visualization contract. The maintained v1 experiment has a separate input model
 and must not be used to justify v2 interactions.
 
+This page owns presentation order, not color-policy meaning. Read the
+[v2 ontology](v2-decisions/ontology.md) for the project concepts and dependency
+graph, the [rule mechanics](v2-decisions/rules.md) for candidate filtering and
+ranking, and the [decision-model index](v2-decisions/README.md) for role policy,
+numeric evidence, and research findings. The public [About](../v2/about.html)
+and [Reference](../v2/reference.html) pages are the reader-facing projections of
+those maintained sources.
+
 ## Research message
 
 Color Lab v2 turns one primary color into complete light and dark semantic UI
@@ -49,6 +57,43 @@ overall design-quality verdict.
 
 The form accepts one primary color. The direction is fixed to calm and minimal.
 There are no vibe, supporting-color, or harmony controls in v2.
+
+Primary and Destructive are filled button families with the same mode-relative
+interaction grammar: Light darkens from default to hover to pressed, while Dark
+lightens in that order. The
+Primary family first selects one readable black-or-white action foreground;
+Destructive candidate and state searches must reuse it. Warning remains a
+semantic status family and may use its own foreground and label-preserving
+direction.
+
+This is the accepted policy v16 product grammar. The resting/default state was
+the primary human review surface. The review accepted the mode-relative result
+while keeping 22 separation and nine Dark source-fidelity findings truthful.
+See [ADR-0004](v2-decisions/adr/0004-mode-relative-filled-actions-and-contextual-separation.md).
+
+The earlier state-direction research was Destructive-anchored, but it was not a
+literal sequential choice. Primary↔Destructive separation makes the two
+families mutually dependent, so the bounded probe enumerates complete Dark
+Primary and Destructive families with one shared foreground and ranks only
+eligible joint tuples. Under the unchanged inventory it recovers 3 of the 15
+known failures and leaves 12 infeasible, so it is not a corpus-complete policy
+candidate. These controls are not exposed in Generator; the completed successor
+experiment is what policy v16 adopts.
+See the retained
+[state-direction experiment](v2-decisions/research/filled-action-state-direction.md).
+
+The applied-sample tabs expose the accepted one-filled-action hierarchy.
+`Routine actions` renders Primary filled and Destructive outline;
+`Destructive confirmation` renders dedicated Destructive filled beside
+secondary Cancel and contains no ordinary Primary. Both buttons use the same
+mode-relative interaction direction—Light darker, Dark lighter—while Cancel
+uses a smaller neutral movement and keeps its actual `11px/650` label at WCAG
+`4.5:1` in every state. Cancel's state fills belong to this presentation context,
+not to the exported palette. The rejected two-filled
+comparison and red-band inspection remain in research history rather than the
+live Generator. Switching tabs stores no judgment and does not alter palette
+generation. See
+[ADR-0006](v2-decisions/adr/0006-context-derived-secondary-action-states.md).
 
 Generating a palette preserves the current result-mode choice and replaces every
 projection from one result object. Repeated normalized inputs may reuse the
@@ -109,7 +154,9 @@ Question:
 > controls it must serve?
 
 Show the same ring on neutral, primary, and destructive targets with a visible
-gap. Focus is not presented as an alias of primary.
+gap. The generated ring must pass its adjacent-contrast contract on Background,
+Surface, and Muted Surface because all three are live specimen contexts. Focus
+is not presented as an alias of primary.
 
 ### Selected-result review
 
@@ -153,7 +200,9 @@ Question:
 
 This section explains foundation, content, brand, boundary, and feedback
 sequences. It describes the generated structure; it does not render a quality
-verdict.
+verdict. Terminology and dependency ownership come from the
+[ontology](v2-decisions/ontology.md); the executable ordering is summarized by
+the ontology's top-to-bottom Mermaid flow.
 
 ### Palette validation
 
@@ -164,7 +213,9 @@ Question:
 Validation is collapsed by default and reports measured values against declared
 targets. APCA text checks, WCAG non-text checks, and Oklab separation checks must
 remain distinguishable. Passing is not a conformance or production-suitability
-claim.
+claim. Individual check IDs, formulas, thresholds, and evidence authority are
+maintained in [rule mechanics](v2-decisions/rules.md) and the linked policy
+references rather than duplicated here.
 
 ## Shared visualization grammar
 

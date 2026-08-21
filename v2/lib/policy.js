@@ -1,6 +1,13 @@
 import { assertEvidenceAuthority } from "./evidence-authority.js";
 
 export const EVIDENCE = {
+  wcagText: {
+    class: "normative",
+    label: "WCAG 2.2 · Contrast Minimum",
+    url: "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum",
+    scope:
+      "Normal text in the declared typography context uses a minimum 4.5:1 rendered-sRGB contrast ratio.",
+  },
   wcagNonText: {
     class: "normative",
     label: "WCAG 2.2 · Non-text Contrast",
@@ -20,7 +27,7 @@ export const EVIDENCE = {
     label: "Carbon · Interaction states",
     url: "https://preview.carbondesignsystem.com/building-blocks/foundations/color/overview",
     scope:
-      "Subtle hover, stronger active, darker movement on light values and lighter movement on dark values.",
+      "Subtle hover and stronger active state progression; it does not determine v2's fixed darker action direction.",
   },
   spectrumStates: {
     class: "reference",
@@ -32,14 +39,14 @@ export const EVIDENCE = {
   calmMinimal: {
     class: "product-policy",
     label: "Color Lab v2 · Calm/minimal definition",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#calm-and-minimal",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/policy/roles.md#calm-and-minimal",
     scope:
       "One brand hue, neutral-dominant foundations, bounded tint, and no generated harmony hues.",
   },
   stateSeparation: {
     class: "heuristic",
     label: "Provisional state-separation threshold",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#interactive-states",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/policy/roles.md#interactive-states",
     scope:
       "Oklab distance is provisional until a designer ranking study replaces it.",
     validationNeeded: true,
@@ -47,7 +54,7 @@ export const EVIDENCE = {
   destructiveSeparation: {
     class: "heuristic",
     label: "Provisional semantic separation",
-    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/role-policies.md#destructive",
+    url: "https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/policy/roles.md#destructive",
     scope:
       "Brand and destructive colors need perceptual separation; the current bound is not a published standard.",
     validationNeeded: true,
@@ -55,7 +62,49 @@ export const EVIDENCE = {
 };
 
 export const V2_POLICY = {
-  version: "v2-policy-model-12",
+  version: "v2-policy-model-18",
+  text: {
+    strategy: "wcag-eligible-apca-ranked",
+    wcagNormalTextMinimum: 4.5,
+    typographyContextSchema: "typography-context.v1",
+    typographyContexts: {
+      body: {
+        id: "body-text.v1",
+        usage: "normal-text",
+        fontSizePx: 11,
+        fontWeight: 400,
+        apcaDiagnosticMinimum: 75,
+      },
+      muted: {
+        id: "muted-ui-text.v1",
+        usage: "normal-text",
+        fontSizePx: 9,
+        fontWeight: 400,
+        apcaDiagnosticMinimum: 60,
+      },
+      actionLabel: {
+        id: "compact-action-label.v1",
+        usage: "normal-text",
+        fontSizePx: 11,
+        fontWeight: 650,
+        apcaDiagnosticMinimum: 60,
+      },
+      warningLabel: {
+        id: "compact-warning-label.v1",
+        usage: "normal-text",
+        fontSizePx: 10,
+        fontWeight: 650,
+        apcaDiagnosticMinimum: 60,
+      },
+      selection: {
+        id: "selection-text.v1",
+        usage: "normal-text",
+        fontSizePx: 10,
+        fontWeight: 400,
+        apcaDiagnosticMinimum: 60,
+      },
+    },
+  },
   search: {
     candidateStep: 0.0025,
     stateCandidateLimit: 80,
@@ -67,11 +116,15 @@ export const V2_POLICY = {
     },
     chromaCap: 0.15,
     chromaTolerance: 0.002,
-    labelLc: 60,
+    apcaDiagnosticLc: 60,
     boundaryContrast: 3,
     maximumSourceDistance: 0.18,
   },
   state: {
+    // Filled Primary and Destructive actions share one mode-relative grammar:
+    // Light gets darker; Dark gets lighter from default to hover to active.
+    filledActionDirections: { light: -1, dark: 1 },
+    filledActionForeground: "shared-per-mode",
     direction: { light: -1, dark: 1 },
     separation: {
       hoverFromDefault: 0.035,
@@ -102,13 +155,18 @@ export const V2_POLICY = {
   foundation: {
     candidateStep: 0.005,
     candidateRadius: 0.04,
+    modeZone: {
+      lightMinimum: 0.96,
+      darkMaximum: 0.185,
+    },
     hierarchySeparation: 0.01,
-    bodyTextLc: 75,
-    mutedTextLc: 60,
+    bodyTextApcaDiagnosticLc: 75,
+    mutedTextApcaDiagnosticLc: 60,
     inputContrast: 3,
   },
   focus: {
     contrast: 3,
+    adjacentRoles: ["background", "surface", "muted surface"],
     semanticSeparation: 0.05,
     candidateStep: 0.01,
     lightnessRange: [0.2, 0.86],
@@ -126,11 +184,12 @@ export const V2_POLICY = {
     lightnessRange: { light: [0.82, 0.94], dark: [0.24, 0.38] },
     chromaScales: [0.15, 0.3, 0.45],
     surfaceSeparation: 0.03,
-    textLc: 60,
+    textApcaDiagnosticLc: 60,
   },
   destructive: {
     separation: 0.08,
-    labelLc: 60,
+    separationAuthority: "selected-result-review",
+    apcaDiagnosticLc: 60,
     lightnessRange: {
       light: [0.3, 0.56],
       dark: [0.56, 0.72],
@@ -228,8 +287,8 @@ export const RULE_CATALOG = {
   "state.shared-label": {
     label: "Readable shared state label",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "primary.generated-family": {
     label: "Complete interaction family",
@@ -251,8 +310,8 @@ export const RULE_CATALOG = {
   "primary.shared-label": {
     label: "Readable shared label",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "primary-border.adjacent-contrast": {
     label: "Visible action boundary on both foundations",
@@ -269,8 +328,8 @@ export const RULE_CATALOG = {
   "destructive.label-contrast": {
     label: "Readable destructive label",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "destructive.brand-separation": {
     label: "Distinct destructive meaning",
@@ -323,8 +382,8 @@ export const RULE_CATALOG = {
   "foundation.text-contrast": {
     label: "Foundation text contrast",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "foundation.boundary-contrast": {
     label: "Required input boundary contrast",
@@ -341,8 +400,8 @@ export const RULE_CATALOG = {
   "text.required-contrast": {
     label: "Required weakest text contrast",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "text.maximize-weakest-contrast": {
     label: "Maximize weakest APCA contrast",
@@ -351,7 +410,7 @@ export const RULE_CATALOG = {
     direction: "maximize",
   },
   "focus.adjacent-contrast": {
-    label: "Visible on both foundations",
+    label: "Visible on every applied foundation context",
     kind: "constraint",
     authority: "normative",
     evidence: ["wcagNonText"],
@@ -377,8 +436,8 @@ export const RULE_CATALOG = {
   "feedback.label-contrast": {
     label: "Readable feedback label",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "feedback.semantic-separation": {
     label: "Distinct feedback meanings",
@@ -395,8 +454,8 @@ export const RULE_CATALOG = {
   "selection.text-contrast": {
     label: "Readable selected content",
     kind: "constraint",
-    authority: "provisional",
-    evidence: ["apcaText"],
+    authority: "normative",
+    evidence: ["wcagText", "apcaText"],
   },
   "selection.surface-separation": {
     label: "Visible selected surface",
@@ -428,7 +487,50 @@ export function decisionPolicy(id) {
   };
 }
 
+function validateTextPolicy() {
+  if (
+    V2_POLICY.text.strategy !== "wcag-eligible-apca-ranked" ||
+    V2_POLICY.text.wcagNormalTextMinimum !== 4.5 ||
+    V2_POLICY.text.typographyContextSchema !== "typography-context.v1" ||
+    Object.values(V2_POLICY.text.typographyContexts).some(
+      (context) =>
+        context.usage !== "normal-text" ||
+        !Number.isFinite(context.fontSizePx) ||
+        context.fontSizePx <= 0 ||
+        !Number.isFinite(context.fontWeight) ||
+        context.fontWeight <= 0 ||
+        !Number.isFinite(context.apcaDiagnosticMinimum) ||
+        context.apcaDiagnosticMinimum <= 0,
+    )
+  ) {
+    throw new Error(
+      "text policy must declare WCAG normal-text eligibility and versioned typography contexts.",
+    );
+  }
+}
+
 export function validatePolicy() {
+  const { lightMinimum, darkMaximum } = V2_POLICY.foundation.modeZone;
+  if (
+    !Number.isFinite(lightMinimum) ||
+    !Number.isFinite(darkMaximum) ||
+    lightMinimum < 0 ||
+    lightMinimum > 1 ||
+    darkMaximum < 0 ||
+    darkMaximum > 1 ||
+    darkMaximum >= lightMinimum
+  ) {
+    throw new Error("foundation.modeZone must define ordered L bounds in 0–1.");
+  }
+  validateTextPolicy();
+  if (
+    JSON.stringify(V2_POLICY.focus.adjacentRoles) !==
+    JSON.stringify(["background", "surface", "muted surface"])
+  ) {
+    throw new Error(
+      "focus.adjacentRoles must cover every applied foundation context.",
+    );
+  }
   for (const [ruleId, rule] of Object.entries(RULE_CATALOG)) {
     assertEvidenceAuthority(rule.authority, ruleId);
   }

@@ -15,8 +15,8 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
     report.schema,
     "color-palette-destructive-anchor-counterfactual.v2",
   );
-  assert.equal(report.policyVersion, "v2-policy-model-12");
-  assert.equal(report.resultVersion, 2);
+  assert.equal(report.policyVersion, "v2-policy-model-18");
+  assert.equal(report.resultVersion, 3);
   assert.equal(report.experiment.redHue, 27);
   assert.equal(report.experiment.conflictRadiusDegrees, 38);
   assert.equal(report.experiment.comparison, "strictly-less-than");
@@ -37,24 +37,24 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
     modeCaseCount: 432,
     generatedContractFailureInputCount: 0,
     qualityFindingInputCount: 148,
-    semanticFindingInputCount: 0,
+    semanticFindingInputCount: 22,
     shiftedInputCount: 115,
     shiftedModeCaseCount: 186,
-    meanPrimaryDestructiveDistance: 0.22294111585885346,
-    minimumPrimaryDestructiveMargin: 0.0004252584604935161,
-    minimumDestructiveLabelLc: 61.40241410956562,
+    meanPrimaryDestructiveDistance: 0.21912070796389094,
+    minimumPrimaryDestructiveMargin: -0.04023380867597208,
+    minimumDestructiveLabelLc: 71.5750645955411,
   });
   assert.deepEqual(report.summaries.fixedDefaultAnchor, {
     inputCount: 216,
     modeCaseCount: 432,
     generatedContractFailureInputCount: 0,
     qualityFindingInputCount: 148,
-    semanticFindingInputCount: 0,
+    semanticFindingInputCount: 23,
     shiftedInputCount: 115,
     shiftedModeCaseCount: 186,
-    meanPrimaryDestructiveDistance: 0.2191753082151845,
-    minimumPrimaryDestructiveMargin: 0.0004136725705020522,
-    minimumDestructiveLabelLc: 61.40241410956562,
+    meanPrimaryDestructiveDistance: 0.21615801381319222,
+    minimumPrimaryDestructiveMargin: -0.040992586651734095,
+    minimumDestructiveLabelLc: 71.5750645955411,
   });
   assert.deepEqual(report.summaries.sourceBandApplicable, {
     current: {
@@ -62,24 +62,24 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
       modeCaseCount: 82,
       generatedContractFailureInputCount: 0,
       qualityFindingInputCount: 37,
-      semanticFindingInputCount: 0,
+      semanticFindingInputCount: 22,
       shiftedInputCount: 13,
       shiftedModeCaseCount: 16,
-      meanPrimaryDestructiveDistance: 0.1174811146053545,
-      minimumPrimaryDestructiveMargin: 0.0004252584604935161,
-      minimumDestructiveLabelLc: 61.40241410956562,
+      meanPrimaryDestructiveDistance: 0.1001292755699383,
+      minimumPrimaryDestructiveMargin: -0.04023380867597208,
+      minimumDestructiveLabelLc: 71.5750645955411,
     },
     fixedDefaultAnchor: {
       inputCount: 41,
       modeCaseCount: 82,
       generatedContractFailureInputCount: 0,
       qualityFindingInputCount: 37,
-      semanticFindingInputCount: 0,
+      semanticFindingInputCount: 23,
       shiftedInputCount: 13,
       shiftedModeCaseCount: 16,
-      meanPrimaryDestructiveDistance: 0.09764173775090328,
-      minimumPrimaryDestructiveMargin: 0.0004136725705020522,
-      minimumDestructiveLabelLc: 61.40241410956562,
+      meanPrimaryDestructiveDistance: 0.08452093565406146,
+      minimumPrimaryDestructiveMargin: -0.040992586651734095,
+      minimumDestructiveLabelLc: 71.5750645955411,
     },
   });
   assert.equal(report.comparison.changedDecisionEvidenceInputCount, 41);
@@ -87,17 +87,22 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
   assert.equal(report.comparison.unchangedApplicableInputCount, 0);
   assert.equal(report.comparison.nonApplicableIdentityMismatchCount, 0);
   assert.deepEqual(report.comparison.selectedRoleChangedModeCaseCounts, {
-    destructive: 75,
-    destructiveState: 75,
+    destructive: 41,
+    destructiveState: 41,
     warning: 0,
     warningState: 0,
   });
   assert.equal(
     report.comparison.candidateConstraintParityDigest,
-    "4bf715775b67313e058d76cb47991e7ebe43a9032567972e6a5139eeb0b9aad7",
+    "58b7f6e71ad23146f60eb1b0fc8eec28a5e6f845c7597d41e6fbaa226a703843",
   );
   assert.deepEqual(report.comparison.contractTransitions, {});
-  assert.deepEqual(report.comparison.semanticTransitions, {});
+  assert.deepEqual(report.comparison.semanticTransitions, {
+    "feedback-oklab-separation-passes:unsatisfied": {
+      introduced: ["#CC3366"],
+      resolved: [],
+    },
+  });
   assert.deepEqual(report.comparison.sourceShiftModeTransitions, {
     dark: { introduced: [], resolved: [] },
     light: { introduced: [], resolved: [] },
@@ -115,11 +120,11 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
   });
   assert.equal(
     report.comparison.currentFullResultDigest,
-    "4fbf669725618d2df819baaf3dd9e8ebff4f0f295b105d79463c4928a736c928",
+    "61822530a81d23ed163d6e33e09218f0080b633935943db3e31b7b06bbf1dceb",
   );
   assert.equal(
     report.comparison.fixedFullResultDigest,
-    "4686b451b4a7e8b8c6288a87511707e1eb06bdc3ae296ef5b43b18ee1972651e",
+    "70ebe23ee41378988cd9c26f8bc4364de65cb01dc639b0bcaa34d8615920ff35",
   );
   assert.equal(
     digest(
@@ -140,6 +145,6 @@ test("reviewed Destructive anchor counterfactual remains reproducible", () => {
         ),
       })),
     ),
-    "98ffca70a1f98406c9dc348278a0838e3da117969c6f5bca1c440bd2162bb777",
+    "8a7c8171773252bca2e8770f6dda4a710a44090ff2c7c7b369da52db6a199071",
   );
 });

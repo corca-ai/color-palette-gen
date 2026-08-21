@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Color Lab v2의 색상 역할, 생성 순서, 검증 규칙과 수치 근거를 시각적으로 설명합니다."
+    />
+    <title>About the color system — Color Lab v2</title>
+    <link rel="stylesheet" href="./styles/base.css" />
+    <link rel="stylesheet" href="./styles/about.css" />
+  </head>
+  <body class="about-page">
+    <header class="topbar">
+      <a class="brand" href="./">Color Lab</a>
+      <nav class="product-nav" aria-label="페이지">
+        <a href="./">Generator</a
+        ><a href="./about.html" aria-current="page">About</a
+        ><a href="./reference.html">Reference</a
+        ><a href="./contextual-review.html">Review</a><a href="../v1/">v1</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="about-hero">
+        <p class="eyebrow">Ontology → decisions → evidence</p>
+        <h1>한 색이<br />시스템이 되는 과정.</h1>
+        <p class="lede">
+          Color Lab은 예쁜 색 목록을 만드는 도구가 아니다. 하나의 입력색에서
+          화면의 역할을 정의하고, 후보를 만들고, 필수 조건을 통과한 색을 고른 뒤
+          Light와 Dark를 한 쌍으로 조정하는 규칙 기반 생성기다.
+        </p>
+        <nav class="page-index" aria-label="이 페이지의 내용">
+          <a href="#red-walkthrough">빨강이 어떻게 바뀌나?</a
+          ><a href="#primary-selection-example">왜 이 버튼색이 골라졌나?</a
+          ><a href="#dependencies">어떤 역할부터 만드나?</a
+          ><a href="#rules">후보는 어떻게 고르나?</a
+          ><a href="#numbers">숫자는 왜 이 값인가?</a
+          ><a href="#faq">용어가 궁금하다</a>
+        </nav>
+      </section>
+
+      <section
+        id="red-walkthrough"
+        class="about-section concrete-walkthrough"
+        aria-labelledby="walkthrough-title"
+      >
+        <div class="about-heading">
+          <p class="eyebrow">Start here · actual v13 output</p>
+          <h2 id="walkthrough-title">
+            <code>#FF0000</code> 생성 과정을 끝까지 따라가기
+          </h2>
+          <p>
+            아래 값은 설명용 가상이 아니라 현재 엔진의 실제 결과다. 각 단계의
+            밑줄 친 규칙을 누르면 공식, 기준값, 근거와 한계를 볼 수 있다.
+          </p>
+        </div>
+        <ol class="walkthrough-list">
+          <li id="walkthrough-input" class="walkthrough-step">
+            <header>
+              <b>01</b>
+              <h3>먼저 빨강을 숫자로 읽되, 원본은 그대로 보관한다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>왜 측정하는가?</strong> <code>#FF0000</code>이라는
+                  hex만으로는 밝기·색의 강도·색상 방향을 따로 비교하기 어렵다.
+                  엔진은 이를 OKLCH의 세 숫자,
+                  <code>L .628 · C .258 · H 29.2°</code>로 읽는다.
+                </p>
+                <p>
+                  <strong>분류는 무엇을 바꾸는가?</strong> 이 빨강은 색의 강도
+                  <code>C</code>가 <code>.06</code> 이상이어서
+                  <strong>chromatic</strong>, 즉 색조가 뚜렷한 입력으로
+                  취급된다. 이 분류는 뒤에서 Foundation에 입력색 기운을 얼마나
+                  넣을지 정할 때 사용된다.
+                </p>
+                <p>
+                  <strong>원본은 없어지지 않는다.</strong>
+                  <code>#FF0000</code>은 <strong>Brand Source</strong>라는
+                  증거로 그대로 저장한다. 화면에 쓸 Primary는 이후 별도로
+                  만든다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#oklch">L·C·H가 각각 뜻하는 것</a
+                  ><a href="./reference.html#input-classification"
+                    >세 입력 분류와 실제 영향</a
+                  ><a href="./reference.html#generated-primary"
+                    >원본과 생성용 Primary의 차이</a
+                  >
+                </div>
+              </div>
+              <div class="swatch-evidence">
+                <i style="--swatch: #ff0000"></i><strong>#FF0000</strong
+                ><small>preserved source</small>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-foundation" class="walkthrough-step">
+            <header>
+              <b>02</b>
+              <h3>버튼색보다 먼저, 버튼이 놓일 화면 바탕을 만든다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>왜 먼저 만드는가?</strong> 같은 빨강 버튼도 흰 화면
+                  위와 검은 화면 위에서 읽힘과 경계가 달라진다. 따라서 버튼용
+                  Primary를 고르기 전에 비교 기준이 될 작은 Light 화면과 Dark
+                  화면을 각각 만든다. 이 바탕 역할 묶음을
+                  <strong>Foundation</strong>이라 부른다.
+                </p>
+                <ol class="foundation-order">
+                  <li><b>Background</b><span>페이지의 가장 바깥 바탕</span></li>
+                  <li>
+                    <b>Surface</b><span>그 위에 놓이는 카드·입력 영역</span>
+                  </li>
+                  <li>
+                    <b>Text</b><span>두 바탕에서 읽히는 본문과 보조 글자</span>
+                  </li>
+                  <li>
+                    <b>Border</b
+                    ><span>Surface와 입력칸의 경계를 보여 주는 선</span>
+                  </li>
+                </ol>
+                <p>
+                  이제 03단계에서 빨강 Primary 후보를 이 두 미니 화면 위에 올려
+                  보고, text와 경계가 실제로 작동하는 후보만 남길 수 있다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#foundation-mode-zone"
+                    >Light·Dark 바탕 밝기 범위</a
+                  ><a href="./reference.html#foundation-hierarchy"
+                    >Background와 Surface를 구분하는 법</a
+                  ><a href="./reference.html#foundation-text"
+                    >읽을 수 있는 Text를 고르는 법</a
+                  ><a href="./reference.html#boundary-contrast"
+                    >Border가 보여야 하는 기준</a
+                  >
+                </div>
+              </div>
+              <div
+                class="foundation-scenes"
+                aria-label="빨강 입력에서 생성된 Light와 Dark Foundation 예시"
+              >
+                <article
+                  style="
+                    --background: #fffdfc;
+                    --surface: #fff6f5;
+                    --text: #0d0909;
+                    --muted: #59504f;
+                    --border: #8d8482;
+                  "
+                >
+                  <header>
+                    <strong>Light Foundation</strong
+                    ><code>Background #FFFDFC</code>
+                  </header>
+                  <div class="foundation-scene">
+                    <span>Surface #FFF6F5</span><b>Readable text</b
+                    ><small>Muted text</small
+                    ><i>Input field · Border #8D8482</i>
+                  </div>
+                </article>
+                <article
+                  style="
+                    --background: #0d0706;
+                    --surface: #181110;
+                    --text: #faefed;
+                    --muted: #bfb5b3;
+                    --border: #6e6563;
+                  "
+                >
+                  <header>
+                    <strong>Dark Foundation</strong
+                    ><code>Background #0D0706</code>
+                  </header>
+                  <div class="foundation-scene">
+                    <span>Surface #181110</span><b>Readable text</b
+                    ><small>Muted text</small
+                    ><i>Input field · Border #6E6563</i>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-primary" class="walkthrough-step emphasized-step">
+            <header>
+              <b>03</b>
+              <h3>원본 빨강을 화면에서 쓸 버튼 색 묶음으로 바꾼다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>왜 원본 빨강을 그대로 버튼에 쓰지 않는가?</strong>
+                  버튼은 Light와 Dark 화면에서 text가 읽혀야 하고, hover·active
+                  때도 서로 구분되어야 한다. 원본은 이 조건을 자동으로 만족하지
+                  않는다.
+                </p>
+                <p>
+                  <strong>무엇을 바꾸는가?</strong> 빨강 방향 <code>H</code>는
+                  유지한다. 다만 현재 잠정 정책은 생성 후보의 강도
+                  <code>C</code>를 최대 <code>.15</code>로 제한하므로
+                  <code>min(.258, .15) = .15</code>를 사용한다. 그 상태에서
+                  Light는 <code>L .46–.54</code>, Dark는
+                  <code>L .58–.62</code>의 밝기 후보를 만든다.
+                </p>
+                <p>
+                  <strong>한 색이 아니라 family를 고른다.</strong> 평상시
+                  색(default), 마우스를 올린 색(hover), 누른 색(active), 그 위의
+                  글자색이 모두 함께 작동하는 조합만 남긴다. 그림의 세 칸이 그
+                  결과다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#primary-chroma-cap"
+                    >왜 생성 후보만 C .15로 제한하는가?</a
+                  ><a href="./reference.html#primary-range"
+                    >Light·Dark 버튼 밝기 범위</a
+                  ><a href="./reference.html#state-separation"
+                    >hover·active를 얼마나 다르게 만드는가?</a
+                  ><a href="#primary-selection-example"
+                    >여러 후보 중 하나를 고르는 절차</a
+                  >
+                </div>
+              </div>
+              <div class="family-results">
+                <div>
+                  <strong>Light family</strong
+                  ><span
+                    ><i style="--swatch: #b54437"></i><code>#B54437</code></span
+                  ><span
+                    ><i style="--swatch: #a9392d"></i><code>#A9392D</code></span
+                  ><span
+                    ><i style="--swatch: #9b2b20"></i><code>#9B2B20</code></span
+                  ><small>default → hover → active</small>
+                </div>
+                <div>
+                  <strong>Dark family</strong
+                  ><span
+                    ><i style="--swatch: #d05c4e"></i><code>#D05C4E</code></span
+                  ><span
+                    ><i style="--swatch: #dd6859"></i><code>#DD6859</code></span
+                  ><span
+                    ><i style="--swatch: #eb7465"></i><code>#EB7465</code></span
+                  ><small>default → hover → active</small>
+                </div>
+              </div>
+            </div>
+            <section
+              id="primary-selection-example"
+              class="selection-explainer"
+              aria-labelledby="primary-selection-title"
+            >
+              <div>
+                <small>질문에 대한 바로 답</small>
+                <h4 id="primary-selection-title">
+                  왜 Light 버튼은 <code>#B54437</code>이 되었나?
+                </h4>
+                <p>
+                  원본과 가장 가까운 <code>#FF0000</code>부터 무조건 고른 것이
+                  아니다. 먼저 버튼으로 쓸 수 없는 후보를 탈락시키고,
+                  <strong>통과한 후보 안에서만</strong> 원본과 가장 가까운 것을
+                  골랐다.
+                </p>
+              </div>
+              <ol class="selection-pipeline">
+                <li>
+                  <b>1 · 만들기</b>
+                  <span><i style="--swatch: #ff0000"></i></span>
+                  <p>
+                    빨강 방향을 유지하면서 Light 밝기 범위에서 family 후보
+                    <strong>34개</strong>를 만든다.
+                  </p>
+                </li>
+                <li class="rejected-candidate">
+                  <b>2 · 먼저 탈락</b>
+                  <span><i style="--swatch: #ff0000"></i><s>#FF0000</s></span>
+                  <p>
+                    원본은 가장 가깝지만 <code>L .628</code>이 Light 범위
+                    <code>.46–.54</code> 밖이고, <code>C .258</code>도 현재 상한
+                    <code>.152</code>를 넘어서 탈락한다.
+                  </p>
+                </li>
+                <li>
+                  <b>3 · 통과 후보만 정렬</b>
+                  <span class="mini-candidate-order"
+                    ><i style="--swatch: #b54437"></i
+                    ><i style="--swatch: #b54337"></i
+                  ></span>
+                  <p>
+                    family 완성, 밝기 범위, chroma 상한, 공통 글자 WCAG
+                    <code>4.5:1</code>을 모두 통과한 후보만 원본과의 Oklab
+                    <code>ΔE</code>가 작은 순서로 놓는다.
+                  </p>
+                </li>
+                <li class="selected-candidate">
+                  <b>4 · 첫 통과 후보 선택</b>
+                  <span
+                    ><i style="--swatch: #b54437"></i><code>#B54437</code></span
+                  >
+                  <p>
+                    <code>L .539 · C .149</code>이며, 흰 글자의 WCAG 값
+                    <code>5.46:1</code>이 최소 <code>4.5:1</code>을 통과한다.
+                    APCA <code>Lc 81.8</code>은 진단값이다. 통과 후보 중
+                    원본과의 <code>ΔE .140</code>이 가장 작아 선택된다. APCA
+                    값은 통과 기준이 아니라 후보 순위와 진단에 남는다.
+                  </p>
+                </li>
+              </ol>
+              <p class="selection-dark-note">
+                Dark도 같은 절차다. Dark 범위에서 만든 18개 후보를 검사해
+                <code>#D05C4E</code>를 고른다. 이후 각각의 default에서 hover와
+                active를 완성한다.
+              </p>
+              <div class="rule-links">
+                <a href="./reference.html#candidate-vs-constraint"
+                  >Candidate·Constraint·Objective 용어 설명</a
+                ><a href="./reference.html#primary-range"
+                  >Light·Dark 밝기 범위의 근거</a
+                ><a href="./reference.html#primary-chroma-cap"
+                  >C 상한의 근거와 한계</a
+                ><a href="./reference.html#oklab-delta-e">ΔE 계산법</a>
+              </div>
+            </section>
+          </li>
+          <li id="walkthrough-destructive" class="walkthrough-step">
+            <header>
+              <b>04</b>
+              <h3>삭제 버튼을 위한 Destructive를 별도로 만든다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>Destructive는 무엇인가?</strong> “삭제”, “제거”,
+                  “위험한 실행”처럼 되돌리기 어렵거나 주의가 필요한 행동에 쓰는
+                  별도 역할이다. 입력이 빨강이라서 생긴 색이 아니며, 어떤
+                  입력색을 넣어도 이 역할은 필요하다.
+                </p>
+                <p>
+                  <strong>왜 Primary 다음인가?</strong> 일반 행동과 위험 행동이
+                  나란히 있을 때 서로 구분돼야 하므로, 방금 고른 Primary를 비교
+                  대상으로 사용한다. 현재 엔진은 글자가 읽히는 red 계열 후보를
+                  만든 뒤 Primary와의 색 거리도 기록한다. 다만
+                  <code>ΔE .08</code>은 후보를 탈락시키는 조건이 아니라, 최종
+                  선택 뒤 두 역할이 가까우면 사람이 확인하도록 남기는 review
+                  기준이다.
+                </p>
+                <p class="meaning-boundary">
+                  <strong>여기서 “구분”이 뜻하는 것:</strong> Primary는 일반적인
+                  대표 행동이고 Destructive는 삭제처럼 되돌리기 어려운 행동이다.
+                  같은 화면에서 두 역할이 거의 같은 색이면 색만으로는 행동의
+                  성격 차이를 전달하기 어렵다. 그래서 선택 결과의 거리를
+                  측정한다. <code>ΔE .08</code> 미만이면 review 신호를 남기지만
+                  팔레트 생성을 실패시키지는 않는다. 이 숫자는 두 색의 수치적
+                  거리만 말하며 사용자가 실제로 “위험” 의미를 알아본다는 것을
+                  증명하지 않는다.
+                </p>
+                <p>
+                  <strong>Component 문맥에서는:</strong> 현재 accepted
+                  hierarchy는 두 역할을 한 action group에서 동시에 filled로 두지
+                  않는다. 함께 있으면 Primary는 filled, Destructive는
+                  outline이고, destructive confirmation에서는 Primary가 없다.
+                  따라서 role identity와 <code>ΔE .08</code> 전역 fill 분리는
+                  같은 의무가 아니다. context-free palette에는 두 role을 모두
+                  보존하고, 실제 동시 표시 방식은 component presentation이
+                  정한다.
+                </p>
+                <p>
+                  <strong>결과:</strong> Light <code>#99000D</code>, Dark
+                  <code>#FB6157</code>. 각각에도 default·hover·active·text
+                  묶음을 만든다.
+                </p>
+                <p class="meaning-boundary">
+                  <strong>그럼 옆의 Cancel은 언제 정하는가?</strong> Cancel은
+                  Destructive처럼 새 palette role을 생성하는 단계가 아니다. 최종
+                  mode bundle을 실제 <em>destructive confirmation</em>에 놓을
+                  때, 그 화면의 Muted Surface를 Default로 삼고 Foreground를
+                  글자로 삼아 Hover·Active를 문맥 안에서 파생한다. Light에서는
+                  둘 다 어두워지고 Dark에서는 둘 다 밝아지되, Cancel은 강조도가
+                  낮게 느껴지도록 더 작은 변화량을 쓴다. 세 상태의 글자 대비는
+                  각각 WCAG <code>4.5:1</code> 이상인지 다시 검사한다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#semantic-separation"
+                    >왜 구분하며, 어떻게 계산하는가?</a
+                  ><a href="./reference.html#semantic-hue-review"
+                    >선택 후 별도 hue 검토를 하는 이유</a
+                  ><a href="./reference.html#destructive-inventory"
+                    >Destructive 후보가 만들어지는 범위</a
+                  ><a href="./reference.html#secondary-action-states"
+                    >Cancel의 실제 색·후보 선택 절차</a
+                  >
+                </div>
+              </div>
+              <div class="mode-swatches">
+                <div>
+                  <i style="--swatch: #99000d"></i><strong>Light</strong
+                  ><code>#99000D</code>
+                </div>
+                <div>
+                  <i style="--swatch: #fb6157"></i><strong>Dark</strong
+                  ><code>#FB6157</code>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-warning" class="walkthrough-step">
+            <header>
+              <b>05</b>
+              <h3>주의 메시지를 위한 Warning을 세 번째로 만든다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>Warning은 무엇인가?</strong> 삭제 자체가 아니라 “확인
+                  필요”, “주의”, “곧 문제가 될 수 있음”을 알리는 역할이다.
+                  그래서 Destructive와 같은 빨강을 그대로 쓰지 않고 amber 계열을
+                  탐색한다.
+                </p>
+                <p>
+                  <strong>왜 마지막에 만드는가?</strong> Warning은 일반 행동인
+                  Primary와 위험 행동인 Destructive 양쪽에서 모두 구분돼야 한다.
+                  따라서 두 색이 정해진 뒤에만 제대로 검사할 수 있다.
+                </p>
+                <p>
+                  <strong>선택 방법과 결과:</strong>
+                  <code>70°·85°·100°</code> 방향의 후보 중 두 선행 역할 모두와
+                  <code>ΔE .08</code> 이상 떨어지고 글자가 읽히는 색을 고른다.
+                  Light <code>#B48700</code>, Dark <code>#D8A730</code>이
+                  선택됐다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#semantic-separation"
+                    >세 역할 사이의 최소 거리 계산</a
+                  ><a href="./reference.html#warning-inventory"
+                    >Warning 후보가 만들어지는 범위</a
+                  >
+                </div>
+              </div>
+              <div class="mode-swatches">
+                <div>
+                  <i style="--swatch: #b48700"></i><strong>Light</strong
+                  ><code>#B48700</code>
+                </div>
+                <div>
+                  <i style="--swatch: #d8a730"></i><strong>Dark</strong
+                  ><code>#D8A730</code>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-utility" class="walkthrough-step">
+            <header>
+              <b>06</b>
+              <h3>선택된 영역과 키보드 위치를 보여 줄 색을 만든다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>Selection</strong>은 목록에서 현재 선택된 행처럼 “이
+                  영역이 선택됐다”는 것을 면 색으로 보여 준다. 따라서 앞서 만든
+                  Surface와 구분되면서도 글자를 읽을 수 있어야 한다.
+                </p>
+                <p class="meaning-boundary">
+                  <strong>Selection과 Text는 언제 검사하는가?</strong> 후보를
+                  만들자마자 각 배경에 검정·흰색 글자를 시험해 WCAG
+                  <code>4.5:1</code>인 후보만 남긴다. Selection을 고른 직후 실제
+                  <code>selection text</code>를 확정하고, mode를 완성할 때 최종
+                  두 색을 <code>Selected content</code> 검사로 다시 확인한다.
+                  마지막 semantic model은 그 Light·Dark 결과를 기록할 뿐 색을
+                  다시 고르지 않는다.
+                </p>
+                <p>
+                  <strong>Focus Ring</strong>은 키보드 사용자가 지금 어느
+                  버튼이나 입력칸에 있는지 보여 주는 외곽선이다. Primary 버튼과
+                  Destructive 버튼 어디에 둘러도 보여야 하므로 두 control과
+                  Background·Surface·Muted Surface 세 인접 바탕을 따로 비교한다.
+                </p>
+                <p>
+                  <strong>결과:</strong> Light는 Selection <code>#FAE6E3</code>,
+                  Focus <code>#A43429</code>. Dark는 <code>#291B19</code>,
+                  <code>#BA6F64</code>이다. 오른쪽 그림에서 면과 외곽선의 차이를
+                  볼 수 있다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#boundary-contrast"
+                    >외곽선이 배경에서 보여야 하는 기준</a
+                  ><a href="./reference.html#semantic-separation"
+                    >Focus가 control과 구분되는 색 거리</a
+                  ><a href="./reference.html#selection-inventory"
+                    >Selection 후보와 Text 검사의 전체 순서</a
+                  ><a href="./reference.html#focus-inventory"
+                    >Focus 후보 생성</a
+                  >
+                </div>
+              </div>
+              <div class="utility-pair">
+                <div
+                  style="
+                    --surface: #fff6f5;
+                    --selection: #fae6e3;
+                    --focus: #a43429;
+                  "
+                >
+                  <i></i><span>Light</span>
+                </div>
+                <div
+                  style="
+                    --surface: #181110;
+                    --selection: #291b19;
+                    --focus: #ba6f64;
+                  "
+                >
+                  <i></i><span>Dark</span>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-pair" class="walkthrough-step">
+            <header>
+              <b>07</b>
+              <h3>Light용 화면 하나와 Dark용 화면 하나를 최종 짝으로 고른다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>pair는 무엇인가?</strong> Light Primary와 Dark Primary
+                  두 색만 뜻하지 않는다. Foundation, Primary, Destructive,
+                  Warning, Selection, Focus까지 모두 들어 있는
+                  <strong
+                    >완성된 Light 화면 후보 하나 + 완성된 Dark 화면 후보
+                    하나</strong
+                  >의 조합이다.
+                </p>
+                <p>
+                  <strong>왜 다시 고르는가?</strong> 각 mode가 혼자 잘 작동해도,
+                  Light와 Dark의 Primary가 전혀 다른 브랜드색처럼 보이면 전환 시
+                  일관성이 깨진다. 엔진은 두 Primary의 hue·chroma 차이와 밝기
+                  간격, 각 mode의 상태 진행을 합쳐 7개 관계를 먼저 비교한다.
+                </p>
+                <p>
+                  <strong>결과:</strong> <code>#B54437 ↔ #D05C4E</code> 조합이
+                  선택됐다. 세부 수치는 각각 hue 차이 <code>.35°</code>, chroma
+                  차이 <code>.00046</code>, 밝기 차이 <code>.0779</code>다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#pair-bands"
+                    >7개 관계를 그림과 공식으로 보기</a
+                  >
+                </div>
+              </div>
+              <div class="pair-result">
+                <i style="--swatch: #b54437"></i><span>↔</span
+                ><i style="--swatch: #d05c4e"></i>
+              </div>
+            </div>
+          </li>
+          <li id="walkthrough-review" class="walkthrough-step review-step">
+            <header>
+              <b>08</b>
+              <h3>마지막으로 “생성 성공”과 “추가 검토 필요”를 따로 기록한다</h3>
+            </header>
+            <div class="walkthrough-grid">
+              <div class="walkthrough-copy">
+                <p>
+                  <strong>생성 contract:</strong> text가 읽히고 경계가 보이는
+                  등, 색을 만들 때 반드시 통과하도록 한 조건이다. 이번 Light와
+                  Dark는 모두 통과했다.
+                </p>
+                <p>
+                  <strong>selected-result review:</strong> 이미 선택된 색에서
+                  사람이 다시 볼 만한 관계를 표시한다. 이번에는 빨강 Primary와
+                  Destructive의 hue 간격이 잠정값 <code>30°</code>보다 작아
+                  mode마다 한 건씩 남는다. 이 신호는 색을 자동 교체하거나 전체
+                  결과를 실패로 바꾸지 않는다.
+                </p>
+                <p>
+                  <strong>semantic model:</strong> 별도로 선언한 역할 관계만
+                  평가한다. 이번 결과는 그 제한된 선언 범위에서는 satisfied다.
+                  세 줄은 서로 다른 질문에 답하며 하나의 “전체 품질 점수”가
+                  아니다.
+                </p>
+                <div class="rule-links">
+                  <a href="./reference.html#semantic-hue-review"
+                    >30° 검토 신호의 의미와 한계</a
+                  ><a href="#rules">통과 조건과 사후 review가 다른 이유</a>
+                </div>
+              </div>
+              <div class="verdict-stack">
+                <span class="pass">contracts · pass</span
+                ><span class="review">hue review · 2 findings</span
+                ><span class="pass">semantic model · satisfied</span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="numeric-lab" class="about-section numeric-lab">
+        <div class="about-heading">
+          <p class="eyebrow">00 · See the actual numbers</p>
+          <h2><code>C 0.15</code>는 무슨 색인가?</h2>
+          <p>
+            하나의 색이 아니다. OKLCH의 <code>C</code>는 무채색 축에서 떨어진
+            거리이므로 같은 <code>0.15</code>라도 hue와 lightness에 따라 전혀
+            다르게 보인다. 아래 색은 모두 실제 sRGB 출력으로 변환한 결과다.
+          </p>
+        </div>
+
+        <div class="number-demo-card cap-demo">
+          <div class="demo-copy">
+            <p class="eyebrow">Primary chroma cap</p>
+            <h3>원본 입력이 생성용 Primary로 바뀌는 경로</h3>
+            <p>
+              원본 hex는 <strong>brand source</strong>로 그대로 보존된다. 하지만
+              state가 있는 filled action용 Primary 후보를 만들 때는
+              <code>requested C = min(source C, 0.15)</code>를 사용하고, mode에
+              맞는 lightness에서 sRGB로 표현 가능한 색으로 변환한다.
+            </p>
+            <form id="cap-demo-form" class="cap-input">
+              <input
+                id="cap-demo-picker"
+                type="color"
+                value="#FF0000"
+                aria-label="실험할 입력색"
+              />
+              <input
+                id="cap-demo-hex"
+                value="#FF0000"
+                maxlength="7"
+                aria-label="실험할 hex"
+              />
+              <button type="submit">변환 보기</button>
+            </form>
+            <p id="cap-demo-error" class="demo-error" aria-live="polite"></p>
+          </div>
+          <div id="cap-pipeline" class="cap-pipeline" aria-live="polite"></div>
+        </div>
+
+        <div class="number-demo-card">
+          <div class="demo-copy compact-copy">
+            <p class="eyebrow">Same C, different colors</p>
+            <h3>모두 요청값 <code>L 0.62 · C 0.15</code></h3>
+            <p>
+              hue만 30°씩 바꾼 표본이다. 각 칸에는 sRGB gamut mapping 뒤 실제
+              <code>C</code>가 표시된다. 요청값이 같아도 화면이 표현할 수 없는
+              영역에서는 실제 chroma가 낮아질 수 있다.
+            </p>
+          </div>
+          <div id="cap-hue-grid" class="cap-hue-grid"></div>
+        </div>
+
+        <div class="number-demo-card">
+          <div class="demo-copy compact-copy">
+            <p class="eyebrow">Why gamut mapping happens</p>
+            <h3>OKLCH 좌표가 화면의 sRGB 범위를 벗어나면</h3>
+            <p>
+              브라우저에 내보낼 수 없는 RGB channel이 생긴다. 이 엔진은
+              lightness와 hue를 유지하면서 chroma만 줄여 sRGB 안으로 들어오는
+              가장 큰 chroma를 찾는다. 지각적으로 가장 가까운 색을 찾는 방식은
+              아니다. 그래서 “요청한 C”와 “실제 출력 C”를 구분한다.
+            </p>
+            <p>
+              <a href="./reference.html#gamut-mapping"
+                >24회 이진 탐색 공식과 clipping·perceptual mapping 비교 보기
+                →</a
+              >
+            </p>
+          </div>
+          <div id="gamut-strip" class="gamut-strip"></div>
+        </div>
+      </section>
+
+      <section id="concepts" class="about-section">
+        <div class="about-heading">
+          <p class="eyebrow">01 · Ontology</p>
+          <h2>엔진은 “예쁜 색 목록”이 아니라 UI에서 맡을 일을 만든다.</h2>
+          <p>
+            여기서 역할은 색의 이름이 아니라 사용 목적이다. 같은 빨강 계열이어도
+            일반 버튼과 삭제 버튼은 해야 할 일이 다르므로 별도로 고른다.
+          </p>
+        </div>
+        <div class="role-map">
+          <article class="role-card foundation-card">
+            <div class="swatch-stack" aria-hidden="true">
+              <i style="--swatch: #f7f7f3"></i><i style="--swatch: #e8e9e3"></i
+              ><i style="--swatch: #d7d9d1"></i>
+            </div>
+            <small>Environment</small>
+            <h3>Foundation</h3>
+            <p>
+              페이지 바탕, 카드 면, 글자, 경계선이다. 나머지 색을 판단할 비교
+              환경을 먼저 만든다.
+            </p>
+          </article>
+          <article class="role-card primary-card">
+            <div
+              class="state-strip"
+              aria-label="Primary default, hover, active example"
+            >
+              <i style="--swatch: #507096"></i><i style="--swatch: #456584"></i
+              ><i style="--swatch: #385771"></i>
+            </div>
+            <small>Brand action</small>
+            <h3>Primary</h3>
+            <p>
+              저장·확인 같은 대표 행동에 쓰는 버튼 묶음이다. 평상시·hover·누른
+              상태와 글자색을 함께 만든다.
+            </p>
+          </article>
+          <article class="role-card feedback-card">
+            <div class="split-swatches" aria-hidden="true">
+              <i style="--swatch: #b32822"></i><i style="--swatch: #bf7900"></i>
+            </div>
+            <small>Semantic feedback</small>
+            <h3>Destructive · Warning</h3>
+            <p>
+              Destructive는 삭제·위험 행동, Warning은 주의 메시지다. 일반
+              Primary 및 서로와 혼동되지 않도록 고른다.
+            </p>
+          </article>
+          <article class="role-card utility-card">
+            <div class="focus-demo" aria-hidden="true"><i></i></div>
+            <small>Interaction support</small>
+            <h3>Selection · Focus</h3>
+            <p>
+              Selection은 선택된 영역의 면, Focus는 현재 키보드 위치를 보여 주는
+              외곽선이다.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="dependencies" class="about-section dependency-section">
+        <div class="about-heading">
+          <p class="eyebrow">02 · Role dependency DAG</p>
+          <h2>어떤 색이 먼저 정해져야 다음 색을 고를 수 있는가?</h2>
+          <p>
+            화살표는 “왼쪽/위 역할의 선택 결과를 다음 역할이 검사에 사용한다”는
+            뜻이다. 이 구조를 Light와 Dark에서 각각 한 번씩 실행한다. 원으로
+            되돌아가는 화살표가 없으므로 DAG(방향성 비순환 그래프)다.
+          </p>
+        </div>
+        <figure class="dependency-graph">
+          <figcaption>
+            <span><i class="solid-edge"></i>위에서 아래로 생성</span>
+            <span>노드의 “읽는 값”은 검사에 직접 사용하는 선행 역할</span>
+          </figcaption>
+          <div class="dependency-canvas">
+            <svg
+              class="dependency-svg"
+              viewBox="0 0 1000 1040"
+              role="img"
+              aria-labelledby="dependency-title dependency-description"
+            >
+              <title id="dependency-title">
+                Light 또는 Dark 한 mode의 색 역할 생성 순서
+              </title>
+              <desc id="dependency-description">
+                Foundation과 Primary family를 만든 뒤 공통 filled-action
+                foreground를 정한다. 이 foreground와 Primary를 입력으로
+                Destructive를 만들고, 이어서 states, Warning, Selection, Focus를
+                만든다. 각 분기의 결과를 선택된 역할 묶음으로 모은 후 mode
+                contract를 검사해 mode bundle을 완성한다.
+              </desc>
+              <defs>
+                <marker
+                  id="dag-arrowhead"
+                  markerWidth="8"
+                  markerHeight="8"
+                  refX="7"
+                  refY="4"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <path d="M0,0 L8,4 L0,8 z"></path>
+                </marker>
+              </defs>
+              <g class="dag-edges generation-edges">
+                <path data-edge="foundation-primary" d="M500 100 V140"></path>
+                <path data-edge="primary-destructive" d="M500 220 V270"></path>
+                <path
+                  data-edge="destructive-states"
+                  d="M400 310 H205 V410"
+                ></path>
+                <path data-edge="destructive-warning" d="M500 350 V410"></path>
+                <path
+                  data-edge="primary-selection"
+                  d="M580 180 H795 V270"
+                ></path>
+                <path
+                  data-edge="destructive-focus"
+                  d="M600 330 V380 H795 V410"
+                ></path>
+                <path data-edge="warning-states" d="M500 490 V550"></path>
+                <path
+                  data-edge="destructive-states-ready"
+                  d="M205 490 V720"
+                ></path>
+                <path data-edge="warning-states-ready" d="M500 630 V720"></path>
+                <path data-edge="focus-ready" d="M795 490 V720"></path>
+                <path
+                  data-edge="selection-ready"
+                  d="M920 310 H950 V760 H850"
+                ></path>
+                <path data-edge="roles-contracts" d="M500 800 V850"></path>
+                <path data-edge="contracts-bundle" d="M500 930 V970"></path>
+              </g>
+
+              <g class="svg-dag-node foundation-node">
+                <rect x="330" y="20" width="340" height="80"></rect>
+                <text x="500" y="50">① Foundation</text>
+                <text class="node-detail" x="500" y="76">
+                  Background · Surface · Text · Border
+                </text>
+              </g>
+              <g class="svg-dag-node primary-node">
+                <rect x="400" y="140" width="200" height="80"></rect>
+                <text x="500" y="168">② Primary family</text>
+                <text class="node-detail" x="500" y="191">
+                  family → 공통 action text 확정
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="400" y="270" width="200" height="80"></rect>
+                <text x="500" y="302">③ Destructive</text>
+                <text class="node-detail" x="500" y="327">
+                  읽는 값: Primary + 공통 action text
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="80" y="410" width="250" height="80"></rect>
+                <text x="205" y="442">④ Destructive states</text>
+                <text class="node-detail" x="205" y="467">
+                  같은 action text로 Hover · Active
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="375" y="410" width="250" height="80"></rect>
+                <text x="500" y="442">⑤ Warning</text>
+                <text class="node-detail" x="500" y="467">
+                  읽는 값: Primary + Destructive
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="375" y="550" width="250" height="80"></rect>
+                <text x="500" y="582">⑥ Warning states</text>
+                <text class="node-detail" x="500" y="607">
+                  Default · Hover · Active · Text
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="670" y="270" width="250" height="80"></rect>
+                <text x="795" y="302">⑦ Selection + Text</text>
+                <text class="node-detail" x="795" y="327">
+                  읽는 값: Foundation + Primary
+                </text>
+              </g>
+              <g class="svg-dag-node">
+                <rect x="650" y="410" width="290" height="80"></rect>
+                <text x="795" y="442">⑧ Focus Ring</text>
+                <text class="node-detail" x="795" y="467">
+                  읽는 값: Foundation + Primary + Destructive
+                </text>
+              </g>
+              <g class="svg-dag-node collector-node">
+                <rect x="150" y="720" width="700" height="80"></rect>
+                <text x="500" y="752">⑨ 선택된 역할 묶음</text>
+                <text class="node-detail" x="500" y="777">
+                  Foundation · Primary · Feedback · Selection · Focus
+                </text>
+              </g>
+              <g class="svg-dag-node contract-node">
+                <rect x="330" y="850" width="340" height="80"></rect>
+                <text x="500" y="882">⑩ Mode contracts</text>
+                <text class="node-detail" x="500" y="907">
+                  묶음 전체의 text · hierarchy · boundary를 검사
+                </text>
+              </g>
+              <g class="svg-dag-node bundle-node">
+                <rect x="330" y="970" width="340" height="65"></rect>
+                <text x="500" y="997">완성된 mode bundle 후보</text>
+                <text class="node-detail" x="500" y="1019">
+                  Light 또는 Dark 화면 하나
+                </text>
+              </g>
+            </svg>
+          </div>
+        </figure>
+        <div
+          class="pair-merge"
+          aria-label="Light와 Dark mode bundle이 최종 pair로 합류"
+        >
+          <article>
+            <small>위 DAG를 Light에서 실행</small
+            ><strong>Light mode bundle</strong>
+          </article>
+          <span aria-hidden="true">↘</span>
+          <article>
+            <small>위 DAG를 Dark에서 실행</small
+            ><strong>Dark mode bundle</strong>
+          </article>
+          <span aria-hidden="true">↙</span>
+          <article class="pair-node">
+            <small>두 완성 화면 필요</small
+            ><strong>최종 Light × Dark pair</strong>
+          </article>
+        </div>
+        <div class="dependency-notes">
+          <p>
+            <b>Destructive보다 text가 먼저인 이유</b> Primary 세 상태에서 고른
+            black/white foreground를 Destructive 후보와 상태도 통과해야 한다.
+            Destructive가 나중에 별도의 polarity를 고르지 않는다.
+          </p>
+          <p>
+            <b>Warning이 늦는 이유</b> Primary와 Destructive가 모두 있어야 두
+            색에서 충분히 떨어졌는지 계산할 수 있다.
+          </p>
+          <p>
+            <b>Focus가 늦는 이유</b> 실제 바탕뿐 아니라 Primary·Destructive
+            control 주위에서도 외곽선이 보여야 한다. 여기서 실제 바탕은
+            Background·Surface뿐 아니라 confirmation footer의 Muted Surface도
+            포함한다.
+          </p>
+          <p>
+            <b>Cancel이 이 DAG에 별도 role로 없는 이유</b> 이 그래프는 export할
+            palette role을 만드는 순서다. Confirmation Cancel은 완성된 mode
+            bundle의 Muted Surface·Foreground·Border를 읽어 component에서만
+            파생하며, 새 Secondary token을 결과에 추가하지 않는다.
+            <a href="./reference.html#secondary-action-states"
+              >실제 Light/Dark 상태색과 선택 절차</a
+            >에서 다음 단계를 이어서 볼 수 있다.
+          </p>
+          <p>
+            <b>Pair가 마지막인 이유</b> 색 하나가 아니라 모든 역할이 포함된
+            Light/Dark 화면 전체를 짝짓기 때문이다.
+          </p>
+        </div>
+        <p class="source-note">
+          이 그림은 이해를 위한 공개 projection이다. 유지되는 전체 의존성 정의는
+          <a
+            href="https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/ontology.md#한-mode가-만들어지는-순서"
+            >ontology의 mode DAG</a
+          >에 있으며 실제 실행 순서는 <code>palette.js</code>가 소유한다.
+        </p>
+      </section>
+
+      <section id="flow" class="about-section">
+        <div class="about-heading">
+          <p class="eyebrow">03 · Generation flow</p>
+          <h2>
+            왜 이 순서인가? 다음 색이 앞의 색을 비교 기준으로 쓰기 때문이다.
+          </h2>
+          <p>
+            아래는 위의 빨강 추적을 한 줄씩 줄인 지도다. 각 항목을 누르면 실제
+            값과 그림이 있는 단계로 돌아간다. Light와 Dark에서 1–6을 각각
+            수행하고, 7에서 두 완성 화면을 짝지은 뒤 8에서 결과를 검토한다.
+          </p>
+        </div>
+        <ol class="flow-list">
+          <li>
+            <span>1</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-input"
+                  >입력을 비교 가능한 숫자로 읽는다</a
+                ></strong
+              >
+              <p>
+                밝기·색의 강도·색상 방향을 분리해서 읽고 원본 hex는 따로
+                보존한다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>2</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-foundation"
+                  >버튼이 놓일 화면 바탕부터 만든다</a
+                ></strong
+              >
+              <p>
+                Background·Surface·Text·Border를 정해 다음 색이 실제로 읽히고
+                보이는지 판단할 환경을 만든다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>3</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-primary"
+                  >대표 버튼의 전체 상태 묶음을 만든다</a
+                ></strong
+              >
+              <p>
+                원본 색의 방향을 바탕으로 평상시·hover·누른 상태와 글자색이 함께
+                작동하는 조합을 고른다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>4</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-destructive"
+                  >삭제·위험 행동색을 만든다</a
+                ></strong
+              >
+              <p>
+                글자를 읽을 수 있고 일반 Primary 버튼과 구분되는 red 계열 묶음을
+                고른다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>5</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-warning"
+                  >주의 메시지 색을 만든다</a
+                ></strong
+              >
+              <p>
+                이미 정해진 Primary와 Destructive 양쪽에서 모두 구분되는 amber
+                계열 묶음을 고른다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>6</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-utility"
+                  >선택 영역과 키보드 위치를 표시한다</a
+                ></strong
+              >
+              <p>
+                Surface 위에서 보이는 선택 면과 여러 버튼 주위에서 보이는 focus
+                외곽선을 고른다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>7</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-pair"
+                  >Light 화면과 Dark 화면을 짝짓는다</a
+                ></strong
+              >
+              <p>
+                완성된 두 화면을 조합하고 Primary의 색 방향·강도·밝기와 상태
+                진행이 서로 자연스럽게 이어지는 조합을 우선한다.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span>8</span>
+            <div>
+              <strong
+                ><a href="#walkthrough-review"
+                  >성공 조건과 추가 검토 신호를 분리해 기록한다</a
+                ></strong
+              >
+              <p>
+                생성에 반드시 필요했던 통과 조건, 선택 후 관찰 신호, 선언된 역할
+                모델의 결과를 하나의 점수로 섞지 않는다.
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section id="rules" class="about-section">
+        <div class="about-heading">
+          <p class="eyebrow">04 · How a decision works</p>
+          <h2>
+            색을 고르는 공통 절차는 “만들기 → 탈락시키기 → 순서 정하기”다.
+          </h2>
+          <p>
+            Foundation과 Primary가 같은 색을 만든다는 뜻이 아니다. 역할마다
+            후보와 통과 조건은 다르지만, 여러 후보에서 하나를 결정하는 네 단계가
+            같다.
+          </p>
+        </div>
+        <div class="decision-demo">
+          <article>
+            <b>01</b><strong>후보 만들기 · Candidate</strong>
+            <div class="candidate-row"><i></i><i></i><i></i><i></i><i></i></div>
+            <p>
+              이 역할에서 시험해 볼 여러 색을 만든다. 예를 들어 Warning은 amber
+              방향과 여러 밝기를 조합한다.
+            </p>
+          </article>
+          <article>
+            <b>02</b><strong>필수 조건으로 탈락시키기 · Constraint</strong>
+            <div class="candidate-row filtered">
+              <i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <p>
+              글자가 안 읽히거나 필요한 경계·색 차이가 부족한 후보를 제외한다.
+              하나라도 실패하면 다음 단계로 가지 못한다.
+            </p>
+          </article>
+          <article>
+            <b>03</b><strong>남은 후보의 순서 정하기 · Objective</strong>
+            <div class="candidate-row ranked"><i></i><i></i><i></i></div>
+            <p>
+              통과 후보가 여러 개면 이 역할의 목표에 더 가까운 순서로 정렬한다.
+              Primary는 원본에 가까운 조합을, Destructive는 정해진 red 기준에
+              가까운 조합을 우선한다.
+            </p>
+          </article>
+          <article>
+            <b>04</b><strong>고른 뒤 별도로 관찰하기 · Review</strong>
+            <div class="review-mark">!</div>
+            <p>
+              선택 결과에서 원본 변화나 역할 간 hue 관계처럼 사람이 다시 볼
+              신호를 남긴다. Review는 앞의 선택을 자동으로 취소하지 않는다.
+            </p>
+          </article>
+        </div>
+
+        <div class="rule-examples">
+          <article>
+            <small>Normative in its scope</small>
+            <h3>
+              <a href="./reference.html#boundary-contrast"
+                >Input boundary · 3:1</a
+              >
+            </h3>
+            <div class="boundary-example">
+              <div></div>
+              <div></div>
+            </div>
+            <p>
+              Input Border처럼 정보를 전달하는 경계는 인접 Surface와 WCAG 3:1을
+              만족해야 한다.
+            </p>
+          </article>
+          <article>
+            <small>Provisional</small>
+            <h3>
+              <a href="./reference.html#foundation-tint"
+                >Foundation tint · C 0.012</a
+              >
+            </h3>
+            <div class="tint-example"><i></i><i></i><i></i></div>
+            <p>
+              넓은 바탕이 brand color처럼 강해지지 않게 제한하지만, 이 숫자는
+              검증된 지각 표준이 아니다.
+            </p>
+          </article>
+          <article>
+            <small>Heuristic</small>
+            <h3>
+              <a href="./reference.html#state-separation">State progression</a>
+            </h3>
+            <div class="state-buttons">
+              <button>Default</button><button>Hover</button
+              ><button>Active</button>
+            </div>
+            <p>
+              Production v16에서 Light는 Default→Hover→Active가 점점 어두워지고,
+              Dark는 점점 밝아진다. Primary와 Destructive는 mode 안에서 같은
+              black/white foreground를 공유한다. 이는 자동 접근성 표준이 아니라
+              operator 검토로 채택한 product interaction 규칙이다.
+            </p>
+          </article>
+          <article>
+            <small>Product policy</small>
+            <h3>
+              <a href="./reference.html#semantic-separation"
+                >Semantic separation</a
+              >
+            </h3>
+            <div class="semantic-example">
+              <i></i><span>Primary</span><i></i><span>Destructive</span>
+            </div>
+            <p>
+              Destructive는 semantic red를 유지하면서 현재 Primary와의 거리를
+              생성 후 review로 기록한다. <code>ΔE 0.08</code>은 생성 후보를
+              제거하지 않으며 false finding도 그대로 남는다. 이 값은
+              context-free palette의 heuristic이며, semantic token identity나
+              모든 component 문맥에서의 동시-filled 필요조건과 같지 않다.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="numbers" class="about-section number-section">
+        <div class="about-heading">
+          <p class="eyebrow">05 · Why these numbers?</p>
+          <h2>코드에 적혀 있다고 표준인 것은 아니다.</h2>
+        </div>
+        <div class="authority-list">
+          <article>
+            <strong>Normative</strong>
+            <p>
+              외부 표준이 실제 적용 범위를 직접 규정한다. 예: required UI
+              boundary의 WCAG 3:1.
+            </p>
+          </article>
+          <article>
+            <strong>Product policy</strong>
+            <p>
+              이 프로젝트가 의도적으로 선택한 방향이다. 보편적인 정답을 뜻하지
+              않는다.
+            </p>
+          </article>
+          <article>
+            <strong>Provisional / heuristic</strong>
+            <p>
+              아직 경험적·지각적으로 검증되지 않은 잠정 임계값 또는 설계 근사다.
+            </p>
+          </article>
+          <article>
+            <strong>Technical</strong>
+            <p>
+              탐색 간격, iteration limit, 부동소수점 tolerance처럼 실행을
+              안정시키는 값이다.
+            </p>
+          </article>
+        </div>
+        <p class="source-note">
+          전체 threshold·range·step의 값, 근거와 nonclaim은
+          <a
+            href="https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/policy/evidence.md#numeric-policy-provenance"
+            >Numeric policy provenance</a
+          >에서, 처음부터 끝까지의 상세 규칙은
+          <a
+            href="https://github.com/corca-ai/color-palette-gen/blob/main/docs/v2-decisions/rules.md"
+            >Color decision rules</a
+          >에서 확인할 수 있다. 브라우저용 전체 색인은
+          <a href="./reference.html">Rule &amp; number reference</a>에 있다.
+        </p>
+      </section>
+
+      <section id="faq" class="about-section faq-section">
+        <div class="about-heading">
+          <p class="eyebrow">Reader questions</p>
+          <h2>처음 읽을 때 생기는 질문</h2>
+          <p>
+            답을 찾기 위해 문서 구조를 먼저 알 필요가 없도록, 질문에서 실제 생성
+            단계와 공식으로 바로 이동한다.
+          </p>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>입력한 빨강은 없어지는가?</summary>
+            <p>
+              아니다. Brand Source로 보존되고, UI에 사용할 Generated Primary를
+              별도로 만든다. <a href="#red-walkthrough">실제 빨강 생성 추적</a>
+            </p>
+          </details>
+          <details>
+            <summary>achromatic·subdued·chromatic은 무엇인가?</summary>
+            <p>
+              입력 OKLCH chroma에 붙이는 runtime class다.
+              <a href="./reference.html#input-classification"
+                >세 경계와 생성 영향</a
+              >
+            </p>
+          </details>
+          <details>
+            <summary>왜 Primary보다 Foundation을 먼저 고르는가?</summary>
+            <p>
+              Primary text와 boundary를 계산할 배경이 먼저 필요하기 때문이다.
+              <a href="#red-walkthrough">2단계 Foundation</a>
+            </p>
+          </details>
+          <details>
+            <summary>왜 원본 C를 .15로 줄이는가?</summary>
+            <p>
+              원본이 아니라 Generated Primary 후보에만 적용되는 잠정 calm-chroma
+              상한이다.
+              <a href="./reference.html#primary-chroma-cap">근거와 반례 실험</a>
+            </p>
+          </details>
+          <details>
+            <summary>gamut mapping은 무엇이며 왜 C가 다시 달라지는가?</summary>
+            <p>
+              현재는 L·H를 고정하고 sRGB 안의 최대 C를 이진 탐색한다.
+              <a href="./reference.html#gamut-mapping"
+                >알고리즘과 다른 전략 비교</a
+              >
+            </p>
+          </details>
+          <details>
+            <summary>Hover .035와 Active .075 거리에 색이 하나뿐인가?</summary>
+            <p>
+              아니다. 최소 거리이며 엔진은 L을 .0025씩 옮긴 유한 후보 중 가장
+              작은 통과 변화를 고른다.
+              <a href="./reference.html#state-separation">공식과 실제 값</a>
+            </p>
+          </details>
+          <details>
+            <summary>Destructive와 Warning은 입력색의 변형인가?</summary>
+            <p>
+              아니다. 각각 삭제·위험과 경고를 맡는 별도 semantic role이며 앞서
+              선택한 역할과의 관계로 고른다.
+              <a href="#red-walkthrough">4·5단계</a>
+            </p>
+          </details>
+          <details>
+            <summary>ΔE는 무엇이며 어떻게 계산하는가?</summary>
+            <p>
+              OKLCH의 C·H를 Oklab a·b 좌표로 펼친 뒤 L·a·b 두 점 사이의
+              직선거리를 계산한다.
+              <a href="./reference.html#oklab-delta-e"
+                >공식과 실제 Primary↔Destructive 계산 예시</a
+              >
+            </p>
+          </details>
+          <details>
+            <summary>pair는 무엇이며 7개 check는 무엇인가?</summary>
+            <p>
+              완성된 Light와 Dark mode bundle의 조합이다. 세 cross-mode 관계와
+              mode별 state check 네 개를 본다.
+              <a href="./reference.html#pair-bands">7개 전체 공식</a>
+            </p>
+          </details>
+          <details>
+            <summary>constraint를 통과하면 좋은 색이라는 뜻인가?</summary>
+            <p>
+              아니다. 선언된 기계 조건을 통과했다는 뜻이며 review와 semantic
+              model은 별도 범위다. <a href="#rules">선택과 review의 차이</a>
+            </p>
+          </details>
+          <details>
+            <summary>숫자는 표준인가, 임의 값인가?</summary>
+            <p>
+              각 숫자는 normative·product-policy·provisional·heuristic·technical
+              중 하나로 구분한다. <a href="#numbers">숫자 authority 읽기</a>
+            </p>
+          </details>
+          <details>
+            <summary>코드에서 실제로 무엇이 선택됐는지 볼 수 있는가?</summary>
+            <p>
+              각 역할은 후보 수, 탈락 constraint, objective, 다음 통과 후보와
+              review evidence를 trace로 남긴다.
+              <a href="./">Generator에서 실제 결과 보기</a>
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./about.js"></script>
+  </body>
+</html>

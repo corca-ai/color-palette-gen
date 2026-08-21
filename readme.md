@@ -42,6 +42,8 @@ v2의 공개 계약은 단순합니다.
 4. **Selected-result review**: generated contract 통과 후에도 남은 검토 신호는 무엇인가?
 5. **Relationships**: 결과 역할들은 어떤 구조로 연결되는가?
 6. **Validation**: 명시한 text, boundary, focus, separation 계약을 통과했는가?
+7. **Consumer compatibility**: 완성된 token을 별도 UI 사용 계약에 투영했을 때
+   어떤 관계가 다시 검토되어야 하는가?
 
 팔레트와 적용 결과를 먼저 읽고, 상세 분석은 필요할 때 펼치는 구조입니다.
 Light, Dark, Compare 선택은 전체 inspector에 동일하게 적용됩니다. 자세한 페이지
@@ -55,6 +57,11 @@ Light, Dark, Compare 선택은 전체 inspector에 동일하게 적용됩니다.
 JSON export는 범용 example token namespace를 사용합니다. 적용 sample의 coverage는
 공개된 디자인 참고 자료에서 아이디어를 얻었지만 특정 제품과의 제휴, 실제 소비
 관계 또는 runtime dependency를 의미하지 않습니다.
+
+Generator의 적용 sample은 Workspace, Routine actions, Destructive
+confirmation, Feedback & selection, Form & focus 탭으로 나뉩니다. 모두 같은
+생성 결과를 문맥만 바꾸어 보여주며, 이전 counterfactual/캘리브레이션 UI는 연구
+문서와 명령으로만 보존됩니다.
 
 ## 보존된 v1 실험
 
@@ -105,28 +112,19 @@ list[(color, function)]
 
 ## 현재 v2 문서
 
-- [프로젝트 방향](docs/product-direction.md)
+- [문서 지도](docs/README.md): 정본, 연구 기록, 역사 문서 구분
+- [제품 방향과 로드맵](docs/product.md)
+- [v2 생성 명세](docs/v2-spec.md)
 - [구조와 실행 경계](docs/architecture.md)
-- [기술 스택](docs/technology-stack.md)
-- [개발 및 검증](docs/development.md)
-- [협업 및 공개 저장소 원칙](docs/collaboration.md)
-- [단기 로드맵](docs/roadmap.md)
-- [운영자 인수 기준](docs/operator-acceptance.md)
-- [공개 표준 기반 설계 근거](docs/public-design-basis.md)
 - [페이지 및 인터랙션 설계 의도](docs/interaction-design.md)
-- [v2 색상 결정 정당화 모델](docs/v2-decisions/README.md)
-- [v2 온톨로지와 실행 규칙 지도](docs/v2-decisions/ontology.md)
-- [현재 색상 결정 흐름 Mermaid](docs/v2-decisions/color-decision-flow.md)
+- [개발·검증·운영](docs/development.md)
+- [v2 결정 모델](docs/v2-decisions/README.md)
 
 ## 보존된 실험 문서
 
 아래 문서는 현재 v2 계약이 아니라 v1 실험과 초기 탐색의 기록입니다.
 
-- [프로토타입 도메인 명세](docs/prototype-domain-spec.md)
-- [초기 설계 기록](docs/prototype-plan.md)
-- [엔진 검증 및 한계](docs/engine-testing-plan.md)
-- [참고 자료와 적용 근거](docs/reference-insights.md)
-- [초기 출력 확장 제안](docs/output-artifact-proposal.md)
+- [v1 및 초기 연구 문서 목록](docs/archive/v1/README.md)
 
 ## 프로토타입 실행
 
@@ -180,8 +178,9 @@ Debug 탭에서 역할을 선택하면 다음 시각 자료가 해당 역할에 
 
 - `v1/`와 `lib/`: 유지보수 전용 실험 UI와 기존 팔레트 엔진
 - `v2/lib/palette.js`: 팔레트 생성 오케스트레이션
-- `docs/v2-decisions/ontology.md`: 개념, rule ID, 권위, producer, test, nonclaim 연결
-- `docs/v2-decisions/color-decision-flow.md`: 현재 색상 결정 단계와 의존성 Mermaid
+- `docs/v2-decisions/ontology.md`: 프로젝트 개념과 역할 의존성을 설명하는 상위 지도
+- `docs/v2-decisions/rules.md`: constraint, ranking, pair eligibility, review와
+  semantic declaration의 작동 방식을 설명하는 규칙 지도
 - `v2/lib/feedback-search.js`: Destructive·Warning 후보 검색
 - `v2/lib/diagnostic-corpus.js`, `result-evidence.js`: 진단 공통 입력과 현재 정책 결과의 사전조건 검증
 - `v2/app.js`와 `v2/styles/`: 현재 UI, 상호작용, 표시 경계
@@ -211,6 +210,7 @@ npm run diagnose:destructive-anchor > destructive-anchor.json
 npm run diagnose:mode-range > mode-range.json
 npm run diagnose:pair-ranking > pair-ranking.json
 npm run diagnose:primary-chroma > primary-chroma.json
+npm run diagnose:text-contrast > text-contrast.json
 ```
 
 이 명령들은 필요할 때만 실행하며 CI 합격 조건이 아닙니다. 범위 리포트는 현재
@@ -247,6 +247,12 @@ transactional fallback 결과도 함께 냅니다. 요청 chroma와 실제 sRGB 
 반올림까지 끝난 실제 sRGB 결과로 WCAG 대비를 다시 계산합니다. 원래 후보가
 기준을 충족하지 않으면 hue와 chroma를 우선 보존한 채 가장 가까운 OKLCH
 lightness를 이진 탐색합니다.
+
+v2가 복사·적용하는 CSS는 각 토큰을 `#RRGGBB` fallback 뒤에 최종 색에서 측정한
+`oklch()`로 한 번 더 선언합니다. 지원 브라우저는 OKLCH 선언을 사용하지만,
+생성기의 APCA/WCAG 계산·gamut 판정·후보 동일성은 계속 결정적인 sRGB 결과를
+기준으로 합니다. CSS 지원만 믿고 검증 전 OKLCH를 브라우저 gamut mapping에
+맡기지는 않습니다.
 
 대비 관계는 `lib/palette-config.js`의 `CONTRAST_CONTRACTS`에 선언되어 있으며,
 현재 다음 관계를 보장합니다.

@@ -157,6 +157,7 @@ export function selectModePair(
   {
     rankingStrategy = V2_POLICY.crossMode.pairRankingStrategy,
     includeCandidateSetIdentity = false,
+    preferredPrimaryLightnesses,
   } = {},
 ) {
   rankingLabels(rankingStrategy);
@@ -182,6 +183,18 @@ export function selectModePair(
         const quality = pairedQuality(modes);
         const lightDistance = distance(source, candidate(light.values.primary));
         const darkDistance = distance(source, candidate(dark.values.primary));
+        const targetLightnessDeltas = preferredPrimaryLightnesses
+          ? {
+              light: Math.abs(
+                candidate(light.values.primary).oklch.l -
+                  preferredPrimaryLightnesses.light,
+              ),
+              dark: Math.abs(
+                candidate(dark.values.primary).oklch.l -
+                  preferredPrimaryLightnesses.dark,
+              ),
+            }
+          : null;
         const qualityMissCount = quality.checks.filter(
           ({ pass }) => !pass,
         ).length;
@@ -204,6 +217,16 @@ export function selectModePair(
           darkDistance,
           maximumSourceDistance: Math.max(lightDistance, darkDistance),
           totalSourceDistance: lightDistance + darkDistance,
+          ...(targetLightnessDeltas
+            ? {
+                maximumTargetLightnessDelta: Math.max(
+                  targetLightnessDeltas.light,
+                  targetLightnessDeltas.dark,
+                ),
+                totalTargetLightnessDelta:
+                  targetLightnessDeltas.light + targetLightnessDeltas.dark,
+              }
+            : {}),
           qualityMissCount,
           eligibilityMissCount: eligibilityChecks.filter(({ pass }) => !pass)
             .length,
@@ -211,9 +234,23 @@ export function selectModePair(
         };
       }),
     )
-    .sort((first, second) =>
-      comparePairMetrics(first, second, rankingStrategy),
-    );
+    .sort((first, second) => {
+      if (preferredPrimaryLightnesses) {
+        const diagnosticRank = (pair) => [
+          pair.maximumTargetLightnessDelta,
+          pair.totalTargetLightnessDelta,
+          pair.eligibilityMissCount > 0 ? 1 : 0,
+        ];
+        const firstRank = diagnosticRank(first);
+        const secondRank = diagnosticRank(second);
+        for (let index = 0; index < firstRank.length; index += 1) {
+          if (firstRank[index] !== secondRank[index]) {
+            return firstRank[index] - secondRank[index];
+          }
+        }
+      }
+      return comparePairMetrics(first, second, rankingStrategy);
+    });
   const selected = pairs[0];
   const compactPair = (pair, includeDiagnosticEvidence = false) =>
     pair
@@ -278,7 +315,14 @@ export function selectModePair(
         fallback:
           "When no sampled candidate passes every eligibility check, preserve source-first ordering across the complete inventory.",
       },
-      ranking: rankingLabels(rankingStrategy),
+      ranking: preferredPrimaryLightnesses
+        ? [
+            "smallest worst-mode distance from the requested Primary lightness targets",
+            "smallest total distance from the requested Primary lightness targets",
+            "prefer pairs passing every policy-owned Primary pair eligibility check after matching the diagnostic target",
+            ...rankingLabels(rankingStrategy),
+          ]
+        : rankingLabels(rankingStrategy),
       selected: compactPair(selected, includeCandidateSetIdentity),
       alternatives: {
         nextRanked: compactPair(pairs[1]),

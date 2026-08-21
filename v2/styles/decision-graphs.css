@@ -438,4 +438,3 @@ body:not([data-result-mode="compare"]) .semantic-maps {
   color: var(--muted);
   grid-column: 1 / -1;
 }
-

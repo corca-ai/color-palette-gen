@@ -1,5 +1,4 @@
 import { isHex, normalizeHex } from "../../lib/color-math.js";
-import { apcaCheck } from "./apca.js";
 import {
   aliasDecision,
   inputDecision,
@@ -25,6 +24,15 @@ import {
   warningSearch,
 } from "./feedback-search.js";
 import {
+  assertFilledActionDirections,
+  FILLED_ACTION_DIRECTION_EXPERIMENT,
+} from "./filled-action-direction.js";
+import { FILLED_ACTION_JOINT_EXPERIMENT } from "./filled-action-joint.js";
+import {
+  assertContextualDestructiveSeparationExperiment,
+  CONTEXTUAL_DESTRUCTIVE_SEPARATION_EXPERIMENT,
+} from "./contextual-destructive-separation.js";
+import {
   DESTRUCTIVE_ANCHOR_POLICY,
   DESTRUCTIVE_ANCHOR_STRATEGIES,
   destructiveAnchorDecision,
@@ -33,15 +41,24 @@ import {
   PRIMARY_CHROMA_EXPERIMENT,
   primaryChromaRequests,
 } from "./primary-chroma-experiment.js";
+import { TONAL_OFFSET_EXPERIMENT, tonalOffsetProfile } from "./tonal-offset.js";
+import {
+  assertTextContrastStrategy,
+  chooseTextContrastForeground,
+  TEXT_CONTRAST_EXPERIMENT,
+  TEXT_CONTRAST_STRATEGIES,
+  textContrastEvidence,
+  textContrastObjective,
+} from "./text-contrast-strategy.js";
 import {
   apcaContrast,
   bindRule,
   boundedSet,
   brandCandidate,
   candidate,
-  chooseSharedText,
   classifyInput,
   contrastRatio,
+  destructiveTone,
   distance,
   foundationCache,
   hueDistance,
@@ -52,15 +69,25 @@ import {
   tone,
 } from "./runtime.js";
 
-function sharedTextSearch({ mode, role, backgrounds, target }) {
+function sharedTextSearch({
+  mode,
+  role,
+  backgrounds,
+  target,
+  fixedText,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+}) {
   const policy = decisionPolicy("binaryText");
-  const candidates = [candidate("#000000"), candidate("#FFFFFF")];
-  const weakestContrast = (item) =>
-    Math.min(
-      ...backgrounds.map((background) =>
-        Math.abs(apcaContrast(item.hex, background)),
-      ),
-    );
+  const candidates = fixedText
+    ? [candidate(fixedText)]
+    : [candidate("#000000"), candidate("#FFFFFF")];
+  const contrastEvidence = (item) =>
+    textContrastEvidence({
+      foreground: item.hex,
+      backgrounds,
+      apcaMinimum: target,
+      strategy: textContrastStrategy,
+    });
   return selectCandidate({
     id: `${mode}.${role.replaceAll(" ", ".")}`,
     mode,
@@ -70,29 +97,38 @@ function sharedTextSearch({ mode, role, backgrounds, target }) {
     policy,
     constraints: [
       bindRule(policy, "constraints", "text.required-contrast", (item) => {
-        const minimumLc = weakestContrast(item);
-        const passed = minimumLc >= target;
+        const result = contrastEvidence(item);
+        const passed = result.passed;
+        if (textContrastStrategy === TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+          const minimumLc = result.apca.minimum;
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Weakest intended fill reaches ${minimumLc.toFixed(1)} Lc.`
+                : `Weakest intended fill reaches only ${minimumLc.toFixed(1)} Lc.`,
+            ],
+            metrics: { minimumLc, target, backgrounds },
+          };
+        }
         return {
           passed,
           reasons: [
             passed
-              ? `Weakest intended fill reaches ${minimumLc.toFixed(1)} Lc.`
-              : `Weakest intended fill reaches only ${minimumLc.toFixed(1)} Lc.`,
+              ? `Weakest intended fill passes ${textContrastStrategy}.`
+              : `Weakest intended fill fails ${textContrastStrategy}.`,
           ],
-          metrics: { minimumLc, target, backgrounds },
+          metrics: { ...result, backgrounds },
         };
       }),
     ],
     objectives: [
-      bindRule(
-        policy,
-        "objectives",
-        "text.maximize-weakest-contrast",
-        weakestContrast,
+      bindRule(policy, "objectives", "text.maximize-weakest-contrast", (item) =>
+        textContrastObjective(contrastEvidence(item)),
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText"),
+    evidence: evidence("wcagText", "apcaText"),
     strategy: "binary foreground search",
   });
 }
@@ -108,6 +144,44 @@ function ratioCheck({ role, foreground, background, target = 3 }) {
     value,
     target,
     pass: value >= target,
+  };
+}
+
+function textContractCheck({
+  role,
+  foreground,
+  background,
+  typographyContext,
+}) {
+  const evidence = textContrastEvidence({
+    foreground,
+    backgrounds: [background],
+    apcaMinimum: typographyContext.apcaDiagnosticMinimum,
+    strategy: TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+  });
+  return {
+    kind: "text",
+    metric: "WCAG contrast",
+    role,
+    foreground,
+    background,
+    value: evidence.wcag.minimum,
+    target: evidence.wcag.required,
+    typography: `${typographyContext.fontSizePx}px / ${typographyContext.fontWeight}`,
+    typographyContext: {
+      schema: V2_POLICY.text.typographyContextSchema,
+      ...typographyContext,
+    },
+    diagnostics: {
+      apca: {
+        metric: "APCA Lc",
+        value: evidence.apca.minimum,
+        target: evidence.apca.required,
+        authority: "diagnostic-ranking",
+        calibration: "legacy-provisional",
+      },
+    },
+    pass: evidence.passed,
   };
 }
 
@@ -193,7 +267,7 @@ function foundationSearch({
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence(
       "calmMinimal",
-      ...(policyId === "foundationText" ? ["apcaText"] : []),
+      ...(policyId === "foundationText" ? ["wcagText", "apcaText"] : []),
       ...(policyId === "foundationInput" ? ["wcagNonText"] : []),
     ),
     searchConstants: ["input hue", "bounded tint candidates"],
@@ -213,14 +287,21 @@ function foundationSearch({
   return resolution;
 }
 
-function foundationPalette(input, mode, recipe) {
-  const cacheKey = `${V2_POLICY.version}/${input.hex}/${mode}`;
+function foundationPalette(
+  input,
+  mode,
+  recipe,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+) {
+  const cacheKey = `${V2_POLICY.version}/${input.hex}/${mode}/${textContrastStrategy}`;
   const cached = foundationCache.get(cacheKey);
   if (cached) return cached;
   const separation = V2_POLICY.foundation.hierarchySeparation;
   const modeZone = (item) => {
     const passed =
-      mode === "light" ? item.oklch.l >= 0.96 : item.oklch.l <= 0.22;
+      mode === "light"
+        ? item.oklch.l >= V2_POLICY.foundation.modeZone.lightMinimum
+        : item.oklch.l <= V2_POLICY.foundation.modeZone.darkMaximum;
     return {
       passed,
       reasons: [
@@ -289,12 +370,25 @@ function foundationPalette(input, mode, recipe) {
       policyId: "foundationText",
       radius: 0.08,
       evaluateRole: (_id, item) => {
-        const minimumLc = Math.min(
-          ...backgrounds.map((backgroundColor) =>
-            Math.abs(apcaContrast(item.hex, backgroundColor.value.hex)),
-          ),
-        );
-        const passed = minimumLc >= targetLc;
+        const result = textContrastEvidence({
+          foreground: item.hex,
+          backgrounds: backgrounds.map(({ value }) => value.hex),
+          apcaMinimum: targetLc,
+          strategy: textContrastStrategy,
+        });
+        const minimumLc = result.apca.minimum;
+        const passed = result.passed;
+        if (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Weakest text pair passes ${textContrastStrategy}.`
+                : `Weakest text pair fails ${textContrastStrategy}.`,
+            ],
+            metrics: result,
+          };
+        }
         return {
           passed,
           reasons: [
@@ -311,14 +405,14 @@ function foundationPalette(input, mode, recipe) {
     recipe.foreground,
     0.08,
     [background, surface],
-    V2_POLICY.foundation.bodyTextLc,
+    V2_POLICY.foundation.bodyTextApcaDiagnosticLc,
   );
   const mutedText = textRole(
     "muted text",
     recipe.mutedText,
     0.16,
     [background, muted],
-    V2_POLICY.foundation.mutedTextLc,
+    V2_POLICY.foundation.mutedTextApcaDiagnosticLc,
   );
   const border = layer(
     "border",
@@ -383,13 +477,25 @@ function foundationPalette(input, mode, recipe) {
   );
 }
 
-function stateSearch({ mode, base, role, target, labelText, labelLc }) {
+function stateSearch({
+  mode,
+  base,
+  role,
+  target,
+  labelText,
+  labelLc,
+  direction: requestedDirection,
+  retainPlot = false,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+}) {
   const policy = decisionPolicy(labelText ? "labeledState" : "state");
-  const direction = labelText
-    ? labelText === "#FFFFFF"
-      ? -1
-      : 1
-    : V2_POLICY.state.direction[mode];
+  const direction =
+    requestedDirection ??
+    (labelText
+      ? labelText === "#FFFFFF"
+        ? -1
+        : 1
+      : V2_POLICY.state.direction[mode]);
   const candidates = [];
   for (
     let index = 1;
@@ -430,15 +536,34 @@ function stateSearch({ mode, base, role, target, labelText, labelLc }) {
                 ({ id }) => id === "state.shared-label",
               ),
               evaluate(item) {
-                const value = Math.abs(apcaContrast(labelText, item.hex));
+                const result = textContrastEvidence({
+                  foreground: labelText,
+                  backgrounds: [item.hex],
+                  apcaMinimum: labelLc,
+                  strategy: textContrastStrategy,
+                });
+                if (
+                  textContrastStrategy === TEXT_CONTRAST_STRATEGIES.APCA_ONLY
+                ) {
+                  const value = result.apca.minimum;
+                  return {
+                    passed: result.passed,
+                    reasons: [
+                      result.passed
+                        ? `Shared label reaches ${value.toFixed(1)} Lc.`
+                        : `Shared label reaches only ${value.toFixed(1)} Lc.`,
+                    ],
+                    metrics: { value, target: labelLc, labelText },
+                  };
+                }
                 return {
-                  passed: value >= labelLc,
+                  passed: result.passed,
                   reasons: [
-                    value >= labelLc
-                      ? `Shared label reaches ${value.toFixed(1)} Lc.`
-                      : `Shared label reaches only ${value.toFixed(1)} Lc.`,
+                    result.passed
+                      ? `Shared label passes ${textContrastStrategy}.`
+                      : `Shared label fails ${textContrastStrategy}.`,
                   ],
-                  metrics: { value, target: labelLc, labelText },
+                  metrics: { ...result, labelText },
                 };
               },
             },
@@ -453,7 +578,169 @@ function stateSearch({ mode, base, role, target, labelText, labelLc }) {
     tieBreakers: stableTieBreaker(policy),
     evidence: evidence("carbonStates", "spectrumStates", "stateSeparation"),
     searchConstants: ["requested hue", "requested chroma"],
+    retainPlot,
   });
+}
+
+export function inspectDestructiveGrammar({
+  mode,
+  lightness,
+  direction,
+  foreground,
+}) {
+  if (!["light", "dark"].includes(mode)) {
+    throw new TypeError("Destructive grammar mode must be light or dark.");
+  }
+  if (![-1, 1].includes(direction)) {
+    throw new TypeError("Destructive grammar direction must be -1 or 1.");
+  }
+  if (!["#000000", "#FFFFFF"].includes(foreground)) {
+    throw new TypeError(
+      "Destructive grammar foreground must be black or white.",
+    );
+  }
+  const [minimum, maximum] = V2_POLICY.destructive.lightnessRange[mode];
+  if (
+    !Number.isFinite(lightness) ||
+    lightness < minimum ||
+    lightness > maximum
+  ) {
+    throw new TypeError(
+      `Destructive grammar L must stay inside ${minimum}–${maximum} for ${mode}.`,
+    );
+  }
+  const base = candidate(destructiveTone(lightness), { lightness });
+  const defaultLc = Math.abs(apcaContrast(foreground, base.hex));
+  if (defaultLc < V2_POLICY.destructive.apcaDiagnosticLc) {
+    return {
+      schema: "destructive-grammar-inspection.v1",
+      authority: "diagnostic",
+      conditioning: "none",
+      mode,
+      requested: { lightness, direction, foreground },
+      complete: false,
+      failure: {
+        stage: "default-label-contrast",
+        checkId: "destructive.label-contrast",
+        value: defaultLc,
+        target: V2_POLICY.destructive.apcaDiagnosticLc,
+      },
+      values: { default: base.hex },
+    };
+  }
+  try {
+    const hover = stateSearch({
+      mode,
+      base,
+      role: "destructive calibration hover",
+      target: V2_POLICY.state.separation.hoverFromDefault,
+      labelText: foreground,
+      labelLc: V2_POLICY.destructive.apcaDiagnosticLc,
+      direction,
+    });
+    const active = stateSearch({
+      mode,
+      base,
+      role: "destructive calibration active",
+      target: V2_POLICY.state.separation.activeFromDefault,
+      labelText: foreground,
+      labelLc: V2_POLICY.destructive.apcaDiagnosticLc,
+      direction,
+    });
+    const values = {
+      default: base.hex,
+      hover: hover.value.hex,
+      active: active.value.hex,
+    };
+    return {
+      schema: "destructive-grammar-inspection.v1",
+      authority: "diagnostic",
+      conditioning: "none",
+      mode,
+      requested: { lightness, direction, foreground },
+      complete: true,
+      values,
+      realized: Object.fromEntries(
+        Object.entries(values).map(([state, hex]) => [
+          state,
+          { hex, oklch: candidate(hex).oklch },
+        ]),
+      ),
+      weakestLc: Math.min(
+        ...Object.values(values).map((hex) =>
+          Math.abs(apcaContrast(foreground, hex)),
+        ),
+      ),
+    };
+  } catch (error) {
+    if (!(error instanceof NoCandidateError)) throw error;
+    return {
+      schema: "destructive-grammar-inspection.v1",
+      authority: "diagnostic",
+      conditioning: "none",
+      mode,
+      requested: { lightness, direction, foreground },
+      complete: false,
+      failure: noCandidateFailure(error),
+      values: { default: base.hex },
+    };
+  }
+}
+
+function primarySharedLabelConstraint({
+  item,
+  filledActionForeground,
+  textContrastStrategy,
+}) {
+  const colors = item.family
+    ? [item.hex, item.family.hover.value.hex, item.family.active.value.hex]
+    : [item.hex];
+  const choice = filledActionForeground
+    ? {
+        foreground: filledActionForeground,
+        evidence: textContrastEvidence({
+          foreground: filledActionForeground,
+          backgrounds: colors,
+          apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+          strategy: textContrastStrategy,
+        }),
+      }
+    : chooseTextContrastForeground({
+        backgrounds: colors,
+        apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+        strategy: textContrastStrategy,
+      });
+  const text = choice.foreground;
+  const minimumLc = choice.evidence.apca.minimum;
+  if (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+    return {
+      passed: Boolean(item.family) && choice.evidence.passed,
+      reasons: [
+        item.family && choice.evidence.passed
+          ? `Complete-family label passes ${textContrastStrategy}.`
+          : `Complete-family label fails ${textContrastStrategy}.`,
+      ],
+      metrics: { ...choice.evidence, text },
+    };
+  }
+  return {
+    passed:
+      Boolean(item.family) && minimumLc >= V2_POLICY.primary.apcaDiagnosticLc,
+    reasons: [
+      item.family && minimumLc >= V2_POLICY.primary.apcaDiagnosticLc
+        ? `Shared label reaches ${minimumLc.toFixed(1)} Lc.`
+        : `Complete-family label reaches only ${minimumLc.toFixed(1)} Lc.`,
+    ],
+    metrics: {
+      minimumLc,
+      target: V2_POLICY.primary.apcaDiagnosticLc,
+      text,
+    },
+  };
+}
+
+function canGenerateDirectionalStates(base, direction) {
+  return direction < 0 ? base.oklch.l > 0.1 : base.oklch.l < 0.9;
 }
 
 function brandFamilySearch({
@@ -464,6 +751,10 @@ function brandFamilySearch({
   primaryRange,
   allowInfeasibleStateCandidates = false,
   primaryChromaExperiment = null,
+  filledActionDirection = V2_POLICY.state.filledActionDirections[mode],
+  filledActionForeground,
+  preferredPrimaryLightness,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
 }) {
   const policy = decisionPolicy("primary");
   const [start, end] = primaryRange ?? V2_POLICY.primary.lightnessRange[mode];
@@ -471,6 +762,10 @@ function brandFamilySearch({
     lightness: input.l,
     ...(primaryChromaExperiment ? { requestedOrigins: [] } : {}),
   });
+  const objectiveReference =
+    preferredPrimaryLightness === undefined
+      ? source
+      : brandCandidate(input, preferredPrimaryLightness);
   const candidates = [];
   let infeasibleStateCandidateCount = 0;
   const addFamily = (primary) => {
@@ -480,12 +775,24 @@ function brandFamilySearch({
         base: primary,
         role: "primary hover",
         target: V2_POLICY.state.separation.hoverFromDefault,
+        direction: filledActionDirection,
+        labelText: filledActionForeground,
+        labelLc: filledActionForeground
+          ? V2_POLICY.primary.apcaDiagnosticLc
+          : undefined,
+        textContrastStrategy,
       });
       const active = stateSearch({
         mode,
         base: primary,
         role: "primary active",
         target: V2_POLICY.state.separation.activeFromDefault,
+        direction: filledActionDirection,
+        labelText: filledActionForeground,
+        labelLc: filledActionForeground
+          ? V2_POLICY.primary.apcaDiagnosticLc
+          : undefined,
+        textContrastStrategy,
       });
       return { ...primary, family: { hover, active } };
     } catch (error) {
@@ -500,8 +807,10 @@ function brandFamilySearch({
       return primary;
     }
   };
-  const sourceCanGenerateStates =
-    mode === "light" ? source.oklch.l > 0.1 : source.oklch.l < 0.9;
+  const sourceCanGenerateStates = canGenerateDirectionalStates(
+    source,
+    filledActionDirection,
+  );
   candidates.push(sourceCanGenerateStates ? addFamily(source) : source);
   if (!primaryChromaExperiment) {
     for (
@@ -594,39 +903,28 @@ function brandFamilySearch({
           metrics: { value: item.oklch.c, maximum },
         };
       }),
-      bindRule(policy, "constraints", "primary.shared-label", (item) => {
-        const colors = item.family
-          ? [
-              item.hex,
-              item.family.hover.value.hex,
-              item.family.active.value.hex,
-            ]
-          : [item.hex];
-        const text = chooseSharedText(colors);
-        const minimumLc = Math.min(
-          ...colors.map((color) => Math.abs(apcaContrast(text, color))),
-        );
-        return {
-          passed:
-            Boolean(item.family) && minimumLc >= V2_POLICY.primary.labelLc,
-          reasons: [
-            item.family && minimumLc >= V2_POLICY.primary.labelLc
-              ? `Shared label reaches ${minimumLc.toFixed(1)} Lc.`
-              : `Complete-family label reaches only ${minimumLc.toFixed(1)} Lc.`,
-          ],
-          metrics: { minimumLc, target: V2_POLICY.primary.labelLc, text },
-        };
-      }),
+      bindRule(policy, "constraints", "primary.shared-label", (item) =>
+        primarySharedLabelConstraint({
+          item,
+          filledActionForeground,
+          textContrastStrategy,
+        }),
+      ),
     ],
     objectives: [
       bindRule(policy, "objectives", "primary.source-fidelity", (item) =>
-        distance(source, item),
+        distance(objectiveReference, item),
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText", "calmMinimal"),
+    evidence: evidence("wcagText", "apcaText", "calmMinimal"),
     searchConstants: ["input hue", "bounded source chroma"],
-    retainPlot: primaryChromaExperiment ? "detailed" : false,
+    retainPlot:
+      primaryChromaExperiment ||
+      (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.PRODUCTION &&
+        textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY)
+        ? "detailed"
+        : false,
   });
   return {
     primary: selection.value,
@@ -641,7 +939,12 @@ function brandFamilySearch({
   };
 }
 
-function selectionSearch({ input, mode, surface }) {
+function selectionSearch({
+  input,
+  mode,
+  surface,
+  textContrastStrategy = TEXT_CONTRAST_STRATEGIES.PRODUCTION,
+}) {
   const policy = decisionPolicy("selection");
   const [start, end] = V2_POLICY.selection.lightnessRange[mode];
   const candidates = [];
@@ -669,9 +972,25 @@ function selectionSearch({ input, mode, surface }) {
     policy,
     constraints: [
       bindRule(policy, "constraints", "selection.text-contrast", (item) => {
-        const text = chooseSharedText([item.hex]);
-        const lc = Math.abs(apcaContrast(text, item.hex));
-        const passed = lc >= V2_POLICY.selection.textLc;
+        const choice = chooseTextContrastForeground({
+          backgrounds: [item.hex],
+          apcaMinimum: V2_POLICY.selection.textApcaDiagnosticLc,
+          strategy: textContrastStrategy,
+        });
+        const text = choice.foreground;
+        const lc = choice.evidence.apca.minimum;
+        const passed = choice.evidence.passed;
+        if (textContrastStrategy !== TEXT_CONTRAST_STRATEGIES.APCA_ONLY) {
+          return {
+            passed,
+            reasons: [
+              passed
+                ? `Selected content passes ${textContrastStrategy}.`
+                : `Selected content fails ${textContrastStrategy}.`,
+            ],
+            metrics: { ...choice.evidence, text },
+          };
+        }
         return {
           passed,
           reasons: [
@@ -679,7 +998,11 @@ function selectionSearch({ input, mode, surface }) {
               ? `Selected content reaches ${lc.toFixed(1)} Lc.`
               : `Selected content reaches only ${lc.toFixed(1)} Lc.`,
           ],
-          metrics: { lc, target: V2_POLICY.selection.textLc, text },
+          metrics: {
+            lc,
+            target: V2_POLICY.selection.textApcaDiagnosticLc,
+            text,
+          },
         };
       }),
       bindRule(
@@ -710,7 +1033,12 @@ function selectionSearch({ input, mode, surface }) {
       ),
     ],
     tieBreakers: stableTieBreaker(policy),
-    evidence: evidence("apcaText", "stateSeparation", "calmMinimal"),
+    evidence: evidence(
+      "wcagText",
+      "apcaText",
+      "stateSeparation",
+      "calmMinimal",
+    ),
     searchConstants: ["input hue", "bounded brand tint"],
     retainPlot: true,
   });
@@ -721,8 +1049,7 @@ function focusSearch({
   mode,
   primary,
   destructive,
-  background,
-  surface,
+  adjacentFoundations,
 }) {
   const policy = decisionPolicy("focus");
   const candidates = [candidate(primary.hex)];
@@ -754,15 +1081,18 @@ function focusSearch({
     mode,
     role: "focus ring",
     intent:
-      "Resolve an independent focus color that remains brand-related while separating from controls on both foundations.",
+      "Resolve an independent focus color that remains brand-related while separating from controls on every applied foundation context.",
     candidates: uniqueCandidates,
     policy,
     constraints: [
       bindRule(policy, "constraints", "focus.adjacent-contrast", (item) => {
-        const minimumContrast = Math.min(
-          contrastRatio(item.hex, background),
-          contrastRatio(item.hex, surface),
+        const ratios = Object.fromEntries(
+          Object.entries(adjacentFoundations).map(([role, color]) => [
+            role,
+            contrastRatio(item.hex, color),
+          ]),
         );
+        const minimumContrast = Math.min(...Object.values(ratios));
         const passed = minimumContrast >= V2_POLICY.focus.contrast;
         return {
           passed,
@@ -771,7 +1101,11 @@ function focusSearch({
               ? `Weakest foundation contrast reaches ${minimumContrast.toFixed(2)}:1.`
               : `Weakest foundation contrast reaches only ${minimumContrast.toFixed(2)}:1.`,
           ],
-          metrics: { minimumContrast, target: V2_POLICY.focus.contrast },
+          metrics: {
+            ratios,
+            minimumContrast,
+            target: V2_POLICY.focus.contrast,
+          },
         };
       }),
       bindRule(policy, "constraints", "focus.semantic-separation", (item) => {
@@ -886,9 +1220,351 @@ function primaryBorderSearch({ input, mode, primary, background, surface }) {
   });
 }
 
+function emptyStateCandidateEvidence() {
+  return {
+    candidateOccurrenceCount: 0,
+    availableOccurrenceCount: 0,
+    failedIdOccurrenceCounts: {},
+    failedPatternOccurrenceCounts: {},
+  };
+}
+
+function addStateCandidateEvidence(summary, searchPlot) {
+  if (!Array.isArray(searchPlot) || searchPlot.length === 0) {
+    throw new TypeError(
+      "Detailed state candidate evidence must contain a search plot.",
+    );
+  }
+  const expectedConstraintIds = [
+    "state.minimum-separation",
+    "state.shared-label",
+  ];
+  for (const item of searchPlot) {
+    if (
+      typeof item?.hex !== "string" ||
+      typeof item.passed !== "boolean" ||
+      !Array.isArray(item.constraintResults)
+    ) {
+      throw new TypeError("Detailed state candidate evidence is malformed.");
+    }
+    const constraintIds = item.constraintResults.map(({ id }) => id).sort();
+    if (
+      new Set(constraintIds).size !== constraintIds.length ||
+      JSON.stringify(constraintIds) !== JSON.stringify(expectedConstraintIds) ||
+      item.constraintResults.some(({ passed }) => typeof passed !== "boolean")
+    ) {
+      throw new TypeError(
+        "Detailed state candidate constraints must match producer policy.",
+      );
+    }
+    const failedIds = item.constraintResults
+      .filter(({ passed }) => !passed)
+      .map(({ id }) => id)
+      .sort();
+    if (item.passed !== (failedIds.length === 0)) {
+      throw new TypeError(
+        "Detailed state candidate verdict must reconcile with constraints.",
+      );
+    }
+    summary.candidateOccurrenceCount += 1;
+    if (failedIds.length === 0) {
+      summary.availableOccurrenceCount += 1;
+      continue;
+    }
+    const pattern = failedIds.join("+");
+    summary.failedPatternOccurrenceCounts[pattern] =
+      (summary.failedPatternOccurrenceCounts[pattern] ?? 0) + 1;
+    for (const id of failedIds) {
+      summary.failedIdOccurrenceCounts[id] =
+        (summary.failedIdOccurrenceCounts[id] ?? 0) + 1;
+    }
+  }
+  const classifiedOccurrenceCount =
+    summary.availableOccurrenceCount +
+    Object.values(summary.failedPatternOccurrenceCounts).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+  if (classifiedOccurrenceCount !== summary.candidateOccurrenceCount) {
+    throw new TypeError(
+      "Detailed state candidate evidence must conserve occurrences.",
+    );
+  }
+}
+
+function inspectTransactionalDestructiveFamilySearch({
+  searchInput,
+  actionForeground,
+  direction,
+}) {
+  if (searchInput.mode !== "dark" || direction !== 1) {
+    throw new TypeError(
+      "Transactional Destructive state selection is scoped to the Dark lighter-state diagnostic.",
+    );
+  }
+  let initial;
+  try {
+    initial = destructiveSearch({ ...searchInput, retainPlot: "detailed" });
+  } catch (error) {
+    if (!(error instanceof NoCandidateError)) throw error;
+    return {
+      complete: false,
+      terminalStage: "base-constraints",
+      failure: noCandidateFailure(error),
+      error,
+      completeFamilies: new Map(),
+      completeFamilyRequestedLightness: new Map(),
+      candidateCounts: {
+        inventory: null,
+        basePassing: 0,
+        hoverComplete: 0,
+        activeComplete: 0,
+        completeFamily: 0,
+      },
+      stateFailureCountsByDecision: {},
+      stateCandidateEvidence: {
+        hover: emptyStateCandidateEvidence(),
+        active: emptyStateCandidateEvidence(),
+      },
+    };
+  }
+  const basePassing = initial.trace.searchPlot.filter(({ passed }) => passed);
+  const completeFamilies = new Map();
+  const completeFamilyRequestedLightness = new Map();
+  const stateFailureCountsByDecision = {};
+  const stateCandidateEvidence = {
+    hover: emptyStateCandidateEvidence(),
+    active: emptyStateCandidateEvidence(),
+  };
+  let hoverComplete = 0;
+  let activeComplete = 0;
+  for (const item of basePassing) {
+    const base = candidate(item.hex);
+    const states = {};
+    for (const [state, target] of [
+      ["hover", V2_POLICY.state.separation.hoverFromDefault],
+      ["active", V2_POLICY.state.separation.activeFromDefault],
+    ]) {
+      try {
+        states[state] = stateSearch({
+          mode: "dark",
+          base,
+          role: `destructive ${state}`,
+          target,
+          labelText: actionForeground,
+          labelLc: V2_POLICY.destructive.apcaDiagnosticLc,
+          direction,
+          retainPlot: "detailed",
+          textContrastStrategy: searchInput.textContrastStrategy,
+        });
+        addStateCandidateEvidence(
+          stateCandidateEvidence[state],
+          states[state].trace.searchPlot,
+        );
+        if (state === "hover") hoverComplete += 1;
+        else activeComplete += 1;
+      } catch (error) {
+        if (!(error instanceof NoCandidateError)) throw error;
+        const failure = noCandidateFailure(error);
+        addStateCandidateEvidence(
+          stateCandidateEvidence[state],
+          error.diagnosticSearchPlot,
+        );
+        stateFailureCountsByDecision[failure.decisionId] =
+          (stateFailureCountsByDecision[failure.decisionId] ?? 0) + 1;
+      }
+    }
+    if (states.hover && states.active) {
+      completeFamilies.set(item.hex, states);
+      completeFamilyRequestedLightness.set(
+        item.hex,
+        Number.isFinite(item.parameters?.lightness)
+          ? Number(item.parameters.lightness.toFixed(6))
+          : null,
+      );
+    }
+  }
+  const candidateCounts = {
+    inventory: initial.trace.candidateCount,
+    basePassing: basePassing.length,
+    hoverComplete,
+    activeComplete,
+    completeFamily: completeFamilies.size,
+  };
+  if (completeFamilies.size === 0) {
+    let error;
+    try {
+      destructiveSearch({
+        ...searchInput,
+        diagnosticEligibleHexes: [],
+      });
+    } catch (caught) {
+      if (!(caught instanceof NoCandidateError)) throw caught;
+      error = caught;
+    }
+    return {
+      complete: false,
+      terminalStage: "state-family",
+      failure: noCandidateFailure(error),
+      error,
+      completeFamilies,
+      completeFamilyRequestedLightness,
+      candidateCounts,
+      stateFailureCountsByDecision,
+      stateCandidateEvidence,
+    };
+  }
+  const decision = destructiveSearch({
+    ...searchInput,
+    diagnosticEligibleHexes: [...completeFamilies.keys()],
+  });
+  return {
+    complete: true,
+    terminalStage: "eligible",
+    decision,
+    states: completeFamilies.get(decision.value.hex),
+    completeFamilies,
+    completeFamilyRequestedLightness,
+    candidateCounts,
+    stateFailureCountsByDecision,
+    stateCandidateEvidence,
+  };
+}
+
+function transactionalDestructiveFamilySearch({
+  searchInput,
+  actionForeground,
+  direction,
+}) {
+  const inspection = inspectTransactionalDestructiveFamilySearch({
+    searchInput,
+    actionForeground,
+    direction,
+  });
+  if (!inspection.complete) throw inspection.error;
+  const { decision, states } = inspection;
+  if (!states) {
+    throw new TypeError(
+      "Selected diagnostic Destructive default must own a complete state family.",
+    );
+  }
+  return {
+    decision,
+    states,
+    candidateCounts: inspection.candidateCounts,
+  };
+}
+
+function destructiveFamilySelection({
+  searchInput,
+  actionForeground,
+  options,
+}) {
+  const { mode } = searchInput;
+  const direction =
+    options.destructiveGrammar?.direction ??
+    options.filledActionDirections?.[mode] ??
+    V2_POLICY.state.filledActionDirections[mode];
+  if (options.transactionalDarkDestructiveStates === true && mode === "dark") {
+    const transactional = transactionalDestructiveFamilySearch({
+      searchInput,
+      actionForeground,
+      direction,
+    });
+    return {
+      decision: transactional.decision,
+      hover: transactional.states.hover,
+      active: transactional.states.active,
+      candidateCounts: transactional.candidateCounts,
+    };
+  }
+  const decision = destructiveSearch({
+    ...searchInput,
+    ...(options.destructiveGrammar
+      ? {
+          preferredLightness: options.destructiveGrammar.lightness,
+          diagnosticLightnessRange: [
+            options.destructiveGrammar.lightness,
+            options.destructiveGrammar.lightness,
+          ],
+        }
+      : {}),
+  });
+  const stateInput = {
+    mode,
+    base: decision.value,
+    labelText: actionForeground,
+    labelLc: V2_POLICY.destructive.apcaDiagnosticLc,
+    direction,
+    textContrastStrategy: searchInput.textContrastStrategy,
+  };
+  return {
+    decision,
+    hover: stateSearch({
+      ...stateInput,
+      role: "destructive hover",
+      target: V2_POLICY.state.separation.hoverFromDefault,
+    }),
+    active: stateSearch({
+      ...stateInput,
+      role: "destructive active",
+      target: V2_POLICY.state.separation.activeFromDefault,
+    }),
+    candidateCounts: null,
+  };
+}
+
+function filledActionConfiguration(options, mode) {
+  const grammar = options.destructiveGrammar
+    ? options.destructiveGrammar[mode]
+    : null;
+  return {
+    grammar,
+    direction:
+      grammar?.direction ??
+      options.filledActionDirections?.[mode] ??
+      V2_POLICY.state.filledActionDirections[mode],
+    foreground: grammar?.foreground ?? null,
+  };
+}
+
+function configuredForeground(configuration, fallback) {
+  return configuration.foreground ?? fallback;
+}
+
+function normalizedInputColor(primary) {
+  if (typeof primary !== "string" || !isHex(primary)) {
+    throw new TypeError("primary must be a six-digit hex color.");
+  }
+  const hex = normalizeHex(primary);
+  const raw = candidate(hex).oklch;
+  const classification = classifyInput(raw);
+  return {
+    normalizedPrimary: hex,
+    raw,
+    input: {
+      ...raw,
+      hex,
+      classification,
+      brandChroma:
+        classification === "achromatic"
+          ? 0
+          : Math.min(V2_POLICY.primary.chromaCap, raw.c),
+    },
+  };
+}
+
 function modePalette(input, mode, options = {}) {
   const recipe = MODE_RECIPE[mode];
-  const foundation = foundationPalette(input, mode, recipe);
+  const actionConfiguration = filledActionConfiguration(options, mode);
+  const textContrastStrategy =
+    options.textContrastStrategy ?? TEXT_CONTRAST_STRATEGIES.PRODUCTION;
+  const foundation = foundationPalette(
+    input,
+    mode,
+    recipe,
+    textContrastStrategy,
+  );
   const foundations = foundation.values;
   const brandFamily = brandFamilySearch({
     input,
@@ -898,6 +1574,10 @@ function modePalette(input, mode, options = {}) {
     primaryRange: options.primaryRange,
     allowInfeasibleStateCandidates: options.allowInfeasibleStateCandidates,
     primaryChromaExperiment: options.primaryChromaExperiment,
+    filledActionDirection: actionConfiguration.direction,
+    filledActionForeground: actionConfiguration.foreground,
+    preferredPrimaryLightness: options.preferredPrimaryLightnesses?.[mode],
+    textContrastStrategy,
   });
   const primary = brandFamily.primary.hex;
   const primaryHover = brandFamily.hover.hex;
@@ -906,9 +1586,15 @@ function modePalette(input, mode, options = {}) {
     mode,
     role: "primary text",
     backgrounds: [primary, primaryHover, primaryActive],
-    target: V2_POLICY.primary.labelLc,
+    target: V2_POLICY.primary.apcaDiagnosticLc,
+    fixedText: actionConfiguration.foreground,
+    textContrastStrategy,
   });
   const primaryText = primaryTextDecision.value.hex;
+  const actionForeground = configuredForeground(
+    actionConfiguration,
+    primaryText,
+  );
   const primaryBorderDecision = primaryBorderSearch({
     input,
     mode,
@@ -929,51 +1615,54 @@ function modePalette(input, mode, options = {}) {
       DESTRUCTIVE_ANCHOR_STRATEGIES.CURRENT_SOURCE_BAND,
   });
   const redConflict = destructiveAnchor.sourceBandApplicable;
-  const destructiveDecision = destructiveSearch({
+  const destructiveSearchInput = {
     mode,
     primary: brandFamily.primary,
-    preferredLightness: destructiveAnchor.preferredLightness,
+    actionForeground,
+    preferredLightness:
+      destructiveAnchor.preferredLightness +
+      (options.filledActionLightnessShifts?.[mode] ?? 0),
+    diagnosticLightnessRange: options.destructiveLightnessRanges?.[mode],
+    diagnosticOmitBrandSeparation:
+      options.destructiveSeparationAuthority === "selected-result-review",
+    textContrastStrategy,
+  };
+  const destructiveFamily = destructiveFamilySelection({
+    searchInput: destructiveSearchInput,
+    actionForeground,
+    options: { ...options, destructiveGrammar: actionConfiguration.grammar },
   });
+  const destructiveDecision = destructiveFamily.decision;
   const destructiveColor = destructiveDecision.value.hex;
-  const destructiveLabel = chooseSharedText([destructiveColor]);
-  const destructiveHoverDecision = stateSearch({
-    mode,
-    base: destructiveDecision.value,
-    role: "destructive hover",
-    target: V2_POLICY.state.separation.hoverFromDefault,
-    labelText: destructiveLabel,
-    labelLc: V2_POLICY.destructive.labelLc,
-  });
-  const destructiveActiveDecision = stateSearch({
-    mode,
-    base: destructiveDecision.value,
-    role: "destructive active",
-    target: V2_POLICY.state.separation.activeFromDefault,
-    labelText: destructiveLabel,
-    labelLc: V2_POLICY.destructive.labelLc,
-  });
+  const destructiveHoverDecision = destructiveFamily.hover;
+  const destructiveActiveDecision = destructiveFamily.active;
   const destructiveHover = destructiveHoverDecision.value.hex;
   const destructiveActive = destructiveActiveDecision.value.hex;
-  const destructiveTextDecision = sharedTextSearch({
-    mode,
-    role: "destructive text",
-    backgrounds: [destructiveColor, destructiveHover, destructiveActive],
-    target: V2_POLICY.destructive.labelLc,
-  });
-  const destructiveText = destructiveTextDecision.value.hex;
+  const destructiveText = actionForeground;
   const warningDecision = warningSearch({
     mode,
     primary: brandFamily.primary,
     destructive: destructiveDecision.value,
+    textContrastStrategy,
+    retainPlot:
+      textContrastStrategy === TEXT_CONTRAST_STRATEGIES.PRODUCTION ||
+      textContrastStrategy === TEXT_CONTRAST_STRATEGIES.APCA_ONLY
+        ? false
+        : "detailed",
   });
-  const warningLabel = chooseSharedText([warningDecision.value.hex]);
+  const warningLabel = chooseTextContrastForeground({
+    backgrounds: [warningDecision.value.hex],
+    apcaMinimum: V2_POLICY.primary.apcaDiagnosticLc,
+    strategy: textContrastStrategy,
+  }).foreground;
   const warningHoverDecision = stateSearch({
     mode,
     base: warningDecision.value,
     role: "warning hover",
     target: V2_POLICY.state.separation.hoverFromDefault,
     labelText: warningLabel,
-    labelLc: V2_POLICY.primary.labelLc,
+    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
   });
   const warningActiveDecision = stateSearch({
     mode,
@@ -981,7 +1670,8 @@ function modePalette(input, mode, options = {}) {
     role: "warning active",
     target: V2_POLICY.state.separation.activeFromDefault,
     labelText: warningLabel,
-    labelLc: V2_POLICY.primary.labelLc,
+    labelLc: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
   });
   const warning = warningDecision.value.hex;
   const warningHover = warningHoverDecision.value.hex;
@@ -990,20 +1680,23 @@ function modePalette(input, mode, options = {}) {
     mode,
     role: "warning text",
     backgrounds: [warning, warningHover, warningActive],
-    target: V2_POLICY.primary.labelLc,
+    target: V2_POLICY.primary.apcaDiagnosticLc,
+    textContrastStrategy,
   });
   const warningText = warningTextDecision.value.hex;
   const selectionDecision = selectionSearch({
     input,
     mode,
     surface: candidate(foundations.surface),
+    textContrastStrategy,
   });
   const selection = selectionDecision.value.hex;
   const selectionTextDecision = sharedTextSearch({
     mode,
     role: "selection text",
     backgrounds: [selection],
-    target: V2_POLICY.selection.textLc,
+    target: V2_POLICY.selection.textApcaDiagnosticLc,
+    textContrastStrategy,
   });
   const selectionText = selectionTextDecision.value.hex;
   const focusDecision = focusSearch({
@@ -1011,8 +1704,9 @@ function modePalette(input, mode, options = {}) {
     mode,
     primary: brandFamily.primary,
     destructive: destructiveDecision.value,
-    background: foundations.background,
-    surface: foundations.surface,
+    adjacentFoundations: Object.fromEntries(
+      V2_POLICY.focus.adjacentRoles.map((role) => [role, foundations[role]]),
+    ),
   });
   const focusRing = focusDecision.value.hex;
   const values = {
@@ -1041,69 +1735,57 @@ function modePalette(input, mode, options = {}) {
     "popover text": foundations.foreground,
   };
   const textChecks = [
-    apcaCheck({
+    textContractCheck({
       role: "Body text",
       foreground: values.foreground,
       background: values.background,
-      target: 75,
-      typography: "16px / 400",
+      typographyContext: V2_POLICY.text.typographyContexts.body,
     }),
-    apcaCheck({
+    textContractCheck({
       role: "Text on surface",
       foreground: values.foreground,
       background: values.surface,
-      target: 75,
-      typography: "16px / 400",
+      typographyContext: V2_POLICY.text.typographyContexts.body,
     }),
-    apcaCheck({
+    textContractCheck({
       role: "Muted text",
       foreground: values["muted text"],
       background: values.background,
-      target: 60,
-      typography: "14px / 500",
+      typographyContext: V2_POLICY.text.typographyContexts.muted,
     }),
     ...["primary", "primary hover", "primary active"].map((role) =>
-      apcaCheck({
+      textContractCheck({
         role: `Label on ${role}`,
         foreground: primaryText,
         background: values[role],
-        target: 60,
-        typography: "14px / 600",
+        typographyContext: V2_POLICY.text.typographyContexts.actionLabel,
       }),
     ),
     ...["destructive", "destructive hover", "destructive active"].map((role) =>
-      apcaCheck({
+      textContractCheck({
         role: `Label on ${role}`,
         foreground: destructiveText,
         background: values[role],
-        target: 60,
-        typography: "14px / 600",
+        typographyContext: V2_POLICY.text.typographyContexts.actionLabel,
       }),
     ),
     ...["warning", "warning hover", "warning active"].map((role) =>
-      apcaCheck({
+      textContractCheck({
         role: `Label on ${role}`,
         foreground: warningText,
         background: values[role],
-        target: 60,
-        typography: "14px / 600",
+        typographyContext: V2_POLICY.text.typographyContexts.warningLabel,
       }),
     ),
-    apcaCheck({
+    textContractCheck({
       role: "Selected content",
       foreground: selectionText,
       background: selection,
-      target: V2_POLICY.selection.textLc,
-      typography: "14px / 500",
+      typographyContext: V2_POLICY.text.typographyContexts.selection,
     }),
-  ].map((check) => ({
-    ...check,
-    kind: "text",
-    metric: "APCA Lc",
-    value: Math.abs(check.lc),
-  }));
+  ];
 
-  const nonTextChecks = [
+  const measuredNonTextChecks = [
     ratioCheck({
       role: "Primary boundary on background",
       foreground: values["primary border"],
@@ -1128,6 +1810,11 @@ function modePalette(input, mode, options = {}) {
       role: "Focus on surface",
       foreground: values["focus ring"],
       background: values.surface,
+    }),
+    ratioCheck({
+      role: "Focus on muted surface",
+      foreground: values["focus ring"],
+      background: values["muted surface"],
     }),
     differenceCheck({
       role: "Default → hover",
@@ -1164,6 +1851,15 @@ function modePalette(input, mode, options = {}) {
       target: V2_POLICY.selection.surfaceSeparation,
     }),
   ];
+  const reviewOnlyChecks =
+    options.destructiveSeparationAuthority === "selected-result-review"
+      ? measuredNonTextChecks.filter(
+          ({ role }) => role === "Brand → destructive",
+        )
+      : [];
+  const nonTextChecks = measuredNonTextChecks.filter(
+    (check) => !reviewOnlyChecks.includes(check),
+  );
   const checks = [...textChecks, ...nonTextChecks];
 
   const decisions = { ...foundation.decisions, ...brandFamily.traces };
@@ -1179,7 +1875,15 @@ function modePalette(input, mode, options = {}) {
   decisions.destructive = destructiveDecision.trace;
   decisions["destructive hover"] = destructiveHoverDecision.trace;
   decisions["destructive active"] = destructiveActiveDecision.trace;
-  decisions["destructive text"] = destructiveTextDecision.trace;
+  decisions["destructive text"] = aliasDecision({
+    id: `${mode}.destructive.text`,
+    role: "destructive text",
+    sourceRole: "primary text",
+    candidate: candidate(destructiveText),
+    intent:
+      "Reuse the mode's shared filled-action foreground so Primary and Destructive follow one text-polarity rule.",
+    evidence: evidence("wcagText", "apcaText"),
+  });
   decisions.warning = warningDecision.trace;
   decisions["warning hover"] = warningHoverDecision.trace;
   decisions["warning active"] = warningActiveDecision.trace;
@@ -1203,6 +1907,7 @@ function modePalette(input, mode, options = {}) {
     mode,
     tokens: TOKEN_ORDER.map((role) => [values[role], role]),
     checks,
+    ...(reviewOnlyChecks.length > 0 ? { reviewOnlyChecks } : {}),
     textChecks,
     nonTextChecks,
     values,
@@ -1218,6 +1923,11 @@ function modePalette(input, mode, options = {}) {
           ? 0
           : Math.min(V2_POLICY.neutral.tintCap, input.brandChroma * 0.52),
       redConflict,
+      filledActionDirection: actionConfiguration.direction,
+      filledActionDirectionAuthority: "state.mode-relative-filled-actions",
+      destructiveSeparationAuthority:
+        options.destructiveSeparationAuthority ??
+        V2_POLICY.destructive.separationAuthority,
       ...(options.destructiveAnchorStrategy
         ? { diagnosticDestructiveAnchor: destructiveAnchor }
         : {}),
@@ -1225,6 +1935,25 @@ function modePalette(input, mode, options = {}) {
         ? {
             diagnosticInfeasiblePrimaryStateCandidateCount:
               brandFamily.infeasibleStateCandidateCount,
+          }
+        : {}),
+      ...(options.filledActionDirections
+        ? {
+            diagnosticFilledActionDirection:
+              options.filledActionDirections[mode],
+          }
+        : {}),
+      ...(destructiveFamily.candidateCounts
+        ? {
+            destructiveFamilyCandidateCounts: destructiveFamily.candidateCounts,
+            diagnosticDestructiveFamilyCandidateCounts:
+              destructiveFamily.candidateCounts,
+          }
+        : {}),
+      ...(options.destructiveSeparationAuthority
+        ? {
+            diagnosticDestructiveSeparationAuthority:
+              options.destructiveSeparationAuthority,
           }
         : {}),
     },
@@ -1247,6 +1976,14 @@ function validateDiagnosticDestructiveHues(relationship, hues) {
   }
 }
 
+function omitsDestructiveSeparationConstraint(modeResult, relationship) {
+  return (
+    relationship === "destructive" &&
+    modeResult.adaptations.destructiveSeparationAuthority ===
+      "selected-result-review"
+  );
+}
+
 export function inspectFeedbackDefaultCandidateAvailabilityV2({
   result,
   mode,
@@ -1254,7 +1991,7 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
   diagnosticDestructiveHueCandidates,
 }) {
   if (
-    result?.version !== 2 ||
+    result?.version !== 3 ||
     result.policyVersion !== V2_POLICY.version ||
     !["light", "dark"].includes(mode) ||
     !["destructive", "warning"].includes(relationship)
@@ -1268,6 +2005,10 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
     diagnosticDestructiveHueCandidates,
   );
   const modeResult = result.modes[mode];
+  const omittedDestructiveSeparation = omitsDestructiveSeparationConstraint(
+    modeResult,
+    relationship,
+  );
   const primary = candidate(modeResult.values.primary);
   const selectedDestructive = candidate(modeResult.values.destructive);
   const baselineCheckId = `review.${mode}.primary-${relationship}-hue`;
@@ -1298,10 +2039,12 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
       ? destructiveSearch({
           mode,
           primary,
+          actionForeground: modeResult.values["primary text"],
           preferredLightness: modeResult.adaptations.redConflict
             ? modeResult.recipe.conflictingDestructive
             : modeResult.recipe.destructive,
           retainPlot: "detailed",
+          diagnosticOmitBrandSeparation: omittedDestructiveSeparation,
           diagnosticHueCandidates: diagnosticDestructiveHueCandidates,
         })
       : warningSearch({
@@ -1317,6 +2060,7 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
   if (
     !reproducedProduction ||
     (diagnosticDestructiveHueCandidates === undefined &&
+      !modeResult.adaptations.destructiveFamilyCandidateCounts &&
       JSON.stringify(search.trace.selected) !==
         JSON.stringify(productionSelected))
   ) {
@@ -1345,9 +2089,13 @@ export function inspectFeedbackDefaultCandidateAvailabilityV2({
   const evidenceSummary = summarizeFeedbackCandidateEvidence({
     searchPlot: search.trace.searchPlot,
     hueReviews: evaluated.map(({ hueReview }) => hueReview),
-    expectedConstraintIds: decisionPolicy(relationship).constraints.map(
-      ({ id }) => id,
-    ),
+    expectedConstraintIds: decisionPolicy(relationship)
+      .constraints.map(({ id }) => id)
+      .filter(
+        (id) =>
+          !omittedDestructiveSeparation ||
+          id !== "destructive.brand-separation",
+      ),
   });
   const siblingRole =
     relationship === "destructive" ? "warning" : "destructive";
@@ -1429,25 +2177,288 @@ function validatePrimaryRanges(primaryRanges) {
   }
 }
 
-function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
-  if (typeof primary !== "string" || !isHex(primary)) {
-    throw new TypeError("primary must be a six-digit hex color.");
+function compareJointFilledActionTuple(first, second) {
+  const numeric = [
+    [first.primarySourceDistance, second.primarySourceDistance],
+    [first.destructiveAnchorDistance, second.destructiveAnchorDistance],
+    [-first.weakestForegroundLc, -second.weakestForegroundLc],
+  ];
+  for (const [firstValue, secondValue] of numeric) {
+    if (firstValue !== secondValue) return firstValue - secondValue;
   }
-  const normalizedPrimary = normalizeHex(primary);
+  return first.identity.localeCompare(second.identity);
+}
+
+export function inspectBoundedJointDarkFilledActionFamily({ primary }) {
+  const { normalizedPrimary, input } = normalizedInputColor(primary);
+  const mode = "dark";
+  const direction = FILLED_ACTION_JOINT_EXPERIMENT.directions.dark;
+  const textContrastStrategy = TEXT_CONTRAST_STRATEGIES.APCA_ONLY;
+  const foundation = foundationPalette(
+    input,
+    mode,
+    MODE_RECIPE.dark,
+    textContrastStrategy,
+  );
+  const source = candidate(normalizedPrimary);
+  const destructiveAnchor = destructiveAnchorDecision({
+    input,
+    mode,
+    strategy: DESTRUCTIVE_ANCHOR_STRATEGIES.CURRENT_SOURCE_BAND,
+  });
+  const [start, end] = V2_POLICY.primary.lightnessRange.dark;
+  const attempted = [];
+  const uniquePrimaryFamilies = new Set();
+  const primaryFamiliesByForeground = new Map(
+    FILLED_ACTION_JOINT_EXPERIMENT.foregrounds.map((foreground) => [
+      foreground,
+      new Map(),
+    ]),
+  );
+  const eligible = [];
+
+  for (const foreground of FILLED_ACTION_JOINT_EXPERIMENT.foregrounds) {
+    for (
+      let requestedLightness = start;
+      requestedLightness <= end + V2_POLICY.search.candidateStep / 2;
+      requestedLightness += V2_POLICY.search.candidateStep
+    ) {
+      let brandFamily;
+      try {
+        brandFamily = brandFamilySearch({
+          input,
+          mode,
+          background: foundation.values.background,
+          surface: foundation.values.surface,
+          primaryRange: [requestedLightness, requestedLightness],
+          allowInfeasibleStateCandidates: true,
+          filledActionDirection: direction,
+          filledActionForeground: foreground,
+          textContrastStrategy,
+        });
+      } catch (error) {
+        if (!(error instanceof NoCandidateError)) throw error;
+        attempted.push({
+          requestedLightness,
+          foreground,
+          status: "primary-family-infeasible",
+          failure: noCandidateFailure(error),
+        });
+        continue;
+      }
+
+      const primaryFamilyKey = `${foreground}/${brandFamily.primary.hex}`;
+      if (uniquePrimaryFamilies.has(primaryFamilyKey)) {
+        attempted.push({
+          requestedLightness,
+          foreground,
+          status: "rendered-primary-duplicate",
+          primary: brandFamily.primary.hex,
+        });
+        continue;
+      }
+      uniquePrimaryFamilies.add(primaryFamilyKey);
+      primaryFamiliesByForeground
+        .get(foreground)
+        .set(brandFamily.primary.hex, brandFamily);
+
+      const destructiveFamily = inspectTransactionalDestructiveFamilySearch({
+        searchInput: {
+          mode,
+          primary: brandFamily.primary,
+          actionForeground: foreground,
+          preferredLightness: destructiveAnchor.preferredLightness,
+          textContrastStrategy,
+        },
+        actionForeground: foreground,
+        direction,
+      });
+      if (!destructiveFamily.complete) {
+        attempted.push({
+          requestedLightness,
+          foreground,
+          status: "destructive-family-infeasible",
+          terminalStage: destructiveFamily.terminalStage,
+          primary: brandFamily.primary.hex,
+          failure: destructiveFamily.failure,
+          destructiveCandidateCounts: destructiveFamily.candidateCounts,
+          stateFailureCountsByDecision:
+            destructiveFamily.stateFailureCountsByDecision,
+          stateCandidateEvidence: destructiveFamily.stateCandidateEvidence,
+        });
+        continue;
+      }
+
+      const values = {
+        foreground,
+        primary: brandFamily.primary.hex,
+        primaryHover: brandFamily.hover.hex,
+        primaryActive: brandFamily.active.hex,
+        destructive: destructiveFamily.decision.value.hex,
+        destructiveHover: destructiveFamily.states.hover.value.hex,
+        destructiveActive: destructiveFamily.states.active.value.hex,
+      };
+      const fillColors = [
+        values.primary,
+        values.primaryHover,
+        values.primaryActive,
+        values.destructive,
+        values.destructiveHover,
+        values.destructiveActive,
+      ];
+      const tuple = {
+        requestedPrimaryLightness: requestedLightness,
+        values,
+        primarySourceDistance: distance(source, brandFamily.primary),
+        destructiveAnchorDistance: Math.abs(
+          destructiveFamily.decision.value.oklch.l -
+            destructiveAnchor.preferredLightness,
+        ),
+        weakestForegroundLc: Math.min(
+          ...fillColors.map((color) =>
+            Math.abs(apcaContrast(foreground, color)),
+          ),
+        ),
+        destructiveCandidateCounts: destructiveFamily.candidateCounts,
+        identity: [
+          foreground,
+          brandFamily.primary.hex,
+          destructiveFamily.decision.value.hex,
+          brandFamily.hover.hex,
+          brandFamily.active.hex,
+          destructiveFamily.states.hover.value.hex,
+          destructiveFamily.states.active.value.hex,
+        ].join("/"),
+      };
+      eligible.push(tuple);
+      attempted.push({
+        requestedLightness,
+        foreground,
+        status: "eligible-joint-family",
+        primary: brandFamily.primary.hex,
+        destructive: destructiveFamily.decision.value.hex,
+      });
+    }
+  }
+
+  eligible.sort(compareJointFilledActionTuple);
+  const statusCounts = Object.fromEntries(
+    [...new Set(attempted.map(({ status }) => status))]
+      .sort()
+      .map((status) => [
+        status,
+        attempted.filter((item) => item.status === status).length,
+      ]),
+  );
+  const whitePrimaryFamilies = [
+    ...primaryFamiliesByForeground.get("#FFFFFF").values(),
+  ];
+  let separationDisconfirmingProbe = null;
+  if (whitePrimaryFamilies.length > 0) {
+    const separationOff = inspectTransactionalDestructiveFamilySearch({
+      searchInput: {
+        mode,
+        primary: whitePrimaryFamilies[0].primary,
+        actionForeground: "#FFFFFF",
+        preferredLightness: destructiveAnchor.preferredLightness,
+        diagnosticOmitBrandSeparation: true,
+        textContrastStrategy,
+      },
+      actionForeground: "#FFFFFF",
+      direction,
+    });
+    if (!separationOff.complete) {
+      throw new TypeError(
+        "The separation-off disconfirming inventory must contain complete Destructive families.",
+      );
+    }
+    const completeDestructiveFamilies = [
+      ...separationOff.completeFamilies.entries(),
+    ]
+      .map(([defaultHex, states]) => ({
+        default: defaultHex,
+        hover: states.hover.value.hex,
+        active: states.active.value.hex,
+        requestedLightness:
+          separationOff.completeFamilyRequestedLightness.get(defaultHex),
+      }))
+      .sort((first, second) => first.default.localeCompare(second.default));
+    let maximumPair = null;
+    for (const brandFamily of whitePrimaryFamilies) {
+      for (const destructiveFamily of completeDestructiveFamilies) {
+        const deltaE = distance(
+          brandFamily.primary,
+          candidate(destructiveFamily.default),
+        );
+        if (
+          maximumPair === null ||
+          deltaE > maximumPair.deltaE ||
+          (deltaE === maximumPair.deltaE &&
+            `${brandFamily.primary.hex}/${destructiveFamily.default}` <
+              `${maximumPair.primary}/${maximumPair.destructive}`)
+        ) {
+          maximumPair = {
+            primary: brandFamily.primary.hex,
+            destructive: destructiveFamily.default,
+            deltaE,
+          };
+        }
+      }
+    }
+    separationDisconfirmingProbe = {
+      authority: "diagnostic",
+      omittedConstraintId: "destructive.brand-separation",
+      retainedConstraintIds: [
+        "destructive.label-contrast",
+        "state.minimum-separation",
+        "state.shared-label",
+      ],
+      conditioning: {
+        mode: "dark",
+        direction,
+        foreground: "#FFFFFF",
+        stateCandidateLimit: V2_POLICY.search.stateCandidateLimit,
+        destructiveLightnessRange: V2_POLICY.destructive.lightnessRange.dark,
+        destructiveCandidateStep: V2_POLICY.destructive.candidateStep,
+      },
+      eligiblePrimaryFamilyCount: whitePrimaryFamilies.length,
+      completeDestructiveFamilyCount: completeDestructiveFamilies.length,
+      completeDestructiveFamilies,
+      separationThreshold: V2_POLICY.destructive.separation,
+      maximumPair,
+      anyPairMeetsSeparation:
+        maximumPair !== null &&
+        maximumPair.deltaE >= V2_POLICY.destructive.separation,
+    };
+  }
+  return {
+    schema: "bounded-joint-dark-filled-action-family-inspection.v1",
+    authority: "diagnostic",
+    experiment: FILLED_ACTION_JOINT_EXPERIMENT,
+    input: normalizedPrimary,
+    complete: eligible.length > 0,
+    selected: eligible[0] ?? null,
+    funnel: {
+      requestedPrimaryForegroundAttemptCount: attempted.length,
+      uniquePrimaryFamilyCount: uniquePrimaryFamilies.size,
+      eligibleJointFamilyCount: eligible.length,
+      statusCounts,
+    },
+    separationDisconfirmingProbe,
+    attempts: attempted,
+  };
+}
+
+function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
+  const {
+    normalizedPrimary,
+    raw: rawInput,
+    input: inputColor,
+  } = normalizedInputColor(primary);
   const cacheKey = `${V2_POLICY.version}/${normalizedPrimary}`;
   const cached = diagnosticOptions ? null : paletteCache.get(cacheKey);
   if (cached) return cached;
-  const rawInput = candidate(normalizedPrimary).oklch;
-  const classification = classifyInput(rawInput);
-  const inputColor = {
-    ...rawInput,
-    hex: normalizedPrimary,
-    classification,
-    brandChroma:
-      classification === "achromatic"
-        ? 0
-        : Math.min(V2_POLICY.primary.chromaCap, rawInput.c),
-  };
+  const { classification } = inputColor;
   const chromaRequests = primaryChromaRequests(rawInput.c);
   const primaryChromaExperiment =
     diagnosticOptions?.experiment === "primary-chroma-ladder"
@@ -1466,6 +2477,23 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
       ),
       primaryChromaExperiment,
       destructiveAnchorStrategy: diagnosticOptions?.destructiveAnchorStrategy,
+      filledActionDirections:
+        diagnosticOptions?.filledActionDirections ??
+        V2_POLICY.state.filledActionDirections,
+      filledActionLightnessShifts:
+        diagnosticOptions?.filledActionLightnessShifts,
+      destructiveLightnessRanges: diagnosticOptions?.destructiveLightnessRanges,
+      preferredPrimaryLightnesses:
+        diagnosticOptions?.preferredPrimaryLightnesses,
+      transactionalDarkDestructiveStates:
+        diagnosticOptions?.transactionalDarkDestructiveStates ?? true,
+      destructiveGrammar: diagnosticOptions?.destructiveGrammar,
+      destructiveSeparationAuthority:
+        diagnosticOptions?.destructiveSeparationAuthority ??
+        V2_POLICY.destructive.separationAuthority,
+      textContrastStrategy:
+        diagnosticOptions?.textContrastStrategy ??
+        TEXT_CONTRAST_STRATEGIES.PRODUCTION,
     });
   const baselineModes = {
     light: buildMode(inputColor, "light", {
@@ -1486,6 +2514,8 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
         V2_POLICY.crossMode.pairRankingStrategy,
       includeCandidateSetIdentity:
         diagnosticOptions?.experiment === "pair-ranking",
+      preferredPrimaryLightnesses:
+        diagnosticOptions?.preferredPrimaryLightnesses,
     },
   );
   const { modes } = pairSelection;
@@ -1503,7 +2533,7 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
     semanticEvaluation,
   );
   const result = {
-    version: 2,
+    version: 3,
     policyVersion: V2_POLICY.version,
     input: { primary: normalizedPrimary },
     source: {
@@ -1516,7 +2546,8 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
           : "Preserve hue and relative chroma; normalize lightness for usable mode roles.",
     },
     direction: "calm minimal",
-    contrastModel: "APCA-W3 0.1.9 text + WCAG non-text",
+    contrastModel:
+      "WCAG 2.2 normal-text eligibility + APCA diagnostic ranking + WCAG non-text",
     modes,
     quality,
     semanticEvaluation,
@@ -1544,6 +2575,17 @@ function generatePalette(primary, primaryRanges, diagnosticOptions = null) {
 
 export function generatePaletteV2({ primary }) {
   return generatePalette(primary, V2_POLICY.primary.lightnessRange);
+}
+
+export function generatePaletteV2BothDarkerLegacyCounterfactual({ primary }) {
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: "legacy-v15-both-darker-replay",
+    authority: "historical-diagnostic-baseline",
+    filledActionDirections: { light: -1, dark: -1 },
+    transactionalDarkDestructiveStates: false,
+    destructiveSeparationAuthority: "generation-constraint",
+    textContrastStrategy: TEXT_CONTRAST_STRATEGIES.APCA_ONLY,
+  });
 }
 
 export function generatePaletteV2Counterfactual({
@@ -1579,6 +2621,18 @@ export function generatePaletteV2PrimaryChromaCounterfactual({ primary }) {
   });
 }
 
+export function generatePaletteV2TextContrastCounterfactual({
+  primary,
+  strategy,
+}) {
+  assertTextContrastStrategy(strategy);
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: TEXT_CONTRAST_EXPERIMENT.id,
+    experimentDefinition: TEXT_CONTRAST_EXPERIMENT,
+    textContrastStrategy: strategy,
+  });
+}
+
 export function generatePaletteV2DestructiveAnchorCounterfactual({
   primary,
   strategy = DESTRUCTIVE_ANCHOR_STRATEGIES.FIXED_DEFAULT,
@@ -1596,11 +2650,104 @@ export function generatePaletteV2DestructiveAnchorCounterfactual({
   });
 }
 
+export function generatePaletteV2FilledActionDirectionCounterfactual({
+  primary,
+  directions = FILLED_ACTION_DIRECTION_EXPERIMENT.directions,
+}) {
+  assertFilledActionDirections(directions);
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: FILLED_ACTION_DIRECTION_EXPERIMENT.id,
+    experimentDefinition: FILLED_ACTION_DIRECTION_EXPERIMENT,
+    filledActionDirections: directions,
+    transactionalDarkDestructiveStates: true,
+    destructiveSeparationAuthority: "generation-constraint",
+    textContrastStrategy: TEXT_CONTRAST_STRATEGIES.APCA_ONLY,
+  });
+}
+
+export function generatePaletteV2ContextualDestructiveSeparationCounterfactual({
+  primary,
+  experiment = CONTEXTUAL_DESTRUCTIVE_SEPARATION_EXPERIMENT,
+}) {
+  assertContextualDestructiveSeparationExperiment(experiment);
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: experiment.id,
+    experimentDefinition: experiment,
+    filledActionDirections: experiment.directions,
+    transactionalDarkDestructiveStates: true,
+    destructiveSeparationAuthority: "selected-result-review",
+    textContrastStrategy: TEXT_CONTRAST_STRATEGIES.APCA_ONLY,
+  });
+}
+
+function assertDestructiveGrammar(grammar) {
+  if (
+    !grammar ||
+    !["light", "dark"].every((mode) => {
+      const item = grammar[mode];
+      const range = V2_POLICY.destructive.lightnessRange[mode];
+      return (
+        item &&
+        Number.isFinite(item.lightness) &&
+        item.lightness >= range[0] &&
+        item.lightness <= range[1] &&
+        [-1, 1].includes(item.direction) &&
+        ["#000000", "#FFFFFF"].includes(item.foreground)
+      );
+    })
+  ) {
+    throw new TypeError(
+      "Destructive grammar preview requires bounded Light and Dark tuples.",
+    );
+  }
+  return grammar;
+}
+
+export function generatePaletteV2DestructiveGrammarCounterfactual({
+  primary,
+  grammar,
+}) {
+  assertDestructiveGrammar(grammar);
+  return generatePalette(primary, V2_POLICY.primary.lightnessRange, {
+    experiment: "destructive-first-grammar-preview",
+    strategy: "operator-selected-bounded-tuples",
+    destructiveGrammar: grammar,
+    allowInfeasibleStateCandidates: true,
+    transactionalDarkDestructiveStates: false,
+    textContrastStrategy: TEXT_CONTRAST_STRATEGIES.APCA_ONLY,
+  });
+}
+
+export function generatePaletteV2TonalOffsetCounterfactual({
+  primary,
+  offset,
+}) {
+  const baseline = generatePaletteV2({ primary });
+  const profile = tonalOffsetProfile(offset, baseline.modes);
+  return generatePalette(primary, profile.primaryLightnessRanges, {
+    experiment: TONAL_OFFSET_EXPERIMENT.id,
+    experimentDefinition: TONAL_OFFSET_EXPERIMENT,
+    tonalOffsetProfile: profile,
+    filledActionLightnessShifts: profile.shifts,
+    destructiveLightnessRanges: profile.destructiveLightnessRanges,
+    preferredPrimaryLightnesses: profile.preferredPrimaryLightnesses,
+  });
+}
+
 export function serializeModeCss(modeResult) {
-  const declarations = modeResult.tokens
+  const selector = `[data-theme="${modeResult.mode}"]`;
+  const hexDeclarations = modeResult.tokens
     .map(
       ([color, role]) => `  --palette-${role.replaceAll(" ", "-")}: ${color};`,
     )
     .join("\n");
-  return `[data-theme="${modeResult.mode}"] {\n${declarations}\n}`;
+  const oklchDeclarations = modeResult.tokens
+    .map(([color, role]) => {
+      const name = `--palette-${role.replaceAll(" ", "-")}`;
+      const { l, c, h } = candidate(color).oklch;
+      const cssColor = `oklch(${l.toFixed(8)} ${c.toFixed(8)} ${h.toFixed(6)})`;
+      return `    ${name}: ${cssColor};`;
+    })
+    .join("\n");
+  return `${selector} {\n${hexDeclarations}\n}\n\n@supports (color: oklch(0.5 0 0)) {\n  ${selector} {\n${oklchDeclarations}\n  }\n}`;
 }
