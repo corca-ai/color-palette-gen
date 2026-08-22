@@ -63,6 +63,10 @@ flowchart TD
 | 문맥 파생 상태군 | context-derived family | 실제 component 배경과 text 역할을 소비해 만들며 context-free palette에는 export하지 않는 상태 묶음 |
 | 의무 적용 범위   | obligation scope       | 규칙이 role 자체, 완전한 family, role 사이 관계, 실제 presentation 중 어디에 적용되는지            |
 | 글자 사용 맥락   | typography context     | text가 normal/large 중 무엇이며 specimen에서 어떤 크기·굵기로 쓰이는지 명시한 계약                 |
+| 검사 투영        | inspection projection  | 상류 선언·규칙의 identity와 관련 role/context를 사람이 볼 화면으로 단방향 연결한 것               |
+| 검사 의무        | inspection obligation  | 특정 맥락을 렌더링하고 질문을 보여 줄 의무. 색의 통과 의무나 새 semantic verdict가 아님            |
+| 화면 구성        | composition            | 한 native context를 그대로 보여주는지, 여러 유효 native context를 비교용으로 정렬하는지 나타내는 축 |
+| 임시 인간 관찰   | ephemeral observation  | 화면을 본 사람이 느낀 점. 현재 저장·점수화·자동 판정하거나 policy로 되돌리지 않음                   |
 
 Role은 단순한 색 이름이 아니라 사용 의무다. 예를 들어 Destructive는 단순히
 “빨간색”이 아니라 읽을 수 있는 label, 완성된 hover/active family, Primary와의
@@ -158,6 +162,49 @@ flowchart TD
 - semantic model은 선언된 관계만 평가하며 candidate를 다시 선택하지 않는다.
 - diagnostic은 fixed corpus 관찰이며 production policy가 아니다.
 
+## 의미 모델과 인간 검사의 분기
+
+실행 semantic model과 Edge matrix는 같은 상류 개념을 사용하지만 서로의 판정을
+소비하지 않는다. Semantic evaluator는 evidence를 읽어 기존 12개 declaration의
+`satisfied` / `unsatisfied` / `needs-review`를 만든다. Inspection projection은 그
+status를 복사하거나 표시하지 않고 declaration identity, 관련 role, 화면 context만
+가져와 사람이 볼 수 있는 specimen과 열린 질문을 만든다.
+
+```mermaid
+flowchart TD
+  sources["상류 의미와 소유자<br/>semantic declaration · policy rule<br/>alias owner · presentation policy"]
+  evidence["자동 evidence"]
+  evaluator["semantic evaluator"]
+  verdict["기존 semantic verdict<br/>satisfied · unsatisfied · needs-review"]
+  inventory["inspection obligation inventory<br/>source + composition + no new verdict"]
+  specimen["rendered native context<br/>또는 aligned native contexts"]
+  observation["임시 인간 관찰<br/>저장·점수·자동 판정 없음"]
+
+  sources --> evidence
+  evidence --> evaluator
+  evaluator --> verdict
+  sources --> inventory
+  inventory --> specimen
+  specimen --> observation
+```
+
+두 분기의 경계는 다음과 같다.
+
+- `sourceKind` / `sourceId`는 질문의 상류 소유자를 나타낸다.
+- `composition`은 그 질문을 native context 하나에서 보여주는지, 서로 다른 유효
+  context를 나란히 정렬하는지를 나타낸다. 상류 authority와 화면 배치는 서로
+  독립된 축이다.
+- 모든 inspection record의 `inspectionVerdictAuthority`는 `none`이다. 이는 상류
+  declaration에 verdict가 없다는 뜻이 아니라, 화면 검사가 **추가 verdict를 만들지
+  않는다**는 뜻이다.
+- 인간 관찰에서 generation, semantic evaluation, result verdict, policy로 돌아가는
+  자동 edge는 없다. 향후 반영에는 별도의 저장·disposition 소유자와 명시적 policy
+  decision이 필요하다.
+
+따라서 이 변경은 `v2-declarative-design@5`의 12개 declaration, evidence contract,
+evaluator, serialized semantic result를 바꾸지 않는다. Presentation co-occurrence도
+새 semantic dependency가 아니라 사람의 비교를 위한 화면 구성이다.
+
 Light Warning의 appearance는 이 경계를 실제로 통과한 사례다. v18 diagnostic은
 후보 부족이 아니라 anchor 선택이 탁한 결과를 만든다는 사실을 분리했고, 사람의
 Default-first disposition 후 [ADR-0007](adr/0007-light-warning-vivid-amber.md)이
@@ -231,6 +278,7 @@ evidence로 남는다.
 | 역할별 규칙이 필요한 이유         | [Role policies](policy/roles.md)                       | `policy.js`, role producers  |
 | authority와 provenance            | [Evidence authority](policy/evidence.md)               | `evidence-authority.js`      |
 | semantic declaration              | [Semantic model](policy/semantic-model.md)             | `semantic-model.js`          |
+| human inspection projection       | [Interaction design](../interaction-design.md#ontology-driven-edge-case-inspection) | `sample-inspection.js`, `view.js` |
 | 후보와 trace 실행 구조            | [Candidate search](implementation/candidate-search.md) | `decision.js`                |
 | bounded diagnostic 결과           | [Research](README.md#research)                         | dedicated diagnostic modules |
 
@@ -247,6 +295,7 @@ evidence로 남는다.
 | diagnostic boundary               | dedicated diagnostic modules                       | focused tests and heavy snapshots              |
 | text contrast policy diagnostic   | `text-contrast-strategy.js`, counterfactual report | `test/v2-text-contrast-counterfactual.test.js` |
 | human-readable ontology and rules | `ontology.md`, `rules.md`                          | `test/v2-color-system-doc.test.js`             |
+| inspection projection and screen bindings | `sample-inspection.js`, `view.js`             | applied-sample unit and Playwright tests       |
 
 ## Maintenance contract
 
@@ -255,6 +304,7 @@ evidence로 남는다.
 1. semantic concept나 역할 의존성이 바뀐다.
 2. 역할 생성 단계 또는 mode assembly 순서가 바뀐다.
 3. candidate, family, pair, evidence, verdict, diagnostic의 의미가 바뀐다.
+4. inspection obligation, composition, 또는 인간 관찰의 authority 경계가 바뀐다.
 
 세부 규칙, pair authority, semantic declaration 또는 verdict scope가 바뀌면
 [Color decision rules](rules.md)를 갱신한다.

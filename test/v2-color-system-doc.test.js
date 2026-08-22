@@ -104,6 +104,33 @@ test("the managed ontology and flow stay bound to current production policy", as
   assert.doesNotMatch(rules, /Restrict ranking pool/);
 });
 
+test("human inspection remains a one-way projection outside semantic verdict authority", async () => {
+  const [ontology, semanticModel, interaction] = await Promise.all([
+    readFile(new URL("docs/v2-decisions/ontology.md", root), "utf8"),
+    readFile(
+      new URL("docs/v2-decisions/policy/semantic-model.md", root),
+      "utf8",
+    ),
+    readFile(new URL("docs/interaction-design.md", root), "utf8"),
+  ]);
+
+  assert.match(ontology, /## 의미 모델과 인간 검사의 분기/);
+  assert.match(ontology, /inspection projection/);
+  assert.match(ontology, /inspectionVerdictAuthority.*none/s);
+  assert.match(ontology, /자동 edge는 없다/);
+  assert.match(semanticModel, /## Human inspection projection/);
+  assert.match(
+    semanticModel,
+    /does not consume or\s+display.*evaluation status/s,
+  );
+  assert.match(semanticModel, /v2-declarative-design@5.*12 declarations/s);
+  assert.match(
+    interaction,
+    /Source provenance and screen composition are orthogonal/,
+  );
+  assert.match(interaction, /authored presentation question/);
+});
+
 test("Warning recipe history and v20 label ownership stay synchronized", async () => {
   const [
     spec,

@@ -642,6 +642,27 @@
   color: var(--sample-muted-text);
   font-size: 9px;
 }
+.inspection-questions {
+  background: var(--sample-muted-surface);
+  border-left: 2px solid var(--sample-focus-ring);
+  color: var(--sample-foreground);
+  display: grid;
+  gap: 3px;
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+}
+.inspection-questions li {
+  font-size: 9px;
+  line-height: 1.45;
+}
+.inspection-questions li::before {
+  color: var(--sample-muted-text);
+  content: "Observe · ";
+  font-family: var(--mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
 .inspection-context-grid {
   display: grid;
   gap: 8px;

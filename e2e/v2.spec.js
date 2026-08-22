@@ -484,6 +484,13 @@ test("Edge matrix binds the bounded inventory to real interactive contexts", asy
 
   for (const mode of ["light", "dark"]) {
     const board = page.locator(`.example.${mode} .inspection-board`);
+    for (const obligation of SAMPLE_INSPECTION_OBLIGATIONS.filter(
+      ({ scenarioId }) => scenarioId === "edge-matrix",
+    )) {
+      await expect(
+        board.getByText(obligation.inspectionQuestion, { exact: true }),
+      ).toBeVisible();
+    }
     for (const family of [
       "primary",
       "destructive-outline",

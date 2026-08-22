@@ -34,6 +34,10 @@ review와 semantic declaration의 실행 설명은
   rendered selector. It permits roles to appear in several contexts and adds
   authored presentation co-occurrence probes without turning them into ontology
   edges, generation policy, automatic verdicts, or a generic component DSL.
+  Upstream source provenance and screen composition remain separate metadata;
+  the inventory projects declaration identity and roles but neither imports nor
+  consumes semantic-evaluation status. Its `inspectionVerdictAuthority: none`
+  applies only to the human inspection item.
   Every generated role has at least one applied consumer; `brand source` is the
   sole explicit provenance-only role.
 - `v2/lib/palette.js` orchestrates generation. Role-family producers own their

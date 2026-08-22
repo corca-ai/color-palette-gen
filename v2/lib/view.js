@@ -1,6 +1,9 @@
 import { hexToRgb, rgbToOklch } from "../../lib/color-math.js";
 import { secondaryActionPresentationForMode } from "./action-presentation.js";
-import { SAMPLE_SCENARIOS } from "./sample-inspection.js";
+import {
+  SAMPLE_INSPECTION_OBLIGATIONS,
+  SAMPLE_SCENARIOS,
+} from "./sample-inspection.js";
 
 const GROUPS = [
   {
@@ -241,11 +244,21 @@ function inspectionAction({ family, label, className }) {
   return `<div class="inspection-action-specimen"><button type="button" class="inspection-action ${className}" data-inspection-family="${family}">${label}</button>${inspectionStateReadout()}</div>`;
 }
 
+function inspectionQuestions(ids) {
+  const questions = ids.map(
+    (id) =>
+      SAMPLE_INSPECTION_OBLIGATIONS.find((item) => item.id === id)
+        .inspectionQuestion,
+  );
+  return `<ul class="inspection-questions" aria-label="Human inspection questions">${questions.map((question) => `<li>${escapeHtml(question)}</li>`).join("")}</ul>`;
+}
+
 function edgeMatrixScenario() {
   return `<section class="reference-scenario-card inspection-board" data-inspection-board="edge-matrix" data-inspection-obligation="focus-control-separation">
     <header class="inspection-board-header"><div><p class="reference-kicker">Inspection board · not a product screen</p><h3>Compare relationships the ontology alone cannot show.</h3></div><p>Valid contexts are aligned for visual comparison. This board records no score, vote, or automatic pass/fail result.</p></header>
     <section class="inspection-action-board" data-inspection-obligation="action-family-consistency feedback-separation action-default-emphasis">
       <header><strong>Action families</strong><span>Fill state and focus are independent.</span></header>
+      ${inspectionQuestions(["action-family-consistency", "feedback-separation", "action-default-emphasis"])}
       <div class="inspection-context-grid">
         <article data-native-context="ordinary-actions"><small>Ordinary actions</small><strong>Primary leads; Destructive stays outline.</strong>${inspectionAction({ family: "primary", label: "Save changes", className: "inspection-primary" })}${inspectionAction({ family: "destructive-outline", label: "Delete project", className: "inspection-destructive-outline" })}</article>
         <article data-native-context="destructive-confirmation"><small>Destructive confirmation</small><strong>Secondary sits beside filled Destructive.</strong>${inspectionAction({ family: "secondary", label: "Cancel", className: "inspection-secondary" })}${inspectionAction({ family: "destructive-filled", label: "Move to Trash", className: "inspection-destructive" })}</article>
@@ -254,6 +267,7 @@ function edgeMatrixScenario() {
     </section>
     <section class="inspection-focus-board" data-inspection-obligation="focus-adjacency">
       <header><strong>Focus across surfaces</strong><span>Tab through the same target on all required foundation contexts.</span></header>
+      ${inspectionQuestions(["focus-adjacency", "focus-control-separation"])}
       <div>
         <article data-focus-context="background"><small>Background</small><button type="button" class="inspection-focus-target">Focus target</button></article>
         <article data-focus-context="surface"><small>Surface</small><button type="button" class="inspection-focus-target">Focus target</button></article>

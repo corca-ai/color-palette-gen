@@ -151,6 +151,11 @@ and the per-candidate result of each rule.
   acceptance scenarios in the fast unit tier;
 - aggregate satisfaction is scoped to 12 measurable declarations and does not
   establish overall palette quality or perceived hover discoverability;
+- the human inspection projection binds all 12 declaration identities to
+  rendered contexts without consuming their evaluation status; source
+  provenance and screen composition are orthogonal, and every inspection item
+  carries `inspectionVerdictAuthority: none` without changing semantic model
+  `@5` or its serialized result;
 
 Disabled and popover roles are explicit semantic aliases to foundation roles.
 Their independent searches are intentionally deferred until a reproducible

@@ -1,6 +1,24 @@
 const BOTH_MODES = Object.freeze(["light", "dark"]);
 const FILL_STATES = Object.freeze(["default", "hover", "active"]);
 
+export const SAMPLE_INSPECTION_SOURCE_KINDS = Object.freeze([
+  "semantic-declaration",
+  "policy-rule",
+  "presentation-policy",
+  "owner-document",
+  "authored-presentation-question",
+]);
+
+export const SAMPLE_INSPECTION_COMPOSITIONS = Object.freeze([
+  "native-context",
+  "aligned-native-contexts",
+]);
+
+export const SAMPLE_AUTHORED_PRESENTATION_QUESTIONS = Object.freeze({
+  "action-default-emphasis-v1":
+    "Which resting action appears unexpectedly stronger or weaker for its context?",
+});
+
 export const SAMPLE_SCENARIOS = Object.freeze([
   Object.freeze({ id: "workspace", label: "Workspace", kind: "situation" }),
   Object.freeze({
@@ -35,6 +53,8 @@ function binding(role, selector) {
 function obligation(definition) {
   return Object.freeze({
     ...definition,
+    composition: definition.composition ?? "native-context",
+    inspectionVerdictAuthority: "none",
     modes: BOTH_MODES,
     contexts: Object.freeze(definition.contexts),
     fillStates: Object.freeze(definition.fillStates),
@@ -53,7 +73,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     fillStates: ["default"],
     focus: false,
     inspectionQuestion:
-      "Do nested surfaces, content, and boundaries form one hierarchy?",
+      "What hierarchy do the selected foundation surfaces form when rendered together?",
     roleBindings: [
       binding("background", ".reference-shell"),
       binding("surface", ".reference-sidebar"),
@@ -73,7 +93,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     fillStates: ["default"],
     focus: false,
     inspectionQuestion:
-      "Does foundation text remain readable in each authored context?",
+      "How does foundation text appear in each authored background context?",
     roleBindings: [
       binding("background", ".reference-shell"),
       binding("surface", ".reference-sidebar"),
@@ -140,7 +160,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     fillStates: FILL_STATES,
     focus: false,
     inspectionQuestion:
-      "Can a person distinguish the three exported Primary states?",
+      "What visual differences appear among the three technically distinct Primary fills?",
     roleBindings: [
       binding("primary", ".reference-primary-demo"),
       binding("primary hover", ".reference-primary-demo"),
@@ -239,7 +259,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     contexts: ["selected-row-beside-unselected-content"],
     fillStates: ["default"],
     focus: false,
-    inspectionQuestion: "Does selected content remain distinct and readable?",
+    inspectionQuestion: "How readable does selected text appear on Selection?",
     roleBindings: [
       binding("selection", ".selected-message"),
       binding("selection text", ".selected-message"),
@@ -254,7 +274,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     fillStates: ["default"],
     focus: false,
     inspectionQuestion:
-      "Does Selection remain distinguishable from its neighboring Surface?",
+      "How does the selected row appear beside its neighboring Surface?",
     roleBindings: [
       binding("surface", ".reference-selection-list"),
       binding("selection", ".selected-message"),
@@ -265,11 +285,12 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     sourceKind: "semantic-declaration",
     sourceId: "focus-adjacent-contrast-passes",
     scenarioId: "edge-matrix",
+    composition: "aligned-native-contexts",
     contexts: ["background", "surface", "muted-surface"],
     fillStates: ["default"],
     focus: true,
     inspectionQuestion:
-      "Is the same Focus Ring visible on every live foundation context?",
+      "How does the same Focus Ring appear on each foundation context?",
     roleBindings: [
       binding("focus ring", ".inspection-focus-target"),
       binding("background", '[data-focus-context="background"]'),
@@ -282,11 +303,12 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     sourceKind: "semantic-declaration",
     sourceId: "focus-control-oklab-separation-passes",
     scenarioId: "edge-matrix",
+    composition: "aligned-native-contexts",
     contexts: ["ordinary-action", "destructive-confirmation"],
     fillStates: ["default"],
     focus: true,
     inspectionQuestion:
-      "Does Focus Ring remain distinct from Primary and Destructive controls?",
+      "How does the Focus Ring appear around Primary and Destructive controls?",
     roleBindings: [
       binding("focus ring", ".inspection-focus-target"),
       binding("primary", '[data-inspection-family="primary"]'),
@@ -300,7 +322,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     scenarioId: "form-focus",
     contexts: ["blocked-control", "overlay"],
     fillStates: ["default"],
-    focus: true,
+    focus: false,
     inspectionQuestion:
       "Do aliased utility roles retain their non-color duties?",
     roleBindings: [
@@ -316,6 +338,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     sourceKind: "presentation-policy",
     sourceId: "single-filled-action-hierarchy-v2",
     scenarioId: "edge-matrix",
+    composition: "aligned-native-contexts",
     contexts: [
       "ordinary-actions",
       "destructive-confirmation",
@@ -324,7 +347,7 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     fillStates: FILL_STATES,
     focus: true,
     inspectionQuestion:
-      "Do native action contexts still read as one interaction grammar?",
+      "When these valid contexts are aligned, which state movement or label treatment feels inconsistent?",
     roleBindings: [
       binding("primary", '[data-inspection-family="primary"]'),
       binding("primary text", '[data-inspection-family="primary"]'),
@@ -349,11 +372,12 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
     sourceKind: "semantic-declaration",
     sourceId: "feedback-oklab-separation-passes",
     scenarioId: "edge-matrix",
+    composition: "aligned-native-contexts",
     contexts: ["aligned-action-families"],
     fillStates: ["default"],
     focus: false,
     inspectionQuestion:
-      "Do Primary, Destructive, and Warning retain separate meanings?",
+      "What similarities or differences appear among Primary, Destructive, and Warning?",
     roleBindings: [
       binding("primary", '[data-inspection-family="primary"]'),
       binding("destructive", '[data-inspection-family="destructive-filled"]'),
@@ -362,14 +386,15 @@ export const SAMPLE_INSPECTION_OBLIGATIONS = Object.freeze([
   }),
   obligation({
     id: "action-default-emphasis",
-    sourceKind: "presentation-probe",
+    sourceKind: "authored-presentation-question",
     sourceId: "action-default-emphasis-v1",
     scenarioId: "edge-matrix",
+    composition: "aligned-native-contexts",
     contexts: ["equal-geometry-native-contexts"],
     fillStates: ["default"],
     focus: false,
     inspectionQuestion:
-      "Do resting actions preserve an intentional emphasis hierarchy?",
+      SAMPLE_AUTHORED_PRESENTATION_QUESTIONS["action-default-emphasis-v1"],
     roleBindings: [
       binding("surface", ".inspection-action-board"),
       binding("primary", '[data-inspection-family="primary"]'),

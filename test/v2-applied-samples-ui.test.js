@@ -10,7 +10,10 @@ import {
 } from "../v2/lib/action-presentation.js";
 import { RULE_CATALOG } from "../v2/lib/policy.js";
 import {
+  SAMPLE_AUTHORED_PRESENTATION_QUESTIONS,
+  SAMPLE_INSPECTION_COMPOSITIONS,
   SAMPLE_INSPECTION_OBLIGATIONS,
+  SAMPLE_INSPECTION_SOURCE_KINDS,
   SAMPLE_PROVENANCE_ONLY_ROLES,
   SAMPLE_SCENARIOS,
   sampleInspectionRoles,
@@ -85,6 +88,9 @@ test("the bounded inspection inventory binds sources, contexts, and rendered sce
     semanticSourceIds,
     new Set(V2_SEMANTIC_MODEL.declarations.map(({ id }) => id)),
   );
+  assert.equal(V2_SEMANTIC_MODEL.id, "v2-declarative-design");
+  assert.equal(V2_SEMANTIC_MODEL.version, 5);
+  assert.equal(V2_SEMANTIC_MODEL.declarations.length, 12);
 
   for (const obligation of SAMPLE_INSPECTION_OBLIGATIONS) {
     assert.ok(!obligationIds.has(obligation.id), `duplicate ${obligation.id}`);
@@ -92,6 +98,10 @@ test("the bounded inspection inventory binds sources, contexts, and rendered sce
     assert.ok(scenarioIds.has(obligation.scenarioId));
     assert.ok(obligation.sourceKind.length > 0);
     assert.ok(obligation.sourceId.length > 0);
+    assert.ok(SAMPLE_INSPECTION_SOURCE_KINDS.includes(obligation.sourceKind));
+    assert.ok(SAMPLE_INSPECTION_COMPOSITIONS.includes(obligation.composition));
+    assert.equal(obligation.inspectionVerdictAuthority, "none");
+    assert.ok(obligation.inspectionQuestion.length > 0);
     if (obligation.sourceKind === "policy-rule") {
       assert.ok(RULE_CATALOG[obligation.sourceId]);
     }
@@ -104,6 +114,12 @@ test("the bounded inspection inventory binds sources, contexts, and rendered sce
         "utf8",
       );
       assert.ok(document.length > 0);
+    }
+    if (obligation.sourceKind === "authored-presentation-question") {
+      assert.equal(
+        obligation.inspectionQuestion,
+        SAMPLE_AUTHORED_PRESENTATION_QUESTIONS[obligation.sourceId],
+      );
     }
     assert.deepEqual(obligation.modes, ["light", "dark"]);
     assert.ok(obligation.contexts.length > 0);
@@ -125,5 +141,31 @@ test("the bounded inspection inventory binds sources, contexts, and rendered sce
       markup,
       new RegExp(`data-inspection-obligation="[^"]*${obligation.id}[^"]*"`),
     );
+    if (obligation.scenarioId === "edge-matrix") {
+      assert.ok(markup.includes(obligation.inspectionQuestion));
+    }
   }
+});
+
+test("the human inspection projection cannot produce semantic authority", async () => {
+  const [inspection, palette, semanticModel, app] = await Promise.all([
+    readFile(
+      new URL("../v2/lib/sample-inspection.js", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../v2/lib/palette.js", import.meta.url), "utf8"),
+    readFile(new URL("../v2/lib/semantic-model.js", import.meta.url), "utf8"),
+    readFile(new URL("../v2/app.js", import.meta.url), "utf8"),
+  ]);
+
+  assert.doesNotMatch(
+    inspection,
+    /from\s+["']\.\/(?:palette|semantic-model|decision|quality|result-verdicts)\.js/,
+  );
+  assert.doesNotMatch(palette, /sample-inspection/);
+  assert.doesNotMatch(semanticModel, /sample-inspection/);
+  assert.doesNotMatch(
+    app,
+    /SAMPLE_INSPECTION_OBLIGATIONS|semanticEvaluation\s*=/,
+  );
 });

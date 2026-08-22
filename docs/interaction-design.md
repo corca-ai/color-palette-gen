@@ -119,21 +119,28 @@ frame around the specimen.
 ### Ontology-driven edge-case inspection
 
 The applied sample is also a human inspection instrument. Its coverage model
-must distinguish two kinds of relationship:
+must distinguish two independent axes:
 
 1. **Ontology relation** — a declared dependency or obligation such as one
    Primary foreground spanning Default/Hover/Active, Focus remaining visible on
    Background/Surface/Muted Surface, or Selection Text remaining readable on
    Selection.
-2. **Presentation co-occurrence** — roles with no generation dependency that a
-   person can compare across aligned native contexts, such as ordinary actions,
-   destructive confirmation, and warning feedback. Differences in foreground,
-   resting emphasis, border treatment, or state direction can be visually
-   inconsistent even when every role passes its own contract.
+2. **Presentation composition** — whether a person inspects one native context
+   or several valid native contexts aligned for comparison, such as ordinary
+   actions, destructive confirmation, and warning feedback. The aligned roles
+   may already have an ontology relation or may only share a screen question.
+   Differences in foreground, resting emphasis, border treatment, or state
+   direction can look inconsistent even when every role passes its own contract.
 
-The second kind is deliberately not promoted into palette policy. Co-location
+The second axis is deliberately not promoted into palette policy. Co-location
 creates an inspection obligation and possible human finding, not a new candidate
 constraint or semantic dependency.
+
+Source provenance and screen composition are orthogonal. `sourceKind` and
+`sourceId` name the upstream declaration, rule, document, or authored question;
+`composition` says whether it is rendered in one `native-context` or as
+`aligned-native-contexts`. A semantic declaration can therefore be inspected
+through aligned presentation co-occurrence without changing its ontology kind.
 
 #### Presentation/context migration
 
@@ -179,10 +186,10 @@ aesthetic defects.
 | Selection separation | semantic declaration / `selection-surface-oklab-separation-passes` | Surface, Selection | Light, Dark | selected beside unselected content | default / off | Feedback & selection |
 | Focus adjacency | semantic declaration / `focus-adjacent-contrast-passes` | Focus Ring, Background, Surface, Muted Surface | Light, Dark | three live foundation targets | default / on | Edge matrix |
 | Focus/control separation | semantic declaration / `focus-control-oklab-separation-passes` | Focus Ring, Primary, Destructive | Light, Dark | ordinary and destructive controls | default / on | Edge matrix |
-| Utility semantics | owner document / `docs/v2-decisions/policy/utility-role-aliases.md` | Disabled aliases, Popover aliases | Light, Dark | blocked control and overlay | default / off, on | Form & focus |
+| Utility semantics | owner document / `docs/v2-decisions/policy/utility-role-aliases.md` | Disabled aliases, Popover aliases | Light, Dark | blocked control and overlay | default / off | Form & focus |
 | Action-family consistency | presentation / `single-filled-action-hierarchy-v2` | Primary, Destructive, Warning plus derived Secondary | Light, Dark | aligned native action contexts | default, hover, active / off, on | Edge matrix |
 | Feedback separation | semantic declaration / `feedback-oklab-separation-passes` | Primary, Destructive, Warning | Light, Dark | aligned action families | default / off | Edge matrix |
-| Default emphasis hierarchy | presentation / `action-default-emphasis-v1` | Surface plus all action defaults | Light, Dark | equal geometry across native contexts | default / off | Edge matrix |
+| Default emphasis hierarchy | authored presentation question / `action-default-emphasis-v1` | Surface plus all action defaults | Light, Dark | equal geometry across native contexts | default / off | Edge matrix |
 
 Intentional differences keep explicit owners. Warning owns an independent label
 envelope; Secondary is derived from Muted Surface and Foreground in confirmation
@@ -207,13 +214,19 @@ deliberate inspection board, not a simulated product screen.
 - Explanatory labels distinguish ontology-owned sameness from intentionally
   independent behavior. The screen records no vote and converts no visual finding
   into generation authority.
+- Open observation questions are visible beside the relevant comparison. They
+  ask what appears similar, different, stronger, or weaker; they do not restate
+  an automated semantic status as a human conclusion.
 
 `SAMPLE_INSPECTION_OBLIGATIONS` is the executable presentation contract. Each
-static record contains `id`, `sourceKind`, exact `sourceId`, `scenarioId`,
-`modes`, `contexts`, `fillStates`, `focus`, and `roleBindings` of token role to
-actual selector; derived Secondary bindings are marked separately. The inventory
-does not generate components, expand arbitrary families, evaluate color policy,
-or drive palette production.
+static record contains `id`, closed `sourceKind`, exact `sourceId`,
+`composition`, `scenarioId`, `modes`, `contexts`, `fillStates`, `focus`,
+`inspectionQuestion`, `inspectionVerdictAuthority`, and `roleBindings` of token
+role to actual selector; derived Secondary bindings are marked separately. The
+inventory does not generate components, expand arbitrary families, evaluate
+color policy, or drive palette production. `inspectionVerdictAuthority: none`
+applies only to the inspection record; it does not erase an upstream semantic
+verdict.
 
 Unit tests must prove generated-role coverage without requiring roles to be
 unique to one scenario, validate the record shape, and bind every obligation's

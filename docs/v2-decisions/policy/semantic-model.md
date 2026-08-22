@@ -99,6 +99,28 @@ measurable declaration passed. It does not establish overall palette quality,
 hover discoverability, feedback meaning, selection discoverability, or complete
 accessibility conformance. The runtime records no human score or observation.
 
+## Human inspection projection
+
+The applied specimen projects all 12 declaration identities into renderable
+contexts, but it is not another semantic evaluator. The projection copies only
+the declaration identity and relevant roles/context; it does not consume or
+display that declaration's evaluation status. Policy rules, alias owners, and
+presentation policy may also source inspection records without becoming
+semantic declarations.
+
+Source provenance and screen composition are independent axes. A declaration
+may be shown in one native context or through several valid native contexts
+aligned for comparison. Every record declares
+`inspectionVerdictAuthority: "none"`: this scopes the non-claim to the rendered
+inspection item while the upstream declaration retains its existing semantic
+verdict authority. Open observation questions create no evidence contract,
+evaluation instance, score, or reverse edge into generation or policy.
+
+Consequently the inspection layer does not change the executable identity
+`v2-declarative-design@5`, its 12 declarations, or the serialized semantic
+result. New declarations for perceptual distinguishability, emphasis hierarchy,
+or feedback meaning remain deferred until they have named evidence and evaluators.
+
 ## Deliberately not doing
 
 - APCA is not used as a temporal default-to-hover distance metric.
